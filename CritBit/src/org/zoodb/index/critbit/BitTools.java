@@ -20,6 +20,10 @@
  */
 package org.zoodb.index.critbit;
 
+/**
+ * 
+ * @author Tilmann Zäschke
+ */
 public class BitTools {
 
     /**
@@ -81,39 +85,6 @@ public class BitTools {
 		return Float.intBitsToFloat((int) value);
 	}
 
-	public static long toSortableLong(String s) {
-    	// store magic number: 6 chars + (hash >> 16)
-		long n = 0;
-    	int i = 0;
-    	for ( ; i < 6 && i < s.length(); i++ ) {
-    		n |= (byte) s.charAt(i);
-    		n = n << 8;
-    	}
-    	//Fill with empty spaces if string is too short
-    	for ( ; i < 6; i++) {
-    		n = n << 8;
-    	}
-    	n = n << 8;
-
-    	//add hashcode
-    	n |= (0xFFFF & s.hashCode());
-		return n;
-	}
-	
-	
-	/**
-	 * Reverses the value, considering that not all 64bits of the long value are used.
-	 * @param l
-	 * @param usedBits
-	 * @return Reversed value
-	 */
-	public static long reverse(long l, int usedBits) {
-		long r = Long.reverse(l);
-		r >>>= (64-usedBits);
-		return r;
-	}
-	
-	
 	/**
 	 * Splits a value and write it to trgV at position trg1 and trg2.
 	 * This is the inverse operation to merge(...).
@@ -176,54 +147,6 @@ public class BitTools {
 		}
 		return v;
 	}
-
-	/**
-	 * Merges to long values into a single value by interleaving there respective bits.
-	 * This is the inverse operation to split(...).
-	 * @param src Source array
-	 * @param nBitsPerValue Number of bits of each source value
-	 * @return Merged result
-	 */
-//	public static int[] merge(int nBitsPerValue, long[] src) {
-//		//int intArrayLen = (int) Math.ceil(src.length*nBitsPerValue/(double)32.0);
-//		int intArrayLen = (src.length*nBitsPerValue+31) >>> 5;
-//		int[] trg = new int[intArrayLen];
-//		
-//		for (int j = 0; j < src.length; j++) {
-//			long maskSrc = 1L << (nBitsPerValue-1);
-//			for (int k = 0; k < nBitsPerValue; k++) {
-//				int posBit = k*src.length + j; 
-//				boolean bit = (src[j] & maskSrc) != 0;
-//				BitsInt.setBit(trg, posBit, bit);
-//				maskSrc >>>= 1;
-//			}
-//		}
-//		
-//		return trg;
-//	}
-	
-	/**
-	 * Splits a value and write it to trgV at position trg1 and trg2.
-	 * This is the inverse operation to merge(...).
-	 * @param toSplit
-	 * @param nBitsPerValue Number of bits of source value
-	 */
-//	public static long[] split(final int DIM, final int nBitsPerValue, final int[] toSplit) {
-//		long[] trg = new long[DIM];
-//
-//		long maskTrg = 1L << (nBitsPerValue-1);
-//		for (int k = 0; k < nBitsPerValue; k++) {
-//			for (int j = 0; j < trg.length; j++) {
-//				int posBit = k*trg.length + j; 
-//				boolean bit = BitsInt.getBit(toSplit, posBit);
-//				if (bit) {
-//					trg[j] |= maskTrg;
-//				}
-//			}
-//			maskTrg >>>= 1;
-//		}
-//		return trg;
-//	}
 
 	/**
 	 * Merges to long values into a single value by interleaving there respective bits.

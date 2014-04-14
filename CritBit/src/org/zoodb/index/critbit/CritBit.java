@@ -26,6 +26,13 @@ package org.zoodb.index.critbit;
  * 1-dimensional use. Exceptions are the size(), printTree() and similar methods, which work  for
  * all dimensions. 
  * 
+ * In order to store floating point values, please convert them to 'long' with
+ * BitTools.toSortableLong(...), also when supplying query parameters.
+ * Extracted values can be converted back with BitTools.toDouble() or toFloat().
+ * This conversion is taken from: 
+ * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and 
+ * Multi-Dimensional Index (SIGMOD 2014)
+ * 
  * @author Tilmann Zaeschke
  */
 import java.util.Iterator;
@@ -297,6 +304,7 @@ public class CritBit {
 		int end = endPos >>> 6;
 		long[] inf = new long[end-start+1];
 		//System.out.println("s/e/l/sp/ep=" + start + "/" + end + "/" + inf.length + "/" + startPos + "/" + endPos);
+		//System.out.println("vl/s/il=" + v.length + "/" + start + "/" + inf.length);
 		System.arraycopy(v, start, inf, 0, inf.length);
 		//System.out.println("New infix: " + inf[0] + "  " + Bits.toBinary(inf, 64)); //TODO
 		//avoid shifting by64 bit which means 0 shifting in Java!
