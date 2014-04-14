@@ -20,6 +20,14 @@
  */
 package org.zoodb.index.critbit;
 
+/**
+ * CritBit is a multi-dimensional crit-bit tree.
+ * All method ending with 'KD' are for k-dimensional use of the tree, all other methods are for
+ * 1-dimensional use. Exceptions are the size(), printTree() and similar methods, which work  for
+ * all dimensions. 
+ * 
+ * @author Tilmann Zaeschke
+ */
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -630,6 +638,8 @@ public class CritBit {
 		private boolean checkMatchFullIntoNextVal(long[] valTemplate) {
 			//TODO optimise: do not check dimensions that can not possibly fail
 			//  --> Track dimensions that could fail.
+			// --> Check only dimensions between depth of parent and current depth.
+			//     At the same time, don't check more than (currentDept-K) dimensions (i.e. =K dim)
 
 			
 			for (int i = 0; i < valTemplate.length; i++) {
