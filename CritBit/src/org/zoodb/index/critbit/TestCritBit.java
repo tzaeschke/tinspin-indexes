@@ -871,6 +871,7 @@ public class TestCritBit {
 					a[k] = BitTools.toSortableLong(R.nextDouble());//R.nextLong();
 				}
 				aa[i] = a;
+
 				//System.out.println(a[i]>>>32 + ",");
 				//System.out.println("Inserting: " + a[i] + " / " + BitsInt.toBinary(a[i]));
 				if (cb.containsKD(a)) {
@@ -895,32 +896,52 @@ public class TestCritBit {
 			}
 			
 			assertEquals(N, cb.size());
-	
+
 			for (int i = 0; i < N>>1; i++) {
 				long[] a = aa[i];
-				//System.out.println("r=" + r + " i=" + i);
-				//assertTrue("r=" + r + " i=" + i, cb.containsKD(a));
-				if (!cb.containsKD(a)) {
-					System.out.println("Missing: " + BitTools.toBinary(a, 64));
-					System.out.println("Missing2: " + BitTools.toBinary(BitTools.mergeLong(64, a), 64));
-				}
-				//assertTrue(cb.removeKD(a));
+				assertTrue(cb.removeKD(a));
 				cb.removeKD(a);
 				a = aa[N-i-1];
-				if (!cb.containsKD(a)) {
-					System.out.println("Missing: " + BitTools.toBinary(a, 64));
-					System.out.println("Missing2: " + BitTools.toBinary(BitTools.mergeLong(64, a), 64));
-				}
-				//assertTrue(cb.removeKD(a));
-				cb.removeKD(a);
+				assertTrue(cb.removeKD(a));
 			}
 			
-			cb.printTree();
 			assertEquals(0, cb.size());
 		}
 	}
 
 
+	@Test
+	public void testInsert64KBug1() {
+		final int K = 3;
+		CritBit cb = newCritBit(64, K); 
+		long[] A = new long[]{4603080768121727233L, 4602303061770585570L, 4604809596301821093L};
+		long[] B = new long[]{4603082763292946186L, 4602305978608368320L, 4604812210005530572L};
+		cb.insertKD(A);
+		assertTrue(cb.containsKD(A));
+		//cb.printTree();
+		cb.insertKD(B);
+		//cb.printTree();
+		assertTrue(cb.containsKD(A));
+		assertTrue(cb.containsKD(B));
+	}
+	
+	@Test
+	public void testInsert64KBug2() {
+		final int K = 3;
+		CritBit cb = newCritBit(64, K); 
+		long[] A = new long[]{4603080768121727233L, 4602303061770585570L, 4604809596301821093L};
+		long[] B = new long[]{4603082763292946186L, 4602305978608368320L, 4604812210005530572L};
+		cb.insertKD(A);
+		assertTrue(cb.containsKD(A));
+		cb.insertKD(B);
+		assertTrue(cb.containsKD(A));
+		assertTrue(cb.containsKD(B));
+		cb.printTree();
+		cb.removeKD(B);
+		cb.printTree();
+		assertTrue(cb.containsKD(A));
+	}
+	
 	
 	private boolean isEqual(long[] a, long[] r) {
 		for (int k = 0; k < a.length; k++) {

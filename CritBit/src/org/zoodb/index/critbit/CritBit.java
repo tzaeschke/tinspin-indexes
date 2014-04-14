@@ -299,7 +299,10 @@ public class CritBit {
 		//System.out.println("s/e/l/sp/ep=" + start + "/" + end + "/" + inf.length + "/" + startPos + "/" + endPos);
 		System.arraycopy(v, start, inf, 0, inf.length);
 		//System.out.println("New infix: " + inf[0] + "  " + Bits.toBinary(inf, 64)); //TODO
-		inf[inf.length-1] &= ~((-1L) >>> (1+(endPos & 0x3F))); // & 0x3f == %64
+		//avoid shifting by64 bit which means 0 shifting in Java!
+		if ((endPos & 0x3F) < 63) {
+			inf[inf.length-1] &= ~((-1L) >>> (1+(endPos & 0x3F))); // & 0x3f == %64
+		}
 		//System.out.println("New infix: " + inf[0] + "  " + Bits.toBinary(inf, 64)); //TODO
 		return inf;
 	}
@@ -472,25 +475,14 @@ public class CritBit {
 						return false;
 					}
 					//match! --> delete node
-					if (parent == null) {
-						rootVal = n.loVal;
-						root = n.lo;
-					} else if (isParentHigh) {
-						parent.hiVal = n.loVal;
-						parent.hi = n.lo;
-					} else {
-						parent.loVal = n.loVal;
-						parent.lo = n.lo;
+					//a) first recover other values
+					long[] newPost = null;
+					if (n.loVal != null) {
+						readPostFix(n.loVal, currentPrefix);
+						newPost = currentPrefix;
 					}
-					//n.infix = extractInfix(val2, currentDepth-1, n.posDiff-1);
-					//FIXME re-evaluate infix
-					if (parent != null) {
-						//   ((n.posDiff-1)/64)+1 - len_inf
-						int start = ((n.posDiff-1) & 0x3F)+1-  (n.infix != null ? n.infix.length : 0);
-						start <<= 6; //*64
-						parent.infix = extractInfix(val2, start, n.posDiff-1);
-					}
-					size--;
+					//b) replace data in parent node
+					updateParentAfterRemove(parent, newPost, n.lo, isParentHigh, currentPrefix, n);
 					return true;
 				}
 			} else {
@@ -507,31 +499,43 @@ public class CritBit {
 						return false;
 					}
 					//match! --> delete node
-					if (parent == null) {
-						rootVal = n.hiVal;
-						root = n.hi;
-					} else if (isParentHigh) {
-						parent.hiVal = n.hiVal;
-						parent.hi = n.hi;
-					} else {
-						parent.loVal = n.hiVal;
-						parent.lo = n.hi;
+					//a) first recover other values
+					long[] newPost = null;
+					if (n.hiVal != null) {
+						readPostFix(n.hiVal, currentPrefix);
+						newPost = currentPrefix;
 					}
-					//n.infix = extractInfix(val2, currentDepth-1, n.posDiff-1);
-					//FIXME re-evaluate infix
-					if (parent != null) {
-						//   ((n.posDiff-1)/64)+1 - len_inf
-						int start = ((n.posDiff-1) & 0x3F)+1-  (n.infix != null ? n.infix.length : 0);
-						start <<= 6; //*64
-						parent.infix = extractInfix(val2, start, n.posDiff-1);
-					}
-					size--;
+					//b) replace data in parent node
+					updateParentAfterRemove(parent, newPost, n.hi, isParentHigh, currentPrefix, n);
 					return true;
 				}
 			}
 		}
 	}
 	
+	private void updateParentAfterRemove(Node parent, long[] newPost,
+			Node newSub, boolean isParentHigh, long[] currentPrefix, Node n) {
+		if (parent == null) {
+			rootVal = newPost;
+			root = newSub;
+		} else if (isParentHigh) {
+			parent.hiVal = createPostFix(currentPrefix, parent.posDiff);
+			parent.hi = newSub;
+		} else {
+			parent.loVal = createPostFix(currentPrefix, parent.posDiff);
+			parent.lo = newSub;
+		}
+		//n.infix = extractInfix(val2, currentDepth-1, n.posDiff-1);
+		//FIXME re-evaluate infix
+		if (parent != null) {
+			//   ((n.posDiff-1)/64)+1 - len_inf
+			int start = ((n.posDiff-1) & 0x3F)+1-  (n.infix != null ? n.infix.length : 0);
+			start <<= 6; //*64
+			parent.infix = extractInfix(currentPrefix, start, n.posDiff-1);
+		}
+		size--;
+	}
+
 	public Iterator<long[]> query(long[] min, long[] max) {
 		checkDim0(); 
 		return new QueryIterator(this, min, max, DEPTH);
