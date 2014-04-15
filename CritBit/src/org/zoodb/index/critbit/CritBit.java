@@ -56,19 +56,20 @@ public class CritBit {
 		long[] loVal;
 		long[] hiVal;
 		long[] infix;
+		int posFirstBit;  
 		int posDiff;
 		
-		Node(int localDepth, int DEPTH, long[] loVal, long[] hiVal, long[] infix, int posDiff) {
+		Node(int posFirstBit, long[] loVal, long[] hiVal, long[] infix, int posDiff) {
 			this.loVal = loVal;
 			this.hiVal = hiVal;
 			this.infix = infix;
+			this.posFirstBit = posFirstBit;
 			this.posDiff = posDiff;
 		}
 	}
 	
 	
 	private CritBit(int depth, int dim) {
-		//TODO remove DEPTH?
 		this.DEPTH = depth;
 		//we deliberately allow dim=1 here 
 		this.DIM = dim;
@@ -116,6 +117,7 @@ public class CritBit {
 			return true;
 		}
 		Node n = root;
+		//TODO remove this
 		int currentDepth = 0;
 		long[] currentPrefix = new long[val.length];
 		while (true) {
@@ -125,9 +127,9 @@ public class CritBit {
 				//split infix?
 				int posDiff = compare(val, currentPrefix);
 				if (posDiff < n.posDiff && posDiff != -1) {
-					long[] subInfix = extractInfix(n.infix, posDiff+1, n.posDiff-1);
+					long[] subInfix = extractInfix(currentPrefix, posDiff+1, n.posDiff-1);
 					//new sub-node
-					Node newSub = new Node(-1, DEPTH, null, null, subInfix, n.posDiff);
+					Node newSub = new Node(posDiff+1, null, null, subInfix, n.posDiff);
 					newSub.hi = n.hi;
 					newSub.lo = n.lo;
 					newSub.hiVal = n.hiVal;
@@ -231,6 +233,43 @@ public class CritBit {
 		}
 	}
 	
+	public boolean checkTree() {
+		if (root == null) {
+			if (rootVal != null) {
+				return true;
+			}
+			return true;
+		}
+		if (rootVal != null) {
+			System.err.println("root node AND value != null");
+			return false;
+		}
+		return checkNode(root, 0);
+	}
+	
+	private boolean checkNode(Node n, int firstBitOfNode) {
+		//check infix
+		if (n.posDiff == firstBitOfNode && n.infix != null) {
+			System.err.println("infix with len=0 detected!");
+			return false;
+		}
+		if (n.lo != null) {
+			if (n.loVal != null) {
+				System.err.println("lo: sub-node AND value != null");
+				return false;
+			}
+			checkNode(n.lo, n.posDiff+1);
+		}
+		if (n.hi != null) {
+			if (n.hiVal != null) {
+				System.err.println("hi: sub-node AND value != null");
+				return false;
+			}
+			checkNode(n.hi, n.posDiff+1);
+		}
+		return true;
+	}
+	
 	/**
 	 * Creates a postfix starting at posDiff+1.
 	 * @param val
@@ -259,9 +298,9 @@ public class CritBit {
 		long[] p2 = createPostFix(v2, posDiff);
 		//if (isABitwiseSmallerB(v1, v2)) {
 		if (BitTools.getBit(v2, posDiff)) {
-			return new Node(0, DEPTH, p1, p2, infix, posDiff);
+			return new Node(currentDepth, p1, p2, infix, posDiff);
 		} else {
-			return new Node(0, DEPTH, p2, p1, infix, posDiff);
+			return new Node(currentDepth, p2, p1, infix, posDiff);
 		}
 	}
 	
@@ -453,6 +492,7 @@ public class CritBit {
 			return false;
 		}
 		Node n = root;
+		//TODO remove this
 		int currentDepth = 0;
 		long[] currentPrefix = new long[val2.length];
 		Node parent = null;
@@ -487,6 +527,7 @@ public class CritBit {
 						newPost = currentPrefix;
 					}
 					//b) replace data in parent node
+					BitTools.setBit(currentPrefix, n.posDiff, false);
 					updateParentAfterRemove(parent, newPost, n.lo, isParentHigh, currentPrefix, n);
 					return true;
 				}
@@ -511,6 +552,8 @@ public class CritBit {
 						newPost = currentPrefix;
 					}
 					//b) replace data in parent node
+					//for new infixes...
+					BitTools.setBit(currentPrefix, n.posDiff, true);
 					updateParentAfterRemove(parent, newPost, n.hi, isParentHigh, currentPrefix, n);
 					return true;
 				}
@@ -520,23 +563,23 @@ public class CritBit {
 	
 	private void updateParentAfterRemove(Node parent, long[] newPost,
 			Node newSub, boolean isParentHigh, long[] currentPrefix, Node n) {
+		
+		if (newSub != null) {
+			readInfix(newSub, newSub.posFirstBit, currentPrefix);
+		}
 		if (parent == null) {
 			rootVal = newPost;
 			root = newSub;
 		} else if (isParentHigh) {
-			parent.hiVal = createPostFix(currentPrefix, parent.posDiff);
+			parent.hiVal = newSub != null ? null : createPostFix(currentPrefix, parent.posDiff);
 			parent.hi = newSub;
 		} else {
-			parent.loVal = createPostFix(currentPrefix, parent.posDiff);
+			parent.loVal = newSub != null ? null : createPostFix(currentPrefix, parent.posDiff);
 			parent.lo = newSub;
 		}
-		//n.infix = extractInfix(val2, currentDepth-1, n.posDiff-1);
-		//FIXME re-evaluate infix
-		if (parent != null) {
-			//   ((n.posDiff-1)/64)+1 - len_inf
-			int start = ((n.posDiff-1) & 0x3F)+1-  (n.infix != null ? n.infix.length : 0);
-			start <<= 6; //*64
-			parent.infix = extractInfix(currentPrefix, start, n.posDiff-1);
+		if (newSub != null) {
+			newSub.posFirstBit = n.posFirstBit;
+			newSub.infix = extractInfix(currentPrefix, newSub.posFirstBit, newSub.posDiff-1);
 		}
 		size--;
 	}
@@ -733,7 +776,7 @@ public class CritBit {
 	 * Performs a k-dimensional query.
 	 * @param min
 	 * @param max
-	 * @return
+	 * @return Result iterator
 	 */
 	public Iterator<long[]> queryKD(long[] min, long[] max) {
 		checkDIM(min);
