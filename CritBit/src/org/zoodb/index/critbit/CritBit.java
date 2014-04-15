@@ -48,6 +48,8 @@ public class CritBit {
 
 	private int size;
 	
+	private static final int SINGLE_DIM = -1;
+	
 	private static class Node {
 		Node lo;
 		Node hi;
@@ -68,12 +70,13 @@ public class CritBit {
 	private CritBit(int depth, int dim) {
 		//TODO remove DEPTH?
 		this.DEPTH = depth;
+		//we deliberately allow dim=1 here 
 		this.DIM = dim;
 	}
 	
 	public static CritBit create(int depth) {
-		// -1 ensures that DIM is never used in this case.
-		return new CritBit(depth, -1);
+		// SINGLE_DIM ensures that DIM is never used in this case.
+		return new CritBit(depth, SINGLE_DIM);
 	}
 	
 	/**
@@ -186,7 +189,7 @@ public class CritBit {
 	}
 	
 	private void checkDim0() {
-		if (DIM != -1) {
+		if (DIM != SINGLE_DIM) {
 			throw new IllegalStateException("Please use ___KD() methods for k-dimensional data.");
 		}
 	}
@@ -226,12 +229,6 @@ public class CritBit {
 		} else {
 			s.append(level + " " + BitTools.toBinary(n.hiVal,64) + NL);
 		}
-	}
-	
-	private void printNode(Node n, int currentDepth) {
-		StringBuilder s = new StringBuilder();
-		printNode(n, s, "+", currentDepth);
-		System.out.println("Node: \n" + s);
 	}
 	
 	/**
