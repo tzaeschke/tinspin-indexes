@@ -20,10 +20,7 @@
  */
 package org.zoodb.index.critbit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,11 +31,11 @@ import org.junit.Test;
 
 public class TestCritBit {
 
-	private CritBit newCritBit(int depth) {
+	private CritBit<Integer> newCritBit(int depth) {
 		return CritBit.create(depth);
 	}
 	
-	private CritBit newCritBit(int depth, int K) {
+	private CritBit<Integer> newCritBit(int depth, int K) {
 		return CritBit.createKD(depth, K);
 	}
 	
@@ -63,12 +60,12 @@ public class TestCritBit {
 				-1779484802764767232L,
 				-9223372036854775808L				
 		};
-		CritBit cb = newCritBit(16);
+		CritBit<Integer> cb = newCritBit(16);
 		for (long l: a) {
 			//cb.printTree();
 			//System.out.println("Inserting: " + l + " --- " + Bits.toBinary(l, 64));
-			assertTrue(cb.insert(new long[]{l}));
-			assertFalse(cb.insert(new long[]{l}));
+			assertNull(cb.insert(new long[]{l}, 1));
+			assertNotNull(cb.insert(new long[]{l}, 2));
 		}
 	}
 	
@@ -106,7 +103,7 @@ public class TestCritBit {
 	private void randomInsertCheck(final int N, final int SEED, int DEPTH) {
 		Random R = new Random(SEED);
 		long[] a = new long[N];
-		CritBit cb = newCritBit(DEPTH); 
+		CritBit<Integer> cb = newCritBit(DEPTH); 
 		for (int i = 0; i < N; i++) {
 			iFail = i;
 			a[i] = ((long)R.nextInt()) << (64-DEPTH);
@@ -125,15 +122,15 @@ public class TestCritBit {
 				}
 				if (isDuplicate) {
 					//Check if at least insert() recognises
-					assertFalse(cb.insert(new long[]{a[i]}));
+					assertNotNull(cb.insert(new long[]{a[i]}, i));
 					i--;
 					continue;
 				}
 				fail("i= " + i);
 			}
-			assertTrue("i=" + i + " v=" + a[i], cb.insert(new long[]{a[i]}));
+			assertNull("i=" + i + " v=" + a[i], cb.insert(new long[]{a[i]}, 12345+i));
 			//cb.printTree();
-			assertFalse("i=" + i, cb.insert(new long[]{a[i]}));
+			assertEquals("i=" + i, 12345+i, (int)cb.insert(new long[]{a[i]}, i));
 			//cb.printTree();
 			assertEquals(i+1, cb.size());
 			assertTrue(cb.contains(new long[]{a[i]}));
@@ -148,8 +145,8 @@ public class TestCritBit {
 		
 		for (int i = 0; i < N; i++) {
 			assertTrue(cb.contains(new long[]{a[i]}));
-			assertTrue(cb.remove(new long[]{a[i]}));
-			assertFalse(cb.remove(new long[]{a[i]}));
+			assertEquals(i, (int)cb.remove(new long[]{a[i]}));
+			assertEquals(null, cb.remove(new long[]{a[i]}));
 			assertFalse(cb.contains(new long[]{a[i]}));
 			assertEquals(N-i-1, cb.size());
 		}
@@ -164,13 +161,13 @@ public class TestCritBit {
 				-1690734402,
 				-1728529858,
 				-1661998771};
-		CritBit cb = newCritBit(32); 
+		CritBit<Integer> cb = newCritBit(32); 
 		for (int i = 0; i < a.length; i++) {
 			a[i] = a[i] << 32;
 			assertFalse(cb.contains(new long[]{a[i]}));
-			assertTrue(cb.insert(new long[]{a[i]}));
+			assertNull(cb.insert(new long[]{a[i]}, i));
 			//cb.printTree();
-			assertFalse(cb.insert(new long[]{a[i]}));
+			assertEquals(i, (int)cb.insert(new long[]{a[i]}, i));
 			//cb.printTree();
 			assertEquals(i+1, cb.size());
 			assertTrue(cb.contains(new long[]{a[i]}));
@@ -189,14 +186,14 @@ public class TestCritBit {
 				-65105105,
 				-73789608,
 				-518907128};
-		CritBit cb = newCritBit(32); 
+		CritBit<Integer> cb = newCritBit(32); 
 		for (int i = 0; i < a.length; i++) {
 			a[i] = a[i] << 32;
 			//System.out.println("Inserting: " + a[i] + " / " + BitsInt.toBinary(a[i] >>> 32));
 			assertFalse(cb.contains(new long[]{a[i]}));
-			assertTrue(cb.insert(new long[]{a[i]}));
+			assertNull(cb.insert(new long[]{a[i]}, i));
 			//cb.printTree();
-			assertFalse(cb.insert(new long[]{a[i]}));
+			assertEquals(i, (int)cb.insert(new long[]{a[i]}, i));
 			//cb.printTree();
 			assertEquals(i+1, cb.size());
 			assertTrue(cb.contains(new long[]{a[i]}));
@@ -216,7 +213,7 @@ public class TestCritBit {
 			Random R = new Random(r);
 			int N = 1000;
 			long[] a = new long[N];
-			CritBit cb = newCritBit(64); 
+			CritBit<Integer> cb = newCritBit(64); 
 			for (int i = 0; i < N; i++) {
 				a[i] = R.nextLong();
 				//System.out.println(a[i]>>>32 + ",");
@@ -231,9 +228,9 @@ public class TestCritBit {
 					}
 					fail("r=" + r + "  i= " + i);
 				}
-				assertTrue(cb.insert(new long[]{a[i]}));
+				assertNull(cb.insert(new long[]{a[i]}, i));
 				//cb.printTree();
-				assertFalse(cb.insert(new long[]{a[i]}));
+				assertEquals(i, (int)cb.insert(new long[]{a[i]}, i));
 				//cb.printTree();
 				assertEquals(i+1, cb.size());
 				assertTrue(cb.contains(new long[]{a[i]}));
@@ -248,8 +245,8 @@ public class TestCritBit {
 			
 			for (int i = 0; i < N; i++) {
 				assertTrue(cb.contains(new long[]{a[i]}));
-				assertTrue(cb.remove(new long[]{a[i]}));
-				assertFalse(cb.remove(new long[]{a[i]}));
+				assertEquals(i, (int)cb.remove(new long[]{a[i]}));
+				assertNull(cb.remove(new long[]{a[i]}));
 				assertFalse(cb.contains(new long[]{a[i]}));
 				assertEquals(N-i-1, cb.size());
 			}
@@ -263,7 +260,7 @@ public class TestCritBit {
 		Random R = new Random(0);
 		int N = 6;
 		long[] a = new long[N];
-		CritBit cb = newCritBit(64); 
+		CritBit<Integer> cb = newCritBit(64); 
 		for (int i = 0; i < N; i++) {
 			a[i] = R.nextLong();
 			//System.out.println(a[i]>>>32 + ",");
@@ -278,17 +275,17 @@ public class TestCritBit {
 				}
 				fail("i= " + i);
 			}
-			assertTrue(cb.insert(new long[]{a[i]}));
+			assertNull(cb.insert(new long[]{a[i]}, i));
 		}
 
 		assertEquals(N, cb.size());
 
 		for (int i = 0; i < N; i++) {
 			//cb.printTree();
-			assertTrue(cb.remove(new long[]{a[i]}));
+			assertEquals(i, (int)cb.remove(new long[]{a[i]}));
 			//cb.printTree();
 			assertTrue("i="+i, cb.checkTree());
-			assertFalse(cb.remove(new long[]{a[i]}));
+			assertNull(cb.remove(new long[]{a[i]}));
 			assertTrue("i="+i, cb.checkTree());
 		}
 
@@ -300,7 +297,7 @@ public class TestCritBit {
 		Random R = new Random(1);
 		int N = 7;
 		long[] a = new long[N];
-		CritBit cb = newCritBit(64); 
+		CritBit<Integer> cb = newCritBit(64); 
 		for (int i = 0; i < N; i++) {
 			a[i] = R.nextLong();
 			//System.out.println(a[i]>>>32 + ",");
@@ -315,7 +312,7 @@ public class TestCritBit {
 				}
 				fail("i= " + i);
 			}
-			assertTrue(cb.insert(new long[]{a[i]}));
+			assertNull(cb.insert(new long[]{a[i]}, i));
 			assertEquals(i+1, cb.size());
 			assertTrue(cb.checkTree());
 		}
@@ -326,8 +323,8 @@ public class TestCritBit {
 			//cb.printTree();
 			assertTrue("i=" + i, cb.checkTree());
 			assertTrue("i=" + i, cb.contains(new long[]{a[i]}));
-			assertTrue(cb.remove(new long[]{a[i]}));
-			assertFalse(cb.remove(new long[]{a[i]}));
+			assertEquals(i, (int)cb.remove(new long[]{a[i]}));
+			assertNull(cb.remove(new long[]{a[i]}));
 			assertFalse(cb.contains(new long[]{a[i]}));
 			assertEquals(N-i-1, cb.size());
 		}
@@ -342,7 +339,7 @@ public class TestCritBit {
 			Random R = new Random(r);
 			int N = 1000;
 			long[] aa = new long[2*N];
-			CritBit cb = newCritBit(64, 2); 
+			CritBit<Integer> cb = newCritBit(64, 2); 
 			for (int i = 0; i < N; i+=K) {
 				aa[i] = R.nextLong();
 				aa[i+1] = R.nextLong();
@@ -359,9 +356,9 @@ public class TestCritBit {
 					}
 					fail("r=" + r + "  i= " + i);
 				}
-				assertTrue(cb.insertKD(a));
+				assertNull(cb.insertKD(a, i));
 				//cb.printTree();
-				assertFalse(cb.insertKD(a));
+				assertEquals(i, (int)cb.insertKD(a, i));
 				//cb.printTree();
 				assertEquals(i+K, cb.size()*K);
 				assertTrue(cb.containsKD(a));
@@ -378,8 +375,8 @@ public class TestCritBit {
 			for (int i = 0; i < N; i+=K) {
 				long[] a = new long[]{aa[i], aa[i+1]};
 				assertTrue(cb.containsKD(a));
-				assertTrue(cb.removeKD(a));
-				assertFalse(cb.removeKD(a));
+				assertEquals(i, (int)cb.removeKD(a));
+				assertNull(cb.removeKD(a));
 				assertFalse(cb.containsKD(a));
 				assertEquals(N-i-K, cb.size()*K);
 			}
@@ -395,7 +392,7 @@ public class TestCritBit {
 			Random R = new Random(r);
 			int N = 10000;
 			long[] aa = new long[K*N];
-			CritBit cb = newCritBit(64, K); 
+			CritBit<Integer> cb = newCritBit(64, K); 
 			for (int i = 0; i < N; i++) {
 				for (int k = 0; k < K; k++) {
 					aa[i*K+k] = R.nextLong();
@@ -421,9 +418,9 @@ public class TestCritBit {
 					}
 					fail("r=" + r + "  i= " + i);
 				}
-				assertTrue(cb.insertKD(a));
+				assertNull(cb.insertKD(a, 12345+i));
 				//cb.printTree();
-				assertFalse(cb.insertKD(a));
+				assertEquals(12345+i, (int)cb.insertKD(a, i));
 				//cb.printTree();
 				assertEquals(i+1, cb.size());
 				assertTrue(cb.containsKD(a));
@@ -442,8 +439,8 @@ public class TestCritBit {
 				long[] a = new long[K];
 				System.arraycopy(aa, i*K, a, 0, a.length);
 				assertTrue(cb.containsKD(a));
-				assertTrue(cb.removeKD(a));
-				assertFalse(cb.removeKD(a));
+				assertEquals(i, (int)cb.removeKD(a));
+				assertNull(cb.removeKD(a));
 				assertFalse(cb.containsKD(a));
 				assertEquals(N-i-1, cb.size());
 			}
@@ -459,7 +456,7 @@ public class TestCritBit {
 			Random R = new Random(r);
 			int N = 1000;
 			long[][] aa = new long[N][];
-			CritBit cb = newCritBit(64, K); 
+			CritBit<Integer> cb = newCritBit(64, K); 
 			for (int i = 0; i < N; i++) {
 				long[] a = new long[K];
 				for (int k = 0; k < K; k++) {
@@ -472,7 +469,7 @@ public class TestCritBit {
 					continue;
 				}
 				aa[i] = a;
-				assertTrue(cb.insertKD(a));
+				assertNull(cb.insertKD(a, i));
 				assertTrue(cb.containsKD(a));
 			}
 			
@@ -531,7 +528,7 @@ public class TestCritBit {
 			
 			// delete stuff
 			for (int i = 0; i < N; i++) {
-				assertTrue(cb.removeKD(aa[i]));
+				assertEquals(i, (int)cb.removeKD(aa[i]));
 			}
 			
 			// assert none on empty tree
@@ -549,7 +546,7 @@ public class TestCritBit {
 			Random R = new Random(r);
 			int N = 5;
 			long[][] aa = new long[N][];
-			CritBit cb = newCritBit(64); 
+			CritBit<Integer> cb = newCritBit(64); 
 			for (int i = 0; i < N; i++) {
 				long[] a = new long[K];
 				for (int k = 0; k < K; k++) {
@@ -562,7 +559,7 @@ public class TestCritBit {
 					continue;
 				}
 				aa[i] = a;
-				assertTrue(cb.insert(a));
+				assertNull(cb.insert(a, i));
 				assertTrue(cb.contains(a));
 			}
 			
@@ -624,7 +621,7 @@ public class TestCritBit {
 			
 			// delete stuff
 			for (int i = 0; i < N; i++) {
-				assertTrue(cb.remove(aa[i]));
+				assertEquals(i, (int)cb.remove(aa[i]));
 			}
 			
 			// assert none on empty tree
@@ -639,7 +636,7 @@ public class TestCritBit {
 	public void test64_1D_queries_1() {
 		final int K = 1;
 		long[][] aa = new long[][]{{1},{2},{3},{4},{5},{6}};
-		CritBit cb = newCritBit(64, K); 
+		CritBit<Integer> cb = newCritBit(64, K); 
 		for (int i = 0; i < aa.length; i++) {
 			long[] a = aa[i];
 			if (cb.containsKD(a)) {
@@ -648,7 +645,7 @@ public class TestCritBit {
 				continue;
 			}
 			aa[i] = a;
-			assertTrue(cb.insertKD(a));
+			assertNull(cb.insertKD(a, i));
 			//cb.printTree();
 			assertTrue(cb.containsKD(a));
 			//cb.printTree();
@@ -707,7 +704,7 @@ public class TestCritBit {
 
 		// delete stuff
 		for (long[] a: aa) {
-			assertTrue(cb.removeKD(a));
+			assertNotNull(cb.removeKD(a));
 		}
 
 		// assert none on empty tree
@@ -721,8 +718,8 @@ public class TestCritBit {
 	@Test
 	public void test64_True1D_queries_Single() {
 		long[] a = new long[]{3};
-		CritBit cb = newCritBit(64);
-		assertTrue(cb.insert(a));
+		CritBit<Integer> cb = newCritBit(64);
+		assertNull(cb.insert(a, 123));
 		assertTrue(cb.contains(a));
 
 		assertEquals(1, cb.size());
@@ -767,7 +764,7 @@ public class TestCritBit {
 		assertFalse(it.hasNext());
 
 		// delete stuff
-		assertTrue(cb.remove(a));
+		assertEquals(123, (int)cb.remove(a));
 
 		// assert none on empty tree
 		Arrays.fill(qMin, Long.MIN_VALUE);
@@ -780,8 +777,8 @@ public class TestCritBit {
 	public void test64_1D_queries_Single() {
 		final int K = 1;
 		long[] a = new long[]{3};
-		CritBit cb = newCritBit(64, K);
-		assertTrue(cb.insertKD(a));
+		CritBit<Integer> cb = newCritBit(64, K);
+		assertNull(cb.insertKD(a, 123));
 		assertTrue(cb.containsKD(a));
 
 		assertEquals(1, cb.size());
@@ -826,7 +823,7 @@ public class TestCritBit {
 		assertFalse(it.hasNext());
 
 		// delete stuff
-		assertTrue(cb.removeKD(a));
+		assertEquals(123, (int)cb.removeKD(a));
 
 		// assert none on empty tree
 		Arrays.fill(qMin, Long.MIN_VALUE);
@@ -845,7 +842,7 @@ public class TestCritBit {
 		for (int r = 0; r < 100; r++) {
 			Random R = new Random(r);
 			long[][] aa = new long[N][];
-			CritBit cb = newCritBit(W, K); 
+			CritBit<Integer> cb = newCritBit(W, K); 
 			for (int i = 0; i < N; i++) {
 				long[] a = new long[K];
 				for (int k = 0; k < K; k++) {
@@ -858,7 +855,7 @@ public class TestCritBit {
 					continue;
 				}
 				aa[i] = a;
-				assertTrue(cb.insertKD(a));
+				assertNull(cb.insertKD(a, i));
 				assertTrue(cb.containsKD(a));
 			}
 			
@@ -916,7 +913,7 @@ public class TestCritBit {
 			
 			// delete stuff
 			for (long[] a: aa) {
-				assertTrue(cb.removeKD(a));
+				assertNotNull(cb.removeKD(a));
 			}
 			
 			// assert none on empty tree
@@ -934,7 +931,7 @@ public class TestCritBit {
 			Random R = new Random(r);
 			int N = 20000;
 			long[][] aa = new long[N][];
-			CritBit cb = newCritBit(64, K); 
+			CritBit<Integer> cb = newCritBit(64, K); 
 			for (int i = 0; i < N; i++) {
 				long[] a = new long[K];
 				for (int k = 0; k < K; k++) {
@@ -961,7 +958,7 @@ public class TestCritBit {
 					}
 					fail("r=" + r + "  i= " + i);
 				}
-				assertTrue(cb.insertKD(a));
+				assertNull(cb.insertKD(a, i));
 				assertEquals(i+1, cb.size());
 			}
 			
@@ -969,10 +966,10 @@ public class TestCritBit {
 
 			for (int i = 0; i < N>>1; i++) {
 				long[] a = aa[i];
-				assertTrue(cb.removeKD(a));
+				assertEquals(i, (int)cb.removeKD(a));
 				cb.removeKD(a);
 				a = aa[N-i-1];
-				assertTrue(cb.removeKD(a));
+				assertNull(cb.removeKD(a));
 			}
 			
 			assertEquals(0, cb.size());
@@ -986,7 +983,7 @@ public class TestCritBit {
 			Random R = new Random(r);
 			int N = 10000;
 			long[][] aa = new long[N][];
-			CritBit cb = newCritBit(64, K); 
+			CritBit<Integer> cb = newCritBit(64, K); 
 			for (int i = 0; i < N; i++) {
 				long[] a = new long[K];
 				for (int k = 0; k < K; k++) {
@@ -1013,7 +1010,7 @@ public class TestCritBit {
 					}
 					fail("r=" + r + "  i= " + i);
 				}
-				assertTrue(cb.insertKD(a));
+				assertNull(cb.insertKD(a, i));
 				assertEquals(i+1, cb.size());
 			}
 			
@@ -1021,10 +1018,10 @@ public class TestCritBit {
 
 			for (int i = 0; i < N>>1; i++) {
 				long[] a = aa[i];
-				assertTrue(cb.removeKD(a));
+				assertEquals(i, (int)cb.removeKD(a));
 				cb.removeKD(a);
 				a = aa[N-i-1];
-				assertTrue(cb.removeKD(a));
+				assertNull(cb.removeKD(a));
 			}
 			
 			assertEquals(0, cb.size());
@@ -1035,13 +1032,13 @@ public class TestCritBit {
 	@Test
 	public void testInsert64KBug1() {
 		final int K = 3;
-		CritBit cb = newCritBit(64, K); 
+		CritBit<Integer> cb = newCritBit(64, K); 
 		long[] A = new long[]{4603080768121727233L, 4602303061770585570L, 4604809596301821093L};
 		long[] B = new long[]{4603082763292946186L, 4602305978608368320L, 4604812210005530572L};
-		cb.insertKD(A);
+		cb.insertKD(A, 11);
 		assertTrue(cb.containsKD(A));
 		//cb.printTree();
-		cb.insertKD(B);
+		cb.insertKD(B, 22);
 		//cb.printTree();
 		assertTrue(cb.containsKD(A));
 		assertTrue(cb.containsKD(B));
@@ -1050,12 +1047,12 @@ public class TestCritBit {
 	@Test
 	public void testInsert64KBug2() {
 		final int K = 3;
-		CritBit cb = newCritBit(64, K); 
+		CritBit<Integer> cb = newCritBit(64, K); 
 		long[] A = new long[]{4603080768121727233L, 4602303061770585570L, 4604809596301821093L};
 		long[] B = new long[]{4603082763292946186L, 4602305978608368320L, 4604812210005530572L};
-		cb.insertKD(A);
+		cb.insertKD(A, 11);
 		assertTrue(cb.containsKD(A));
-		cb.insertKD(B);
+		cb.insertKD(B, 22);
 		assertTrue(cb.containsKD(A));
 		assertTrue(cb.containsKD(B));
 		cb.removeKD(B);

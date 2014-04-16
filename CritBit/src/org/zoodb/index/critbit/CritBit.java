@@ -43,7 +43,7 @@ public class CritBit<V> {
 	private final int DEPTH;
 	private final int DIM;
 	
-	private Node root;
+	private Node<V> root;
 	private long[] rootKey;
 	private V rootVal;
 
@@ -51,20 +51,23 @@ public class CritBit<V> {
 	
 	private static final int SINGLE_DIM = -1;
 	
-	private static class Node {
-		Object loVal;
-		Object hiVal;
-		Node lo;
-		Node hi;
+	private static class Node<V> {
+		V loVal;
+		V hiVal;
+		Node<V> lo;
+		Node<V> hi;
 		long[] loPost;
 		long[] hiPost;
 		long[] infix;
 		int posFirstBit;  
 		int posDiff;
 		
-		Node(int posFirstBit, long[] loPost, long[] hiPost, long[] infix, int posDiff) {
+		Node(int posFirstBit, long[] loPost, V loVal, long[] hiPost, V hiVal, 
+				long[] infix, int posDiff) {
 			this.loPost = loPost;
+			this.loVal = loVal;
 			this.hiPost = hiPost;
+			this.hiVal = hiVal;
 			this.infix = infix;
 			this.posFirstBit = posFirstBit;
 			this.posDiff = posDiff;
@@ -110,17 +113,18 @@ public class CritBit<V> {
 				rootKey = new long[key.length];
 				System.arraycopy(key, 0, rootKey, 0, key.length);
 			} else {
-				Node n2 = createNode(key, rootKey, 0);
+				Node<V> n2 = createNode(key, val, rootKey, rootVal, 0);
 				if (n2 == null) {
-					return false; 
+					return rootVal; 
 				}
 				root = n2;
 				rootKey = null;
 			}
 			size++;
-			return true;
+			rootVal = val;
+			return null;
 		}
-		Node n = root;
+		Node<V> n = root;
 		//TODO remove this
 		int currentDepth = 0;
 		long[] currentPrefix = new long[key.length];
@@ -133,26 +137,29 @@ public class CritBit<V> {
 				if (posDiff < n.posDiff && posDiff != -1) {
 					long[] subInfix = extractInfix(currentPrefix, posDiff+1, n.posDiff-1);
 					//new sub-node
-					Node newSub = new Node(posDiff+1, null, null, subInfix, n.posDiff);
+					Node<V> newSub = new Node<V>(posDiff+1, n.loPost, n.loVal, n.hiPost, n.hiVal, 
+							subInfix, n.posDiff);
 					newSub.hi = n.hi;
 					newSub.lo = n.lo;
-					newSub.hiPost = n.hiPost;
-					newSub.loPost = n.loPost;
 					if (BitTools.getBit(key, posDiff)) {
 						n.hi = null;
 						n.hiPost = createPostFix(key, posDiff);
+						n.hiVal = val;
 						n.lo = newSub;
 						n.loPost = null;
+						n.loVal = null;
 					} else {
 						n.hi = newSub;
 						n.hiPost = null;
+						n.hiVal = null;
 						n.lo = null;
 						n.loPost = createPostFix(key, posDiff);
+						n.loVal = val;
 					}
 					n.infix = extractInfix(currentPrefix, currentDepth, posDiff-1);
 					n.posDiff = posDiff;
 					size++;
-					return true;
+					return null;
 				}
 			}			
 			
@@ -165,14 +172,17 @@ public class CritBit<V> {
 					continue;
 				} else {
 					readPostFix(n.hiPost, currentPrefix);
-					Node n2 = createNode(key, currentPrefix, currentDepth);
+					Node<V> n2 = createNode(key, val, currentPrefix, n.hiVal, currentDepth);
 					if (n2 == null) {
-						return false; 
+						V prev = n.hiVal;
+						n.hiVal = val;
+						return prev; 
 					}
 					n.hi = n2;
 					n.hiPost = null;
+					n.hiVal = null;
 					size++;
-					return true;
+					return null;
 				}
 			} else {
 				currentDepth++;
@@ -181,14 +191,17 @@ public class CritBit<V> {
 					continue;
 				} else {
 					readPostFix(n.loPost, currentPrefix);
-					Node n2 = createNode(key, currentPrefix, currentDepth);
+					Node<V> n2 = createNode(key, val, currentPrefix, n.loVal, currentDepth);
 					if (n2 == null) {
-						return false; 
+						V prev = n.loVal;
+						n.loVal = val;
+						return prev; 
 					}
 					n.lo = n2;
 					n.loPost = null;
+					n.loVal = null;
 					size++;
-					return true;
+					return null;
 				}
 			}
 		}
@@ -211,13 +224,13 @@ public class CritBit<V> {
 			}
 			return "- -";
 		}
-		Node n = root;
+		Node<V> n = root;
 		StringBuilder s = new StringBuilder();
 		printNode(n, s, "", 0);
 		return s.toString();
 	}
 	
-	private void printNode(Node n, StringBuilder s, String level, int currentDepth) {
+	private void printNode(Node<V> n, StringBuilder s, String level, int currentDepth) {
 		char NL = '\n'; 
 		if (n.infix != null) {
 			s.append(level + "n: " + currentDepth + "/" + n.posDiff + " " + 
@@ -251,7 +264,7 @@ public class CritBit<V> {
 		return checkNode(root, 0);
 	}
 	
-	private boolean checkNode(Node n, int firstBitOfNode) {
+	private boolean checkNode(Node<V> n, int firstBitOfNode) {
 		//check infix
 		if (n.posDiff == firstBitOfNode && n.infix != null) {
 			System.err.println("infix with len=0 detected!");
@@ -292,19 +305,19 @@ public class CritBit<V> {
 		System.arraycopy(postVal, 0, currentPrefix, preLen, postVal.length);
 	}
 
-	private Node createNode(long[] v1, long[] v2, int currentDepth) {
-		int posDiff = compare(v1, v2);
+	private Node<V> createNode(long[] k1, V val1, long[] k2, V val2, int currentDepth) {
+		int posDiff = compare(k1, k2);
 		if (posDiff == -1) {
 			return null;
 		}
-		long[] infix = extractInfix(v1, currentDepth, posDiff-1);
-		long[] p1 = createPostFix(v1, posDiff);
-		long[] p2 = createPostFix(v2, posDiff);
+		long[] infix = extractInfix(k1, currentDepth, posDiff-1);
+		long[] p1 = createPostFix(k1, posDiff);
+		long[] p2 = createPostFix(k2, posDiff);
 		//if (isABitwiseSmallerB(v1, v2)) {
-		if (BitTools.getBit(v2, posDiff)) {
-			return new Node(currentDepth, p1, p2, infix, posDiff);
+		if (BitTools.getBit(k2, posDiff)) {
+			return new Node<V>(currentDepth, p1, val1, p2, val2, infix, posDiff);
 		} else {
-			return new Node(currentDepth, p2, p1, infix, posDiff);
+			return new Node<V>(currentDepth, p2, val2, p1, val1, infix, posDiff);
 		}
 	}
 	
@@ -314,7 +327,7 @@ public class CritBit<V> {
 	 * @param infixStart The bit-position of the first infix bits relative to the whole value
 	 * @param currentPrefix
 	 */
-	private static void readInfix(Node n, int infixStart, long[] currentPrefix) {
+	private void readInfix(Node<V> n, int infixStart, long[] currentPrefix) {
 		if (n.infix == null) {
 			return;
 		}
@@ -361,7 +374,7 @@ public class CritBit<V> {
 	 * @param startPos
 	 * @return True if the infix matches the value or if no infix is defined
 	 */
-	private boolean doesInfixMatch(Node n, long[] v, int startPos) {
+	private boolean doesInfixMatch(Node<V> n, long[] v, int startPos) {
 		if (n.infix == null) {
 			return true;
 		}
@@ -441,7 +454,7 @@ public class CritBit<V> {
 			}
 			return false;
 		}
-		Node n = root;
+		Node<V> n = root;
 		int currentDepth = 0;
 		long[] currentPrefix = new long[val.length];
 		while (true) {
@@ -495,16 +508,18 @@ public class CritBit<V> {
 				if (posDiff == -1) {
 					size--;
 					rootKey = null;
-					return true;
+					V prev = rootVal;
+					rootVal = null;
+					return prev;
 				}
 			}
 			return null;
 		}
-		Node n = root;
+		Node<V> n = root;
 		//TODO remove this
 		int currentDepth = 0;
 		long[] currentPrefix = new long[val2.length];
-		Node parent = null;
+		Node<V> parent = null;
 		boolean isParentHigh = false;
 		while (true) {
 			readInfix(n, currentDepth, currentPrefix);
@@ -537,8 +552,8 @@ public class CritBit<V> {
 					}
 					//b) replace data in parent node
 					BitTools.setBit(currentPrefix, n.posDiff, false);
-					updateParentAfterRemove(parent, newPost, n.lo, isParentHigh, currentPrefix, n);
-					return true;
+					updateParentAfterRemove(parent, newPost, n.loVal, n.lo, isParentHigh, currentPrefix, n);
+					return n.hiVal;
 				}
 			} else {
 				currentDepth++;
@@ -563,15 +578,15 @@ public class CritBit<V> {
 					//b) replace data in parent node
 					//for new infixes...
 					BitTools.setBit(currentPrefix, n.posDiff, true);
-					updateParentAfterRemove(parent, newPost, n.hi, isParentHigh, currentPrefix, n);
-					return true;
+					updateParentAfterRemove(parent, newPost, n.hiVal, n.hi, isParentHigh, currentPrefix, n);
+					return n.loVal;
 				}
 			}
 		}
 	}
 	
-	private void updateParentAfterRemove(Node parent, long[] newPost,
-			Node newSub, boolean isParentHigh, long[] currentPrefix, Node n) {
+	private void updateParentAfterRemove(Node<V> parent, long[] newPost, V newVal,
+			Node<V> newSub, boolean isParentHigh, long[] currentPrefix, Node<V> n) {
 		
 		if (newSub != null) {
 			readInfix(newSub, newSub.posFirstBit, currentPrefix);
@@ -580,10 +595,22 @@ public class CritBit<V> {
 			rootKey = newPost;
 			root = newSub;
 		} else if (isParentHigh) {
-			parent.hiPost = newSub != null ? null : createPostFix(currentPrefix, parent.posDiff);
+			if (newSub == null) {
+				parent.hiPost = createPostFix(currentPrefix, parent.posDiff);
+				parent.hiVal = newVal;
+			} else {
+				parent.hiPost = null;
+				parent.hiVal = null;
+			}
 			parent.hi = newSub;
 		} else {
-			parent.loPost = newSub != null ? null : createPostFix(currentPrefix, parent.posDiff);
+			if (newSub == null) {
+				parent.loPost = createPostFix(currentPrefix, parent.posDiff);
+				parent.loVal = newVal;
+			} else {
+				parent.loPost = null;
+				parent.loVal = null;
+			}
 			parent.lo = newSub;
 		}
 		if (newSub != null) {
@@ -604,7 +631,7 @@ public class CritBit<V> {
 		private final long[] maxOrig;
 		private final int DEPTH;
 		private long[] nextValue = null;
-		private final Node[] stack;
+		private final Node<V>[] stack;
 		 //0==read_lower; 1==read_upper; 2==go_to_parent
 		private static final byte READ_LOWER = 0;
 		private static final byte READ_UPPER = 1;
@@ -629,7 +656,7 @@ public class CritBit<V> {
 				//Tree is empty
 				return;
 			}
-			Node n = cb.root;
+			Node<V> n = cb.root;
 			readInfix(n, 0, valIntTemplate);
 			if (!checkMatch(valIntTemplate, n.posDiff)) {
 				return;
@@ -640,7 +667,7 @@ public class CritBit<V> {
 
 		private void findNext() {
 			while (stackTop >= 0) {
-				Node n = stack[stackTop];
+				Node<V> n = stack[stackTop];
 				int currentDepth = n.posDiff;
 				//check lower
 				if (readHigherNext[stackTop] == READ_LOWER) {
@@ -801,7 +828,7 @@ public class CritBit<V> {
 		private final int DIM;
 		private final int DEPTH;
 		private long[] nextValue = null;
-		private final Node[] stack;
+		private final Node<V>[] stack;
 		 //0==read_lower; 1==read_upper; 2==go_to_parent
 		private static final byte READ_LOWER = 0;
 		private static final byte READ_UPPER = 1;
@@ -809,7 +836,7 @@ public class CritBit<V> {
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
 
-		public QueryIteratorKD(CritBit cb, long[] minOrig, long[] maxOrig, int DIM, int DEPTH) {
+		public QueryIteratorKD(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DIM, int DEPTH) {
 			this.stack = new Node[DIM*DEPTH];
 			this.readHigherNext = new byte[DIM*DEPTH];  // default = false
 			int intArrayLen = (DIM*DEPTH+63) >>> 6;
@@ -827,7 +854,7 @@ public class CritBit<V> {
 				//Tree is empty
 				return;
 			}
-			Node n = cb.root;
+			Node<V> n = cb.root;
 			readInfix(n, 0, valIntTemplate);
 			if (!checkMatchKD(valIntTemplate, n.posDiff)) {
 				return;
@@ -838,7 +865,7 @@ public class CritBit<V> {
 
 		private void findNext() {
 			while (stackTop >= 0) {
-				Node n = stack[stackTop];
+				Node<V> n = stack[stackTop];
 				int currentDepth = n.posDiff;
 				//check lower
 				if (readHigherNext[stackTop] == READ_LOWER) {
