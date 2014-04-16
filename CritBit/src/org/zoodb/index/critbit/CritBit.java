@@ -38,30 +38,33 @@ package org.zoodb.index.critbit;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class CritBit {
+public class CritBit<V> {
 
 	private final int DEPTH;
 	private final int DIM;
 	
 	private Node root;
-	private long[] rootVal;
+	private long[] rootKey;
+	private V rootVal;
 
 	private int size;
 	
 	private static final int SINGLE_DIM = -1;
 	
 	private static class Node {
+		Object loVal;
+		Object hiVal;
 		Node lo;
 		Node hi;
-		long[] loVal;
-		long[] hiVal;
+		long[] loPost;
+		long[] hiPost;
 		long[] infix;
 		int posFirstBit;  
 		int posDiff;
 		
-		Node(int posFirstBit, long[] loVal, long[] hiVal, long[] infix, int posDiff) {
-			this.loVal = loVal;
-			this.hiVal = hiVal;
+		Node(int posFirstBit, long[] loPost, long[] hiPost, long[] infix, int posDiff) {
+			this.loPost = loPost;
+			this.hiPost = hiPost;
 			this.infix = infix;
 			this.posFirstBit = posFirstBit;
 			this.posDiff = posDiff;
@@ -75,9 +78,9 @@ public class CritBit {
 		this.DIM = dim;
 	}
 	
-	public static CritBit create(int depth) {
+	public static <V> CritBit<V> create(int depth) {
 		// SINGLE_DIM ensures that DIM is never used in this case.
-		return new CritBit(depth, SINGLE_DIM);
+		return new CritBit<V>(depth, SINGLE_DIM);
 	}
 	
 	/**
@@ -86,32 +89,33 @@ public class CritBit {
 	 * @param dim
 	 * @return k-dimensional tree
 	 */
-	public static CritBit createKD(int depth, int dim) {
-		return new CritBit(depth, dim);
+	public static <V> CritBit<V> createKD(int depth, int dim) {
+		return new CritBit<V>(depth, dim);
 	}
 	
 	/**
 	 * 
+	 * @param key
 	 * @param val
 	 * @return False if the value already exists.
 	 */
-	public boolean insert(long[] val) {
+	public V insert(long[] key, V val) {
 		checkDim0();
-		return insertNoCheck(val);
+		return insertNoCheck(key, val);
 	}
 	
-	private boolean insertNoCheck(long[] val) {
+	private V insertNoCheck(long[] key, V val) {
 		if (root == null) {
-			if (rootVal == null) {
-				rootVal = new long[val.length];
-				System.arraycopy(val, 0, rootVal, 0, val.length);
+			if (rootKey == null) {
+				rootKey = new long[key.length];
+				System.arraycopy(key, 0, rootKey, 0, key.length);
 			} else {
-				Node n2 = createNode(val, rootVal, 0);
+				Node n2 = createNode(key, rootKey, 0);
 				if (n2 == null) {
 					return false; 
 				}
 				root = n2;
-				rootVal = null;
+				rootKey = null;
 			}
 			size++;
 			return true;
@@ -119,31 +123,31 @@ public class CritBit {
 		Node n = root;
 		//TODO remove this
 		int currentDepth = 0;
-		long[] currentPrefix = new long[val.length];
+		long[] currentPrefix = new long[key.length];
 		while (true) {
 			readInfix(n, currentDepth, currentPrefix);
 			
 			if (n.infix != null) {
 				//split infix?
-				int posDiff = compare(val, currentPrefix);
+				int posDiff = compare(key, currentPrefix);
 				if (posDiff < n.posDiff && posDiff != -1) {
 					long[] subInfix = extractInfix(currentPrefix, posDiff+1, n.posDiff-1);
 					//new sub-node
 					Node newSub = new Node(posDiff+1, null, null, subInfix, n.posDiff);
 					newSub.hi = n.hi;
 					newSub.lo = n.lo;
-					newSub.hiVal = n.hiVal;
-					newSub.loVal = n.loVal;
-					if (BitTools.getBit(val, posDiff)) {
+					newSub.hiPost = n.hiPost;
+					newSub.loPost = n.loPost;
+					if (BitTools.getBit(key, posDiff)) {
 						n.hi = null;
-						n.hiVal = createPostFix(val, posDiff);
+						n.hiPost = createPostFix(key, posDiff);
 						n.lo = newSub;
-						n.loVal = null;
+						n.loPost = null;
 					} else {
 						n.hi = newSub;
-						n.hiVal = null;
+						n.hiPost = null;
 						n.lo = null;
-						n.loVal = createPostFix(val, posDiff);
+						n.loPost = createPostFix(key, posDiff);
 					}
 					n.infix = extractInfix(currentPrefix, currentDepth, posDiff-1);
 					n.posDiff = posDiff;
@@ -154,19 +158,19 @@ public class CritBit {
 			
 			//infix matches, so now we check sub-nodes and postfixes
 			currentDepth = n.posDiff;
-			if (BitTools.getBit(val, currentDepth)) {
+			if (BitTools.getBit(key, currentDepth)) {
 				currentDepth++;
 				if (n.hi != null) {
 					n = n.hi;
 					continue;
 				} else {
-					readPostFix(n.hiVal, currentPrefix);
-					Node n2 = createNode(val, currentPrefix, currentDepth);
+					readPostFix(n.hiPost, currentPrefix);
+					Node n2 = createNode(key, currentPrefix, currentDepth);
 					if (n2 == null) {
 						return false; 
 					}
 					n.hi = n2;
-					n.hiVal = null;
+					n.hiPost = null;
 					size++;
 					return true;
 				}
@@ -176,13 +180,13 @@ public class CritBit {
 					n = n.lo;
 					continue;
 				} else {
-					readPostFix(n.loVal, currentPrefix);
-					Node n2 = createNode(val, currentPrefix, currentDepth);
+					readPostFix(n.loPost, currentPrefix);
+					Node n2 = createNode(key, currentPrefix, currentDepth);
 					if (n2 == null) {
 						return false; 
 					}
 					n.lo = n2;
-					n.loVal = null;
+					n.loPost = null;
 					size++;
 					return true;
 				}
@@ -202,8 +206,8 @@ public class CritBit {
 	
 	public String toString() {
 		if (root == null) {
-			if (rootVal != null) {
-				return "-" + BitTools.toBinary(rootVal, 64);
+			if (rootKey != null) {
+				return "-" + BitTools.toBinary(rootKey, 64);
 			}
 			return "- -";
 		}
@@ -224,23 +228,23 @@ public class CritBit {
 		if (n.lo != null) {
 			printNode(n.lo, s, level + "-", n.posDiff+1);
 		} else {
-			s.append(level + " " + BitTools.toBinary(n.loVal, 64) + NL);
+			s.append(level + " " + BitTools.toBinary(n.loPost, 64) + NL);
 		}
 		if (n.hi != null) {
 			printNode(n.hi, s, level + "-", n.posDiff+1);
 		} else {
-			s.append(level + " " + BitTools.toBinary(n.hiVal,64) + NL);
+			s.append(level + " " + BitTools.toBinary(n.hiPost,64) + NL);
 		}
 	}
 	
 	public boolean checkTree() {
 		if (root == null) {
-			if (rootVal != null) {
+			if (rootKey != null) {
 				return true;
 			}
 			return true;
 		}
-		if (rootVal != null) {
+		if (rootKey != null) {
 			System.err.println("root node AND value != null");
 			return false;
 		}
@@ -254,14 +258,14 @@ public class CritBit {
 			return false;
 		}
 		if (n.lo != null) {
-			if (n.loVal != null) {
+			if (n.loPost != null) {
 				System.err.println("lo: sub-node AND value != null");
 				return false;
 			}
 			checkNode(n.lo, n.posDiff+1);
 		}
 		if (n.hi != null) {
-			if (n.hiVal != null) {
+			if (n.hiPost != null) {
 				System.err.println("hi: sub-node AND value != null");
 				return false;
 			}
@@ -429,8 +433,8 @@ public class CritBit {
 
 	private boolean containsNoCheck(long[] val) {
 		if (root == null) {
-			if (rootVal != null) {
-				int posDiff = compare(val, rootVal);
+			if (rootKey != null) {
+				int posDiff = compare(val, rootKey);
 				if (posDiff == -1) {
 					return true;
 				}
@@ -455,14 +459,14 @@ public class CritBit {
 					n = n.hi;
 					continue;
 				} 
-				readPostFix(n.hiVal, currentPrefix);
+				readPostFix(n.hiPost, currentPrefix);
 			} else {
 				currentDepth++;
 				if (n.lo != null) {
 					n = n.lo;
 					continue;
 				}
-				readPostFix(n.loVal, currentPrefix);
+				readPostFix(n.loPost, currentPrefix);
 			}
 			return compare(val, currentPrefix) == -1;
 		}
@@ -474,22 +478,27 @@ public class CritBit {
 		return r;
 	}
 
-	public boolean remove(long[] val) {
+	/**
+	 * 
+	 * @param key
+	 * @return The value of the key of null if the value was not found. 
+	 */
+	public V remove(long[] key) {
 		checkDim0();
-		return removeNoCheck(val);
+		return removeNoCheck(key);
 	}
 	
-	private boolean removeNoCheck(long[] val2) {
+	private V removeNoCheck(long[] val2) {
 		if (root == null) {
-			if (rootVal != null) {
-				int posDiff = compare(val2, rootVal);
+			if (rootKey != null) {
+				int posDiff = compare(val2, rootKey);
 				if (posDiff == -1) {
 					size--;
-					rootVal = null;
+					rootKey = null;
 					return true;
 				}
 			}
-			return false;
+			return null;
 		}
 		Node n = root;
 		//TODO remove this
@@ -501,7 +510,7 @@ public class CritBit {
 			readInfix(n, currentDepth, currentPrefix);
 			
 			if (!doesInfixMatch(n, val2, currentDepth)) {
-				return false;
+				return null;
 			}
 			
 			//infix matches, so now we check sub-nodes and postfixes
@@ -514,16 +523,16 @@ public class CritBit {
 					n = n.hi;
 					continue;
 				} else {
-					readPostFix(n.hiVal, currentPrefix);
+					readPostFix(n.hiPost, currentPrefix);
 					int posDiff = compare(val2, currentPrefix);
 					if (posDiff != -1) {
-						return false;
+						return null;
 					}
 					//match! --> delete node
 					//a) first recover other values
 					long[] newPost = null;
-					if (n.loVal != null) {
-						readPostFix(n.loVal, currentPrefix);
+					if (n.loPost != null) {
+						readPostFix(n.loPost, currentPrefix);
 						newPost = currentPrefix;
 					}
 					//b) replace data in parent node
@@ -539,16 +548,16 @@ public class CritBit {
 					n = n.lo;
 					continue;
 				} else {
-					readPostFix(n.loVal, currentPrefix);
+					readPostFix(n.loPost, currentPrefix);
 					int posDiff = compare(val2, currentPrefix);
 					if (posDiff != -1) {
-						return false;
+						return null;
 					}
 					//match! --> delete node
 					//a) first recover other values
 					long[] newPost = null;
-					if (n.hiVal != null) {
-						readPostFix(n.hiVal, currentPrefix);
+					if (n.hiPost != null) {
+						readPostFix(n.hiPost, currentPrefix);
 						newPost = currentPrefix;
 					}
 					//b) replace data in parent node
@@ -568,13 +577,13 @@ public class CritBit {
 			readInfix(newSub, newSub.posFirstBit, currentPrefix);
 		}
 		if (parent == null) {
-			rootVal = newPost;
+			rootKey = newPost;
 			root = newSub;
 		} else if (isParentHigh) {
-			parent.hiVal = newSub != null ? null : createPostFix(currentPrefix, parent.posDiff);
+			parent.hiPost = newSub != null ? null : createPostFix(currentPrefix, parent.posDiff);
 			parent.hi = newSub;
 		} else {
-			parent.loVal = newSub != null ? null : createPostFix(currentPrefix, parent.posDiff);
+			parent.loPost = newSub != null ? null : createPostFix(currentPrefix, parent.posDiff);
 			parent.lo = newSub;
 		}
 		if (newSub != null) {
@@ -603,7 +612,7 @@ public class CritBit {
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
 
-		public QueryIterator(CritBit cb, long[] minOrig, long[] maxOrig, int DEPTH) {
+		public QueryIterator(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DEPTH) {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			int intArrayLen = (DEPTH+63) >>> 6;
@@ -612,8 +621,8 @@ public class CritBit {
 			this.maxOrig = maxOrig;
 			this.DEPTH = DEPTH;
 
-			if (cb.rootVal != null) {
-				checkMatchFullIntoNextVal(cb.rootVal);
+			if (cb.rootKey != null) {
+				checkMatchFullIntoNextVal(cb.rootKey);
 				return;
 			}
 			if (cb.root == null) {
@@ -639,8 +648,8 @@ public class CritBit {
 					//TODO use bit directly to check validity
 					BitTools.setBit(valIntTemplate, currentDepth, false);
 					if (checkMatch(valIntTemplate, currentDepth)) {
-						if (n.loVal != null) {
-							readPostFix(n.loVal, valIntTemplate);
+						if (n.loPost != null) {
+							readPostFix(n.loPost, valIntTemplate);
 							if (checkMatchFullIntoNextVal(valIntTemplate)) {
 								return;
 							} 
@@ -658,8 +667,8 @@ public class CritBit {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
 					BitTools.setBit(valIntTemplate, currentDepth, true);
 					if (checkMatch(valIntTemplate, currentDepth)) {
-						if (n.hiVal != null) {
-							readPostFix(n.hiVal, valIntTemplate);
+						if (n.hiPost != null) {
+							readPostFix(n.hiPost, valIntTemplate);
 							if (checkMatchFullIntoNextVal(valIntTemplate)) {
 								--stackTop;
 								return;
@@ -745,13 +754,13 @@ public class CritBit {
 	
 	/**
 	 * 
-	 * @param val
+	 * @param key
 	 * @return False if the value already exists.
 	 */
-	public boolean insertKD(long[] val) {
-		checkDIM(val);
-		long[] vi = BitTools.mergeLong(DEPTH, val);
-		return insertNoCheck(vi);
+	public V insertKD(long[] key, V val) {
+		checkDIM(key);
+		long[] vi = BitTools.mergeLong(DEPTH, key);
+		return insertNoCheck(vi, val);
 	}
 	
 	public boolean containsKD(long[] val) {
@@ -760,7 +769,7 @@ public class CritBit {
 		return containsNoCheck(vi);
 	}
 
-	public boolean removeKD(long[] val) {
+	public V removeKD(long[] val) {
 		checkDIM(val);
 		long[] vi = BitTools.mergeLong(DEPTH, val);
 		return removeNoCheck(vi);
@@ -810,8 +819,8 @@ public class CritBit {
 			this.DIM = DIM;
 			this.DEPTH = DEPTH;
 
-			if (cb.rootVal != null) {
-				checkMatchKDFullIntoNextVal(cb.rootVal);
+			if (cb.rootKey != null) {
+				checkMatchKDFullIntoNextVal(cb.rootKey);
 				return;
 			}
 			if (cb.root == null) {
@@ -837,8 +846,8 @@ public class CritBit {
 					//TODO use bit directly to check validity
 					BitTools.setBit(valIntTemplate, currentDepth, false);
 					if (checkMatchKD(valIntTemplate, currentDepth)) {
-						if (n.loVal != null) {
-							readPostFix(n.loVal, valIntTemplate);
+						if (n.loPost != null) {
+							readPostFix(n.loPost, valIntTemplate);
 							if (checkMatchKDFullIntoNextVal(valIntTemplate)) {
 								return;
 							} 
@@ -856,8 +865,8 @@ public class CritBit {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
 					BitTools.setBit(valIntTemplate, currentDepth, true);
 					if (checkMatchKD(valIntTemplate, currentDepth)) {
-						if (n.hiVal != null) {
-							readPostFix(n.hiVal, valIntTemplate);
+						if (n.hiPost != null) {
+							readPostFix(n.hiPost, valIntTemplate);
 							if (checkMatchKDFullIntoNextVal(valIntTemplate)) {
 								--stackTop;
 								return;
