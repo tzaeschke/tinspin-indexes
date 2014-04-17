@@ -112,16 +112,19 @@ public class CritBit<V> {
 			if (rootKey == null) {
 				rootKey = new long[key.length];
 				System.arraycopy(key, 0, rootKey, 0, key.length);
+				rootVal = val;
 			} else {
 				Node<V> n2 = createNode(key, val, rootKey, rootVal, 0);
 				if (n2 == null) {
-					return rootVal; 
+					V prev = rootVal;
+					rootVal = val;
+					return prev; 
 				}
 				root = n2;
 				rootKey = null;
+				rootVal = null;
 			}
 			size++;
-			rootVal = val;
 			return null;
 		}
 		Node<V> n = root;
@@ -215,7 +218,7 @@ public class CritBit<V> {
 	public String toString() {
 		if (root == null) {
 			if (rootKey != null) {
-				return "-" + BitTools.toBinary(rootKey, 64);
+				return "-" + BitTools.toBinary(rootKey, 64) + " v=" + rootVal;
 			}
 			return "- -";
 		}
@@ -236,12 +239,12 @@ public class CritBit<V> {
 		if (n.lo != null) {
 			printNode(n.lo, s, level + "-", n.posDiff+1);
 		} else {
-			s.append(level + " " + BitTools.toBinary(n.loPost, 64) + NL);
+			s.append(level + " " + BitTools.toBinary(n.loPost, 64) + " v=" + n.loVal + NL);
 		}
 		if (n.hi != null) {
 			printNode(n.hi, s, level + "-", n.posDiff+1);
 		} else {
-			s.append(level + " " + BitTools.toBinary(n.hiPost,64) + NL);
+			s.append(level + " " + BitTools.toBinary(n.hiPost,64) + " v=" + n.hiVal + NL);
 		}
 	}
 	
@@ -477,6 +480,54 @@ public class CritBit<V> {
 		}
 	}
 	
+	public V get(long[] val) {
+		checkDim0();
+		return getNoCheck(val);
+	}
+
+	private V getNoCheck(long[] val) {
+		if (root == null) {
+			if (rootKey != null) {
+				int posDiff = compare(val, rootKey);
+				if (posDiff == -1) {
+					return rootVal;
+				}
+			}
+			return null;
+		}
+		Node<V> n = root;
+		long[] currentPrefix = new long[val.length];
+		while (true) {
+			readInfix(n, currentPrefix);
+			
+			if (!doesInfixMatch(n, val)) {
+				return null;
+			}			
+			
+			//infix matches, so now we check sub-nodes and postfixes
+			if (BitTools.getBit(val, n.posDiff)) {
+				if (n.hi != null) {
+					n = n.hi;
+					continue;
+				} 
+				readPostFix(n.hiPost, currentPrefix);
+				if (compare(val, currentPrefix) == -1) {
+					return n.hiVal;
+				}
+			} else {
+				if (n.lo != null) {
+					n = n.lo;
+					continue;
+				}
+				readPostFix(n.loPost, currentPrefix);
+				if (compare(val, currentPrefix) == -1) {
+					return n.loVal;
+				}
+			}
+			return null;
+		}
+	}
+	
 	private static long[] clone(long[] v) {
 		long[] r = new long[v.length];
 		System.arraycopy(v, 0, r, 0, v.length);
@@ -580,6 +631,7 @@ public class CritBit<V> {
 		}
 		if (parent == null) {
 			rootKey = newPost;
+			rootVal = newVal;
 			root = newSub;
 		} else if (isParentHigh) {
 			if (newSub == null) {
@@ -782,6 +834,12 @@ public class CritBit<V> {
 		checkDIM(val);
 		long[] vi = BitTools.mergeLong(DEPTH, val);
 		return containsNoCheck(vi);
+	}
+
+	public V getKD(long[] val) {
+		checkDIM(val);
+		long[] vi = BitTools.mergeLong(DEPTH, val);
+		return getNoCheck(vi);
 	}
 
 	public V removeKD(long[] val) {
