@@ -340,7 +340,8 @@ public class TestCritBit {
 			int N = 1000;
 			long[] aa = new long[2*N];
 			CritBit<Integer> cb = newCritBit(64, 2); 
-			for (int i = 0; i < N; i+=K) {
+			int n = 0;
+			for (int i = 0; i < N; i+=K, n++) {
 				aa[i] = R.nextLong();
 				aa[i+1] = R.nextLong();
 				//System.out.println(a[i]>>>32 + ",");
@@ -356,9 +357,9 @@ public class TestCritBit {
 					}
 					fail("r=" + r + "  i= " + i);
 				}
-				assertNull(cb.insertKD(a, i));
+				assertNull(cb.insertKD(a, n+12345));
 				//cb.printTree();
-				assertEquals(i, (int)cb.insertKD(a, i));
+				assertEquals(n+12345, (int)cb.insertKD(a, n));
 				//cb.printTree();
 				assertEquals(i+K, cb.size()*K);
 				assertTrue(cb.containsKD(a));
@@ -372,10 +373,11 @@ public class TestCritBit {
 				assertTrue(cb.containsKD(a));
 			}
 			
-			for (int i = 0; i < N; i+=K) {
+			n = 0;
+			for (int i = 0; i < N; i+=K, n++) {
 				long[] a = new long[]{aa[i], aa[i+1]};
 				assertTrue(cb.containsKD(a));
-				assertEquals(i, (int)cb.removeKD(a));
+				assertEquals("i="+ i, (int)cb.removeKD(a));
 				assertNull(cb.removeKD(a));
 				assertFalse(cb.containsKD(a));
 				assertEquals(N-i-K, cb.size()*K);
