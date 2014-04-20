@@ -206,6 +206,24 @@ public class BitTools {
 	}
 
 	/**
+	 * Reads a bit from {@code src}, writes it to {@code dst} and returns it.
+	 * @Param posBit Counts from left to right
+	 */
+    public static boolean getAndCopyBit(long[] src, int posBit, long[] dst) {
+        int pA = posBit >>> 6; // 1/64
+        //last 6 bit [0..63]
+        posBit &= 0x3F;
+        long mask = 1L << (63-posBit);
+        if ( (src[pA] & mask) != 0 ) {
+            dst[pA] |= mask;
+            return true;
+        } else {
+            dst[pA] &= ~mask;
+            return false;
+        }
+	}
+
+	/**
 	 * @Param posBit Counts from left to right (highest to lowest)!!!
 	 */
     public static void setBit(long[] ba, int posBit, boolean b) {

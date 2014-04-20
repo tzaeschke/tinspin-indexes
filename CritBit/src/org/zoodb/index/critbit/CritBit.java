@@ -142,7 +142,7 @@ public class CritBit<V> {
 							subInfix, n.posDiff);
 					newSub.hi = n.hi;
 					newSub.lo = n.lo;
-					if (BitTools.getBit(key, posDiff)) {
+					if (BitTools.getAndCopyBit(key, posDiff, currentPrefix)) {
 						n.hi = null;
 						n.hiPost = createPostFix(key, posDiff);
 						n.hiVal = val;
@@ -165,7 +165,7 @@ public class CritBit<V> {
 			}			
 			
 			//infix matches, so now we check sub-nodes and postfixes
-			if (BitTools.getBit(key, n.posDiff)) {
+			if (BitTools.getAndCopyBit(key, n.posDiff, currentPrefix)) {
 				if (n.hi != null) {
 					n = n.hi;
 					continue;
@@ -330,10 +330,7 @@ public class CritBit<V> {
 			return;
 		}
 		int dst = n.posFirstBit >>> 6;
-		for (long l: n.infix) {
-			currentPrefix[dst] = 0;  //the infix contains also bits to fill up the front.
-			currentPrefix[dst++] |= l;
-		}
+		System.arraycopy(n.infix, 0, currentPrefix, dst, n.infix.length);
 	}
 
 	/**
@@ -463,7 +460,7 @@ public class CritBit<V> {
 			}			
 			
 			//infix matches, so now we check sub-nodes and postfixes
-			if (BitTools.getBit(val, n.posDiff)) {
+			if (BitTools.getAndCopyBit(val, n.posDiff, currentPrefix)) {
 				if (n.hi != null) {
 					n = n.hi;
 					continue;
@@ -505,7 +502,7 @@ public class CritBit<V> {
 			}			
 			
 			//infix matches, so now we check sub-nodes and postfixes
-			if (BitTools.getBit(val, n.posDiff)) {
+			if (BitTools.getAndCopyBit(val, n.posDiff, currentPrefix)) {
 				if (n.hi != null) {
 					n = n.hi;
 					continue;
@@ -570,7 +567,7 @@ public class CritBit<V> {
 			}
 			
 			//infix matches, so now we check sub-nodes and postfixes
-			if (BitTools.getBit(val2, n.posDiff)) {
+			if (BitTools.getAndCopyBit(val2, n.posDiff, currentPrefix)) {
 				if (n.hi != null) {
 					isParentHigh = true;
 					parent = n;
