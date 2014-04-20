@@ -383,6 +383,7 @@ public class CritBit<V> {
 				if ((v[i] & mask) != (n.infix[i-start] & mask)) {
 					return false;
 				}
+				return true;
 			}
 		}
 		return true;
@@ -418,7 +419,7 @@ public class CritBit<V> {
 	 * @param v2
 	 * @return Position of the differing bit, or -1 if both values are equal
 	 */
-	private int compare(long[] v1, long[] v2) {
+	private static int compare(long[] v1, long[] v2) {
 		int pos = 0;
 		for (int i = 0; i < v1.length; i++) {
 			if (v1[i] != v2[i]) {

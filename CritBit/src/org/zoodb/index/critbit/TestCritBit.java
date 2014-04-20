@@ -70,6 +70,11 @@ public class TestCritBit {
 	}
 	
 	@Test
+	public void testInsertIntRBug4() {
+		randomInsertCheck(23, 0, 8);
+	}
+	
+	@Test
 	public void testInsertIntR() {
 		randomInsertCheck(1000000, 0, 32);
 	}
@@ -122,7 +127,6 @@ public class TestCritBit {
 				}
 				if (isDuplicate) {
 					//Check if at least insert() recognises
-					assertNotNull(cb.insert(new long[]{a[i]}, i));
 					i--;
 					continue;
 				}
@@ -134,6 +138,7 @@ public class TestCritBit {
 			//cb.printTree();
 			assertEquals(i+1, cb.size());
 			assertTrue(cb.contains(new long[]{a[i]}));
+			assertEquals("i=" + i, i, (int)cb.get(new long[]{a[i]}));
 		}
 		
 		assertEquals(N, cb.size());
@@ -141,6 +146,10 @@ public class TestCritBit {
 		for (int i = 0; i < N; i++) {
 			//System.out.println("Checking: " + i + "   " + BitsInt.toBinary(a[i] >>> 32));
 			assertTrue(cb.contains(new long[]{a[i]}));
+			if (i != (int)cb.get(new long[]{a[i]})) {
+				cb.printTree();
+			}
+			assertEquals("i=" + i, i, (int)cb.get(new long[]{a[i]}));
 		}
 		
 		for (int i = 0; i < N; i++) {
@@ -301,7 +310,7 @@ public class TestCritBit {
 		for (int i = 0; i < N; i++) {
 			a[i] = R.nextLong();
 			//System.out.println(a[i]>>>32 + ",");
-			System.out.println("Inserting: " + a[i] + " / " + BitTools.toBinary(a[i], 64));
+			//System.out.println("Inserting: " + a[i] + " / " + BitTools.toBinary(a[i], 64));
 			if (cb.contains(new long[]{a[i]})) {
 				for (int j = 0; j < i; j++) {
 					if (a[j] == a[i]) {
