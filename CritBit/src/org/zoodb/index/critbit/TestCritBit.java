@@ -640,6 +640,221 @@ public class TestCritBit {
 	}
 
 	@Test
+	public void test64_True1D_256bit_1() {
+		final int K = 1;
+		long[][] aa = new long[][]{{5,5,5,5}};
+		int N = aa.length;
+		CritBit<Integer> cb = newCritBit(256); 
+		assertNull(cb.insert(aa[0], 5555));
+		assertTrue(cb.contains(aa[0]));
+
+		assertEquals(N, cb.size());
+
+		long[] qMin = new long[K];
+		long[] qMax = new long[K];
+		Iterator<long[]> it = null;
+
+		//test special
+		qMin = new long[]{5,5,0,0};
+		qMax = new long[]{5,5,8,8};
+		int n = 0;
+		it = cb.query(qMin, qMax);
+		while (it.hasNext()) {
+			it.next();
+			//System.out.println("r1:" + it.next()[0]);
+			n++;
+		}
+		assertEquals(N, n);
+
+		qMin = new long[]{5,4,16,0};
+		qMax = new long[]{5,8,16,0};
+		n = 0;
+		it = cb.query(qMin, qMax);
+		while (it.hasNext()) {
+			it.next();
+			//System.out.println("r1:" + it.next()[0]);
+			n++;
+		}
+		assertEquals(N, n);
+
+		qMin = new long[]{5,8,0,0};
+		qMax = new long[]{5,9,0,0};
+		n = 0;
+		it = cb.query(qMin, qMax);
+		while (it.hasNext()) {
+			it.next();
+			//System.out.println("r1:" + it.next()[0]);
+			n++;
+		}
+		assertEquals(0, n);
+
+		
+//		//test normal queries
+//		for (int i = 0; i < 10; i++) {
+//			//TODO this is bad, allow normal queries!
+//			createQueryAbs(R, qMin, qMax);
+//
+//			ArrayList<long[]> result = executeQuery(aa, qMin, qMax);
+//			it = cb.query(qMin, qMax);
+//
+//			int nResult = 0;
+//			while (it.hasNext()) {
+//				long[] ra = it.next();
+//				nResult++;
+//				assertContains(aa, ra);
+//			}
+//
+//			assertEquals("r=" + r + " i=" + i, result.size(), nResult);
+//		}			
+
+		//assert all
+		Arrays.fill(qMin, Long.MIN_VALUE);
+		Arrays.fill(qMax, Long.MAX_VALUE);
+		it = cb.query(qMin, qMax);
+		while (it.hasNext()) {
+			it.next();
+			//System.out.println("r1:" + it.next()[0]);
+			n++;
+		}
+		assertEquals(2, n);
+
+		//assert point search
+		for (long[] a: aa) {
+			it = cb.query(a, a);
+			assertTrue(it.hasNext());
+			long[] r2 = it.next();
+			assertFalse(it.hasNext());
+			assertTrue(isEqual(a, r2));
+		}
+
+
+		//assert none on invert
+		Arrays.fill(qMin, Long.MIN_VALUE);
+		Arrays.fill(qMax, Long.MAX_VALUE);
+		it = cb.query(qMax, qMin);
+		assertFalse(it.hasNext());
+
+		// delete stuff
+		for (int i = 0; i < 2; i++) {
+			assertEquals(i, (int)cb.remove(aa[i]));
+		}
+
+		// assert none on empty tree
+		Arrays.fill(qMin, Long.MIN_VALUE);
+		Arrays.fill(qMax, Long.MAX_VALUE);
+		it = cb.query(qMin, qMax);
+		assertFalse(it.hasNext());
+	}
+
+	@Test
+	public void test64_True1D_256bit_2() {
+		final int K = 1;
+		long[][] aa = new long[][]{{5,5,5,5}, {5,5,8,8}};
+		CritBit<Integer> cb = newCritBit(256); 
+		assertNull(cb.insert(aa[0], 5555));
+		assertTrue(cb.contains(aa[0]));
+		assertNull(cb.insert(aa[1], 5588));
+		assertTrue(cb.contains(aa[1]));
+
+		assertEquals(2, cb.size());
+
+		long[] qMin = new long[K];
+		long[] qMax = new long[K];
+		Iterator<long[]> it = null;
+
+		//test special
+		qMin = new long[]{5,5,0,0};
+		qMax = new long[]{5,5,8,8};
+		int n = 0;
+		it = cb.query(qMin, qMax);
+		while (it.hasNext()) {
+			it.next();
+			//System.out.println("r1:" + it.next()[0]);
+			n++;
+		}
+		assertEquals(2, n);
+
+		qMin = new long[]{5,4,16,0};
+		qMax = new long[]{5,8,16,0};
+		n = 0;
+		it = cb.query(qMin, qMax);
+		while (it.hasNext()) {
+			it.next();
+			//System.out.println("r1:" + it.next()[0]);
+			n++;
+		}
+		assertEquals(2, n);
+
+		qMin = new long[]{5,8,0,0};
+		qMax = new long[]{5,9,0,0};
+		n = 0;
+		it = cb.query(qMin, qMax);
+		while (it.hasNext()) {
+			it.next();
+			//System.out.println("r1:" + it.next()[0]);
+			n++;
+		}
+		assertEquals(0, n);
+
+		
+//		//test normal queries
+//		for (int i = 0; i < 10; i++) {
+//			//TODO this is bad, allow normal queries!
+//			createQueryAbs(R, qMin, qMax);
+//
+//			ArrayList<long[]> result = executeQuery(aa, qMin, qMax);
+//			it = cb.query(qMin, qMax);
+//
+//			int nResult = 0;
+//			while (it.hasNext()) {
+//				long[] ra = it.next();
+//				nResult++;
+//				assertContains(aa, ra);
+//			}
+//
+//			assertEquals("r=" + r + " i=" + i, result.size(), nResult);
+//		}			
+
+		//assert all
+		Arrays.fill(qMin, Long.MIN_VALUE);
+		Arrays.fill(qMax, Long.MAX_VALUE);
+		it = cb.query(qMin, qMax);
+		while (it.hasNext()) {
+			it.next();
+			//System.out.println("r1:" + it.next()[0]);
+			n++;
+		}
+		assertEquals(2, n);
+
+		//assert point search
+		for (long[] a: aa) {
+			it = cb.query(a, a);
+			assertTrue(it.hasNext());
+			long[] r2 = it.next();
+			assertFalse(it.hasNext());
+			assertTrue(isEqual(a, r2));
+		}
+
+
+		//assert none on invert
+		Arrays.fill(qMin, Long.MIN_VALUE);
+		Arrays.fill(qMax, Long.MAX_VALUE);
+		it = cb.query(qMax, qMin);
+		assertFalse(it.hasNext());
+
+		// delete stuff
+		for (int i = 0; i < 2; i++) {
+			assertEquals(i, (int)cb.remove(aa[i]));
+		}
+
+		// assert none on empty tree
+		Arrays.fill(qMin, Long.MIN_VALUE);
+		Arrays.fill(qMax, Long.MAX_VALUE);
+		it = cb.query(qMin, qMax);
+		assertFalse(it.hasNext());
+	}
+
+	@Test
 	public void test64_1D_queries_1() {
 		final int K = 1;
 		long[][] aa = new long[][]{{1},{2},{3},{4},{5},{6}};
