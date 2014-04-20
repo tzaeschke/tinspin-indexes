@@ -273,7 +273,7 @@ public class TestCritBit {
 		for (int i = 0; i < N; i++) {
 			a[i] = R.nextLong();
 			//System.out.println(a[i]>>>32 + ",");
-			System.out.println("Inserting: " + a[i] + " / " + BitTools.toBinary(a[i], 64));
+			//System.out.println("Inserting: " + a[i] + " / " + BitTools.toBinary(a[i], 64));
 			if (cb.contains(new long[]{a[i]})) {
 				for (int j = 0; j < i; j++) {
 					if (a[j] == a[i]) {
@@ -553,9 +553,9 @@ public class TestCritBit {
 	@Test
 	public void test64_True1D_queries_PositiveNumbers() {
 		final int K = 1;
-		for (int r = 0; r < 100; r++) {
+		for (int r = 0; r < 1000; r++) {
 			Random R = new Random(r);
-			int N = 5;
+			int N = 1000;
 			long[][] aa = new long[N][];
 			CritBit<Integer> cb = newCritBit(64); 
 			for (int i = 0; i < N; i++) {
@@ -589,13 +589,10 @@ public class TestCritBit {
 				it = cb.query(qMin, qMax);
 				
 				int nResult = 0;
-				System.out.println("q1=" + BitTools.toBinary(qMin[0], 64));
-				System.out.println("q2=" + BitTools.toBinary(qMax[0], 64));
 				while (it.hasNext()) {
 					long[] ra = it.next();
 					nResult++;
 					assertContains(aa, ra);
-					System.out.println("ra0=" + BitTools.toBinary(ra[0], 64));
 				}
 					
 				assertEquals("r=" + r + " i=" + i, result.size(), nResult);
@@ -620,7 +617,6 @@ public class TestCritBit {
 				long[] r2 = it.next();
 				assertFalse(it.hasNext());
 				assertTrue(isEqual(a, r2));
-				//System.out.println("r2:" + r2[0]);
 			}
 			
 			
@@ -676,7 +672,6 @@ public class TestCritBit {
 			int nResult = 0;
 			while (it.hasNext()) {
 				long[] ra = it.next();
-				//System.out.println("ra=" + ra[0]);
 				nResult++;
 				assertContains(aa, ra);
 			}

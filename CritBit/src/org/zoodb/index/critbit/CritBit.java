@@ -786,8 +786,9 @@ public class CritBit<V> {
 			}
 			if ((i+1)*DEPTH != currentDepth+1) {
 				int toIgnore = ((i+1)*DEPTH) - currentDepth;
-				if (minOrig[i]>>>toIgnore > valTemplate[i]>>>toIgnore || 
-					valTemplate[i]>>>toIgnore > maxOrig[i]>>>toIgnore) {  
+				long mask = (-1L) << toIgnore;
+				if ((minOrig[i] & mask) > (valTemplate[i] & mask) || 
+					(valTemplate[i] & mask) > (maxOrig[i] & mask)) {  
 					return false;
 				}
 			}
