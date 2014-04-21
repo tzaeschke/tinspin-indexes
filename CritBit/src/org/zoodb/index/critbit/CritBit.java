@@ -22,6 +22,22 @@ package org.zoodb.index.critbit;
 
 /**
  * CritBit is a multi-dimensional crit-bit tree.
+ * 
+ * Cribit trees are very space efficient due to prefix-sharing and suitable for
+ * multi-dimensional data with low dimensionality (e.g. less than 10 dimensions or so).
+ * They are also stable, that means unlike kD-trees or quadtrees they do not require
+ * rebalancing, this makes update performance much more predictable.
+ * 
+ * There is 1 1D-version and a kD-version (kD: k-dimensional).
+ * The 1D version supports keys with arbitrary length (e.g. 256bit), the kD-version
+ * supports k-dimensional keys with a maximum length of 64 bit per dimension. 
+ * 
+ * Both tree versions use internally the same methods, except for the range queries.
+ * For range queries, the 1D version interprets the parameters as one minimum and one
+ * maximum value. For kD queries, the parameters are interpreted as arrays of
+ * minimum and maximum values (i.e. the low left and upper right 
+ * corner of a query (hyper-)rectangle). 
+ * 
  * All method ending with 'KD' are for k-dimensional use of the tree, all other methods are for
  * 1-dimensional use. Exceptions are the size(), printTree() and similar methods, which work  for
  * all dimensions. 
@@ -38,7 +54,7 @@ package org.zoodb.index.critbit;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class CritBit<V> {
+public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 
 	private final int DEPTH;
 	private final int DIM;
@@ -74,40 +90,54 @@ public class CritBit<V> {
 		}
 	}
 	
-	
 	private CritBit(int depth, int dim) {
 		this.DEPTH = depth;
 		//we deliberately allow dim=1 here 
 		this.DIM = dim;
 	}
 	
-	public static <V> CritBit<V> create(int depth) {
+	/**
+	 * Create a 1D crit-bit tree with arbitrary key length. 
+	 * @param width The number of bits per value
+	 * @return a 1D crit-bit tree
+	 */
+	public static <V> CritBit1D<V> create1D(int width) {
+		if (width < 1) {
+			throw new IllegalArgumentException("Illegal bit width: " + width);
+		}
 		// SINGLE_DIM ensures that DIM is never used in this case.
-		return new CritBit<V>(depth, SINGLE_DIM);
+		return new CritBit<V>(width, SINGLE_DIM);
 	}
 	
 	/**
+	 * Create a kD crit-bit tree with maximum 64bit key length. 
 	 * 
-	 * @param depth
-	 * @param dim
+	 * @param width The number of bits per value
+	 * @param dim The number of dimensions
 	 * @return k-dimensional tree
 	 */
-	public static <V> CritBit<V> createKD(int depth, int dim) {
-		return new CritBit<V>(depth, dim);
+	public static <V> CritBitKD<V> createKD(int width, int dim) {
+		if (width < 1 || width > 64) {
+			throw new IllegalArgumentException("Illegal bit width: " + width);
+		}
+		if (dim < 1) {
+			throw new IllegalArgumentException("Illegal dimension count: " + dim);
+		}
+		return new CritBit<V>(width, dim);
 	}
 	
 	/**
 	 * 
 	 * @param key
 	 * @param val
-	 * @return False if the value already exists.
+	 * @return The previous value or {@code null} if there was no previous value
 	 */
-	public V insert(long[] key, V val) {
+	public V put(long[] key, V val) {
 		checkDim0();
-		return insertNoCheck(key, val);
+		return putNoCheck(key, val);
 	}
 	
-	private V insertNoCheck(long[] key, V val) {
+	private V putNoCheck(long[] key, V val) {
 		if (root == null) {
 			if (rootKey == null) {
 				rootKey = new long[key.length];
@@ -767,10 +797,24 @@ public class CritBit<V> {
 			// --> Check only dimensions between depth of parent and current depth.
 			//     At the same time, don't check more than (currentDept-K) dimensions (i.e. =K dim)
 
-			
+			boolean loMatch = false;
+			boolean hiMatch = false;
 			for (int i = 0; i < valTemplate.length; i++) {
-				if (minOrig[i] > valTemplate[i] || valTemplate[i] > maxOrig[i]) { 
+				if ((!loMatch && minOrig[i] > valTemplate[i]) || 
+						(!hiMatch && valTemplate[i] > maxOrig[i])) { 
 					return false;
+				}
+				if (minOrig[i] < valTemplate[i]) { 
+					loMatch = true;
+					if (loMatch && hiMatch) {
+						break;
+					}
+				}
+				if (valTemplate[i] < maxOrig[i]) { 
+					hiMatch = true;
+					if (loMatch && hiMatch) {
+						break;
+					}
 				}
 			}
 			nextValue = CritBit.clone(valTemplate);
@@ -779,16 +823,36 @@ public class CritBit<V> {
 		
 		private boolean checkMatch(long[] valTemplate, int currentDepth) {
 			int i;
-			for (i = 0; (i+1)*DEPTH <= currentDepth; i++) {
-				if (minOrig[i] > valTemplate[i]	|| valTemplate[i] > maxOrig[i]) {  
+			boolean loMatch = false;
+			boolean hiMatch = false;
+			for (i = 0; (i+1)*64 <= currentDepth; i++) {
+//				if (minOrig[i] > valTemplate[i]	|| valTemplate[i] > maxOrig[i]) {  
+//					return false;
+//				}
+				if ((!loMatch && minOrig[i] > valTemplate[i]) || 
+						(!hiMatch && valTemplate[i] > maxOrig[i])) { 
 					return false;
 				}
+				if (minOrig[i] < valTemplate[i]) { 
+					loMatch = true;
+					if (loMatch && hiMatch) {
+						break;
+					}
+				}
+				if (valTemplate[i] < maxOrig[i]) { 
+					hiMatch = true;
+					if (loMatch && hiMatch) {
+						break;
+					}
+				}
 			}
-			if ((i+1)*DEPTH != currentDepth+1) {
-				int toIgnore = ((i+1)*DEPTH) - currentDepth;
+			if ((i+1)*64 != currentDepth+1) {
+				int toIgnore = ((i+1)*64) - currentDepth;
 				long mask = (-1L) << toIgnore;
-				if ((minOrig[i] & mask) > (valTemplate[i] & mask) || 
-					(valTemplate[i] & mask) > (maxOrig[i] & mask)) {  
+				if (!loMatch && (minOrig[i] & mask) > (valTemplate[i] & mask)) {  
+					return false;
+				}
+				if (!hiMatch && (valTemplate[i] & mask) > (maxOrig[i] & mask)) {  
 					return false;
 				}
 			}
@@ -819,14 +883,14 @@ public class CritBit<V> {
 	}
 	
 	/**
-	 * 
+	 * Put the key value pair into the tree.
 	 * @param key
-	 * @return False if the value already exists.
+	 * @return The previous value or {@code null} if there was no previous value
 	 */
-	public V insertKD(long[] key, V val) {
+	public V putKD(long[] key, V val) {
 		checkDIM(key);
 		long[] vi = BitTools.mergeLong(DEPTH, key);
-		return insertNoCheck(vi, val);
+		return putNoCheck(vi, val);
 	}
 	
 	public boolean containsKD(long[] val) {
