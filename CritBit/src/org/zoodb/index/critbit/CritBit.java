@@ -698,16 +698,17 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		size--;
 	}
 
-	public Iterator<long[]> query(long[] min, long[] max) {
+	public QueryIterator<V> query(long[] min, long[] max) {
 		checkDim0(); 
-		return new QueryIterator(this, min, max, DEPTH);
+		return new QueryIterator<V>(this, min, max, DEPTH);
 	}
 	
-	public class QueryIterator implements Iterator<long[]> {
+	public static class QueryIterator<V> implements Iterator<V> {
 		private final long[] valIntTemplate;
 		private final long[] minOrig;
 		private final long[] maxOrig;
-		private long[] nextValue = null;
+		private long[] nextKey = null; 
+		private V nextValue = null;
 		private final Node<V>[] stack;
 		 //0==read_lower; 1==read_upper; 2==go_to_parent
 		private static final byte READ_LOWER = 0;
@@ -726,7 +727,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			this.maxOrig = maxOrig;
 
 			if (cb.rootKey != null) {
-				checkMatchFullIntoNextVal(cb.rootKey);
+				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
 				return;
 			}
 			if (cb.root == null) {
@@ -753,7 +754,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					if (checkMatch(valIntTemplate, n.posDiff)) {
 						if (n.loPost != null) {
 							readPostFix(n.loPost, valIntTemplate);
-							if (checkMatchFullIntoNextVal(valIntTemplate)) {
+							if (checkMatchFullIntoNextVal(valIntTemplate, n.loVal)) {
 								return;
 							} 
 							//proceed to check upper
@@ -772,7 +773,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					if (checkMatch(valIntTemplate, n.posDiff)) {
 						if (n.hiPost != null) {
 							readPostFix(n.hiPost, valIntTemplate);
-							if (checkMatchFullIntoNextVal(valIntTemplate)) {
+							if (checkMatchFullIntoNextVal(valIntTemplate, n.hiVal)) {
 								--stackTop;
 								return;
 							} 
@@ -790,6 +791,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			}
 			//Finished
 			nextValue = null;
+			nextKey = null;
 		}
 
 
@@ -799,7 +801,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 * @param keyTemplate
 		 * @return Whether we have a match or not
 		 */
-		private boolean checkMatchFullIntoNextVal(long[] keyTemplate) {
+		private boolean checkMatchFullIntoNextVal(long[] keyTemplate, V value) {
 			//TODO optimise: do not check dimensions that can not possibly fail
 			//  --> Track dimensions that could fail.
 			// --> Check only dimensions between depth of parent and current depth.
@@ -825,7 +827,8 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					}
 				}
 			}
-			nextValue = CritBit.clone(keyTemplate);
+			nextValue = value;
+			nextKey = CritBit.clone(keyTemplate);
 			return true;
 		}
 		
@@ -874,11 +877,29 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		}
 
 		@Override
-		public long[] next() {
-			if (nextValue == null) {
+		public V next() {
+			if (!hasNext()) {
 				throw new NoSuchElementException();
 			}
-			long[] ret = nextValue;
+			V ret = nextValue;
+			findNext();
+			return ret;
+		}
+
+		public long[] nextKey() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			long[] ret = nextKey;
+			findNext();
+			return ret;
+		}
+
+		public Entry<V> nextEntry() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			Entry<V> ret = new Entry<V>(nextKey, nextValue);
 			findNext();
 			return ret;
 		}

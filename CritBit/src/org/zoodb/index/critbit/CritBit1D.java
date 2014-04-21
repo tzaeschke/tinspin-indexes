@@ -20,28 +20,28 @@
  */
 package org.zoodb.index.critbit;
 
-import java.util.Iterator;
+import org.zoodb.index.critbit.CritBit.QueryIterator;
 
 /**
  * 
  * @author Tilmann Zäschke
  */
-public interface CritBit1D<T> {
+public interface CritBit1D<V> {
 
 	/** @see CritBit#put(long[], Object) */
-	T put(long[] key, T value);
+	V put(long[] key, V value);
 
 	/** @see CritBit#contains(long[]) */
 	boolean contains(long[] key);
 
 	/** @see CritBit#query(long[], long[]) */
-	Iterator<long[]> query(long[] min, long[] max);
+	QueryIterator<V> query(long[] min, long[] max);
 
 	/** @see CritBit#size() */
 	int size();
 
 	/** @see CritBit#remove(long[]) */
-	T remove(long[] key);
+	V remove(long[] key);
 
 	/** @see CritBit#checkTree() */
 	boolean checkTree();
@@ -49,6 +49,6 @@ public interface CritBit1D<T> {
 	/** @see CritBit#printTree() */
 	void printTree();
 
-	T get(long[] key);
+	V get(long[] key);
 
 }

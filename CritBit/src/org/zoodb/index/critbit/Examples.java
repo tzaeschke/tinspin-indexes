@@ -20,6 +20,9 @@
  */
 package org.zoodb.index.critbit;
 
+import java.util.Arrays;
+
+import org.zoodb.index.critbit.CritBit.QueryIterator;
 import org.zoodb.index.critbit.CritBit.QueryIteratorKD;
 
 /**
@@ -47,8 +50,13 @@ public class Examples {
 		cb.put(key, "hello 32");
 		log("contains() --> " + cb.contains(key));
 		log("get() --> "+ cb.get(key));
-		log("");
-		//TODO iterator
+		long[] min = new long[]{123}; 
+		long[] max = new long[]{12345}; 
+		QueryIterator<String> it = cb.query(min, max); 
+		log("iterator val: " + it.next());
+		QueryIterator<String> it2 = cb.query(min, max); 
+		log("iterator key: " + it2.nextKey()[0]);
+		log("remove: " + cb.remove(key));
 	}
 
 	/**
@@ -63,8 +71,13 @@ public class Examples {
 		cb.put(key, "hello float");
 		log("contains() --> " + cb.contains(key));
 		log("get() --> "+ cb.get(key));
-		log("");
-		//TODO iterator
+		long[] min = new long[]{BitTools.toSortableLong(1.0)}; 
+		long[] max = new long[]{BitTools.toSortableLong(15.0)}; 
+		QueryIterator<String> it = cb.query(min, max); 
+		log("iterator val: " + it.next());
+		QueryIterator<String> it2 = cb.query(min, max); 
+		log("iterator key: " + BitTools.toDouble(it2.nextKey()[0]));
+		log("remove: " + cb.remove(key));
 	}
 
 	/**
@@ -78,8 +91,13 @@ public class Examples {
 		cb.put(key, "hello 256");
 		log("contains() --> " + cb.contains(key));
 		log("get() --> "+ cb.get(key));
-		log("");
-		//TODO iterator
+		long[] min = new long[]{0, 0, 0, 0}; 
+		long[] max = new long[]{Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE}; 
+		QueryIterator<String> it = cb.query(min, max); 
+		log("iterator val: " + it.next());
+		QueryIterator<String> it2 = cb.query(min, max); 
+		log("iterator key: " + it2.nextKey()[0]);
+		log("remove: " + cb.remove(key));
 	}
 
 	/**
@@ -99,11 +117,11 @@ public class Examples {
 		log("get() --> "+ cb.getKD(key));
 		long[] min = new long[]{0, 0, BitTools.toSortableLong(1.0), 0}; 
 		long[] max = new long[]{Long.MAX_VALUE, Long.MAX_VALUE,
-				BitTools.toSortableLong(15.0), Long.MAX_VALUE}; 
+				BitTools.toSortableLong(Double.MAX_VALUE), Long.MAX_VALUE}; 
 		QueryIteratorKD<String> it = cb.queryKD(min, max); 
 		log("iterator val: " + it.next());
 		QueryIteratorKD<String> it2 = cb.queryKD(min, max); 
-		log("iterator key: " + it2.nextKey());
+		log("iterator key: " + Arrays.toString(it2.nextKey()));
 		log("remove: " + cb.removeKD(key));
 	}
 
