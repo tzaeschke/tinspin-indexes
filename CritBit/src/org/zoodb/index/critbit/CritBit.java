@@ -799,10 +799,10 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		/**
 		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
 		 * fits.
-		 * @param valTemplate
-		 * @return
+		 * @param keyTemplate
+		 * @return Whether we have a match or not
 		 */
-		private boolean checkMatchFullIntoNextVal(long[] valTemplate) {
+		private boolean checkMatchFullIntoNextVal(long[] keyTemplate) {
 			//TODO optimise: do not check dimensions that can not possibly fail
 			//  --> Track dimensions that could fail.
 			// --> Check only dimensions between depth of parent and current depth.
@@ -810,29 +810,29 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 
 			boolean loMatch = false;
 			boolean hiMatch = false;
-			for (int i = 0; i < valTemplate.length; i++) {
-				if ((!loMatch && minOrig[i] > valTemplate[i]) || 
-						(!hiMatch && valTemplate[i] > maxOrig[i])) { 
+			for (int i = 0; i < keyTemplate.length; i++) {
+				if ((!loMatch && minOrig[i] > keyTemplate[i]) || 
+						(!hiMatch && keyTemplate[i] > maxOrig[i])) { 
 					return false;
 				}
-				if (minOrig[i] < valTemplate[i]) { 
+				if (minOrig[i] < keyTemplate[i]) { 
 					loMatch = true;
 					if (loMatch && hiMatch) {
 						break;
 					}
 				}
-				if (valTemplate[i] < maxOrig[i]) { 
+				if (keyTemplate[i] < maxOrig[i]) { 
 					hiMatch = true;
 					if (loMatch && hiMatch) {
 						break;
 					}
 				}
 			}
-			nextValue = CritBit.clone(valTemplate);
+			nextValue = CritBit.clone(keyTemplate);
 			return true;
 		}
 		
-		private boolean checkMatch(long[] valTemplate, int currentDepth) {
+		private boolean checkMatch(long[] keyTemplate, int currentDepth) {
 			int i;
 			boolean loMatch = false;
 			boolean hiMatch = false;
@@ -840,17 +840,17 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 //				if (minOrig[i] > valTemplate[i]	|| valTemplate[i] > maxOrig[i]) {  
 //					return false;
 //				}
-				if ((!loMatch && minOrig[i] > valTemplate[i]) || 
-						(!hiMatch && valTemplate[i] > maxOrig[i])) { 
+				if ((!loMatch && minOrig[i] > keyTemplate[i]) || 
+						(!hiMatch && keyTemplate[i] > maxOrig[i])) { 
 					return false;
 				}
-				if (minOrig[i] < valTemplate[i]) { 
+				if (minOrig[i] < keyTemplate[i]) { 
 					loMatch = true;
 					if (loMatch && hiMatch) {
 						break;
 					}
 				}
-				if (valTemplate[i] < maxOrig[i]) { 
+				if (keyTemplate[i] < maxOrig[i]) { 
 					hiMatch = true;
 					if (loMatch && hiMatch) {
 						break;
@@ -860,10 +860,10 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			if ((i+1)*64 != currentDepth+1) {
 				int toIgnore = ((i+1)*64) - currentDepth;
 				long mask = (-1L) << toIgnore;
-				if (!loMatch && (minOrig[i] & mask) > (valTemplate[i] & mask)) {  
+				if (!loMatch && (minOrig[i] & mask) > (keyTemplate[i] & mask)) {  
 					return false;
 				}
-				if (!hiMatch && (valTemplate[i] & mask) > (maxOrig[i] & mask)) {  
+				if (!hiMatch && (keyTemplate[i] & mask) > (maxOrig[i] & mask)) {  
 					return false;
 				}
 			}
@@ -938,9 +938,9 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		return removeNoCheck(vi);
 	}
 	
-	private void checkDIM(long[] val) {
-		if (val.length != DIM) {
-			throw new IllegalArgumentException("Dimension mismatch: " + val.length + " vs " + DIM);
+	private void checkDIM(long[] key) {
+		if (key.length != DIM) {
+			throw new IllegalArgumentException("Dimension mismatch: " + key.length + " vs " + DIM);
 		}
 	}
 	
@@ -958,12 +958,12 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	
 	public class QueryIteratorKD implements Iterator<long[]> {
 
-		private final long[] valIntTemplate;
+		private final long[] keyIntTemplate;
 		private final long[] minOrig;
 		private final long[] maxOrig;
 		private final int DIM;
 		private final int DEPTH;
-		private long[] nextValue = null;
+		private long[] nextKey = null;
 		private final Node<V>[] stack;
 		 //0==read_lower; 1==read_upper; 2==go_to_parent
 		private static final byte READ_LOWER = 0;
@@ -976,7 +976,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			this.stack = new Node[DIM*DEPTH];
 			this.readHigherNext = new byte[DIM*DEPTH];  // default = false
 			int intArrayLen = (DIM*DEPTH+63) >>> 6;
-			this.valIntTemplate = new long[intArrayLen];
+			this.keyIntTemplate = new long[intArrayLen];
 			this.minOrig = minOrig;
 			this.maxOrig = maxOrig;
 			this.DIM = DIM;
@@ -991,8 +991,8 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				return;
 			}
 			Node<V> n = cb.root;
-			readInfix(n, valIntTemplate);
-			if (!checkMatchKD(valIntTemplate, n.posDiff)) {
+			readInfix(n, keyIntTemplate);
+			if (!checkMatchKD(keyIntTemplate, n.posDiff)) {
 				return;
 			}
 			stack[++stackTop] = cb.root;
@@ -1006,16 +1006,16 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				if (readHigherNext[stackTop] == READ_LOWER) {
 					readHigherNext[stackTop] = READ_UPPER;
 					//TODO use bit directly to check validity
-					BitTools.setBit(valIntTemplate, n.posDiff, false);
-					if (checkMatchKD(valIntTemplate, n.posDiff)) {
+					BitTools.setBit(keyIntTemplate, n.posDiff, false);
+					if (checkMatchKD(keyIntTemplate, n.posDiff)) {
 						if (n.loPost != null) {
-							readPostFix(n.loPost, valIntTemplate);
-							if (checkMatchKDFullIntoNextVal(valIntTemplate)) {
+							readPostFix(n.loPost, keyIntTemplate);
+							if (checkMatchKDFullIntoNextVal(keyIntTemplate)) {
 								return;
 							} 
 							//proceed to check upper
 						} else {
-							readInfix(n.lo, valIntTemplate);
+							readInfix(n.lo, keyIntTemplate);
 							stack[++stackTop] = n.lo;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
@@ -1025,17 +1025,17 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				//check upper
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
-					BitTools.setBit(valIntTemplate, n.posDiff, true);
-					if (checkMatchKD(valIntTemplate, n.posDiff)) {
+					BitTools.setBit(keyIntTemplate, n.posDiff, true);
+					if (checkMatchKD(keyIntTemplate, n.posDiff)) {
 						if (n.hiPost != null) {
-							readPostFix(n.hiPost, valIntTemplate);
-							if (checkMatchKDFullIntoNextVal(valIntTemplate)) {
+							readPostFix(n.hiPost, keyIntTemplate);
+							if (checkMatchKDFullIntoNextVal(keyIntTemplate)) {
 								--stackTop;
 								return;
 							} 
 							//proceed to move up a level
 						} else {
-							readInfix(n.hi, valIntTemplate);
+							readInfix(n.hi, keyIntTemplate);
 							stack[++stackTop] = n.hi;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
@@ -1046,31 +1046,31 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				--stackTop;
 			}
 			//Finished
-			nextValue = null;
+			nextKey = null;
 		}
 
 
 		/**
-		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
+		 * Full comparison on the parameter. Assigns the parameter to 'nextKey' if comparison
 		 * fits.
-		 * @param valTemplate
-		 * @return
+		 * @param keyTemplate
+		 * @return Whether we have a match or not
 		 */
-		private boolean checkMatchKDFullIntoNextVal(long[] valTemplate) {
+		private boolean checkMatchKDFullIntoNextVal(long[] keyTemplate) {
 			//TODO optimise: do not check dimensions that can not possibly fail
 			//  --> Track dimensions that could fail.
 
-			long[] valTOrig = BitTools.splitLong(DIM, DEPTH, valTemplate);
+			long[] keyTOrig = BitTools.splitLong(DIM, DEPTH, keyTemplate);
 			for (int k = 0; k < DIM; k++) {
-				if (minOrig[k] > valTOrig[k] || valTOrig[k] > maxOrig[k]) { 
+				if (minOrig[k] > keyTOrig[k] || keyTOrig[k] > maxOrig[k]) { 
 					return false;
 				}
 			}
-			nextValue = valTOrig;
+			nextKey = keyTOrig;
 			return true;
 		}
 		
-		private boolean checkMatchKD(long[] valTemplate, int currentDepth) {
+		private boolean checkMatchKD(long[] keyTemplate, int currentDepth) {
 			//do fast superficial check on interleaved value
 
 			//TODO?
@@ -1089,10 +1089,10 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			//TODO optimise: do not check dimensions that can not possibly fail
 			//  --> Track dimensions that could fail.
 
-			long[] valTOrig = BitTools.splitLong(DIM, DEPTH, valTemplate);
+			long[] keyTOrig = BitTools.splitLong(DIM, DEPTH, keyTemplate);
 			for (int k = 0; k < DIM-kLimit; k++) {
-				if (minOrig[k] > (valTOrig[k] | maxMask)    // > 0x1212FFFF ? -> exit
-						|| (valTOrig[k] & minMask) > maxOrig[k]) {  // < 0x12120000 ? -> exit 
+				if (minOrig[k] > (keyTOrig[k] | maxMask)    // > 0x1212FFFF ? -> exit
+						|| (keyTOrig[k] & minMask) > maxOrig[k]) {  // < 0x12120000 ? -> exit 
 					return false;
 				}
 			}
@@ -1100,8 +1100,8 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				minMask <<= 1;
 				maxMask = ~minMask;
 				for (int k = DIM-kLimit; k < DIM; k++) {
-					if (minOrig[k] > (valTOrig[k] | maxMask) 
-							|| (valTOrig[k] & minMask) > maxOrig[k]) {
+					if (minOrig[k] > (keyTOrig[k] | maxMask) 
+							|| (keyTOrig[k] & minMask) > maxOrig[k]) {
 						return false;
 					}
 				}
@@ -1111,15 +1111,15 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return nextKey != null;
 		}
 
 		@Override
 		public long[] next() {
-			if (nextValue == null) {
+			if (nextKey == null) {
 				throw new NoSuchElementException();
 			}
-			long[] ret = nextValue;
+			long[] ret = nextKey;
 			findNext();
 			return ret;
 		}

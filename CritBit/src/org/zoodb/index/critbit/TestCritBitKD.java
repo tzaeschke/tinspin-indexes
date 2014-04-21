@@ -252,7 +252,9 @@ public class TestCritBitKD {
 	public void test64_True1D_256bit_1() {
 		final int K = 4;
 		final int W = 64;
-		long[][] aa = new long[][]{{5,5,5,5}};
+		long[][] aa = new long[][]{{
+			0x5555555555555555L,0x5555555555555555L,
+			0x5555555555555555L,0x5555555555555555L}};
 		int N = aa.length;
 		CritBitKD<Integer> cb = newCritBit(W, K); 
 		assertNull(cb.putKD(aa[0], 5555));
@@ -265,8 +267,12 @@ public class TestCritBitKD {
 		Iterator<long[]> it = null;
 
 		//test special
-		qMin = new long[]{5,5,0,0};
-		qMax = new long[]{5,5,8,8};
+		qMin = new long[]{
+				0x5555555500000000L,0x5555555500000000L,
+				0x5555555500000000L,0x5555555500000000L};
+		qMax = new long[]{
+				0x5555555588888888L,0x5555555588888888L,
+				0x5555555588888888L,0x5555555588888888L};
 		int n = 0;
 		it = cb.queryKD(qMin, qMax);
 		while (it.hasNext()) {
@@ -276,8 +282,12 @@ public class TestCritBitKD {
 		}
 		assertEquals(N, n);
 
-		qMin = new long[]{5,4,16,0};
-		qMax = new long[]{5,8,16,0};
+		qMin = new long[]{//5,4,16,0};
+				0x55554444FFFF0000L,0x55554444FFFF0000L,
+				0x55554444FFFF0000L,0x55554444FFFF0000L};
+		qMax = new long[]{//5,8,16,0};
+				0x55558888FFFF0000L,0x55558888FFFF0000L,
+				0x55558888FFFF0000L,0x55558888FFFF0000L};
 		n = 0;
 		it = cb.queryKD(qMin, qMax);
 		while (it.hasNext()) {
@@ -287,8 +297,12 @@ public class TestCritBitKD {
 		}
 		assertEquals(N, n);
 
-		qMin = new long[]{5,8,0,0};
-		qMax = new long[]{5,9,0,0};
+		qMin = new long[]{//5,8,0,0};
+				0x5555888800000000L,0x5555888800000000L,
+				0x5555888800000000L,0x5555888800000000L};
+		qMax = new long[]{//5,9,0,0};
+				0x5555999900000000L,0x5555999900000000L,
+				0x5555999900000000L,0x5555999900000000L};
 		n = 0;
 		it = cb.queryKD(qMin, qMax);
 		while (it.hasNext()) {
@@ -297,25 +311,6 @@ public class TestCritBitKD {
 			n++;
 		}
 		assertEquals(0, n);
-
-		
-//		//test normal queries
-//		for (int i = 0; i < 10; i++) {
-//			//TODO this is bad, allow normal queries!
-//			createQueryAbs(R, qMin, qMax);
-//
-//			ArrayList<long[]> result = executeQuery(aa, qMin, qMax);
-//			it = cb.query(qMin, qMax);
-//
-//			int nResult = 0;
-//			while (it.hasNext()) {
-//				long[] ra = it.next();
-//				nResult++;
-//				assertContains(aa, ra);
-//			}
-//
-//			assertEquals("r=" + r + " i=" + i, result.size(), nResult);
-//		}			
 
 		//assert all
 		Arrays.fill(qMin, Long.MIN_VALUE);
@@ -361,7 +356,12 @@ public class TestCritBitKD {
 	public void test64_True1D_256bit_2() {
 		final int K = 4;
 		final int W = 64;
-		long[][] aa = new long[][]{{5,5,5,5}, {5,5,8,8}};
+		long[][] aa = new long[][]{
+				{0x5555555555555555L,0x5555555555555555L,
+					0x5555555555555555L,0x5555555555555555L},
+					{0x5555555588888888L,0x5555555588888888L,
+						0x5555555588888888L,0x5555555588888888L}};
+		final int N = aa.length;
 		CritBitKD<Integer> cb = newCritBit(W, K); 
 		assertNull(cb.putKD(aa[0], 5555));
 		assertTrue(cb.containsKD(aa[0]));
@@ -375,8 +375,12 @@ public class TestCritBitKD {
 		Iterator<long[]> it = null;
 
 		//test special
-		qMin = new long[]{5,5,0,0};
-		qMax = new long[]{5,5,8,8};
+		qMin = new long[]{
+				0x5555555500000000L,0x5555555500000000L,
+				0x5555555500000000L,0x5555555500000000L};
+		qMax = new long[]{
+				0x5555555588888888L,0x5555555588888888L,
+				0x5555555588888888L,0x5555555588888888L};
 		int n = 0;
 		it = cb.queryKD(qMin, qMax);
 		while (it.hasNext()) {
@@ -384,10 +388,14 @@ public class TestCritBitKD {
 			//System.out.println("r1:" + it.next()[0]);
 			n++;
 		}
-		assertEquals(2, n);
+		assertEquals(N, n);
 
-		qMin = new long[]{5,4,16,0};
-		qMax = new long[]{5,8,16,0};
+		qMin = new long[]{//5,4,16,0};
+				0x55554444FFFF0000L,0x55554444FFFF0000L,
+				0x55554444FFFF0000L,0x55554444FFFF0000L};
+		qMax = new long[]{//5,8,16,0};
+				0x55558888FFFF0000L,0x55558888FFFF0000L,
+				0x55558888FFFF0000L,0x55558888FFFF0000L};
 		n = 0;
 		it = cb.queryKD(qMin, qMax);
 		while (it.hasNext()) {
@@ -395,10 +403,14 @@ public class TestCritBitKD {
 			//System.out.println("r1:" + it.next()[0]);
 			n++;
 		}
-		assertEquals(2, n);
+		assertEquals(N, n);
 
-		qMin = new long[]{5,8,0,0};
-		qMax = new long[]{5,9,0,0};
+		qMin = new long[]{//5,8,0,0};
+				0x5555888800000000L,0x5555888800000000L,
+				0x5555888800000000L,0x5555888800000000L};
+		qMax = new long[]{//5,9,0,0};
+				0x5555999900000000L,0x5555999900000000L,
+				0x5555999900000000L,0x5555999900000000L};
 		n = 0;
 		it = cb.queryKD(qMin, qMax);
 		while (it.hasNext()) {
@@ -407,25 +419,6 @@ public class TestCritBitKD {
 			n++;
 		}
 		assertEquals(0, n);
-
-		
-//		//test normal queries
-//		for (int i = 0; i < 10; i++) {
-//			//TODO this is bad, allow normal queries!
-//			createQueryAbs(R, qMin, qMax);
-//
-//			ArrayList<long[]> result = executeQuery(aa, qMin, qMax);
-//			it = cb.query(qMin, qMax);
-//
-//			int nResult = 0;
-//			while (it.hasNext()) {
-//				long[] ra = it.next();
-//				nResult++;
-//				assertContains(aa, ra);
-//			}
-//
-//			assertEquals("r=" + r + " i=" + i, result.size(), nResult);
-//		}			
 
 		//assert all
 		Arrays.fill(qMin, Long.MIN_VALUE);
@@ -471,7 +464,13 @@ public class TestCritBitKD {
 	public void test64_True1D_256bit_2b() {
 		final int K = 4;
 		final int W = 64;
-		long[][] aa = new long[][]{{5,8,5,5}, {5,8,8,8}};
+		long[][] aa = new long[][]{//{5,8,5,5}, {5,8,8,8}};
+				{0x5555888855555555L, 0x5555888855555555L,
+					0x5555888855555555L, 0x5555888855555555L},
+					{0x5555888888888888L, 0x5555888888888888L,
+						0x5555888888888888L, 0x5555888888888888L}
+		};
+		final int N = aa.length;
 		CritBitKD<Integer> cb = newCritBit(W, K); 
 		assertNull(cb.putKD(aa[0], 5555));
 		assertTrue(cb.containsKD(aa[0]));
@@ -485,8 +484,12 @@ public class TestCritBitKD {
 		Iterator<long[]> it = null;
 
 		//test special
-		qMin = new long[]{5,5,0,0};
-		qMax = new long[]{5,8,8,8};
+		qMin = new long[]{//5,5,0,0};
+				0x5555555500000000L, 0x5555555500000000L,
+				0x5555555500000000L, 0x5555555500000000L};
+		qMax = new long[]{//5,8,8,8};
+				0x5555888888888888L, 0x5555888888888888L,
+				0x5555888888888888L, 0x5555888888888888L};
 		int n = 0;
 		it = cb.queryKD(qMin, qMax);
 		while (it.hasNext()) {
@@ -494,10 +497,14 @@ public class TestCritBitKD {
 			//System.out.println("r1:" + it.next()[0]);
 			n++;
 		}
-		assertEquals(2, n);
+		assertEquals(N, n);
 
-		qMin = new long[]{5,4,16,0};
-		qMax = new long[]{5,8,16,0};
+		qMin = new long[]{//5,4,16,0};
+				0x55554444FFFF0000L, 0x55554444FFFF0000L,
+				0x55554444FFFF0000L, 0x55554444FFFF0000L};
+		qMax = new long[]{//5,8,16,0};
+				0x55558888FFFF0000L, 0x55558888FFFF0000L,
+				0x55558888FFFF0000L, 0x55558888FFFF0000L};
 		n = 0;
 		it = cb.queryKD(qMin, qMax);
 		while (it.hasNext()) {
@@ -505,10 +512,14 @@ public class TestCritBitKD {
 			//System.out.println("r1:" + it.next()[0]);
 			n++;
 		}
-		assertEquals(2, n);
+		assertEquals(N, n);
 
-		qMin = new long[]{5,18,0,0};
-		qMax = new long[]{5,19,0,0};
+		qMin = new long[]{//5,18,0,0};
+				0x5555EEEE00000000L, 0x5555EEEE00000000L,
+				0x5555EEEE00000000L, 0x5555EEEE00000000L};
+		qMax = new long[]{//5,19,0,0};
+				0x5555FFFF00000000L, 0x5555FFFF00000000L,
+				0x5555FFFF00000000L, 0x5555FFFF00000000L};
 		n = 0;
 		it = cb.queryKD(qMin, qMax);
 		while (it.hasNext()) {
