@@ -20,14 +20,20 @@
  */
 package org.zoodb.index.critbit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Random;
 
 import org.junit.Test;
+import org.zoodb.index.critbit.CritBit.Entry;
+import org.zoodb.index.critbit.CritBit.QueryIteratorKD;
 
 /**
  * 
@@ -100,16 +106,16 @@ public class TestCritBitKD {
 		for (int r = 0; r < 100; r++) {
 			Random R = new Random(r);
 			int N = 1000;
-			long[] aa = new long[K*N];
+			long[][] aa = new long[N][];
 			CritBitKD<Integer> cb = newCritBit(64, K); 
 			for (int i = 0; i < N; i++) {
+				long[] a = new long[K];
 				for (int k = 0; k < K; k++) {
-					aa[i*K+k] = R.nextLong();
+					a[k] = R.nextLong();
 				}
+				aa[i] = a;
 				//System.out.println(a[i]>>>32 + ",");
 				//System.out.println("Inserting: " + a[i] + " / " + BitsInt.toBinary(a[i]));
-				long[] a = new long[K];
-				System.arraycopy(aa, i*K, a, 0, a.length);
 				if (cb.containsKD(a)) {
 					for (int j = 0; j < i; j++) {
 						boolean match = true;
@@ -139,14 +145,49 @@ public class TestCritBitKD {
 	
 			for (int i = 0; i < N; i++) {
 				//System.out.println("Checking: " + i + "   " + BitsInt.toBinary(a[i] >>> 32));
-				long[] a = new long[K];
-				System.arraycopy(aa, i*K, a, 0, a.length);
-				assertTrue(cb.containsKD(a));
+				assertTrue(cb.containsKD(aa[i]));
 			}
 			
+			//test iterators
+			long[] min = new long[K];
+			long[] max = new long[K];
+			Arrays.fill(min, Long.MIN_VALUE);
+			Arrays.fill(max, Long.MAX_VALUE);
+			//value iteration
+			QueryIteratorKD<Integer> it = cb.queryKD(min, max);
+			int n = 0;
+			ArrayList<Integer> sortedResults = new ArrayList<>();
+			while (it.hasNext()) {
+				Integer val = it.next();
+				assertNotNull(val);
+				sortedResults.add(val);
+				n++;
+			}
+			assertEquals(N, n);
+			//key iteration
+			it = cb.queryKD(min, max);
+			n = 0;
+			while (it.hasNext()) {
+				long[] key = it.nextKey();
+				//assure same order
+				assertEquals(sortedResults.get(n), cb.getKD(key));
+				n++;
+			}
+			assertEquals(N, n);
+			//entry iteration
+			it = cb.queryKD(min, max);
+			n = 0;
+			while (it.hasNext()) {
+				Entry<Integer> e = it.nextEntry();
+				long[] key = e.key();
+				assertEquals(sortedResults.get(n), cb.getKD(key));
+				assertEquals(sortedResults.get(n), e.value());
+				n++;
+			}
+			assertEquals(N, n);
+			
 			for (int i = 0; i < N; i++) {
-				long[] a = new long[K];
-				System.arraycopy(aa, i*K, a, 0, a.length);
+				long[] a = aa[i];
 				assertTrue(cb.containsKD(a));
 				assertEquals(i, (int)cb.removeKD(a));
 				assertNull(cb.removeKD(a));
@@ -186,7 +227,7 @@ public class TestCritBitKD {
 	
 			long[] qMin = new long[K];
 			long[] qMax = new long[K];
-			Iterator<long[]> it = null;
+			QueryIteratorKD<Integer> it = null;
 			
 			//test normal queries
 			for (int i = 0; i < 10; i++) {
@@ -197,7 +238,7 @@ public class TestCritBitKD {
 				
 				int nResult = 0;
 				while (it.hasNext()) {
-					long[] ra = it.next();
+					long[] ra = it.nextKey();
 					nResult++;
 					assertContains(aa, ra);
 					//System.out.println("ra0=" + ra[0]);
@@ -222,7 +263,7 @@ public class TestCritBitKD {
 			for (long[] a: aa) {
 				it = cb.queryKD(a, a);
 				assertTrue(it.hasNext());
-				long[] r2 = it.next();
+				long[] r2 = it.nextKey();
 				assertFalse(it.hasNext());
 				assertTrue(isEqual(a, r2));
 				//System.out.println("r2:" + r2[0]);
@@ -264,7 +305,7 @@ public class TestCritBitKD {
 
 		long[] qMin = new long[K];
 		long[] qMax = new long[K];
-		Iterator<long[]> it = null;
+		QueryIteratorKD<Integer> it = null;
 
 		//test special
 		qMin = new long[]{
@@ -328,7 +369,7 @@ public class TestCritBitKD {
 		for (long[] a: aa) {
 			it = cb.queryKD(a, a);
 			assertTrue(it.hasNext());
-			long[] r2 = it.next();
+			long[] r2 = it.nextKey();
 			assertFalse(it.hasNext());
 			assertTrue(isEqual(a, r2));
 		}
@@ -372,7 +413,7 @@ public class TestCritBitKD {
 
 		long[] qMin = new long[K];
 		long[] qMax = new long[K];
-		Iterator<long[]> it = null;
+		QueryIteratorKD<Integer> it = null;
 
 		//test special
 		qMin = new long[]{
@@ -435,7 +476,7 @@ public class TestCritBitKD {
 		for (long[] a: aa) {
 			it = cb.queryKD(a, a);
 			assertTrue(it.hasNext());
-			long[] r2 = it.next();
+			long[] r2 = it.nextKey();
 			assertFalse(it.hasNext());
 			assertTrue(isEqual(a, r2));
 		}
@@ -481,7 +522,7 @@ public class TestCritBitKD {
 
 		long[] qMin = new long[K];
 		long[] qMax = new long[K];
-		Iterator<long[]> it = null;
+		QueryIteratorKD<Integer> it = null;
 
 		//test special
 		qMin = new long[]{//5,5,0,0};
@@ -529,25 +570,6 @@ public class TestCritBitKD {
 		}
 		assertEquals(0, n);
 
-		
-//		//test normal queries
-//		for (int i = 0; i < 10; i++) {
-//			//TODO this is bad, allow normal queries!
-//			createQueryAbs(R, qMin, qMax);
-//
-//			ArrayList<long[]> result = executeQuery(aa, qMin, qMax);
-//			it = cb.query(qMin, qMax);
-//
-//			int nResult = 0;
-//			while (it.hasNext()) {
-//				long[] ra = it.next();
-//				nResult++;
-//				assertContains(aa, ra);
-//			}
-//
-//			assertEquals("r=" + r + " i=" + i, result.size(), nResult);
-//		}			
-
 		//assert all
 		Arrays.fill(qMin, Long.MIN_VALUE);
 		Arrays.fill(qMax, Long.MAX_VALUE);
@@ -563,7 +585,7 @@ public class TestCritBitKD {
 		for (long[] a: aa) {
 			it = cb.queryKD(a, a);
 			assertTrue(it.hasNext());
-			long[] r2 = it.next();
+			long[] r2 = it.nextKey();
 			assertFalse(it.hasNext());
 			assertTrue(isEqual(a, r2));
 		}
@@ -611,7 +633,7 @@ public class TestCritBitKD {
 		
 		long[] qMin = new long[]{0};
 		long[] qMax = new long[]{2};
-		Iterator<long[]> it = null;
+		QueryIteratorKD<Integer> it = null;
 
 		//test normal queries
 		for (int i = 0; i < 10; i++) {
@@ -620,7 +642,7 @@ public class TestCritBitKD {
 
 			int nResult = 0;
 			while (it.hasNext()) {
-				long[] ra = it.next();
+				long[] ra = it.nextKey();
 				nResult++;
 				assertContains(aa, ra);
 			}
@@ -645,7 +667,7 @@ public class TestCritBitKD {
 		for (long[] a: aa) {
 			it = cb.queryKD(a, a);
 			assertTrue(it.hasNext());
-			long[] r2 = it.next();
+			long[] r2 = it.nextKey();
 			assertFalse(it.hasNext());
 			assertTrue(isEqual(a, r2));
 		}
@@ -682,21 +704,20 @@ public class TestCritBitKD {
 		
 		long[] qMin = new long[]{3};
 		long[] qMax = new long[]{3};
-		Iterator<long[]> it = null;
+		QueryIteratorKD<Integer> it = null;
 		
 		//test normal queries
 		it = cb.queryKD(qMin, qMax);
-		long[] ra = it.next();
+		long[] ra = it.nextKey();
 		assertEquals(a[0], ra[0]);
 		assertFalse(it.hasNext());
 
 		//assert all
 		//assert point search
-		//TODO query for negative...
-		qMin = new long[]{2};
+		qMin = new long[]{-2};
 		qMax = new long[]{4};
 		it = cb.queryKD(qMin, qMax);
-		ra = it.next();
+		ra = it.nextKey();
 		assertEquals(a[0], ra[0]);
 		assertFalse(it.hasNext());
 
@@ -760,7 +781,7 @@ public class TestCritBitKD {
 	
 			long[] qMin = new long[K];
 			long[] qMax = new long[K];
-			Iterator<long[]> it = null;
+			QueryIteratorKD<Integer> it = null;
 			
 			//test normal queries
 			for (int i = 0; i < 10; i++) {
@@ -771,7 +792,7 @@ public class TestCritBitKD {
 				
 				int nResult = 0;
 				while (it.hasNext()) {
-					long[] ra = it.next();
+					long[] ra = it.nextKey();
 					nResult++;
 					assertContains(aa, ra);
 				}
@@ -796,7 +817,7 @@ public class TestCritBitKD {
 //				System.out.println("Checking: " + Bits.toBinary(a, 32));
 //				System.out.println("Checking: " + Bits.toBinary(BitTools.mergeLong(W, a), 64));
 				assertTrue(it.hasNext());
-				long[] r2 = it.next();
+				long[] r2 = it.nextKey();
 				assertFalse(it.hasNext());
 				assertTrue(isEqual(a, r2));
 			}

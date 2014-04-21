@@ -20,16 +20,16 @@
  */
 package org.zoodb.index.critbit;
 
-import java.util.Iterator;
+import org.zoodb.index.critbit.CritBit.QueryIteratorKD;
 
 /**
  * 
  * @author Tilmann Zäschke
  */
-public interface CritBitKD<T> {
+public interface CritBitKD<V> {
 
 	/** @see CritBit#putKD(long[], Object) */
-	T putKD(long[] key, T value);
+	V putKD(long[] key, V value);
 
 	/** @see CritBit#containsKD(long[]) */
 	boolean containsKD(long[] key);
@@ -38,15 +38,15 @@ public interface CritBitKD<T> {
 	int size();
 
 	/** @see CritBit#queryKD(long[], long[]) */  
-	Iterator<long[]> queryKD(long[] lowerLeft, long[] upperRight);
+	QueryIteratorKD<V> queryKD(long[] lowerLeft, long[] upperRight);
 
 	/** @see CritBit#removeKD(long[]) */  
-	T removeKD(long[] key);
+	V removeKD(long[] key);
 
 	/** @see CritBit#printTree() */  
 	void printTree();
 
 	/** @see CritBit#getKD(long[]) */  
-	T getKD(long[] key);
+	V getKD(long[] key);
 
 }

@@ -20,6 +20,8 @@
  */
 package org.zoodb.index.critbit;
 
+import org.zoodb.index.critbit.CritBit.QueryIteratorKD;
+
 /**
  * 
  * @author Tilmann Zäschke
@@ -95,8 +97,14 @@ public class Examples {
 		cb.putKD(key, "hello 4D");
 		log("contains() --> " + cb.containsKD(key));
 		log("get() --> "+ cb.getKD(key));
-		log("");
-		//TODO iterator
+		long[] min = new long[]{0, 0, BitTools.toSortableLong(1.0), 0}; 
+		long[] max = new long[]{Long.MAX_VALUE, Long.MAX_VALUE,
+				BitTools.toSortableLong(15.0), Long.MAX_VALUE}; 
+		QueryIteratorKD<String> it = cb.queryKD(min, max); 
+		log("iterator val: " + it.next());
+		QueryIteratorKD<String> it2 = cb.queryKD(min, max); 
+		log("iterator key: " + it2.nextKey());
+		log("remove: " + cb.removeKD(key));
 	}
 
 	private static void log(String msg) {
