@@ -127,7 +127,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	}
 	
 	/**
-	 * 
+	 * Add a key value pair to the tree or replace the value if the key already exists.
 	 * @param key
 	 * @param val
 	 * @return The previous value or {@code null} if there was no previous value
@@ -462,13 +462,22 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		return -1;
 	}
 
+	/**
+	 * Get the size of the tree.
+	 * @return the number of keys in the tree
+	 */
 	public int size() {
 		return size;
 	}
 
-	public boolean contains(long[] val) {
+	/**
+	 * Check whether a given key exists in the tree.
+	 * @param key
+	 * @return {@code true} if the key exists otherwise {@code false}
+	 */
+	public boolean contains(long[] key) {
 		checkDim0();
-		return containsNoCheck(val);
+		return containsNoCheck(key);
 	}
 
 	private boolean containsNoCheck(long[] val) {
@@ -508,15 +517,20 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		}
 	}
 	
-	public V get(long[] val) {
+	/**
+	 * Get the value for a given key. 
+	 * @param key
+	 * @return the values associated with {@code key} or {@code null} if the key does not exist.
+	 */
+	public V get(long[] key) {
 		checkDim0();
-		return getNoCheck(val);
+		return getNoCheck(key);
 	}
 
-	private V getNoCheck(long[] val) {
+	private V getNoCheck(long[] key) {
 		if (root == null) {
 			if (rootKey != null) {
-				int posDiff = compare(val, rootKey);
+				int posDiff = compare(key, rootKey);
 				if (posDiff == -1) {
 					return rootVal;
 				}
@@ -524,22 +538,22 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			return null;
 		}
 		Node<V> n = root;
-		long[] currentPrefix = new long[val.length];
+		long[] currentPrefix = new long[key.length];
 		while (true) {
 			readInfix(n, currentPrefix);
 			
-			if (!doesInfixMatch(n, val)) {
+			if (!doesInfixMatch(n, key)) {
 				return null;
 			}			
 			
 			//infix matches, so now we check sub-nodes and postfixes
-			if (BitTools.getAndCopyBit(val, n.posDiff, currentPrefix)) {
+			if (BitTools.getAndCopyBit(key, n.posDiff, currentPrefix)) {
 				if (n.hi != null) {
 					n = n.hi;
 					continue;
 				} 
 				readPostFix(n.hiPost, currentPrefix);
-				if (compare(val, currentPrefix) == -1) {
+				if (compare(key, currentPrefix) == -1) {
 					return n.hiVal;
 				}
 			} else {
@@ -548,7 +562,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					continue;
 				}
 				readPostFix(n.loPost, currentPrefix);
-				if (compare(val, currentPrefix) == -1) {
+				if (compare(key, currentPrefix) == -1) {
 					return n.loVal;
 				}
 			}
@@ -563,9 +577,9 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	}
 
 	/**
-	 * 
+	 * Remove a key and its value
 	 * @param key
-	 * @return The value of the key of null if the value was not found. 
+	 * @return The value of the key of {@code null} if the value was not found. 
 	 */
 	public V remove(long[] key) {
 		checkDim0();
@@ -696,7 +710,6 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private final long[] valIntTemplate;
 		private final long[] minOrig;
 		private final long[] maxOrig;
-		private final int DEPTH;
 		private long[] nextValue = null;
 		private final Node<V>[] stack;
 		 //0==read_lower; 1==read_upper; 2==go_to_parent
@@ -706,6 +719,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
 
+		@SuppressWarnings("unchecked")
 		public QueryIterator(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DEPTH) {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
@@ -713,7 +727,6 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			this.valIntTemplate = new long[intArrayLen];
 			this.minOrig = minOrig;
 			this.maxOrig = maxOrig;
-			this.DEPTH = DEPTH;
 
 			if (cb.rootKey != null) {
 				checkMatchFullIntoNextVal(cb.rootKey);
@@ -883,8 +896,9 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	}
 	
 	/**
-	 * Put the key value pair into the tree.
+	 * Add a key value pair to the tree or replace the value if the key already exists.
 	 * @param key
+	 * @param val
 	 * @return The previous value or {@code null} if there was no previous value
 	 */
 	public V putKD(long[] key, V val) {
@@ -893,21 +907,36 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		return putNoCheck(vi, val);
 	}
 	
-	public boolean containsKD(long[] val) {
-		checkDIM(val);
-		long[] vi = BitTools.mergeLong(DEPTH, val);
+	/**
+	 * Check whether a given key exists in the tree.
+	 * @param key
+	 * @return {@code true} if the key exists otherwise {@code false}
+	 */
+	public boolean containsKD(long[] key) {
+		checkDIM(key);
+		long[] vi = BitTools.mergeLong(DEPTH, key);
 		return containsNoCheck(vi);
 	}
 
-	public V getKD(long[] val) {
-		checkDIM(val);
-		long[] vi = BitTools.mergeLong(DEPTH, val);
+	/**
+	 * Get the value for a given key. 
+	 * @param key
+	 * @return the values associated with {@code key} or {@code null} if the key does not exist.
+	 */
+	public V getKD(long[] key) {
+		checkDIM(key);
+		long[] vi = BitTools.mergeLong(DEPTH, key);
 		return getNoCheck(vi);
 	}
 
-	public V removeKD(long[] val) {
-		checkDIM(val);
-		long[] vi = BitTools.mergeLong(DEPTH, val);
+	/**
+	 * Remove a key and its value
+	 * @param key
+	 * @return The value of the key of {@code null} if the value was not found. 
+	 */
+	public V removeKD(long[] key) {
+		checkDIM(key);
+		long[] vi = BitTools.mergeLong(DEPTH, key);
 		return removeNoCheck(vi);
 	}
 	
