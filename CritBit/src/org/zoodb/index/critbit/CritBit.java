@@ -748,14 +748,12 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private void findNext() {
 			while (stackTop >= 0) {
 				Node<V> n = stack[stackTop];
-				//TODO remove?
-				int currentDepth = n.posDiff;
 				//check lower
 				if (readHigherNext[stackTop] == READ_LOWER) {
 					readHigherNext[stackTop] = READ_UPPER;
 					//TODO use bit directly to check validity
-					BitTools.setBit(valIntTemplate, currentDepth, false);
-					if (checkMatch(valIntTemplate, currentDepth)) {
+					BitTools.setBit(valIntTemplate, n.posDiff, false);
+					if (checkMatch(valIntTemplate, n.posDiff)) {
 						if (n.loPost != null) {
 							readPostFix(n.loPost, valIntTemplate);
 							if (checkMatchFullIntoNextVal(valIntTemplate)) {
@@ -773,8 +771,8 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				//check upper
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
-					BitTools.setBit(valIntTemplate, currentDepth, true);
-					if (checkMatch(valIntTemplate, currentDepth)) {
+					BitTools.setBit(valIntTemplate, n.posDiff, true);
+					if (checkMatch(valIntTemplate, n.posDiff)) {
 						if (n.hiPost != null) {
 							readPostFix(n.hiPost, valIntTemplate);
 							if (checkMatchFullIntoNextVal(valIntTemplate)) {
