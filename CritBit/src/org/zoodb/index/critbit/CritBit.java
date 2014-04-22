@@ -977,11 +977,12 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	
 	public static class QueryIteratorKD<V> implements Iterator<V> {
 
-		private final long[] keyIntTemplate;
+		private final long[] keyOrigTemplate;
 		private final long[] minOrig;
 		private final long[] maxOrig;
 		private final int DIM;
 		private final int DEPTH;
+		private final int DEPTH_OFFS;
 		private V nextValue = null;
 		private long[] nextKey = null;
 		private final Node<V>[] stack;
@@ -996,15 +997,16 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		public QueryIteratorKD(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DIM, int DEPTH) {
 			this.stack = new Node[DIM*DEPTH];
 			this.readHigherNext = new byte[DIM*DEPTH];  // default = false
-			int intArrayLen = (DIM*DEPTH+63) >>> 6;
-			this.keyIntTemplate = new long[intArrayLen];
+			this.keyOrigTemplate = new long[DIM];
 			this.minOrig = minOrig;
 			this.maxOrig = maxOrig;
 			this.DIM = DIM;
 			this.DEPTH = DEPTH;
+			this.DEPTH_OFFS = 64-DEPTH;  //the shift local to any Long
 
 			if (cb.rootKey != null) {
-				checkMatchKDFullIntoNextVal(cb.rootKey, cb.rootVal);
+				readPostFixAndSplit(cb.rootKey, 0, keyOrigTemplate);
+				checkMatchOrigKDFullIntoNextVal(keyOrigTemplate, cb.rootVal);
 				return;
 			}
 			if (cb.root == null) {
@@ -1012,8 +1014,8 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				return;
 			}
 			Node<V> n = cb.root;
-			readInfix(n, keyIntTemplate);
-			if (!checkMatchKD(keyIntTemplate, n.posDiff)) {
+			readAndSplitInfix(n, keyOrigTemplate);
+			if (!checkMatchOrigKD(keyOrigTemplate, n.posFirstBit, n.posDiff)) {
 				return;
 			}
 			stack[++stackTop] = cb.root;
@@ -1027,16 +1029,16 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				if (readHigherNext[stackTop] == READ_LOWER) {
 					readHigherNext[stackTop] = READ_UPPER;
 					//TODO use bit directly to check validity
-					BitTools.setBit(keyIntTemplate, n.posDiff, false);
-					if (checkMatchKD(keyIntTemplate, n.posDiff)) {
+					unsetBitAfterSplit(keyOrigTemplate, n.posDiff);
+					if (checkMatchOrigKD(keyOrigTemplate, n.posFirstBit, n.posDiff)) {
 						if (n.loPost != null) {
-							readPostFix(n.loPost, keyIntTemplate);
-							if (checkMatchKDFullIntoNextVal(keyIntTemplate, n.loVal)) {
+							readPostFixAndSplit(n.loPost, n.posDiff+1, keyOrigTemplate);
+							if (checkMatchOrigKDFullIntoNextVal(keyOrigTemplate, n.loVal)) {
 								return;
 							} 
 							//proceed to check upper
 						} else {
-							readInfix(n.lo, keyIntTemplate);
+							readAndSplitInfix(n.lo, keyOrigTemplate);
 							stack[++stackTop] = n.lo;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
@@ -1046,17 +1048,17 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				//check upper
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
-					BitTools.setBit(keyIntTemplate, n.posDiff, true);
-					if (checkMatchKD(keyIntTemplate, n.posDiff)) {
+					setBitAfterSplit(keyOrigTemplate, n.posDiff);
+					if (checkMatchOrigKD(keyOrigTemplate, n.posFirstBit, n.posDiff)) {
 						if (n.hiPost != null) {
-							readPostFix(n.hiPost, keyIntTemplate);
-							if (checkMatchKDFullIntoNextVal(keyIntTemplate, n.hiVal)) {
+							readPostFixAndSplit(n.hiPost, n.posDiff+1, keyOrigTemplate);
+							if (checkMatchOrigKDFullIntoNextVal(keyOrigTemplate, n.hiVal)) {
 								--stackTop;
 								return;
 							} 
 							//proceed to move up a level
 						} else {
-							readInfix(n.hi, keyIntTemplate);
+							readAndSplitInfix(n.hi, keyOrigTemplate);
 							stack[++stackTop] = n.hi;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
@@ -1071,6 +1073,17 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			nextValue = null;
 		}
 
+		private void setBitAfterSplit(long[] keyOrigTemplate, int posBitInt) {
+			int k = posBitInt % DIM;
+			long maskDst = 0x8000000000000000L >>> (posBitInt / DIM)+DEPTH_OFFS;
+			keyOrigTemplate[k] |= maskDst;
+		}
+
+		private void unsetBitAfterSplit(long[] dstOrig, int posBitInt) {
+			int k = posBitInt % DIM;
+			long maskDst = 0x8000000000000000L >>> (posBitInt / DIM)+DEPTH_OFFS;
+			keyOrigTemplate[k] &= ~maskDst;
+		}
 
 		/**
 		 * Full comparison on the parameter. Assigns the parameter to 'nextKey' if comparison
@@ -1078,58 +1091,117 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 * @param keyTemplate
 		 * @return Whether we have a match or not
 		 */
-		private boolean checkMatchKDFullIntoNextVal(long[] keyTemplate, V value) {
+		private boolean checkMatchOrigKDFullIntoNextVal(long[] keyOrigTemplate, V value) {
 			//TODO optimise: do not check dimensions that can not possibly fail
 			//  --> Track dimensions that could fail.
 
-			long[] keyTOrig = BitTools.splitLong(DIM, DEPTH, keyTemplate);
 			for (int k = 0; k < DIM; k++) {
-				if (minOrig[k] > keyTOrig[k] || keyTOrig[k] > maxOrig[k]) { 
+				if (minOrig[k] > keyOrigTemplate[k] || keyOrigTemplate[k] > maxOrig[k]) { 
 					return false;
 				}
 			}
-			nextKey = keyTOrig;
+			nextKey = CritBit.clone(keyOrigTemplate);
 			nextValue = value;
 			return true;
 		}
 		
-		private boolean checkMatchKD(long[] keyTemplate, int currentDepth) {
-			//do fast superficial check on interleaved value
-
-			//TODO?
-			//System.err.println("Reenable for positive values?");
-			//if (!isABitwiseSmallerB(minInt, valInt) || !isABitwiseSmallerB(valInt, maxInt)) {
-			//	return false;
-			//}
-
-			//TODO avoid this! For example track DEPTHs separately for each k in an currentDep[]
-			int commonDepth = currentDepth / DIM; 
-			int kLimit = currentDepth - DIM*commonDepth;
-			int openBits = DEPTH-commonDepth;
-			long minMask = (-1L) << openBits;  // 0xFF00
-			long maxMask = ~minMask;           // 0x00FF
-
+		private boolean checkMatchOrigKD(long[] keyOrigTemplate, int startBit, int currentDepth) {
+			//TODO unused startBit
 			//TODO optimise: do not check dimensions that can not possibly fail
 			//  --> Track dimensions that could fail.
 
-			long[] keyTOrig = BitTools.splitLong(DIM, DEPTH, keyTemplate);
-			for (int k = 0; k < DIM-kLimit; k++) {
-				if (minOrig[k] > (keyTOrig[k] | maxMask)    // > 0x1212FFFF ? -> exit
-						|| (keyTOrig[k] & minMask) > maxOrig[k]) {  // < 0x12120000 ? -> exit 
-					return false;
-				}
-			}
-			if (kLimit > 0) {
-				minMask <<= 1;
-				maxMask = ~minMask;
-				for (int k = DIM-kLimit; k < DIM; k++) {
-					if (minOrig[k] > (keyTOrig[k] | maxMask) 
-							|| (keyTOrig[k] & minMask) > maxOrig[k]) {
+			//TODO avoid this! For example track DEPTHs separately for each k in an currentDep[]
+			int commonDepth = currentDepth / DIM;
+			int openBits = DEPTH-commonDepth;
+			long minMask = (-1L) << openBits;  // 0xFF00
+			long maxMask = ~minMask;           // 0x00FF
+			//We don't need to check the same number of bits in all dimensions. 
+			//--> calc number of dimensions with more bits than others
+			int kLimit = currentDepth - DIM*commonDepth;
+			
+			//if all have the same length, we can use a simple loop
+			if (kLimit == 0) {
+				for (int k = 0; k < DIM; k++) {
+					if (minOrig[k] > (keyOrigTemplate[k] | maxMask)    // > 0x1212FFFF ? -> exit
+							|| (keyOrigTemplate[k] & minMask) > maxOrig[k]) {  // < 0x12120000 ? -> exit 
 						return false;
 					}
 				}
+				return true;
+			}
+
+			//first check DIMs with fewer bits
+			for (int k = kLimit; k < DIM; k++) {
+				if (minOrig[k] > (keyOrigTemplate[k] | maxMask)    // > 0x1212FFFF ? -> exit
+						|| (keyOrigTemplate[k] & minMask) > maxOrig[k]) {  // < 0x12120000 ? -> exit 
+					return false;
+				}
+			}
+			//know proceed with one more bit
+			maxMask >>>= 1;
+			minMask = ~maxMask;
+			for (int k = 0; k < kLimit; k++) {
+				if (minOrig[k] > (keyOrigTemplate[k] | maxMask) 
+						|| (keyOrigTemplate[k] & minMask) > maxOrig[k]) {
+					return false;
+				}
 			}
 			return true;
+
+		}
+		
+		/**
+		 * 
+		 * @param n
+		 * @param infixStart The bit-position of the first infix bits relative to the whole value
+		 * @param currentPrefix
+		 */
+		private <T> void readAndSplitInfix(Node<T> n, long[] currentPrefixOrig) {
+			if (n.infix == null) {
+				return;
+			}
+			readAndSplit(n.infix, 0, n.posFirstBit, n.posDiff, currentPrefixOrig);
+		}
+
+		private void readPostFixAndSplit(long[] postVal, int posFirstBit, long[] currentPrefixOrig) {
+			int stopBit = DIM*DEPTH;
+			int src = 0;
+			readAndSplit(postVal, src, posFirstBit, stopBit, currentPrefixOrig);
+		}
+		
+		/**
+		 * 
+		 * @param src Interleaved src array
+		 * @param posFirstBit First bit to be transferred
+		 * @param stopBit Stop bit (last bit to be transferred + 1)
+		 * @param dst Non-interleaved destination array
+		 */
+		private void readAndSplit(long[] srcVal, int posFirstLong, int posFirstBit, long stopBit, 
+				long[] dstVal) {
+			int src = posFirstLong;
+			long maskSrc = 0x8000000000000000L >>> (posFirstBit & 0x3F);
+			int k = posFirstBit % DIM;
+			long maskDst = 0x8000000000000000L >>> (posFirstBit / DIM)+DEPTH_OFFS;
+			long maskDstX = ~maskDst;
+			for (int i = posFirstBit; i < stopBit; i++) {
+				if ((srcVal[src] & maskSrc) != 0) {
+					dstVal[k] |= maskDst;
+				} else {
+					dstVal[k] &= maskDstX;
+				}
+				if (++k >= DIM) {
+					k = 0;
+					maskDst >>>= 1;
+					maskDstX = ~maskDst;
+				}
+				if (maskSrc != 1L) {
+					maskSrc >>>= 1;
+				} else {
+					//overflow for i multiple of 64
+					src++;
+					maskSrc = 0x8000000000000000L;
+				}
+			}
 		}
 
 		@Override

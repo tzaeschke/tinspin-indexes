@@ -30,6 +30,8 @@ package org.zoodb.index.critbit;
  * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and 
  * Multi-Dimensional Index (SIGMOD 2014)
  * 
+ * Version 1.0
+ * 
  * @author Tilmann Zaeschke
  */
 import java.util.Iterator;
