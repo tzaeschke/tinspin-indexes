@@ -87,25 +87,22 @@ public class CritBit64<V> {
 	 * @return The previous value or {@code null} if there was no previous value
 	 */
 	public V put(long key, V val) {
-		return putNoCheck(key, val);
-	}
-	
-	private V putNoCheck(long key, V val) {
-		if (root == null) {
-			if (root != null) {
-				rootKey = key;
+		if (size == 0) {
+			rootKey = key;
+			rootVal = val;
+			size++;
+			return null;
+		}
+		if (size == 1) {
+			Node<V> n2 = createNode(key, val, rootKey, rootVal, 0);
+			if (n2 == null) {
+				V prev = rootVal;
 				rootVal = val;
-			} else {
-				Node<V> n2 = createNode(key, val, rootKey, rootVal, 0);
-				if (n2 == null) {
-					V prev = rootVal;
-					rootVal = val;
-					return prev; 
-				}
-				root = n2;
-				rootKey = 0;
-				rootVal = null;
+				return prev; 
 			}
+			root = n2;
+			rootKey = 0;
+			rootVal = null;
 			size++;
 			return null;
 		}
@@ -117,7 +114,7 @@ public class CritBit64<V> {
 				//split infix?
 				int posDiff = compare(key, currentPrefix);
 				if (posDiff < n.posDiff && posDiff != -1) {
-					long subInfix = extractInfix(currentPrefix, posDiff+1, n.posDiff-1);
+					long subInfix = extractInfix(currentPrefix, n.posDiff-1);
 					//new sub-node
 					Node<V> newSub = new Node<V>(posDiff+1, n.loPost, n.loVal, n.hiPost, n.hiVal, 
 							subInfix, n.posDiff);
@@ -138,7 +135,7 @@ public class CritBit64<V> {
 						n.loPost = key;
 						n.loVal = val;
 					}
-					n.infix = extractInfix(currentPrefix, n.posFirstBit, posDiff-1);
+					n.infix = extractInfix(currentPrefix, posDiff-1);
 					n.posDiff = posDiff;
 					size++;
 					return null;
@@ -263,7 +260,7 @@ public class CritBit64<V> {
 		if (posDiff == -1) {
 			return null;
 		}
-		long infix = extractInfix(k1, posFirstBit, posDiff-1);
+		long infix = extractInfix(k1, posDiff-1);
 		if (BitTools.getBit(k2, posDiff)) {
 			return new Node<V>(posFirstBit, k1, val1, k2, val2, infix, posDiff);
 		} else {
@@ -278,7 +275,7 @@ public class CritBit64<V> {
 	 * @param endPos last bit of infix
 	 * @return The infix PLUS leading bits before the infix that belong in the same 'long'.
 	 */
-	private static long extractInfix(long v, int startPos, int endPos) {
+	private static long extractInfix(long v, int endPos) {
 		long inf = v;
 		//avoid shifting by 64 bit which means 0 shifting in Java!
 		if (endPos < 63) {
@@ -295,7 +292,7 @@ public class CritBit64<V> {
 	 */
 	private boolean doesInfixMatch(Node<V> n, long v) {
 		int endPos = n.posDiff-1;
-		if (v != n.infix) {
+		if (endPos >= 0 && v != n.infix) {
 			long mask = 0x8000000000000000L >>> endPos;
 			if ((v & mask) != (n.infix & mask)) {
 				return false;
@@ -335,12 +332,11 @@ public class CritBit64<V> {
 	 * @return {@code true} if the key exists otherwise {@code false}
 	 */
 	public boolean contains(long key) {
-		return containsNoCheck(key);
-	}
-
-	private boolean containsNoCheck(long val) {
-		if (root == null) {
-			int posDiff = compare(val, rootKey);
+		if (size == 0) {
+			return false;
+		} 
+		if (size == 1) {
+			int posDiff = compare(key, rootKey);
 			if (posDiff == -1) {
 				return true;
 			}
@@ -348,23 +344,23 @@ public class CritBit64<V> {
 		}
 		Node<V> n = root;
 		while (true) {
-			if (!doesInfixMatch(n, val)) {
+			if (!doesInfixMatch(n, key)) {
 				return false;
 			}			
 			
 			//infix matches, so now we check sub-nodes and postfixes
-			if (BitTools.getBit(val, n.posDiff)) {
+			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
 					n = n.hi;
 					continue;
 				} 
-				return compare(val,  n.hiPost) == -1;
+				return compare(key,  n.hiPost) == -1;
 			} else {
 				if (n.lo != null) {
 					n = n.lo;
 					continue;
 				}
-				return compare(val,  n.loPost) == -1;
+				return compare(key,  n.loPost) == -1;
 			}
 			
 		}
@@ -376,11 +372,10 @@ public class CritBit64<V> {
 	 * @return the values associated with {@code key} or {@code null} if the key does not exist.
 	 */
 	public V get(long key) {
-		return getNoCheck(key);
-	}
-
-	private V getNoCheck(long key) {
-		if (root == null) {
+		if (size == 0) {
+			return null;
+		}
+		if (size == 1) {
 			int posDiff = compare(key, rootKey);
 			if (posDiff == -1) {
 				return rootVal;
@@ -421,12 +416,11 @@ public class CritBit64<V> {
 	 * @return The value of the key of {@code null} if the value was not found. 
 	 */
 	public V remove(long key) {
-		return removeNoCheck(key);
-	}
-	
-	private V removeNoCheck(long val2) {
-		if (root == null) {
-			int posDiff = compare(val2, rootKey);
+		if (size == 0) {
+			return null;
+		}
+		if (size == 1) {
+			int posDiff = compare(key, rootKey);
 			if (posDiff == -1) {
 				size--;
 				rootKey = 0;
@@ -440,19 +434,19 @@ public class CritBit64<V> {
 		Node<V> parent = null;
 		boolean isParentHigh = false;
 		while (true) {
-			if (!doesInfixMatch(n, val2)) {
+			if (!doesInfixMatch(n, key)) {
 				return null;
 			}
 			
 			//infix matches, so now we check sub-nodes and postfixes
-			if (BitTools.getBit(val2, n.posDiff)) {
+			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
 					isParentHigh = true;
 					parent = n;
 					n = n.hi;
 					continue;
 				} else {
-					int posDiff = compare(val2, n.hiPost);
+					int posDiff = compare(key, n.hiPost);
 					if (posDiff != -1) {
 						return null;
 					}
@@ -473,7 +467,7 @@ public class CritBit64<V> {
 					n = n.lo;
 					continue;
 				} else {
-					int posDiff = compare(val2, n.loPost);
+					int posDiff = compare(key, n.loPost);
 					if (posDiff != -1) {
 						return null;
 					}
@@ -520,7 +514,7 @@ public class CritBit64<V> {
 		}
 		if (newSub != null) {
 			newSub.posFirstBit = n.posFirstBit;
-			newSub.infix = extractInfix(newPost, newSub.posFirstBit, newSub.posDiff-1);
+			newSub.infix = extractInfix(newSub.infix, newSub.posDiff-1);
 		}
 		size--;
 	}
@@ -549,12 +543,12 @@ public class CritBit64<V> {
 			this.minOrig = minOrig;
 			this.maxOrig = maxOrig;
 
-			if (cb.root == null && cb.size()>0) {
-				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
+			if (cb.size == 0) {
+				//Tree is empty
 				return;
 			}
-			if (cb.root == null) {
-				//Tree is empty
+			if (cb.size == 1) {
+				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
 				return;
 			}
 			Node<V> n = cb.root;

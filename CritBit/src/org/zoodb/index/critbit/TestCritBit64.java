@@ -353,8 +353,10 @@ public class TestCritBit64 {
 		assertEquals(N, cb.size());
 
 		for (int i = 0; i < N; i++) {
+			//System.out.println("Removing: " + a[i] + " / " + BitTools.toBinary(a[i], 64));
 			//cb.printTree();
-			assertEquals(i, (int)cb.remove(a[i]));
+			assertTrue("i="+i, cb.contains(a[i]));
+			assertEquals("i="+ i, i, (int)cb.remove(a[i]));
 			//cb.printTree();
 			assertTrue("i="+i, cb.checkTree());
 			assertNull(cb.remove(a[i]));
