@@ -21,7 +21,7 @@
 package org.zoodb.index.critbit;
 
 /**
- * CritBit is a multi-dimensional crit-bit tree.
+ * CritBit is a multi-dimensional OR arbitrary length crit-bit tree.
  * 
  * Cribit trees are very space efficient due to prefix-sharing and suitable for
  * multi-dimensional data with low dimensionality (e.g. less than 10 dimensions or so).
@@ -406,7 +406,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		int end = ((endPos+63) >>> 6)-1;
 		for (int i = start; i <= end; i++) {
 			if (v[i] != n.infix[i-start] && i==end) {
-				long mask = (-1L)<< (63-endPos);
+				long mask = 0x8000000000000000L >>> endPos;
 				if ((v[i] & mask) != (n.infix[i-start] & mask)) {
 					return false;
 				}

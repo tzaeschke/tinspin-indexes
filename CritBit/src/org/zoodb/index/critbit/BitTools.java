@@ -45,7 +45,7 @@ public class BitTools {
 		if (value < 0.0) {
 			long l = Double.doubleToRawLongBits(value);
 			l = ~l;
-			l |= (1l << 63l);
+			l |= (1l << 63);
 			return l;
 		}
 		return Double.doubleToRawLongBits(value);
@@ -59,7 +59,7 @@ public class BitTools {
 		if (value < 0.0) {
 			int l = Float.floatToRawIntBits(value);
 			l = ~l;
-			l |= (1l << 31l);
+			l |= (1l << 31);
 			return l;
 		}
 		return Float.floatToRawIntBits(value);
@@ -69,7 +69,7 @@ public class BitTools {
 		if (value < 0.0) {
 			long l = value;
 			l = ~l;
-			l |= (1l << 63l);
+			l |= (1l << 63);
 			return Double.longBitsToDouble(l);
 		}
 		return Double.longBitsToDouble(value);
@@ -79,7 +79,7 @@ public class BitTools {
 		if (value < 0.0) { // TODO: do we want to cast value to int before comparison?
 			int l = (int) value;
 			l = ~l;
-			l |= (1l << 31l);
+			l |= (1l << 31);
 			return Float.intBitsToFloat(l);
 		}
 		return Float.intBitsToFloat((int) value);
@@ -202,7 +202,15 @@ public class BitTools {
         int pA = posBit >>> 6; // 1/64
         //last 6 bit [0..63]
         posBit &= 0x3F;
-        return (ba[pA] & (1L << (64-1-posBit))) != 0;
+        return (ba[pA] & (0x8000000000000000L >>> posBit)) != 0;
+	}
+
+	/**
+	 * @Param posBit Counts from left to right!!!
+	 */
+    public static boolean getBit(long l, int posBit) {
+        //last 6 bit [0..63]
+        return (l & (0x8000000000000000L >>> posBit)) != 0;
 	}
 
 	/**
@@ -213,12 +221,28 @@ public class BitTools {
         int pA = posBit >>> 6; // 1/64
         //last 6 bit [0..63]
         posBit &= 0x3F;
-        long mask = 1L << (63-posBit);
+        long mask = (0x8000000000000000L >>> posBit);
         if ( (src[pA] & mask) != 0 ) {
             dst[pA] |= mask;
             return true;
         } else {
             dst[pA] &= ~mask;
+            return false;
+        }
+	}
+
+	/**
+	 * Reads a bit from {@code src}, writes it to {@code dst} and returns it.
+	 * @Param posBit Counts from left to right
+	 */
+    public static boolean getAndCopyBit(long src, int posBit, long dst) {
+        //last 6 bit [0..63]
+        long mask = (0x8000000000000000L >>> posBit);
+        if ( (src & mask) != 0 ) {
+            dst |= mask;
+            return true;
+        } else {
+            dst &= ~mask;
             return false;
         }
 	}
@@ -231,9 +255,18 @@ public class BitTools {
         //last 6 bit [0..63]
         posBit &= 0x3F;
         if (b) {
-            ba[pA] |= (1L << (64-1-posBit));
+            ba[pA] |= (0x8000000000000000L >>> posBit);
         } else {
-            ba[pA] &= (~(1L << (64-1-posBit)));
+            ba[pA] &= (~(0x8000000000000000L >>> posBit));
+        }
+	}
+
+
+    public static long setBit(long ba, int posBit, boolean b) {
+        if (b) {
+            return ba | (0x8000000000000000L >>> posBit);
+        } else {
+            return ba & (~(0x8000000000000000L >>> posBit));
         }
 	}
 
