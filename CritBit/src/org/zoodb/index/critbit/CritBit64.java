@@ -108,19 +108,17 @@ public class CritBit64<V> {
 		}
 		Node<V> n = root;
 		while (true) {
-			long currentPrefix = n.infix;
-			
 			if (n.posFirstBit != n.posDiff) {
 				//split infix?
-				int posDiff = compare(key, currentPrefix);
+				int posDiff = compare(key, n.infix);
 				if (posDiff < n.posDiff && posDiff != -1) {
-					long subInfix = extractInfix(currentPrefix, n.posDiff-1);
+					long subInfix = extractInfix(n.infix, n.posDiff-1);
 					//new sub-node
 					Node<V> newSub = new Node<V>(posDiff+1, n.loPost, n.loVal, n.hiPost, n.hiVal, 
 							subInfix, n.posDiff);
 					newSub.hi = n.hi;
 					newSub.lo = n.lo;
-					if (BitTools.getAndCopyBit(key, posDiff, currentPrefix)) {
+					if (BitTools.getBit(key, posDiff)) {
 						n.hi = null;
 						n.hiPost = key;
 						n.hiVal = val;
@@ -135,7 +133,7 @@ public class CritBit64<V> {
 						n.loPost = key;
 						n.loVal = val;
 					}
-					n.infix = extractInfix(currentPrefix, posDiff-1);
+					n.infix = extractInfix(key, posDiff-1);
 					n.posDiff = posDiff;
 					size++;
 					return null;
@@ -143,7 +141,7 @@ public class CritBit64<V> {
 			}			
 			
 			//infix matches, so now we check sub-nodes and postfixes
-			if (BitTools.getAndCopyBit(key, n.posDiff, currentPrefix)) {
+			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
 					n = n.hi;
 					continue;
@@ -519,6 +517,118 @@ public class CritBit64<V> {
 		size--;
 	}
 
+	public CBIterator<V> iterator() {
+		return new CBIterator<V>(this, DEPTH);
+	}
+	
+	public static class CBIterator<V> implements Iterator<V> {
+		private long nextKey = 0; 
+		private V nextValue = null;
+		private final Node<V>[] stack;
+		 //0==read_lower; 1==read_upper; 2==go_to_parent
+		private static final byte READ_LOWER = 0;
+		private static final byte READ_UPPER = 1;
+		private static final byte RETURN_TO_PARENT = 2;
+		private final byte[] readHigherNext;
+		private int stackTop = -1;
+
+		@SuppressWarnings("unchecked")
+		public CBIterator(CritBit64<V> cb, int DEPTH) {
+			this.stack = new Node[DEPTH];
+			this.readHigherNext = new byte[DEPTH];  // default = false
+
+			if (cb.size == 0) {
+				//Tree is empty
+				return;
+			}
+			if (cb.size == 1) {
+				nextValue = cb.rootVal;
+				nextKey = cb.rootKey;
+				return;
+			}
+			stack[++stackTop] = cb.root;
+			findNext();
+		}
+
+		private void findNext() {
+			while (stackTop >= 0) {
+				Node<V> n = stack[stackTop];
+				//check lower
+				if (readHigherNext[stackTop] == READ_LOWER) {
+					readHigherNext[stackTop] = READ_UPPER;
+					if (n.lo == null) {
+						nextValue = n.loVal;
+						nextKey = n.loPost;
+						return;
+					} else {
+						stack[++stackTop] = n.lo;
+						readHigherNext[stackTop] = READ_LOWER;
+						continue;
+					}
+				}
+				//check upper
+				if (readHigherNext[stackTop] == READ_UPPER) {
+					readHigherNext[stackTop] = RETURN_TO_PARENT;
+					if (n.hi == null) {
+						nextValue = n.hiVal;
+						nextKey = n.hiPost;
+						--stackTop;
+						return;
+						//proceed to move up a level
+					} else {
+						stack[++stackTop] = n.hi;
+						readHigherNext[stackTop] = READ_LOWER;
+						continue;
+					}
+				}
+				//proceed to move up a level
+				--stackTop;
+			}
+			//Finished
+			nextValue = null;
+			nextKey = 0;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return nextValue != null;
+		}
+
+		@Override
+		public V next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			V ret = nextValue;
+			findNext();
+			return ret;
+		}
+
+		public long nextKey() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			long ret = nextKey;
+			findNext();
+			return ret;
+		}
+
+		public Entry<V> nextEntry() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			Entry<V> ret = new Entry<V>(nextKey, nextValue);
+			findNext();
+			return ret;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+	
 	public QueryIterator<V> query(long min, long max) {
 		return new QueryIterator<V>(this, min, max, DEPTH);
 	}

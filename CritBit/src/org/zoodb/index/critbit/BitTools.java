@@ -196,7 +196,7 @@ public class BitTools {
 	}
 
 	/**
-	 * @Param posBit Counts from left to right!!!
+	 * @param posBit Counts from left to right!!!
 	 */
     public static boolean getBit(long[] ba, int posBit) {
         int pA = posBit >>> 6; // 1/64
@@ -206,7 +206,7 @@ public class BitTools {
 	}
 
 	/**
-	 * @Param posBit Counts from left to right!!!
+	 * @param posBit Counts from left to right!!!
 	 */
     public static boolean getBit(long l, int posBit) {
         //last 6 bit [0..63]
@@ -215,7 +215,7 @@ public class BitTools {
 
 	/**
 	 * Reads a bit from {@code src}, writes it to {@code dst} and returns it.
-	 * @Param posBit Counts from left to right
+	 * @param posBit Counts from left to right
 	 */
     public static boolean getAndCopyBit(long[] src, int posBit, long[] dst) {
         int pA = posBit >>> 6; // 1/64
@@ -233,7 +233,7 @@ public class BitTools {
 
 	/**
 	 * Reads a bit from {@code src}, writes it to {@code dst} and returns it.
-	 * @Param posBit Counts from left to right
+	 * @param posBit Counts from left to right
 	 */
     public static boolean getAndCopyBit(long src, int posBit, long dst) {
         //last 6 bit [0..63]
@@ -248,7 +248,7 @@ public class BitTools {
 	}
 
 	/**
-	 * @Param posBit Counts from left to right (highest to lowest)!!!
+	 * @param posBit Counts from left to right (highest to lowest)!!!
 	 */
     public static void setBit(long[] ba, int posBit, boolean b) {
         int pA = posBit >>> 6;  // 1/64

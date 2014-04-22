@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import org.junit.Test;
+import org.zoodb.index.critbit.CritBit64.CBIterator;
 import org.zoodb.index.critbit.CritBit64.Entry;
 import org.zoodb.index.critbit.CritBit64.QueryIterator;
 
@@ -270,10 +271,10 @@ public class TestCritBit64 {
 	}
 
 	@Test
-	public void testIterators64() {
+	public void testQueries64() {
 		for (int r = 0; r < 1000; r++) {
 			Random R = new Random(r);
-			int N = 1000;
+			int N = 10000;
 			long[] a = new long[N];
 			CritBit64<Integer> cb = newCritBit(); 
 			for (int i = 0; i < N; i++) {
@@ -315,6 +316,62 @@ public class TestCritBit64 {
 			assertEquals(N, n);
 			//entry iteration
 			it = cb.query(min, max);
+			n = 0;
+			while (it.hasNext()) {
+				Entry<Integer> e = it.nextEntry();
+				long key = e.key();
+				assertEquals(sortedResults.get(n), cb.get(key));
+				assertEquals(sortedResults.get(n), e.value());
+				n++;
+			}
+			assertEquals(N, n);
+		}
+	}
+
+	@Test
+	public void testIterators64() {
+		for (int r = 0; r < 1000; r++) {
+			Random R = new Random(r);
+			int N = 10000;
+			long[] a = new long[N];
+			CritBit64<Integer> cb = newCritBit(); 
+			for (int i = 0; i < N; i++) {
+				a[i] = R.nextLong();
+				//System.out.println(a[i]>>>32 + ",");
+				//System.out.println("Inserting: " + a[i] + " / " + BitTools.toBinary(a[i], 64));
+				if (cb.contains(a[i])) {
+					i--;
+					continue;
+				}
+				assertNull(cb.put(a[i], i));
+			}
+			
+			assertEquals(N, cb.size());
+	
+			//test iterators
+			//value iteration
+			CBIterator<Integer> it = cb.iterator();
+			int n = 0;
+			ArrayList<Integer> sortedResults = new ArrayList<>();
+			while (it.hasNext()) {
+				Integer val = it.next();
+				assertNotNull(val);
+				sortedResults.add(val);
+				n++;
+			}
+			assertEquals(N, n);
+			//key iteration
+			it = cb.iterator();
+			n = 0;
+			while (it.hasNext()) {
+				long key = it.nextKey();
+				//assure same order
+				assertEquals(sortedResults.get(n), cb.get(key));
+				n++;
+			}
+			assertEquals(N, n);
+			//entry iteration
+			it = cb.iterator();
 			n = 0;
 			while (it.hasNext()) {
 				Entry<Integer> e = it.nextEntry();
