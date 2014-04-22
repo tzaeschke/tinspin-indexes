@@ -43,12 +43,10 @@ public interface CritBit1D<V> {
 	/** @see CritBit#remove(long[]) */
 	V remove(long[] key);
 
-	/** @see CritBit#checkTree() */
-	boolean checkTree();
-
 	/** @see CritBit#printTree() */
 	void printTree();
 
+	/** @see CritBit#get(long[]) */
 	V get(long[] key);
 
 }

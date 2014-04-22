@@ -68,6 +68,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	private static final int SINGLE_DIM = -1;
 	
 	private static class Node<V> {
+		//TODO reduce space usage by using same reference for lo/loPost or lo/loVal
 		V loVal;
 		V hiVal;
 		Node<V> lo;
@@ -298,19 +299,33 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			System.err.println("infix with len=0 detected!");
 			return false;
 		}
+		if (n.posFirstBit != firstBitOfNode) {
+			System.err.println("infix inconsistency detected!");
+			return false;
+		}
 		if (n.lo != null) {
 			if (n.loPost != null) {
-				System.err.println("lo: sub-node AND value != null");
+				System.err.println("lo: sub-node AND key != null");
 				return false;
 			}
 			checkNode(n.lo, n.posDiff+1);
+		} else {
+			if (n.loPost == null) {
+				System.err.println("lo: sub-node AND key == null");
+				return false;
+			}
 		}
 		if (n.hi != null) {
 			if (n.hiPost != null) {
-				System.err.println("hi: sub-node AND value != null");
+				System.err.println("hi: sub-node AND key != null");
 				return false;
 			}
 			checkNode(n.hi, n.posDiff+1);
+		} else {
+			if (n.hiPost == null) {
+				System.err.println("hi: sub-node AND key == null");
+				return false;
+			}
 		}
 		return true;
 	}
@@ -416,30 +431,6 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		return true;
 	}
 
-//	/**
-//	 * 
-//	 * @param a
-//	 * @param b
-//	 * @return true iff a<b or (a>0 && b<0)
-//	 */
-//	private static boolean isABitwiseSmallerB(long[]a, long[] b) {
-//		for (int i = 0; i < a.length; i++) {
-//			if (a[i] < b[i]) {
-//				if (a[i]<=-0 && b[i]>=0) {
-//					return false;
-//				}
-//				return true;
-//			}
-//			if (a[i] > b[i]) {
-//				if (a[i]>=0 && b[i]<=-0) {
-//					return true;
-//				}
-//				return false;
-//			}
-//		}
-//		throw new IllegalStateException();
-//	}
-	
 	/**
 	 * Compares two values.
 	 * @param v1

@@ -86,6 +86,8 @@ public class TestCritBitKD {
 				assertTrue(cb.containsKD(a));
 			}
 			
+			((CritBit<?>)cb).checkTree();
+			
 			n = 0;
 			for (int i = 0; i < N; i+=K, n++) {
 				long[] a = new long[]{aa[i], aa[i+1]};
@@ -186,6 +188,8 @@ public class TestCritBitKD {
 			}
 			assertEquals(N, n);
 			
+			((CritBit<?>)cb).checkTree();
+			
 			for (int i = 0; i < N; i++) {
 				long[] a = aa[i];
 				assertTrue(cb.containsKD(a));
@@ -275,6 +279,8 @@ public class TestCritBitKD {
 			Arrays.fill(qMax, Long.MAX_VALUE);
 			it = cb.queryKD(qMax, qMin);
 			assertFalse(it.hasNext());
+			
+			((CritBit<?>)cb).checkTree();
 			
 			// delete stuff
 			for (int i = 0; i < N; i++) {
@@ -380,6 +386,8 @@ public class TestCritBitKD {
 		Arrays.fill(qMax, Long.MAX_VALUE);
 		it = cb.queryKD(qMax, qMin);
 		assertFalse(it.hasNext());
+		
+		((CritBit<?>)cb).checkTree();
 
 		// delete stuff
 		for (int i = 0; i < N; i++) {
@@ -493,6 +501,8 @@ public class TestCritBitKD {
 		assertEquals(5555, (int)cb.removeKD(aa[0]));
 		assertEquals(5588, (int)cb.removeKD(aa[1]));
 		//}
+		
+		((CritBit<?>)cb).checkTree();
 
 		// assert none on empty tree
 		Arrays.fill(qMin, Long.MIN_VALUE);
@@ -596,6 +606,8 @@ public class TestCritBitKD {
 		Arrays.fill(qMax, Long.MAX_VALUE);
 		it = cb.queryKD(qMax, qMin);
 		assertFalse(it.hasNext());
+		
+		((CritBit<?>)cb).checkTree();
 
 		// delete stuff
 		//for (int i = 0; i < 2; i++) {
@@ -678,6 +690,8 @@ public class TestCritBitKD {
 		Arrays.fill(qMax, Long.MAX_VALUE);
 		it = cb.queryKD(qMax, qMin);
 		assertFalse(it.hasNext());
+		
+		((CritBit<?>)cb).checkTree();
 
 		// delete stuff
 		for (long[] a: aa) {
@@ -739,6 +753,8 @@ public class TestCritBitKD {
 		Arrays.fill(qMax, Long.MAX_VALUE);
 		it = cb.queryKD(qMin, qMax);
 		assertFalse(it.hasNext());
+		
+		((CritBit<?>)cb).checkTree();
 
 		// delete stuff
 		assertEquals(123, (int)cb.removeKD(a));
@@ -829,6 +845,8 @@ public class TestCritBitKD {
 			it = cb.queryKD(qMax, qMin);
 			assertFalse(it.hasNext());
 			
+			((CritBit<?>)cb).checkTree();
+			
 			// delete stuff
 			for (long[] a: aa) {
 				assertNotNull(cb.removeKD(a));
@@ -883,6 +901,8 @@ public class TestCritBitKD {
 			assertEquals(N, cb.size());
 
 			checkValues1D(cb, aa);
+			
+			((CritBit<?>)cb).checkTree();
 			
 			for (int i = 0; i < N>>1; i++) {
 				long[] a = aa[i];

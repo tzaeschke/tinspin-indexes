@@ -158,6 +158,8 @@ public class TestCritBit {
 			assertEquals("i=" + i, i, (int)cb.get(new long[]{a[i]}));
 		}
 		
+		((CritBit<?>)cb).checkTree();
+		
 		for (int i = 0; i < N; i++) {
 			assertTrue(cb.contains(new long[]{a[i]}));
 			assertEquals(i, (int)cb.remove(new long[]{a[i]}));
@@ -257,6 +259,8 @@ public class TestCritBit {
 				//System.out.println("Checking: " + i + "   " + BitsInt.toBinary(a[i] >>> 32));
 				assertTrue(cb.contains(new long[]{a[i]}));
 			}
+			
+			((CritBit<?>)cb).checkTree();
 
 			for (int i = 0; i < N; i++) {
 				assertTrue(cb.contains(new long[]{a[i]}));
@@ -354,14 +358,16 @@ public class TestCritBit {
 		}
 
 		assertEquals(N, cb.size());
+		
+		((CritBit<?>)cb).checkTree();
 
 		for (int i = 0; i < N; i++) {
 			//cb.printTree();
 			assertEquals(i, (int)cb.remove(new long[]{a[i]}));
 			//cb.printTree();
-			assertTrue("i="+i, cb.checkTree());
+			assertTrue("i="+i, ((CritBit<?>)cb).checkTree());
 			assertNull(cb.remove(new long[]{a[i]}));
-			assertTrue("i="+i, cb.checkTree());
+			assertTrue("i="+i, ((CritBit<?>)cb).checkTree());
 		}
 
 		assertEquals(0, cb.size());
@@ -389,14 +395,16 @@ public class TestCritBit {
 			}
 			assertNull(cb.put(new long[]{a[i]}, i));
 			assertEquals(i+1, cb.size());
-			assertTrue(cb.checkTree());
+			assertTrue(((CritBit<?>)cb).checkTree());
 		}
 
 		assertEquals(N, cb.size());
+		
+		((CritBit<?>)cb).checkTree();
 
 		for (int i = 0; i < N; i++) {
 			//cb.printTree();
-			assertTrue("i=" + i, cb.checkTree());
+			assertTrue("i=" + i, ((CritBit<?>)cb).checkTree());
 			assertTrue("i=" + i, cb.contains(new long[]{a[i]}));
 			assertEquals(i, (int)cb.remove(new long[]{a[i]}));
 			assertNull(cb.remove(new long[]{a[i]}));
@@ -481,6 +489,8 @@ public class TestCritBit {
 			Arrays.fill(qMax, Long.MAX_VALUE);
 			it = cb.query(qMax, qMin);
 			assertFalse(it.hasNext());
+			
+			((CritBit<?>)cb).checkTree();
 			
 			// delete stuff
 			for (int i = 0; i < N; i++) {
@@ -571,6 +581,8 @@ public class TestCritBit {
 		Arrays.fill(qMax, Long.MAX_VALUE);
 		it = cb.query(qMax, qMin);
 		assertFalse(it.hasNext());
+		
+		((CritBit<?>)cb).checkTree();
 
 		// delete stuff
 		for (int i = 0; i < N; i++) {
@@ -660,6 +672,8 @@ public class TestCritBit {
 		Arrays.fill(qMax, Long.MAX_VALUE);
 		it = cb.query(qMax, qMin);
 		assertFalse(it.hasNext());
+		
+		((CritBit<?>)cb).checkTree();
 
 		// delete stuff
 		//for (int i = 0; i < 2; i++) {
@@ -751,6 +765,8 @@ public class TestCritBit {
 		Arrays.fill(qMax, Long.MAX_VALUE);
 		it = cb.query(qMax, qMin);
 		assertFalse(it.hasNext());
+		
+		((CritBit<?>)cb).checkTree();
 
 		// delete stuff
 		//for (int i = 0; i < 2; i++) {
@@ -811,6 +827,8 @@ public class TestCritBit {
 		Arrays.fill(qMax, Long.MAX_VALUE);
 		it = cb.query(qMin, qMax);
 		assertFalse(it.hasNext());
+		
+		((CritBit<?>)cb).checkTree();
 
 		// delete stuff
 		assertEquals(123, (int)cb.remove(a));
