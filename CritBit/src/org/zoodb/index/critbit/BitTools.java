@@ -20,6 +20,7 @@
  */
 package org.zoodb.index.critbit;
 
+
 /**
  * 
  * @author Tilmann Zäschke
@@ -118,7 +119,7 @@ public class BitTools {
 	}
 
 	/**
-	 * Merges to long values into a single value by interleaving there respective bits.
+	 * Merges two long values into a single value by interleaving there respective bits.
 	 * This is the inverse operation to split(...).
 	 * @param srcV Source array
 	 * @param src1 Position of 1st source value
@@ -149,26 +150,37 @@ public class BitTools {
 	}
 
 	/**
-	 * Merges to long values into a single value by interleaving there respective bits.
+	 * Merges long values into a single value by interleaving there respective bits.
 	 * This is the inverse operation to split(...).
 	 * @param src Source array
 	 * @param nBitsPerValue Number of bits of each source value
 	 * @return Merged result
 	 */
-	public static long[] mergeLong(int nBitsPerValue, long[] src) {
+	public static long[] mergeLong(final int nBitsPerValue, long[] src) {
+		final int DIM = src.length;
 		int intArrayLen = (src.length*nBitsPerValue+63) >>> 6;
 		long[] trg = new long[intArrayLen];
 		
-		for (int j = 0; j < src.length; j++) {
-			long maskSrc = 1L << (nBitsPerValue-1);
-			for (int k = 0; k < nBitsPerValue; k++) {
-				int posBit = k*src.length + j; 
-				boolean bit = (src[j] & maskSrc) != 0;
-				setBit(trg, posBit, bit);
+		long maskSrc = 1L << (nBitsPerValue-1);
+		long maskTrg = 0x8000000000000000L;
+		int srcPos = 0;
+		int trgPos = 0;
+		for (int j = 0; j < nBitsPerValue*DIM; j++) {
+	        if ((src[srcPos] & maskSrc) != 0) {
+	        	trg[trgPos] |= maskTrg;
+	        } else {
+	        	trg[trgPos] &= ~maskTrg;
+	        }
+			maskTrg >>>= 1;
+			if (maskTrg == 0) {
+				maskTrg = 0x8000000000000000L;
+				trgPos++;
+			}
+			if (++srcPos == DIM) {
+				srcPos = 0;
 				maskSrc >>>= 1;
 			}
 		}
-		
 		return trg;
 	}
 	

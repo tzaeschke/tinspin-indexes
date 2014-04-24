@@ -49,7 +49,11 @@ package org.zoodb.index.critbit;
  * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and 
  * Multi-Dimensional Index (SIGMOD 2014)
  * 
- * Version: 1.0  --  Initial release
+ * Version: 1.1  
+ *   --  Slight performance improvements in mergeLong() and  readAndSplit()
+ * 
+ * Version: 1.0  
+ *   --  Initial release
  * 
  * @author Tilmann Zaeschke
  */
@@ -974,6 +978,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private final long[] minOrig;
 		private final long[] maxOrig;
 		private final int DIM;
+		private final int DIM_INV_16;
 		private final int DEPTH;
 		private final int DEPTH_OFFS;
 		private V nextValue = null;
@@ -994,6 +999,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			this.minOrig = minOrig;
 			this.maxOrig = maxOrig;
 			this.DIM = DIM;
+			this.DIM_INV_16 = 1 + ((1<<16)+1)/DIM;
 			this.DEPTH = DEPTH;
 			this.DEPTH_OFFS = 64-DEPTH;  //the shift local to any Long
 
@@ -1104,7 +1110,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			//  --> Track dimensions that could fail.
 
 			//TODO avoid this! For example track DEPTHs separately for each k in an currentDep[]
-			int commonDepth = currentDepth / DIM;
+			int commonDepth = getDepthAcrossDims(currentDepth);//currentDepth / DIM;
 			int openBits = DEPTH-commonDepth;
 			long minMask = (-1L) << openBits;  // 0xFF00
 			long maxMask = ~minMask;           // 0x00FF
@@ -1153,13 +1159,12 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			if (n.infix == null) {
 				return;
 			}
-			readAndSplit(n.infix, 0, n.posFirstBit, n.posDiff, currentPrefixOrig);
+			readAndSplit(n.infix, n.posFirstBit, n.posDiff, currentPrefixOrig);
 		}
 
 		private void readPostFixAndSplit(long[] postVal, int posFirstBit, long[] currentPrefixOrig) {
 			int stopBit = DIM*DEPTH;
-			int src = 0;
-			readAndSplit(postVal, src, posFirstBit, stopBit, currentPrefixOrig);
+			readAndSplit(postVal, posFirstBit, stopBit, currentPrefixOrig);
 		}
 		
 		/**
@@ -1169,27 +1174,24 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 * @param stopBit Stop bit (last bit to be transferred + 1)
 		 * @param dst Non-interleaved destination array
 		 */
-		private void readAndSplit(long[] srcVal, int posFirstLong, int posFirstBit, long stopBit, 
-				long[] dstVal) {
-			int src = posFirstLong;
+		private void readAndSplit(long[] srcVal, int posFirstBit, long stopBit, long[] dstVal) {
 			long maskSrc = 0x8000000000000000L >>> (posFirstBit & 0x3F);
 			int k = posFirstBit % DIM;
-			long maskDst = 0x8000000000000000L >>> (posFirstBit / DIM)+DEPTH_OFFS;
-			long maskDstX = ~maskDst;
+			//long maskDst = 0x8000000000000000L >>> (posFirstBit / DIM)+DEPTH_OFFS;
+			long maskDst = 0x8000000000000000L >>> (getDepthAcrossDims(posFirstBit)+DEPTH_OFFS);
+			int src = 0;
 			for (int i = posFirstBit; i < stopBit; i++) {
-				if ((srcVal[src] & maskSrc) != 0) {
-					dstVal[k] |= maskDst;
+				if ((srcVal[src] & maskSrc) == 0) {
+					dstVal[k] &= ~maskDst;
 				} else {
-					dstVal[k] &= maskDstX;
+					dstVal[k] |= maskDst;
 				}
 				if (++k >= DIM) {
 					k = 0;
 					maskDst >>>= 1;
-					maskDstX = ~maskDst;
 				}
-				if (maskSrc != 1L) {
-					maskSrc >>>= 1;
-				} else {
+				maskSrc >>>= 1;
+				if (maskSrc == 0) {
 					//overflow for i multiple of 64
 					src++;
 					maskSrc = 0x8000000000000000L;
@@ -1197,6 +1199,21 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			}
 		}
 
+		/**
+		 * Calculate the common minimum depth across all dimensions.
+		 * This is equal to {@code floor(posDirstBit/DIM)}.
+		 * @param posFirstBit
+		 * @return depth across dims.
+		 */
+		private int getDepthAcrossDims(int posFirstBit) {
+//			int depthAcrossDims = posFirstBit/DIM;
+			int depthAcrossDims = (posFirstBit*DIM_INV_16) >>> 16;
+//			if (depthAcrossDims != posFirstBit/DIM) {
+//				System.out.println("dad=" + depthAcrossDims + " pfb/D=" + (posFirstBit/DIM) + " DIM="+DIM + " pfb=" + posFirstBit + "  di16=" + DIM_INV_16);
+//			}
+			return depthAcrossDims;
+		}
+		
 		@Override
 		public boolean hasNext() {
 			return nextValue != null;
