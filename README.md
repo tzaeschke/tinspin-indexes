@@ -4,7 +4,11 @@ critbit
 A Critical Bit tree for k-dimensional or arbitrary length keys.
 (Also called: binary patricia trie, radix-tree, ...)
 
-Current version: 1.0
+Current version: 
+
+v1.1: Slight performance improvements
+  
+v1.0: Initial release
 
 This is a Java implementation of a crit-bit tree. 
 A crit-bit tree is a Patricie-Trie for binary data. Patricia-Tries have are very space efficient due to their prefix sharing. They are also update efficent because they are 'stable' trees, meaning that any update will affect at most two nodes.
