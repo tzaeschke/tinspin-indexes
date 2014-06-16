@@ -32,6 +32,9 @@ package org.zoodb.index.critbit;
  * 
  * Version 1.0
  * 
+ * Version 1.1:
+ * - added queryWithMask()
+ * 
  * @author Tilmann Zaeschke
  */
 import java.util.Iterator;
@@ -55,8 +58,8 @@ public class CritBit64<V> {
 		long loPost;
 		long hiPost;
 		long infix;
-		int posFirstBit;  
-		int posDiff;
+		byte posFirstBit;  
+		byte posDiff;
 		
 		Node(int posFirstBit, long loPost, V loVal, long hiPost, V hiVal, 
 				long infix, int posDiff) {
@@ -65,8 +68,8 @@ public class CritBit64<V> {
 			this.hiPost = hiPost;
 			this.hiVal = hiVal;
 			this.infix = infix;
-			this.posFirstBit = posFirstBit;
-			this.posDiff = posDiff;
+			this.posFirstBit = (byte) posFirstBit;
+			this.posDiff = (byte) posDiff;
 		}
 	}
 	
@@ -136,7 +139,7 @@ public class CritBit64<V> {
 						n.loVal = val;
 					}
 					n.infix = extractInfix(key, posDiff-1);
-					n.posDiff = posDiff;
+					n.posDiff = (byte) posDiff;
 					size++;
 					return null;
 				}
@@ -631,6 +634,12 @@ public class CritBit64<V> {
 
 	}
 	
+	/**
+	 * Queries the tree for entries with min<=key<=max. 
+	 * @param min
+	 * @param max
+	 * @return An iterator over the matching entries.
+	 */
 	public QueryIterator<V> query(long min, long max) {
 		return new QueryIterator<V>(this, min, max, DEPTH);
 	}
@@ -741,6 +750,174 @@ public class CritBit64<V> {
 				return false;
 			}
 			if ((keyTemplate & mask) > (maxOrig & mask)) {  
+				return false;
+			}
+			
+			return true;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return nextValue != null;
+		}
+
+		@Override
+		public V next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			V ret = nextValue;
+			findNext();
+			return ret;
+		}
+
+		public long nextKey() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			long ret = nextKey;
+			findNext();
+			return ret;
+		}
+
+		public Entry<V> nextEntry() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			Entry<V> ret = new Entry<V>(nextKey, nextValue);
+			findNext();
+			return ret;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+	
+	/**
+	 * Queries the tree for entries with min<=key<=max. Unlike the normal query, this
+	 * query also excludes all elements with (key|min)!=key and (key&max!=max).
+	 * See PH-Tree for a discussion.
+	 * @param min
+	 * @param max
+	 * @return An iterator over the matching entries.
+	 */
+	public QueryIteratorMask<V> queryWithMask(long min, long max) {
+		return new QueryIteratorMask<V>(this, min, max, DEPTH);
+	}
+	
+	public static class QueryIteratorMask<V> implements Iterator<V> {
+		private final long minOrig;
+		private final long maxOrig;
+		private long nextKey = 0; 
+		private V nextValue = null;
+		private final Node<V>[] stack;
+		 //0==read_lower; 1==read_upper; 2==go_to_parent
+		private static final byte READ_LOWER = 0;
+		private static final byte READ_UPPER = 1;
+		private static final byte RETURN_TO_PARENT = 2;
+		private final byte[] readHigherNext;
+		private int stackTop = -1;
+
+		@SuppressWarnings("unchecked")
+		public QueryIteratorMask(CritBit64<V> cb, long minOrig, long maxOrig, int DEPTH) {
+			this.stack = new Node[DEPTH];
+			this.readHigherNext = new byte[DEPTH];  // default = false
+			this.minOrig = minOrig;
+			this.maxOrig = maxOrig;
+
+			if (cb.size == 0) {
+				//Tree is empty
+				return;
+			}
+			if (cb.size == 1) {
+				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
+				return;
+			}
+			Node<V> n = cb.root;
+			if (!checkMatch(n.infix, n.posDiff)) {
+				return;
+			}
+			stack[++stackTop] = cb.root;
+			findNext();
+		}
+
+		private void findNext() {
+			while (stackTop >= 0) {
+				Node<V> n = stack[stackTop];
+				//check lower
+				if (readHigherNext[stackTop] == READ_LOWER) {
+					readHigherNext[stackTop] = READ_UPPER;
+					//TODO use bit directly to check validity
+					long valTemp = BitTools.setBit(n.infix, n.posDiff, false);
+					if (checkMatch(valTemp, n.posDiff)) {
+						if (n.lo == null) {
+							if (checkMatchFullIntoNextVal(n.loPost, n.loVal)) {
+								return;
+							} 
+							//proceed to check upper
+						} else {
+							stack[++stackTop] = n.lo;
+							readHigherNext[stackTop] = READ_LOWER;
+							continue;
+						}
+					}
+				}
+				//check upper
+				if (readHigherNext[stackTop] == READ_UPPER) {
+					readHigherNext[stackTop] = RETURN_TO_PARENT;
+					long valTemp = BitTools.setBit(n.infix, n.posDiff, true);
+					if (checkMatch(valTemp, n.posDiff)) {
+						if (n.hi == null) {
+							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal)) {
+								--stackTop;
+								return;
+							} 
+							//proceed to move up a level
+						} else {
+							stack[++stackTop] = n.hi;
+							readHigherNext[stackTop] = READ_LOWER;
+							continue;
+						}
+					}
+				}
+				//proceed to move up a level
+				--stackTop;
+			}
+			//Finished
+			nextValue = null;
+			nextKey = 0;
+		}
+
+
+		/**
+		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
+		 * fits.
+		 * @param keyTemplate
+		 * @return Whether we have a match or not
+		 */
+		private boolean checkMatchFullIntoNextVal(long keyTemplate, V value) {
+			if ((keyTemplate | minOrig) != keyTemplate) {
+				return false;
+			}
+			if ((keyTemplate & maxOrig) != keyTemplate) {
+				return false;
+			}
+			nextValue = value;
+			nextKey = keyTemplate;
+			return true;
+		}
+		
+		private boolean checkMatch(long keyTemplate, int currentDepth) {
+			int toIgnore = 64 - currentDepth;
+			long mask = (-1L) << toIgnore;
+			long myKey = keyTemplate & mask;
+			if ((myKey | (minOrig&mask)) != myKey) {
+				return false;
+			}
+			if ((myKey & (maxOrig&mask)) != myKey) {
 				return false;
 			}
 			
