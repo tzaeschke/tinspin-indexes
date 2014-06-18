@@ -44,10 +44,7 @@ public class BitTools {
 			value = 0.0;
 		}
 		if (value < 0.0) {
-			long l = Double.doubleToRawLongBits(value);
-			l = ~l;
-			l |= (1l << 63);
-			return l;
+			return Double.doubleToRawLongBits(value) ^ 0x7FFFFFFFFFFFFFFFL;
 		}
 		return Double.doubleToRawLongBits(value);
 	}
@@ -58,32 +55,17 @@ public class BitTools {
 			value = 0.0f;
 		}
 		if (value < 0.0) {
-			int l = Float.floatToRawIntBits(value);
-			l = ~l;
-			l |= (1l << 31);
-			return l;
+			return Float.floatToRawIntBits(value) ^ 0x7FFFFFFF;
 		}
 		return Float.floatToRawIntBits(value);
 	}
 
 	public static double toDouble(long value) {
-		if (value < 0.0) {
-			long l = value;
-			l = ~l;
-			l |= (1l << 63);
-			return Double.longBitsToDouble(l);
-		}
-		return Double.longBitsToDouble(value);
+		return Double.longBitsToDouble(value >= 0.0 ? value : value ^ 0x7FFFFFFFFFFFFFFFL);
 	}
 
 	public static float toFloat(long value) {
-		if (value < 0.0) { // TODO: do we want to cast value to int before comparison?
-			int l = (int) value;
-			l = ~l;
-			l |= (1l << 31);
-			return Float.intBitsToFloat(l);
-		}
-		return Float.intBitsToFloat((int) value);
+		return Float.intBitsToFloat((int) (value >= 0.0 ? value : value ^ 0x7FFFFFFF));
 	}
 
 	/**

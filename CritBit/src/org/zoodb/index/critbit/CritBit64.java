@@ -51,6 +51,9 @@ public class CritBit64<V> {
 	private int size;
 	
 	private static class Node<V> {
+		//TODO store both post in one array
+		//TODO use only one ref for hi/low each
+		//TODO ? put other fields into long[]????
 		V loVal;
 		V hiVal;
 		Node<V> lo;
