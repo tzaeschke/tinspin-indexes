@@ -112,6 +112,7 @@ public class TestCritBit64 {
 	
 	
 	private void randomInsertCheck(final int N, final int SEED, int DEPTH) {
+		assertEquals(64, DEPTH);
 		Random R = new Random(SEED);
 		long[] a = new long[N];
 		CritBit64<Integer> cb = newCritBit(); 
