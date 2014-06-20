@@ -112,13 +112,13 @@ public class TestCritBit64 {
 	
 	
 	private void randomInsertCheck(final int N, final int SEED, int DEPTH) {
-		assertEquals(64, DEPTH);
+		int shift = 64-DEPTH;
 		Random R = new Random(SEED);
 		long[] a = new long[N];
 		CritBit64<Integer> cb = newCritBit(); 
 		for (int i = 0; i < N; i++) {
 			iFail = i;
-			a[i] = (long)R.nextInt();
+			a[i] = R.nextLong() >> shift;
 			//System.out.println((int)(a[i]>>>32) + ",");
 			//System.out.println("Inserting: " + a[i] + " / " + BitsInt.toBinary(a[i] >>> 32));
 			//System.out.println("i1=" + i + " / " + a[i]);
