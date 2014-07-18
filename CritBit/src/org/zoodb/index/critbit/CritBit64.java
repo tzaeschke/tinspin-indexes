@@ -27,8 +27,8 @@ package org.zoodb.index.critbit;
  * BitTools.toSortableLong(...), also when supplying query parameters.
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
  * This conversion is taken from: 
- * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and 
- * Multi-Dimensional Index (SIGMOD 2014)
+ * T.Zaeschke, C.Zimmerli, M.C.Norrie:  
+ * "The PH-Tree - A Space-Efficient Storage Structure and Multi-Dimensional Index" (SIGMOD 2014)
  * 
  * Version 1.0
  * 
