@@ -49,6 +49,10 @@ package org.zoodb.index.critbit;
  * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and 
  * Multi-Dimensional Index (SIGMOD 2014)
  * 
+ * 
+ * Version: 1.2  
+ *   --  Added iterator() to iterate over all entries
+ * 
  * Version: 1.1  
  *   --  Slight performance improvements in mergeLong() and  readAndSplit()
  * 
@@ -695,6 +699,145 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		size--;
 	}
 
+	/**
+	 * Create an iterator over all values, keys or entries.
+	 * @return the iterator
+	 */
+	public FullIterator<V> iterator() {
+		checkDim0(); 
+		return new FullIterator<V>(this, DEPTH);
+	}
+	
+	public static class FullIterator<V> implements Iterator<V> {
+		private final long[] valIntTemplate;
+		private long[] nextKey = null; 
+		private V nextValue = null;
+		private final Node<V>[] stack;
+		 //0==read_lower; 1==read_upper; 2==go_to_parent
+		private static final byte READ_LOWER = 0;
+		private static final byte READ_UPPER = 1;
+		private static final byte RETURN_TO_PARENT = 2;
+		private final byte[] readHigherNext;
+		private int stackTop = -1;
+
+		@SuppressWarnings("unchecked")
+		public FullIterator(CritBit<V> cb, int DEPTH) {
+			this.stack = new Node[DEPTH];
+			this.readHigherNext = new byte[DEPTH];  // default = false
+			int intArrayLen = (DEPTH+63) >>> 6;
+			this.valIntTemplate = new long[intArrayLen];
+
+			if (cb.rootKey != null) {
+				readNextVal(cb.rootKey, cb.rootVal);
+				return;
+			}
+			if (cb.root == null) {
+				//Tree is empty
+				return;
+			}
+			Node<V> n = cb.root;
+			CritBit.readInfix(n, valIntTemplate);
+			stack[++stackTop] = cb.root;
+			findNext();
+		}
+
+		private void findNext() {
+			while (stackTop >= 0) {
+				Node<V> n = stack[stackTop];
+				//check lower
+				if (readHigherNext[stackTop] == READ_LOWER) {
+					readHigherNext[stackTop] = READ_UPPER;
+					//TODO use bit directly to check validity
+					BitTools.setBit(valIntTemplate, n.posDiff, false);
+					if (n.loPost != null) {
+						CritBit.readPostFix(n.loPost, valIntTemplate);
+						readNextVal(valIntTemplate, n.loVal);
+						return;
+						//proceed to check upper
+					} else {
+						CritBit.readInfix(n.lo, valIntTemplate);
+						stack[++stackTop] = n.lo;
+						readHigherNext[stackTop] = READ_LOWER;
+						continue;
+					}
+				}
+				//check upper
+				if (readHigherNext[stackTop] == READ_UPPER) {
+					readHigherNext[stackTop] = RETURN_TO_PARENT;
+					BitTools.setBit(valIntTemplate, n.posDiff, true);
+					if (n.hiPost != null) {
+						CritBit.readPostFix(n.hiPost, valIntTemplate);
+						readNextVal(valIntTemplate, n.hiVal);
+						--stackTop;
+						return;
+						//proceed to move up a level
+					} else {
+						CritBit.readInfix(n.hi, valIntTemplate);
+						stack[++stackTop] = n.hi;
+						readHigherNext[stackTop] = READ_LOWER;
+						continue;
+					}
+				}
+				//proceed to move up a level
+				--stackTop;
+			}
+			//Finished
+			nextValue = null;
+			nextKey = null;
+		}
+
+
+		/**
+		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
+		 * fits.
+		 * @param keyTemplate
+		 * @return Whether we have a match or not
+		 */
+		private void readNextVal(long[] keyTemplate, V value) {
+			nextValue = value;
+			nextKey = CritBit.clone(keyTemplate);
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return nextValue != null;
+		}
+
+		@Override
+		public V next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			V ret = nextValue;
+			findNext();
+			return ret;
+		}
+
+		public long[] nextKey() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			long[] ret = nextKey;
+			findNext();
+			return ret;
+		}
+
+		public Entry<V> nextEntry() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			Entry<V> ret = new Entry<V>(nextKey, nextValue);
+			findNext();
+			return ret;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+	
 	public QueryIterator<V> query(long[] min, long[] max) {
 		checkDim0(); 
 		return new QueryIterator<V>(this, min, max, DEPTH);

@@ -33,6 +33,7 @@ import java.util.Random;
 
 import org.junit.Test;
 import org.zoodb.index.critbit.CritBit.Entry;
+import org.zoodb.index.critbit.CritBit.FullIterator;
 import org.zoodb.index.critbit.CritBit.QueryIterator;
 
 /**
@@ -840,6 +841,34 @@ public class TestCritBit {
 		assertFalse(it.hasNext());
 	}
 
+	@Test
+	public void testIterator() {
+		int N = 10000;
+		int k = 5;
+		Random R = new Random(0);
+
+		CritBit1D<Integer> cb = newCritBit(k*64);
+		long[][] data = new long[N][];
+		for (int i = 0; i < N; i++) {
+			long[] l = new long[k];
+			for (int d = 0; d < k; d++) {
+				l[d] = R.nextInt(12345); 
+			}
+			data[i] = l;
+			cb.put(l, i);
+		}
+		
+		//test
+		FullIterator<Integer> it = cb.iterator();
+		int n = 0;
+		while (it.hasNext()) {
+			Entry<Integer> e = it.nextEntry();
+			assertTrue(isEqual(data[e.value()], e.key()));
+			n++;
+		}
+		assertEquals(N, n);
+	}
+	
 	private boolean isEqual(long[] a, long[] r) {
 		for (int k = 0; k < a.length; k++) {
 			if (a[k] != r[k]) {

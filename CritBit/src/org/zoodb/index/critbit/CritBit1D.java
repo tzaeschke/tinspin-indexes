@@ -20,6 +20,7 @@
  */
 package org.zoodb.index.critbit;
 
+import org.zoodb.index.critbit.CritBit.FullIterator;
 import org.zoodb.index.critbit.CritBit.QueryIterator;
 
 /**
@@ -49,4 +50,6 @@ public interface CritBit1D<V> {
 	/** @see CritBit#get(long[]) */
 	V get(long[] key);
 
+	/** @see CritBit#iterator() */
+	FullIterator<V> iterator();
 }
