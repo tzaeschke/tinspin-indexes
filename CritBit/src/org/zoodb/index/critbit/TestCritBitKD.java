@@ -37,7 +37,7 @@ import org.zoodb.index.critbit.CritBit.QueryIteratorKD;
 
 /**
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestCritBitKD {
 
