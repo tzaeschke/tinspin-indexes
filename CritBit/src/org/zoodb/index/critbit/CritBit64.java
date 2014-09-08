@@ -30,10 +30,16 @@ package org.zoodb.index.critbit;
  * T.Zaeschke, C.Zimmerli, M.C.Norrie:  
  * "The PH-Tree - A Space-Efficient Storage Structure and Multi-Dimensional Index" (SIGMOD 2014)
  * 
- * Version 1.0
+ * Version 1.2.1  
+ *  - Replaced compare() with '==' where possible
+ *  - Simplified compare()
+ *  - Replaced setBit() with set0()/set1()
  * 
  * Version 1.1:
- * - added queryWithMask()
+ *  - added queryWithMask()
+ * 
+ * Version 1.0
+ *  - Initial release
  * 
  * @author Tilmann Zaeschke
  */
@@ -51,9 +57,9 @@ public class CritBit64<V> {
 	private int size;
 	
 	private static class Node<V> {
-		//TODO store both post in one array
-		//TODO use only one ref for hi/low each
-		//TODO ? put other fields into long[]????
+		//TODO replace posDiff with posMask 
+		//     --> Possibly easier to calculate (non-log?)
+		//     --> Similarly powerful....
 		V loVal;
 		V hiVal;
 		Node<V> lo;
@@ -315,13 +321,7 @@ public class CritBit64<V> {
 	 * @return Position of the differing bit, or -1 if both values are equal
 	 */
 	private static int compare(long v1, long v2) {
-		int pos = 0;
-		if (v1 != v2) {
-			long x = v1 ^ v2;
-			pos += Long.numberOfLeadingZeros(x);
-			return pos;
-		}
-		return -1;
+		return (v1 == v2) ? -1 : Long.numberOfLeadingZeros(v1 ^ v2);
 	}
 
 	/**
@@ -342,8 +342,7 @@ public class CritBit64<V> {
 			return false;
 		} 
 		if (size == 1) {
-			int posDiff = compare(key, rootKey);
-			if (posDiff == -1) {
+			if (key == rootKey) {
 				return true;
 			}
 			return false;
@@ -360,13 +359,13 @@ public class CritBit64<V> {
 					n = n.hi;
 					continue;
 				} 
-				return compare(key,  n.hiPost) == -1;
+				return key == n.hiPost;
 			} else {
 				if (n.lo != null) {
 					n = n.lo;
 					continue;
 				}
-				return compare(key,  n.loPost) == -1;
+				return key == n.loPost;
 			}
 			
 		}
@@ -382,8 +381,7 @@ public class CritBit64<V> {
 			return null;
 		}
 		if (size == 1) {
-			int posDiff = compare(key, rootKey);
-			if (posDiff == -1) {
+			if (key == rootKey) {
 				return rootVal;
 			}
 			return null;
@@ -400,7 +398,7 @@ public class CritBit64<V> {
 					n = n.hi;
 					continue;
 				} 
-				if (compare(key, n.hiPost) == -1) {
+				if (key == n.hiPost) {
 					return n.hiVal;
 				}
 			} else {
@@ -408,7 +406,7 @@ public class CritBit64<V> {
 					n = n.lo;
 					continue;
 				}
-				if (compare(key, n.loPost) == -1) {
+				if (key == n.loPost) {
 					return n.loVal;
 				}
 			}
@@ -426,8 +424,7 @@ public class CritBit64<V> {
 			return null;
 		}
 		if (size == 1) {
-			int posDiff = compare(key, rootKey);
-			if (posDiff == -1) {
+			if (key == rootKey) {
 				size--;
 				rootKey = 0;
 				V prev = rootVal;
@@ -452,8 +449,7 @@ public class CritBit64<V> {
 					n = n.hi;
 					continue;
 				} else {
-					int posDiff = compare(key, n.hiPost);
-					if (posDiff != -1) {
+					if (key != n.hiPost) {
 						return null;
 					}
 					//match! --> delete node
@@ -473,8 +469,7 @@ public class CritBit64<V> {
 					n = n.lo;
 					continue;
 				} else {
-					int posDiff = compare(key, n.loPost);
-					if (posDiff != -1) {
+					if (key != n.loPost) {
 						return null;
 					}
 					//match! --> delete node
@@ -690,7 +685,7 @@ public class CritBit64<V> {
 				if (readHigherNext[stackTop] == READ_LOWER) {
 					readHigherNext[stackTop] = READ_UPPER;
 					//TODO use bit directly to check validity
-					long valTemp = BitTools.setBit(n.infix, n.posDiff, false);
+					long valTemp = BitTools.set0(n.infix, n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
 						if (n.lo == null) {
 							if (checkMatchFullIntoNextVal(n.loPost, n.loVal)) {
@@ -707,7 +702,7 @@ public class CritBit64<V> {
 				//check upper
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
-					long valTemp = BitTools.setBit(n.infix, n.posDiff, true);
+					long valTemp = BitTools.set1(n.infix, n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
 						if (n.hi == null) {
 							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal)) {
@@ -854,7 +849,7 @@ public class CritBit64<V> {
 				if (readHigherNext[stackTop] == READ_LOWER) {
 					readHigherNext[stackTop] = READ_UPPER;
 					//TODO use bit directly to check validity
-					long valTemp = BitTools.setBit(n.infix, n.posDiff, false);
+					long valTemp = BitTools.set0(n.infix, n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
 						if (n.lo == null) {
 							if (checkMatchFullIntoNextVal(n.loPost, n.loVal)) {
@@ -871,7 +866,7 @@ public class CritBit64<V> {
 				//check upper
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
-					long valTemp = BitTools.setBit(n.infix, n.posDiff, true);
+					long valTemp = BitTools.set1(n.infix, n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
 						if (n.hi == null) {
 							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal)) {

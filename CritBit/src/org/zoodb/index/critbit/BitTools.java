@@ -236,6 +236,14 @@ public class BitTools {
         }
 	}
 
+    public static long set1(long ba, int posBit) {
+    	return ba | (0x8000000000000000L >>> posBit);
+	}
+
+    public static long set0(long ba, int posBit) {
+    	return ba & (~(0x8000000000000000L >>> posBit));
+	}
+
 
 	public static String toBinary(long[] la, int DEPTH) {
 	    StringBuilder sb = new StringBuilder();

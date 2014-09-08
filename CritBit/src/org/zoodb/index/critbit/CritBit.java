@@ -50,14 +50,18 @@ package org.zoodb.index.critbit;
  * Multi-Dimensional Index (SIGMOD 2014)
  * 
  * 
- * Version: 1.2  
- *   --  Added iterator() to iterate over all entries
+ * Version 1.2.1  
+ *  - Replaced compare() with isEqual() where possible
+ *  - Removed unused arguments
  * 
- * Version: 1.1  
- *   --  Slight performance improvements in mergeLong() and  readAndSplit()
+ * Version 1.2  
+ *  - Added iterator() to iterate over all entries
  * 
- * Version: 1.0  
- *   --  Initial release
+ * Version 1.1  
+ *  - Slight performance improvements in mergeLong() and  readAndSplit()
+ * 
+ * Version 1.0  
+ *  - Initial release
  * 
  * @author Tilmann Zaeschke
  */
@@ -78,7 +82,10 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	private static final int SINGLE_DIM = -1;
 	
 	private static class Node<V> {
+		//TODO store both post in one array
 		//TODO reduce space usage by using same reference for lo/loPost or lo/loVal
+ 		//TODO --> use only one ref for hi/low each
+		//TODO ? put other fields into long[]????
 		V loVal;
 		V hiVal;
 		Node<V> lo;
@@ -461,6 +468,21 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	}
 
 	/**
+	 * Compares two values.
+	 * @param v1
+	 * @param v2
+	 * @return {@code true} iff both values are equal
+	 */
+	private static boolean isEqual(long[] v1, long[] v2) {
+		for (int i = 0; i < v1.length; i++) {
+			if (v1[i] != v2[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Get the size of the tree.
 	 * @return the number of keys in the tree
 	 */
@@ -481,8 +503,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	private boolean containsNoCheck(long[] val) {
 		if (root == null) {
 			if (rootKey != null) {
-				int posDiff = compare(val, rootKey);
-				if (posDiff == -1) {
+				if (isEqual(val, rootKey)) {
 					return true;
 				}
 			}
@@ -511,7 +532,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				}
 				readPostFix(n.loPost, currentPrefix);
 			}
-			return compare(val, currentPrefix) == -1;
+			return isEqual(val, currentPrefix);
 		}
 	}
 	
@@ -528,8 +549,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	private V getNoCheck(long[] key) {
 		if (root == null) {
 			if (rootKey != null) {
-				int posDiff = compare(key, rootKey);
-				if (posDiff == -1) {
+				if (isEqual(key, rootKey)) {
 					return rootVal;
 				}
 			}
@@ -551,7 +571,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					continue;
 				} 
 				readPostFix(n.hiPost, currentPrefix);
-				if (compare(key, currentPrefix) == -1) {
+				if (isEqual(key, currentPrefix)) {
 					return n.hiVal;
 				}
 			} else {
@@ -560,7 +580,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					continue;
 				}
 				readPostFix(n.loPost, currentPrefix);
-				if (compare(key, currentPrefix) == -1) {
+				if (isEqual(key, currentPrefix)) {
 					return n.loVal;
 				}
 			}
@@ -587,8 +607,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	private V removeNoCheck(long[] val2) {
 		if (root == null) {
 			if (rootKey != null) {
-				int posDiff = compare(val2, rootKey);
-				if (posDiff == -1) {
+				if (isEqual(val2, rootKey)) {
 					size--;
 					rootKey = null;
 					V prev = rootVal;
@@ -618,8 +637,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					continue;
 				} else {
 					readPostFix(n.hiPost, currentPrefix);
-					int posDiff = compare(val2, currentPrefix);
-					if (posDiff != -1) {
+					if (!isEqual(val2, currentPrefix)) {
 						return null;
 					}
 					//match! --> delete node
@@ -642,8 +660,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					continue;
 				} else {
 					readPostFix(n.loPost, currentPrefix);
-					int posDiff = compare(val2, currentPrefix);
-					if (posDiff != -1) {
+					if (!isEqual(val2, currentPrefix)) {
 						return null;
 					}
 					//match! --> delete node
@@ -1157,7 +1174,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			}
 			Node<V> n = cb.root;
 			readAndSplitInfix(n, keyOrigTemplate);
-			if (!checkMatchOrigKD(keyOrigTemplate, n.posFirstBit, n.posDiff)) {
+			if (!checkMatchOrigKD(keyOrigTemplate, n.posDiff)) {
 				return;
 			}
 			stack[++stackTop] = cb.root;
@@ -1172,7 +1189,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					readHigherNext[stackTop] = READ_UPPER;
 					//TODO use bit directly to check validity
 					unsetBitAfterSplit(keyOrigTemplate, n.posDiff);
-					if (checkMatchOrigKD(keyOrigTemplate, n.posFirstBit, n.posDiff)) {
+					if (checkMatchOrigKD(keyOrigTemplate, n.posDiff)) {
 						if (n.loPost != null) {
 							readPostFixAndSplit(n.loPost, n.posDiff+1, keyOrigTemplate);
 							if (checkMatchOrigKDFullIntoNextVal(keyOrigTemplate, n.loVal)) {
@@ -1191,7 +1208,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
 					setBitAfterSplit(keyOrigTemplate, n.posDiff);
-					if (checkMatchOrigKD(keyOrigTemplate, n.posFirstBit, n.posDiff)) {
+					if (checkMatchOrigKD(keyOrigTemplate, n.posDiff)) {
 						if (n.hiPost != null) {
 							readPostFixAndSplit(n.hiPost, n.posDiff+1, keyOrigTemplate);
 							if (checkMatchOrigKDFullIntoNextVal(keyOrigTemplate, n.hiVal)) {
@@ -1221,7 +1238,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			keyOrigTemplate[k] |= maskDst;
 		}
 
-		private void unsetBitAfterSplit(long[] dstOrig, int posBitInt) {
+		private void unsetBitAfterSplit(long[] keyOrigTemplate, int posBitInt) {
 			int k = posBitInt % DIM;
 			long maskDst = 0x8000000000000000L >>> (posBitInt / DIM)+DEPTH_OFFS;
 			keyOrigTemplate[k] &= ~maskDst;
@@ -1247,8 +1264,8 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			return true;
 		}
 		
-		private boolean checkMatchOrigKD(long[] keyOrigTemplate, int startBit, int currentDepth) {
-			//TODO unused startBit
+		private boolean checkMatchOrigKD(long[] keyOrigTemplate, int currentDepth) {
+			//TODO no startBit given. Could we use it to avoid unnecessary checking of prefix?
 			//TODO optimise: do not check dimensions that can not possibly fail
 			//  --> Track dimensions that could fail.
 
