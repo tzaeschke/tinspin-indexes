@@ -32,7 +32,7 @@ package org.zoodb.index.critbit;
  * 
  * Version 1.2.1  
  *  - Replaced compare() with '==' where possible
- *  - Simplified compare(), doesInfixMatch()
+ *  - Simplified compare(), doesInfixMatch(), get(), contains()
  *  - Replaced setBit() with set0()/set1()
  * 
  * Version 1.1:
@@ -60,6 +60,7 @@ public class CritBit64<V> {
 		//TODO replace posDiff with posMask 
 		//     --> Possibly easier to calculate (non-log?)
 		//     --> Similarly powerful....
+		//TODO merge loPost & loVal!
 		V loVal;
 		V hiVal;
 		Node<V> lo;
@@ -337,17 +338,10 @@ public class CritBit64<V> {
 			return false;
 		} 
 		if (size == 1) {
-			if (key == rootKey) {
-				return true;
-			}
-			return false;
+			return key == rootKey;
 		}
 		Node<V> n = root;
-		while (true) {
-			if (!doesInfixMatch(n, key)) {
-				return false;
-			}			
-			
+		while (doesInfixMatch(n, key)) {
 			//infix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
@@ -362,8 +356,8 @@ public class CritBit64<V> {
 				}
 				return key == n.loPost;
 			}
-			
 		}
+		return false;
 	}
 	
 	/**
@@ -376,37 +370,26 @@ public class CritBit64<V> {
 			return null;
 		}
 		if (size == 1) {
-			if (key == rootKey) {
-				return rootVal;
-			}
-			return null;
+			return (key == rootKey) ? rootVal : null;
 		}
 		Node<V> n = root;
-		while (true) {
-			if (!doesInfixMatch(n, key)) {
-				return null;
-			}			
-			
+		while (doesInfixMatch(n, key)) {
 			//infix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
 					n = n.hi;
 					continue;
 				} 
-				if (key == n.hiPost) {
-					return n.hiVal;
-				}
+				return (key == n.hiPost) ? n.hiVal : null;
 			} else {
 				if (n.lo != null) {
 					n = n.lo;
 					continue;
 				}
-				if (key == n.loPost) {
-					return n.loVal;
-				}
+				return (key == n.loPost) ? n.loVal : null;
 			}
-			return null;
 		}
+		return null;
 	}
 	
 	/**

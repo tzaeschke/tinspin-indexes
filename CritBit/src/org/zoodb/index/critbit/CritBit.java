@@ -84,7 +84,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	
 	private static class Node<V> {
 		//TODO store both post in one array
-		//TODO reduce space usage by using same reference for lo/loPost or lo/loVal
+		//TODO reduce space usage by using same reference for lo and loPost/loVal
  		//TODO --> use only one ref for hi/low each
 		//TODO ? put other fields into long[]????
 		V loVal;
