@@ -23,7 +23,7 @@ package org.zoodb.index.critbit;
 
 /**
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class BitTools {
 
