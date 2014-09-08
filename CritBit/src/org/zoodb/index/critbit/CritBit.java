@@ -52,6 +52,7 @@ package org.zoodb.index.critbit;
  * 
  * Version 1.2.1  
  *  - Replaced compare() with isEqual() where possible
+ *  - Simplified compare(), doesInfixMatch()
  *  - Removed unused arguments
  * 
  * Version 1.2  
@@ -433,16 +434,22 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			return true;
 		}
 		int startPos = n.posFirstBit;
-		int endPos = n.posDiff-1;
+		int endPos = (n.posDiff-1) & 0x3f;
 		int start = startPos >>> 6;
 		int end = ((endPos+63) >>> 6)-1;
 		for (int i = start; i <= end; i++) {
 			if (v[i] != n.infix[i-start] && i==end) {
-				long mask = 0x8000000000000000L >>> endPos;
-				if ((v[i] & mask) != (n.infix[i-start] & mask)) {
-					return false;
-				}
-				return true;
+//				long mask = 0x8000000000000000L >>> endPos;
+//				if ((v[i] & mask) != (n.infix[i-start] & mask)) {
+//					return false;
+//				}
+//				return true;
+//				fff
+//				if (endPos >= 64) System.out.println("ep=" + endPos);
+//			fff
+				//TODO endPos vs n.posDiff
+				//TODO create test that fails for endPos >=64
+				return (v[i] ^ n.infix[i-start]) >>> (64-endPos) == 0;
 			}
 		}
 		return true;
@@ -455,14 +462,15 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @return Position of the differing bit, or -1 if both values are equal
 	 */
 	private static int compare(long[] v1, long[] v2) {
-		int pos = 0;
+//		int pos = 0;
 		for (int i = 0; i < v1.length; i++) {
 			if (v1[i] != v2[i]) {
-				long x = v1[i] ^ v2[i];
-				pos += Long.numberOfLeadingZeros(x);
-				return pos;
+				return (i*64) + Long.numberOfLeadingZeros(v1[i] ^ v2[i]);
+//				long x = v1[i] ^ v2[i];
+//				pos += Long.numberOfLeadingZeros(x);
+//				return pos;
 			}
-			pos += 64;
+//			pos += 64;
 		}
 		return -1;
 	}

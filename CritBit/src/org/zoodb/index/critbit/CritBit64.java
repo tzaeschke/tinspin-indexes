@@ -32,7 +32,7 @@ package org.zoodb.index.critbit;
  * 
  * Version 1.2.1  
  *  - Replaced compare() with '==' where possible
- *  - Simplified compare()
+ *  - Simplified compare(), doesInfixMatch()
  *  - Replaced setBit() with set0()/set1()
  * 
  * Version 1.1:
@@ -303,13 +303,8 @@ public class CritBit64<V> {
 	 * @return True if the infix matches the value or if no infix is defined
 	 */
 	private boolean doesInfixMatch(Node<V> n, long v) {
-		int endPos = n.posDiff-1;
-		if (endPos >= 0 && v != n.infix) {
-			long mask = 0x8000000000000000L >>> endPos;
-			if ((v & mask) != (n.infix & mask)) {
-				return false;
-			}
-			return true;
+		if (n.posDiff > 0) {
+			return (v ^ n.infix) >>> (64-n.posDiff) == 0;
 		}
 		return true;
 	}
