@@ -925,4 +925,42 @@ public class TestCritBit {
 			}
 		}
 	}
+
+
+	@Test
+	public void test64_doesInfixMatch() {
+		long[] a1 = new long[]{0,0,0};
+		long[] a2 = new long[]{0,0,1};
+		long[] a3 = new long[]{1,0,0};
+		long[] a4 = new long[]{1,1,0};
+		
+		assertTrue(doesInfixMatch(a1, 191, a2, 0)); 
+		assertFalse(doesInfixMatch(a1, 192, a2, 0)); 
+		
+		assertTrue(doesInfixMatch(a1, 63, a3, 0)); 
+		assertFalse(doesInfixMatch(a1, 64, a3, 0)); 
+		
+		assertTrue(doesInfixMatch(a3, 127, a4, 0)); 
+		assertFalse(doesInfixMatch(a3, 128, a4, 0)); 
+	}
+	
+	
+	private boolean doesInfixMatch(long[] currentVal, int posDiff, long[] v,
+			int startSlot) {
+//		if (n.infix == null) {
+//			return true;
+//		}
+		
+		int end = (posDiff-1) >>> 6; 
+		for (int i = startSlot; i < end; i++) {
+			if (v[i] != currentVal[i]) {
+				return false;
+			}
+		}
+		//last elements
+		int shift = 63 - ((posDiff-1) & 0x3f);
+		return (v[end] ^ currentVal[end]) >>> shift == 0;
+	}
+
+
 }

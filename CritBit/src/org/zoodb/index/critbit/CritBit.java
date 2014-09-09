@@ -429,30 +429,21 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param startPos
 	 * @return True if the infix matches the value or if no infix is defined
 	 */
-	private boolean doesInfixMatch(Node<V> n, long[] v) {
+	private boolean doesInfixMatch(Node<V> n, long[] v, long[] currentVal) {
 		if (n.infix == null) {
 			return true;
 		}
-		int startPos = n.posFirstBit;
-		int endPos = (n.posDiff-1) & 0x3f;
-		int start = startPos >>> 6;
-		int end = ((endPos+63) >>> 6)-1;
-		for (int i = start; i <= end; i++) {
-			if (v[i] != n.infix[i-start] && i==end) {
-//				long mask = 0x8000000000000000L >>> endPos;
-//				if ((v[i] & mask) != (n.infix[i-start] & mask)) {
-//					return false;
-//				}
-//				return true;
-//				fff
-//				if (endPos >= 64) System.out.println("ep=" + endPos);
-//			fff
-				//TODO endPos vs n.posDiff
-				//TODO create test that fails for endPos >=64
-				return (v[i] ^ n.infix[i-start]) >>> (64-endPos) == 0;
+		
+		int start = n.posFirstBit >>> 6;
+		int end = (n.posDiff-1) >>> 6; 
+		for (int i = start; i < end; i++) {
+			if (v[i] != currentVal[i]) {
+				return false;
 			}
 		}
-		return true;
+		//last element
+		int shift = 63 - ((n.posDiff-1) & 0x3f);
+		return (v[end] ^ currentVal[end]) >>> shift == 0;
 	}
 
 	/**
@@ -462,15 +453,10 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @return Position of the differing bit, or -1 if both values are equal
 	 */
 	private static int compare(long[] v1, long[] v2) {
-//		int pos = 0;
 		for (int i = 0; i < v1.length; i++) {
 			if (v1[i] != v2[i]) {
 				return (i*64) + Long.numberOfLeadingZeros(v1[i] ^ v2[i]);
-//				long x = v1[i] ^ v2[i];
-//				pos += Long.numberOfLeadingZeros(x);
-//				return pos;
 			}
-//			pos += 64;
 		}
 		return -1;
 	}
@@ -522,7 +508,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		while (true) {
 			readInfix(n, currentPrefix);
 			
-			if (!doesInfixMatch(n, val)) {
+			if (!doesInfixMatch(n, val, currentPrefix)) {
 				return false;
 			}			
 			
@@ -568,7 +554,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		while (true) {
 			readInfix(n, currentPrefix);
 			
-			if (!doesInfixMatch(n, key)) {
+			if (!doesInfixMatch(n, key, currentPrefix)) {
 				return null;
 			}			
 			
@@ -632,7 +618,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		while (true) {
 			readInfix(n, currentPrefix);
 			
-			if (!doesInfixMatch(n, val2)) {
+			if (!doesInfixMatch(n, val2, currentPrefix)) {
 				return null;
 			}
 			
