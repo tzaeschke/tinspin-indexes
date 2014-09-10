@@ -45,11 +45,11 @@ package org.zoodb.index.critbit;
  * In order to store floating point values, please convert them to 'long' with
  * BitTools.toSortableLong(...), also when supplying query parameters.
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
- * This conversion is taken from: 
- * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and 
- * Multi-Dimensional Index (SIGMOD 2014)
  * 
  * 
+ * Version 1.2.2  
+ *  - Moved tests to tst folder
+ *
  * Version 1.2.1  
  *  - Replaced compare() with isEqual() where possible
  *  - Simplified compare(), doesInfixMatch()

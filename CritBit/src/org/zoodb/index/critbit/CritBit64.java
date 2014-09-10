@@ -26,9 +26,11 @@ package org.zoodb.index.critbit;
  * In order to store floating point values, please convert them to 'long' with
  * BitTools.toSortableLong(...), also when supplying query parameters.
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
- * This conversion is taken from: 
- * T.Zaeschke, C.Zimmerli, M.C.Norrie:  
- * "The PH-Tree - A Space-Efficient Storage Structure and Multi-Dimensional Index" (SIGMOD 2014)
+ * 
+ * Version 1.2.2  
+ *  - simplified updateParentAfterRemove()
+ *  - removed Node.posFirstBit
+ *  - Moved test to tst folder
  * 
  * Version 1.2.1  
  *  - Replaced compare() with '==' where possible
@@ -68,17 +70,14 @@ public class CritBit64<V> {
 		long loPost;
 		long hiPost;
 		long infix;
-		byte posFirstBit;  
 		byte posDiff;
 		
-		Node(int posFirstBit, long loPost, V loVal, long hiPost, V hiVal, 
-				long infix, int posDiff) {
+		Node(long loPost, V loVal, long hiPost, V hiVal, long infix, int posDiff) {
 			this.loPost = loPost;
 			this.loVal = loVal;
 			this.hiPost = hiPost;
 			this.hiVal = hiVal;
 			this.infix = infix;
-			this.posFirstBit = (byte) posFirstBit;
 			this.posDiff = (byte) posDiff;
 		}
 	}
@@ -109,7 +108,7 @@ public class CritBit64<V> {
 			return null;
 		}
 		if (size == 1) {
-			Node<V> n2 = createNode(key, val, rootKey, rootVal, 0);
+			Node<V> n2 = createNode(key, val, rootKey, rootVal);
 			if (n2 == null) {
 				V prev = rootVal;
 				rootVal = val;
@@ -122,14 +121,15 @@ public class CritBit64<V> {
 			return null;
 		}
 		Node<V> n = root;
+		int parentPosDiff = -1;
 		while (true) {
-			if (n.posFirstBit != n.posDiff) {
+			if (parentPosDiff+1 != n.posDiff) {
 				//split infix?
 				int posDiff = compare(key, n.infix);
 				if (posDiff < n.posDiff && posDiff != -1) {
 					long subInfix = extractInfix(n.infix, n.posDiff-1);
 					//new sub-node
-					Node<V> newSub = new Node<V>(posDiff+1, n.loPost, n.loVal, n.hiPost, n.hiVal, 
+					Node<V> newSub = new Node<V>(n.loPost, n.loVal, n.hiPost, n.hiVal, 
 							subInfix, n.posDiff);
 					newSub.hi = n.hi;
 					newSub.lo = n.lo;
@@ -159,9 +159,8 @@ public class CritBit64<V> {
 			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
 					n = n.hi;
-					continue;
 				} else {
-					Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal, n.posDiff + 1);
+					Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal);
 					if (n2 == null) {
 						V prev = n.hiVal;
 						n.hiVal = val;
@@ -176,9 +175,8 @@ public class CritBit64<V> {
 			} else {
 				if (n.lo != null) {
 					n = n.lo;
-					continue;
 				} else {
-					Node<V> n2 = createNode(key, val, n.loPost, n.loVal, n.posDiff + 1);
+					Node<V> n2 = createNode(key, val, n.loPost, n.loVal);
 					if (n2 == null) {
 						V prev = n.loVal;
 						n.loVal = val;
@@ -191,6 +189,7 @@ public class CritBit64<V> {
 					return null;
 				}
 			}
+			parentPosDiff = n.posDiff;
 		}
 	}
 	
@@ -213,7 +212,7 @@ public class CritBit64<V> {
 	
 	private void printNode(Node<V> n, StringBuilder s, String level, int currentDepth) {
 		char NL = '\n'; 
-		if (n.posFirstBit != n.posDiff) {
+		if (currentDepth != n.posDiff) {
 			s.append(level + "n: " + currentDepth + "/" + n.posDiff + " " + 
 					BitTools.toBinary(n.infix, 64) + NL);
 		} else {
@@ -268,16 +267,16 @@ public class CritBit64<V> {
 		return true;
 	}
 	
-	private Node<V> createNode(long k1, V val1, long k2, V val2, int posFirstBit) {
+	private Node<V> createNode(long k1, V val1, long k2, V val2) {
 		int posDiff = compare(k1, k2);
 		if (posDiff == -1) {
 			return null;
 		}
 		long infix = extractInfix(k1, posDiff-1);
 		if (BitTools.getBit(k2, posDiff)) {
-			return new Node<V>(posFirstBit, k1, val1, k2, val2, infix, posDiff);
+			return new Node<V>(k1, val1, k2, val2, infix, posDiff);
 		} else {
-			return new Node<V>(posFirstBit, k2, val2, k1, val1, infix, posDiff);
+			return new Node<V>(k2, val2, k1, val1, infix, posDiff);
 		}
 	}
 	
@@ -414,11 +413,7 @@ public class CritBit64<V> {
 		Node<V> n = root;
 		Node<V> parent = null;
 		boolean isParentHigh = false;
-		while (true) {
-			if (!doesInfixMatch(n, key)) {
-				return null;
-			}
-			
+		while (doesInfixMatch(n, key)) {
 			//infix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
@@ -431,13 +426,8 @@ public class CritBit64<V> {
 						return null;
 					}
 					//match! --> delete node
-					//a) first recover other values
-					long newPost = 0;
-					if (n.lo == null) {
-						newPost = n.loPost;
-					}
-					//b) replace data in parent node
-					updateParentAfterRemove(parent, newPost, n.loVal, n.lo, isParentHigh, n);
+					//replace data in parent node
+					updateParentAfterRemove(parent, n.loPost, n.loVal, n.lo, isParentHigh);
 					return n.hiVal;
 				}
 			} else {
@@ -451,48 +441,33 @@ public class CritBit64<V> {
 						return null;
 					}
 					//match! --> delete node
-					//a) first recover other values
-					long newPost = 0;
-					if (n.hi == null) {
-						newPost = n.hiPost;
-					}
-					//b) replace data in parent node
+					//replace data in parent node
 					//for new infixes...
-					updateParentAfterRemove(parent, newPost, n.hiVal, n.hi, isParentHigh, n);
+					updateParentAfterRemove(parent, n.hiPost, n.hiVal, n.hi, isParentHigh);
 					return n.loVal;
 				}
 			}
 		}
+		return null;
 	}
 	
 	private void updateParentAfterRemove(Node<V> parent, long newPost, V newVal,
-			Node<V> newSub, boolean isParentHigh, Node<V> n) {
+			Node<V> newSub, boolean isParentHigh) {
 		
 		if (parent == null) {
 			rootKey = newPost;
 			rootVal = newVal;
 			root = newSub;
 		} else if (isParentHigh) {
-			if (newSub == null) {
-				parent.hiPost = newPost;
-				parent.hiVal = newVal;
-			} else {
-				parent.hiPost = 0;
-				parent.hiVal = null;
-			}
+			parent.hiPost = newPost;
+			parent.hiVal = newVal;
 			parent.hi = newSub;
 		} else {
-			if (newSub == null) {
-				parent.loPost = newPost;
-				parent.loVal = newVal;
-			} else {
-				parent.loPost = 0;
-				parent.loVal = null;
-			}
+			parent.loPost = newPost;
+			parent.loVal = newVal;
 			parent.lo = newSub;
 		}
 		if (newSub != null) {
-			newSub.posFirstBit = n.posFirstBit;
 			newSub.infix = extractInfix(newSub.infix, newSub.posDiff-1);
 		}
 		size--;
