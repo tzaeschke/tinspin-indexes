@@ -29,6 +29,7 @@ package org.zoodb.index.critbit;
  * 
  * Version 1.3
  * - Removed separate field for prefix
+ * - Shared reference for sub-node and value
  * 
  * Version 1.2.2  
  *  - simplified updateParentAfterRemove()
@@ -55,10 +56,9 @@ public class CritBit64<V> {
 
 	private final int DEPTH = 64;
 	
-	private Node<V> root;
+	private Object root;
 	//the following contains either the actual key or the prefix for the sub-node
 	private long rootKey;
-	private V rootVal;
 
 	private int size;
 	
@@ -66,22 +66,41 @@ public class CritBit64<V> {
 		//TODO replace posDiff with posMask 
 		//     --> Possibly easier to calculate (non-log?)
 		//     --> Similarly powerful....
-		//TODO merge loPost & loVal!
-		V loVal;
-		V hiVal;
-		Node<V> lo;
-		Node<V> hi;
+		
+		//Contains either the sub-node or the value of the entry
+		Object lo;
+		Object hi;
 		//the following contain either the actual key or the prefix for sub-nodes
 		long loPost;
 		long hiPost;
 		byte posDiff;
 		
-		Node(long loPost, V loVal, long hiPost, V hiVal, int posDiff) {
+		Node(long loPost, Object lo, long hiPost, Object hi, int posDiff) {
 			this.loPost = loPost;
-			this.loVal = loVal;
+			this.lo = lo;
 			this.hiPost = hiPost;
-			this.hiVal = hiVal;
+			this.hi = hi;
 			this.posDiff = (byte) posDiff;
+		}
+		
+		@SuppressWarnings("unchecked")
+		V loVal() {
+			return (V) lo;
+		}
+		
+		@SuppressWarnings("unchecked")
+		V hiVal() {
+			return (V) hi;
+		}
+		
+		@SuppressWarnings("unchecked")
+		Node<V> loN() {
+			return (Node<V>) lo;
+		}
+		
+		@SuppressWarnings("unchecked")
+		Node<V> hiN() {
+			return (Node<V>) hi;
 		}
 	}
 	
@@ -97,6 +116,16 @@ public class CritBit64<V> {
 		return new CritBit64<V>();
 	}
 	
+	@SuppressWarnings("unchecked")
+	private final V rootVal() {
+		return (V) root;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private final Node<V> rootNode() {
+		return (Node<V>) root;
+	}
+	
 	/**
 	 * Add a key value pair to the tree or replace the value if the key already exists.
 	 * @param key
@@ -106,24 +135,23 @@ public class CritBit64<V> {
 	public V put(long key, V val) {
 		if (size == 0) {
 			rootKey = key;
-			rootVal = val;
+			root = val;
 			size++;
 			return null;
 		}
 		if (size == 1) {
-			Node<V> n2 = createNode(key, val, rootKey, rootVal);
+			Node<V> n2 = createNode(key, val, rootKey, root);
 			if (n2 == null) {
-				V prev = rootVal;
-				rootVal = val;
+				V prev = rootVal();
+				root = val;
 				return prev; 
 			}
 			root = n2;
 			rootKey = extractPrefix(key, n2.posDiff-1);
-			rootVal = null;
 			size++;
 			return null;
 		}
-		Node<V> n = root;
+		Node<V> n = rootNode();
 		int parentPosDiff = -1;
 		long prefix = rootKey;
 		Node<V> parent = null;
@@ -136,11 +164,9 @@ public class CritBit64<V> {
 					Node<V> newSub;
 					long subPrefix = extractPrefix(prefix, posDiff-1);
 					if (BitTools.getBit(key, posDiff)) {
-						newSub = new Node<V>(prefix, null, key, val, posDiff);
-						newSub.lo = n;
+						newSub = new Node<V>(prefix, n, key, val, posDiff);
 					} else {
-						newSub = new Node<V>(key, val, prefix, null, posDiff);
-						newSub.hi = n;
+						newSub = new Node<V>(key, val, prefix, n, posDiff);
 					}
 					if (parent == null) {
 						rootKey = subPrefix;
@@ -159,40 +185,38 @@ public class CritBit64<V> {
 			
 			//prefix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
-				if (n.hi != null) {
+				if (n.hi instanceof Node) {
 					prefix = n.hiPost;
 					parent = n;
-					n = n.hi;
+					n = n.hiN();
 					isCurrentChildLo = false;
 				} else {
-					Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal);
+					Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal());
 					if (n2 == null) {
-						V prev = n.hiVal;
-						n.hiVal = val;
+						V prev = n.hiVal();
+						n.hi = val;
 						return prev; 
 					}
 					n.hi = n2;
 					n.hiPost = extractPrefix(key, n2.posDiff-1);
-					n.hiVal = null;
 					size++;
 					return null;
 				}
 			} else {
-				if (n.lo != null) {
+				if (n.lo instanceof Node) {
 					prefix = n.loPost;
 					parent = n;
-					n = n.lo;
+					n = n.loN();
 					isCurrentChildLo = true;
 				} else {
-					Node<V> n2 = createNode(key, val, n.loPost, n.loVal);
+					Node<V> n2 = createNode(key, val, n.loPost, n.loVal());
 					if (n2 == null) {
-						V prev = n.loVal;
-						n.loVal = val;
+						V prev = n.loVal();
+						n.lo = val;
 						return prev; 
 					}
 					n.lo = n2;
 					n.loPost = extractPrefix(key, n2.posDiff-1);
-					n.loVal = null;
 					size++;
 					return null;
 				}
@@ -210,10 +234,10 @@ public class CritBit64<V> {
 		if (size == 0) {
 			return "- -";
 		}
-		if (root == null) {
-			return "-" + BitTools.toBinary(rootKey, 64) + " v=" + rootVal;
+		if (!(root instanceof Node)) {
+			return "-" + BitTools.toBinary(rootKey, 64) + " v=" + rootVal();
 		}
-		Node<V> n = root;
+		Node<V> n = rootNode();
 		StringBuilder s = new StringBuilder();
 		printNode(n, s, "", 0, rootKey);
 		return s.toString();
@@ -227,27 +251,27 @@ public class CritBit64<V> {
 		} else {
 			s.append(level + "n: " + currentDepth + "/" + n.posDiff + " i=0" + NL);
 		}
-		if (n.lo != null) {
-			printNode(n.lo, s, level + "-", n.posDiff+1, n.loPost);
+		if (n.lo instanceof Node) {
+			printNode(n.loN(), s, level + "-", n.posDiff+1, n.loPost);
 		} else {
-			s.append(level + " " + BitTools.toBinary(n.loPost, 64) + " v=" + n.loVal + NL);
+			s.append(level + " " + BitTools.toBinary(n.loPost, 64) + " v=" + n.loVal() + NL);
 		}
-		if (n.hi != null) {
-			printNode(n.hi, s, level + "-", n.posDiff+1, n.hiPost);
+		if (n.hi instanceof Node) {
+			printNode(n.hiN(), s, level + "-", n.posDiff+1, n.hiPost);
 		} else {
-			s.append(level + " " + BitTools.toBinary(n.hiPost,64) + " v=" + n.hiVal + NL);
+			s.append(level + " " + BitTools.toBinary(n.hiPost,64) + " v=" + n.hiVal() + NL);
 		}
 	}
 	
 	public boolean checkTree() {
-		if (root == null) {
+		if (root == null || !(root instanceof Node)) {
 			if (size > 1) {
 				System.err.println("root node = null AND size = " + size);
 				return false;
 			}
 			return true;
 		}
-		return checkNode(root, 0, rootKey);
+		return checkNode(rootNode(), 0, rootKey);
 	}
 	
 	private boolean checkNode(Node<V> n, int firstBitOfNode, long prefix) {
@@ -256,24 +280,24 @@ public class CritBit64<V> {
 			System.err.println("prefix with len=0 detected!");
 			return false;
 		}
-		if (n.lo != null) {
+		if (n.lo instanceof Node) {
 			if (!doesPrefixMatch(n.posDiff-1, n.loPost, prefix)) {
 				System.err.println("lo: prefix mismatch");
 				return false;
 			}
-			checkNode(n.lo, n.posDiff+1, n.loPost);
+			checkNode(n.loN(), n.posDiff+1, n.loPost);
 		}
-		if (n.hi != null) {
+		if (n.hi instanceof Node) {
 			if (!doesPrefixMatch(n.posDiff-1, n.hiPost, prefix)) {
 				System.err.println("hi: prefix mismatch");
 				return false;
 			}
-			checkNode(n.hi, n.posDiff+1, n.hiPost);
+			checkNode(n.hiN(), n.posDiff+1, n.hiPost);
 		}
 		return true;
 	}
 	
-	private Node<V> createNode(long k1, V val1, long k2, V val2) {
+	private Node<V> createNode(long k1, Object val1, long k2, Object val2) {
 		int posDiff = compare(k1, k2);
 		if (posDiff == -1) {
 			return null;
@@ -343,21 +367,21 @@ public class CritBit64<V> {
 		if (size == 1) {
 			return key == rootKey;
 		}
-		Node<V> n = root;
+		Node<V> n = rootNode();
 		long prefix = rootKey;
 		while (doesPrefixMatch(n.posDiff, key, prefix)) {
 			//prefix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
-				if (n.hi != null) {
+				if (n.hi instanceof Node) {
 					prefix = n.hiPost;
-					n = n.hi;
+					n = n.hiN();
 					continue;
 				} 
 				return key == n.hiPost;
 			} else {
-				if (n.lo != null) {
+				if (n.lo instanceof Node) {
 					prefix = n.loPost;
-					n = n.lo;
+					n = n.loN();
 					continue;
 				}
 				return key == n.loPost;
@@ -376,26 +400,26 @@ public class CritBit64<V> {
 			return null;
 		}
 		if (size == 1) {
-			return (key == rootKey) ? rootVal : null;
+			return (key == rootKey) ? rootVal() : null;
 		}
-		Node<V> n = root;
+		Node<V> n = rootNode();
 		long prefix = rootKey;
 		while (doesPrefixMatch(n.posDiff, key, prefix)) {
 			//prefix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
-				if (n.hi != null) {
+				if (n.hi instanceof Node) {
 					prefix = n.hiPost;
-					n = n.hi;
+					n = n.hiN();
 					continue;
 				} 
-				return (key == n.hiPost) ? n.hiVal : null;
+				return (key == n.hiPost) ? n.hiVal() : null;
 			} else {
-				if (n.lo != null) {
+				if (n.lo instanceof Node) {
 					prefix = n.loPost;
-					n = n.lo;
+					n = n.loN();
 					continue;
 				}
-				return (key == n.loPost) ? n.loVal : null;
+				return (key == n.loPost) ? n.loVal() : null;
 			}
 		}
 		return null;
@@ -414,24 +438,24 @@ public class CritBit64<V> {
 			if (key == rootKey) {
 				size--;
 				rootKey = 0;
-				V prev = rootVal;
-				rootVal = null;
+				V prev = rootVal();
+				root = null;
 				return prev;
 			}
 			return null;
 		}
-		Node<V> n = root;
+		Node<V> n = rootNode();
 		Node<V> parent = null;
 		boolean isParentHigh = false;
 		long prefix = rootKey;
 		while (doesPrefixMatch(n.posDiff, key, prefix)) {
 			//prefix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
-				if (n.hi != null) {
+				if (n.hi instanceof Node) {
 					isParentHigh = true;
 					prefix = n.hiPost; 
 					parent = n;
-					n = n.hi;
+					n = n.hiN();
 					continue;
 				} else {
 					if (key != n.hiPost) {
@@ -439,15 +463,15 @@ public class CritBit64<V> {
 					}
 					//match! --> delete node
 					//replace data in parent node
-					updateParentAfterRemove(parent, n.loPost, n.loVal, n.lo, isParentHigh);
-					return n.hiVal;
+					updateParentAfterRemove(parent, n.loPost, n.lo, isParentHigh);
+					return n.hiVal();
 				}
 			} else {
-				if (n.lo != null) {
+				if (n.lo instanceof Node) {
 					isParentHigh = false;
 					prefix = n.loPost; 
 					parent = n;
-					n = n.lo;
+					n = n.loN();
 					continue;
 				} else {
 					if (key != n.loPost) {
@@ -456,29 +480,30 @@ public class CritBit64<V> {
 					//match! --> delete node
 					//replace data in parent node
 					//for new prefixes...
-					updateParentAfterRemove(parent, n.hiPost, n.hiVal, n.hi, isParentHigh);
-					return n.loVal;
+					updateParentAfterRemove(parent, n.hiPost, n.hi, isParentHigh);
+					return n.loVal();
 				}
 			}
 		}
 		return null;
 	}
 	
-	private void updateParentAfterRemove(Node<V> parent, long newPost, V newVal,
-			Node<V> newSub, boolean isParentHigh) {
+	@SuppressWarnings("unchecked")
+	private void updateParentAfterRemove(Node<V> parent, long newPost, Object newSub,
+			boolean isParentHigh) {
 		
-		newPost = (newSub == null) ? newPost : extractPrefix(newPost, newSub.posDiff-1);
+		if (newSub instanceof Node) {
+			newPost = extractPrefix(newPost, ((Node<V>)newSub).posDiff-1);
+		}
+
 		if (parent == null) {
 			rootKey = newPost;
-			rootVal = newVal;
 			root = newSub;
 		} else if (isParentHigh) {
 			parent.hiPost = newPost;
-			parent.hiVal = newVal;
 			parent.hi = newSub;
 		} else {
 			parent.loPost = newPost;
-			parent.loVal = newVal;
 			parent.lo = newSub;
 		}
 		size--;
@@ -509,11 +534,11 @@ public class CritBit64<V> {
 				return;
 			}
 			if (cb.size == 1) {
-				nextValue = cb.rootVal;
+				nextValue = cb.rootVal();
 				nextKey = cb.rootKey;
 				return;
 			}
-			stack[++stackTop] = cb.root;
+			stack[++stackTop] = cb.rootNode();
 			findNext();
 		}
 
@@ -523,29 +548,29 @@ public class CritBit64<V> {
 				//check lower
 				if (readHigherNext[stackTop] == READ_LOWER) {
 					readHigherNext[stackTop] = READ_UPPER;
-					if (n.lo == null) {
-						nextValue = n.loVal;
-						nextKey = n.loPost;
-						return;
-					} else {
-						stack[++stackTop] = n.lo;
+					if (n.lo instanceof Node) {
+						stack[++stackTop] = n.loN();
 						readHigherNext[stackTop] = READ_LOWER;
 						continue;
+					} else {
+						nextValue = n.loVal();
+						nextKey = n.loPost;
+						return;
 					}
 				}
 				//check upper
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
-					if (n.hi == null) {
-						nextValue = n.hiVal;
+					if (n.hi instanceof Node) {
+						stack[++stackTop] = n.hiN();
+						readHigherNext[stackTop] = READ_LOWER;
+						continue;
+					} else {
+						nextValue = n.hiVal();
 						nextKey = n.hiPost;
 						--stackTop;
 						return;
 						//proceed to move up a level
-					} else {
-						stack[++stackTop] = n.hi;
-						readHigherNext[stackTop] = READ_LOWER;
-						continue;
 					}
 				}
 				//proceed to move up a level
@@ -633,14 +658,14 @@ public class CritBit64<V> {
 				return;
 			}
 			if (cb.size == 1) {
-				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
+				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal());
 				return;
 			}
-			Node<V> n = cb.root;
+			Node<V> n = cb.rootNode();
 			if (!checkMatch(cb.rootKey, n.posDiff)) {
 				return;
 			}
-			stack[++stackTop] = cb.root;
+			stack[++stackTop] = n;
 			prefixes[stackTop] = cb.rootKey;
 			findNext();
 		}
@@ -653,16 +678,16 @@ public class CritBit64<V> {
 					readHigherNext[stackTop] = READ_UPPER;
 					long valTemp = BitTools.set0(prefixes[stackTop], n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
-						if (n.lo == null) {
-							if (checkMatchFullIntoNextVal(n.loPost, n.loVal)) {
-								return;
-							} 
-							//proceed to check upper
-						} else {
-							stack[++stackTop] = n.lo;
+						if (n.lo instanceof Node) {
+							stack[++stackTop] = n.loN();
 							prefixes[stackTop] = n.loPost;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
+						} else {
+							if (checkMatchFullIntoNextVal(n.loPost, n.loVal())) {
+								return;
+							} 
+							//proceed to check upper
 						}
 					}
 				}
@@ -671,17 +696,17 @@ public class CritBit64<V> {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
 					long valTemp = BitTools.set1(prefixes[stackTop], n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
-						if (n.hi == null) {
-							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal)) {
+						if (n.hi instanceof Node) {
+							stack[++stackTop] = n.hiN();
+							prefixes[stackTop] = n.hiPost;
+							readHigherNext[stackTop] = READ_LOWER;
+							continue;
+						} else {
+							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal())) {
 								--stackTop;
 								return;
 							} 
 							//proceed to move up a level
-						} else {
-							stack[++stackTop] = n.hi;
-							prefixes[stackTop] = n.hiPost;
-							readHigherNext[stackTop] = READ_LOWER;
-							continue;
 						}
 					}
 				}
@@ -801,14 +826,14 @@ public class CritBit64<V> {
 				return;
 			}
 			if (cb.size == 1) {
-				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
+				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal());
 				return;
 			}
-			Node<V> n = cb.root;
+			Node<V> n = cb.rootNode();
 			if (!checkMatch(cb.rootKey, n.posDiff)) {
 				return;
 			}
-			stack[++stackTop] = cb.root;
+			stack[++stackTop] = n;
 			prefixes[stackTop] = cb.rootKey;
 			findNext();
 		}
@@ -821,16 +846,16 @@ public class CritBit64<V> {
 					readHigherNext[stackTop] = READ_UPPER;
 					long valTemp = BitTools.set0(prefixes[stackTop], n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
-						if (n.lo == null) {
-							if (checkMatchFullIntoNextVal(n.loPost, n.loVal)) {
-								return;
-							} 
-							//proceed to check upper
-						} else {
-							stack[++stackTop] = n.lo;
+						if (n.lo instanceof Node) {
+							stack[++stackTop] = n.loN();
 							prefixes[stackTop] = n.loPost;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
+						} else {
+							if (checkMatchFullIntoNextVal(n.loPost, n.loVal())) {
+								return;
+							} 
+							//proceed to check upper
 						}
 					}
 				}
@@ -839,17 +864,17 @@ public class CritBit64<V> {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
 					long valTemp = BitTools.set1(prefixes[stackTop], n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
-						if (n.hi == null) {
-							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal)) {
+						if (n.hi instanceof Node) {
+							stack[++stackTop] = n.hiN();
+							prefixes[stackTop] = n.hiPost;
+							readHigherNext[stackTop] = READ_LOWER;
+							continue;
+						} else {
+							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal())) {
 								--stackTop;
 								return;
 							} 
 							//proceed to move up a level
-						} else {
-							stack[++stackTop] = n.hi;
-							prefixes[stackTop] = n.hiPost;
-							readHigherNext[stackTop] = READ_LOWER;
-							continue;
 						}
 					}
 				}
