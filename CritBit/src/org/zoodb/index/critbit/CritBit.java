@@ -151,6 +151,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param val
 	 * @return The previous value or {@code null} if there was no previous value
 	 */
+	@Override
 	public V put(long[] key, V val) {
 		checkDim0();
 		return putNoCheck(key, val);
@@ -260,10 +261,12 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		}
 	}
 
+	@Override
 	public void printTree() {
 		System.out.println("Tree: \n" + toString());
 	}
 	
+	@Override
 	public String toString() {
 		if (root == null) {
 			if (rootKey != null) {
@@ -480,6 +483,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * Get the size of the tree.
 	 * @return the number of keys in the tree
 	 */
+	@Override
 	public int size() {
 		return size;
 	}
@@ -489,6 +493,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param key
 	 * @return {@code true} if the key exists otherwise {@code false}
 	 */
+	@Override
 	public boolean contains(long[] key) {
 		checkDim0();
 		return containsNoCheck(key);
@@ -535,6 +540,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param key
 	 * @return the values associated with {@code key} or {@code null} if the key does not exist.
 	 */
+	@Override
 	public V get(long[] key) {
 		checkDim0();
 		return getNoCheck(key);
@@ -593,6 +599,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param key
 	 * @return The value of the key of {@code null} if the value was not found. 
 	 */
+	@Override
 	public V remove(long[] key) {
 		checkDim0();
 		return removeNoCheck(key);
@@ -714,6 +721,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * Create an iterator over all values, keys or entries.
 	 * @return the iterator
 	 */
+	@Override
 	public FullIterator<V> iterator() {
 		checkDim0(); 
 		return new FullIterator<V>(this, DEPTH);
@@ -802,7 +810,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
 		 * fits.
 		 * @param keyTemplate
-		 * @return Whether we have a match or not
+		 * @param value
 		 */
 		private void readNextVal(long[] keyTemplate, V value) {
 			nextValue = value;
@@ -849,6 +857,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 
 	}
 	
+	@Override
 	public QueryIterator<V> query(long[] min, long[] max) {
 		checkDim0(); 
 		return new QueryIterator<V>(this, min, max, DEPTH);
@@ -1080,6 +1089,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param key
 	 * @return {@code true} if the key exists otherwise {@code false}
 	 */
+	@Override
 	public boolean containsKD(long[] key) {
 		checkDIM(key);
 		long[] vi = BitTools.mergeLong(DEPTH, key);
@@ -1091,6 +1101,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param key
 	 * @return the values associated with {@code key} or {@code null} if the key does not exist.
 	 */
+	@Override
 	public V getKD(long[] key) {
 		checkDIM(key);
 		long[] vi = BitTools.mergeLong(DEPTH, key);
@@ -1102,6 +1113,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param key
 	 * @return The value of the key of {@code null} if the value was not found. 
 	 */
+	@Override
 	public V removeKD(long[] key) {
 		checkDIM(key);
 		long[] vi = BitTools.mergeLong(DEPTH, key);
@@ -1120,6 +1132,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param max
 	 * @return Result iterator
 	 */
+	@Override
 	public QueryIteratorKD<V> queryKD(long[] min, long[] max) {
 		checkDIM(min);
 		checkDIM(max);
