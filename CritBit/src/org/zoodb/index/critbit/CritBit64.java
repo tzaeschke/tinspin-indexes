@@ -27,6 +27,9 @@ package org.zoodb.index.critbit;
  * BitTools.toSortableLong(...), also when supplying query parameters.
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
  * 
+ * Version 1.3
+ * - Removed separate field for prefix
+ * 
  * Version 1.2.2  
  *  - simplified updateParentAfterRemove()
  *  - removed Node.posFirstBit
@@ -53,6 +56,7 @@ public class CritBit64<V> {
 	private final int DEPTH = 64;
 	
 	private Node<V> root;
+	//the following contains either the actual key or the prefix for the sub-node
 	private long rootKey;
 	private V rootVal;
 
@@ -67,17 +71,16 @@ public class CritBit64<V> {
 		V hiVal;
 		Node<V> lo;
 		Node<V> hi;
+		//the following contain either the actual key or the prefix for sub-nodes
 		long loPost;
 		long hiPost;
-		long infix;
 		byte posDiff;
 		
-		Node(long loPost, V loVal, long hiPost, V hiVal, long infix, int posDiff) {
+		Node(long loPost, V loVal, long hiPost, V hiVal, int posDiff) {
 			this.loPost = loPost;
 			this.loVal = loVal;
 			this.hiPost = hiPost;
 			this.hiVal = hiVal;
-			this.infix = infix;
 			this.posDiff = (byte) posDiff;
 		}
 	}
@@ -115,50 +118,52 @@ public class CritBit64<V> {
 				return prev; 
 			}
 			root = n2;
-			rootKey = 0;
+			rootKey = extractPrefix(key, n2.posDiff-1);
 			rootVal = null;
 			size++;
 			return null;
 		}
 		Node<V> n = root;
 		int parentPosDiff = -1;
+		long prefix = rootKey;
+		Node<V> parent = null;
+		boolean isCurrentChildLo = false;
 		while (true) {
 			if (parentPosDiff+1 != n.posDiff) {
-				//split infix?
-				int posDiff = compare(key, n.infix);
+				//split in prefix?
+				int posDiff = compare(key, prefix);
 				if (posDiff < n.posDiff && posDiff != -1) {
-					long subInfix = extractInfix(n.infix, n.posDiff-1);
-					//new sub-node
-					Node<V> newSub = new Node<V>(n.loPost, n.loVal, n.hiPost, n.hiVal, 
-							subInfix, n.posDiff);
-					newSub.hi = n.hi;
-					newSub.lo = n.lo;
+					Node<V> newSub;
+					long subPrefix = extractPrefix(prefix, posDiff-1);
 					if (BitTools.getBit(key, posDiff)) {
-						n.hi = null;
-						n.hiPost = key;
-						n.hiVal = val;
-						n.lo = newSub;
-						n.loPost = 0;
-						n.loVal = null;
+						newSub = new Node<V>(prefix, null, key, val, posDiff);
+						newSub.lo = n;
 					} else {
-						n.hi = newSub;
-						n.hiPost = 0;
-						n.hiVal = null;
-						n.lo = null;
-						n.loPost = key;
-						n.loVal = val;
+						newSub = new Node<V>(key, val, prefix, null, posDiff);
+						newSub.hi = n;
 					}
-					n.infix = extractInfix(key, posDiff-1);
-					n.posDiff = (byte) posDiff;
+					if (parent == null) {
+						rootKey = subPrefix;
+						root = newSub;
+					} else if (isCurrentChildLo) {
+						parent.loPost = subPrefix;
+						parent.lo = newSub;
+					} else {
+						parent.hiPost = subPrefix;
+						parent.hi = newSub;
+					}
 					size++;
 					return null;
 				}
 			}			
 			
-			//infix matches, so now we check sub-nodes and postfixes
+			//prefix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
+					prefix = n.hiPost;
+					parent = n;
 					n = n.hi;
+					isCurrentChildLo = false;
 				} else {
 					Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal);
 					if (n2 == null) {
@@ -167,14 +172,17 @@ public class CritBit64<V> {
 						return prev; 
 					}
 					n.hi = n2;
-					n.hiPost = 0;
+					n.hiPost = extractPrefix(key, n2.posDiff-1);
 					n.hiVal = null;
 					size++;
 					return null;
 				}
 			} else {
 				if (n.lo != null) {
+					prefix = n.loPost;
+					parent = n;
 					n = n.lo;
+					isCurrentChildLo = true;
 				} else {
 					Node<V> n2 = createNode(key, val, n.loPost, n.loVal);
 					if (n2 == null) {
@@ -183,7 +191,7 @@ public class CritBit64<V> {
 						return prev; 
 					}
 					n.lo = n2;
-					n.loPost = 0;
+					n.loPost = extractPrefix(key, n2.posDiff-1);
 					n.loVal = null;
 					size++;
 					return null;
@@ -197,34 +205,35 @@ public class CritBit64<V> {
 		System.out.println("Tree: \n" + toString());
 	}
 	
+	@Override
 	public String toString() {
-		if (root == null) {
-			if (root == null) {
-				return "-" + BitTools.toBinary(rootKey, 64) + " v=" + rootVal;
-			}
+		if (size == 0) {
 			return "- -";
+		}
+		if (root == null) {
+			return "-" + BitTools.toBinary(rootKey, 64) + " v=" + rootVal;
 		}
 		Node<V> n = root;
 		StringBuilder s = new StringBuilder();
-		printNode(n, s, "", 0);
+		printNode(n, s, "", 0, rootKey);
 		return s.toString();
 	}
 	
-	private void printNode(Node<V> n, StringBuilder s, String level, int currentDepth) {
+	private void printNode(Node<V> n, StringBuilder s, String level, int currentDepth, long infix) {
 		char NL = '\n'; 
 		if (currentDepth != n.posDiff) {
 			s.append(level + "n: " + currentDepth + "/" + n.posDiff + " " + 
-					BitTools.toBinary(n.infix, 64) + NL);
+					BitTools.toBinary(infix, 64) + NL);
 		} else {
 			s.append(level + "n: " + currentDepth + "/" + n.posDiff + " i=0" + NL);
 		}
 		if (n.lo != null) {
-			printNode(n.lo, s, level + "-", n.posDiff+1);
+			printNode(n.lo, s, level + "-", n.posDiff+1, n.loPost);
 		} else {
 			s.append(level + " " + BitTools.toBinary(n.loPost, 64) + " v=" + n.loVal + NL);
 		}
 		if (n.hi != null) {
-			printNode(n.hi, s, level + "-", n.posDiff+1);
+			printNode(n.hi, s, level + "-", n.posDiff+1, n.hiPost);
 		} else {
 			s.append(level + " " + BitTools.toBinary(n.hiPost,64) + " v=" + n.hiVal + NL);
 		}
@@ -232,37 +241,34 @@ public class CritBit64<V> {
 	
 	public boolean checkTree() {
 		if (root == null) {
-			if (root == null) {
-				return true;
+			if (size > 1) {
+				System.err.println("root node = null AND size = " + size);
+				return false;
 			}
 			return true;
 		}
-		if (root == null) {
-			System.err.println("root node AND value != null");
-			return false;
-		}
-		return checkNode(root, 0);
+		return checkNode(root, 0, rootKey);
 	}
 	
-	private boolean checkNode(Node<V> n, int firstBitOfNode) {
-		//check infix
+	private boolean checkNode(Node<V> n, int firstBitOfNode, long prefix) {
+		//check prefix
 		if (n.posDiff < firstBitOfNode) {
-			System.err.println("infix with len=0 detected!");
+			System.err.println("prefix with len=0 detected!");
 			return false;
 		}
 		if (n.lo != null) {
-			if (n.loPost != 0) {
-				System.err.println("lo: sub-node AND value != 0");
+			if (!doesPrefixMatch(n.posDiff-1, n.loPost, prefix)) {
+				System.err.println("lo: prefix mismatch");
 				return false;
 			}
-			checkNode(n.lo, n.posDiff+1);
+			checkNode(n.lo, n.posDiff+1, n.loPost);
 		}
 		if (n.hi != null) {
-			if (n.hiPost != 0) {
-				System.err.println("hi: sub-node AND value != 0");
+			if (!doesPrefixMatch(n.posDiff-1, n.hiPost, prefix)) {
+				System.err.println("hi: prefix mismatch");
 				return false;
 			}
-			checkNode(n.hi, n.posDiff+1);
+			checkNode(n.hi, n.posDiff+1, n.hiPost);
 		}
 		return true;
 	}
@@ -272,22 +278,20 @@ public class CritBit64<V> {
 		if (posDiff == -1) {
 			return null;
 		}
-		long infix = extractInfix(k1, posDiff-1);
 		if (BitTools.getBit(k2, posDiff)) {
-			return new Node<V>(k1, val1, k2, val2, infix, posDiff);
+			return new Node<V>(k1, val1, k2, val2, posDiff);
 		} else {
-			return new Node<V>(k2, val2, k1, val1, infix, posDiff);
+			return new Node<V>(k2, val2, k1, val1, posDiff);
 		}
 	}
 	
 	/**
 	 * 
 	 * @param v
-	 * @param startPos first bit of infix, counting starts with 0 for 1st bit 
-	 * @param endPos last bit of infix
-	 * @return The infix PLUS leading bits before the infix that belong in the same 'long'.
+	 * @param endPos last bit of prefix, counting starts with 0 for 1st bit 
+	 * @return The prefix.
 	 */
-	private static long extractInfix(long v, int endPos) {
+	private static long extractPrefix(long v, int endPos) {
 		long inf = v;
 		//avoid shifting by 64 bit which means 0 shifting in Java!
 		if (endPos < 63) {
@@ -300,11 +304,11 @@ public class CritBit64<V> {
 	 * 
 	 * @param v
 	 * @param startPos
-	 * @return True if the infix matches the value or if no infix is defined
+	 * @return True if the prefix matches the value or if no prefix is defined
 	 */
-	private boolean doesInfixMatch(Node<V> n, long v) {
-		if (n.posDiff > 0) {
-			return (v ^ n.infix) >>> (64-n.posDiff) == 0;
+	private boolean doesPrefixMatch(int posDiff, long v, long prefix) {
+		if (posDiff > 0) {
+			return (v ^ prefix) >>> (64-posDiff) == 0;
 		}
 		return true;
 	}
@@ -340,16 +344,19 @@ public class CritBit64<V> {
 			return key == rootKey;
 		}
 		Node<V> n = root;
-		while (doesInfixMatch(n, key)) {
-			//infix matches, so now we check sub-nodes and postfixes
+		long prefix = rootKey;
+		while (doesPrefixMatch(n.posDiff, key, prefix)) {
+			//prefix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
+					prefix = n.hiPost;
 					n = n.hi;
 					continue;
 				} 
 				return key == n.hiPost;
 			} else {
 				if (n.lo != null) {
+					prefix = n.loPost;
 					n = n.lo;
 					continue;
 				}
@@ -372,16 +379,19 @@ public class CritBit64<V> {
 			return (key == rootKey) ? rootVal : null;
 		}
 		Node<V> n = root;
-		while (doesInfixMatch(n, key)) {
-			//infix matches, so now we check sub-nodes and postfixes
+		long prefix = rootKey;
+		while (doesPrefixMatch(n.posDiff, key, prefix)) {
+			//prefix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
+					prefix = n.hiPost;
 					n = n.hi;
 					continue;
 				} 
 				return (key == n.hiPost) ? n.hiVal : null;
 			} else {
 				if (n.lo != null) {
+					prefix = n.loPost;
 					n = n.lo;
 					continue;
 				}
@@ -413,11 +423,13 @@ public class CritBit64<V> {
 		Node<V> n = root;
 		Node<V> parent = null;
 		boolean isParentHigh = false;
-		while (doesInfixMatch(n, key)) {
-			//infix matches, so now we check sub-nodes and postfixes
+		long prefix = rootKey;
+		while (doesPrefixMatch(n.posDiff, key, prefix)) {
+			//prefix matches, so now we check sub-nodes and postfixes
 			if (BitTools.getBit(key, n.posDiff)) {
 				if (n.hi != null) {
 					isParentHigh = true;
+					prefix = n.hiPost; 
 					parent = n;
 					n = n.hi;
 					continue;
@@ -433,6 +445,7 @@ public class CritBit64<V> {
 			} else {
 				if (n.lo != null) {
 					isParentHigh = false;
+					prefix = n.loPost; 
 					parent = n;
 					n = n.lo;
 					continue;
@@ -442,7 +455,7 @@ public class CritBit64<V> {
 					}
 					//match! --> delete node
 					//replace data in parent node
-					//for new infixes...
+					//for new prefixes...
 					updateParentAfterRemove(parent, n.hiPost, n.hiVal, n.hi, isParentHigh);
 					return n.loVal;
 				}
@@ -454,6 +467,7 @@ public class CritBit64<V> {
 	private void updateParentAfterRemove(Node<V> parent, long newPost, V newVal,
 			Node<V> newSub, boolean isParentHigh) {
 		
+		newPost = (newSub == null) ? newPost : extractPrefix(newPost, newSub.posDiff-1);
 		if (parent == null) {
 			rootKey = newPost;
 			rootVal = newVal;
@@ -466,9 +480,6 @@ public class CritBit64<V> {
 			parent.loPost = newPost;
 			parent.loVal = newVal;
 			parent.lo = newSub;
-		}
-		if (newSub != null) {
-			newSub.infix = extractInfix(newSub.infix, newSub.posDiff-1);
 		}
 		size--;
 	}
@@ -606,12 +617,14 @@ public class CritBit64<V> {
 		private static final byte READ_UPPER = 1;
 		private static final byte RETURN_TO_PARENT = 2;
 		private final byte[] readHigherNext;
+		private final long[] prefixes;
 		private int stackTop = -1;
 
 		@SuppressWarnings("unchecked")
 		public QueryIterator(CritBit64<V> cb, long minOrig, long maxOrig, int DEPTH) {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
+			this.prefixes = new long[DEPTH];
 			this.minOrig = minOrig;
 			this.maxOrig = maxOrig;
 
@@ -624,10 +637,11 @@ public class CritBit64<V> {
 				return;
 			}
 			Node<V> n = cb.root;
-			if (!checkMatch(n.infix, n.posDiff)) {
+			if (!checkMatch(cb.rootKey, n.posDiff)) {
 				return;
 			}
 			stack[++stackTop] = cb.root;
+			prefixes[stackTop] = cb.rootKey;
 			findNext();
 		}
 
@@ -637,8 +651,7 @@ public class CritBit64<V> {
 				//check lower
 				if (readHigherNext[stackTop] == READ_LOWER) {
 					readHigherNext[stackTop] = READ_UPPER;
-					//TODO use bit directly to check validity
-					long valTemp = BitTools.set0(n.infix, n.posDiff);
+					long valTemp = BitTools.set0(prefixes[stackTop], n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
 						if (n.lo == null) {
 							if (checkMatchFullIntoNextVal(n.loPost, n.loVal)) {
@@ -647,6 +660,7 @@ public class CritBit64<V> {
 							//proceed to check upper
 						} else {
 							stack[++stackTop] = n.lo;
+							prefixes[stackTop] = n.loPost;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
 						}
@@ -655,7 +669,7 @@ public class CritBit64<V> {
 				//check upper
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
-					long valTemp = BitTools.set1(n.infix, n.posDiff);
+					long valTemp = BitTools.set1(prefixes[stackTop], n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
 						if (n.hi == null) {
 							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal)) {
@@ -665,6 +679,7 @@ public class CritBit64<V> {
 							//proceed to move up a level
 						} else {
 							stack[++stackTop] = n.hi;
+							prefixes[stackTop] = n.hiPost;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
 						}
@@ -770,12 +785,14 @@ public class CritBit64<V> {
 		private static final byte READ_UPPER = 1;
 		private static final byte RETURN_TO_PARENT = 2;
 		private final byte[] readHigherNext;
+		private final long[] prefixes;
 		private int stackTop = -1;
 
 		@SuppressWarnings("unchecked")
 		public QueryIteratorMask(CritBit64<V> cb, long minOrig, long maxOrig, int DEPTH) {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
+			this.prefixes = new long[DEPTH];
 			this.minOrig = minOrig;
 			this.maxOrig = maxOrig;
 
@@ -788,10 +805,11 @@ public class CritBit64<V> {
 				return;
 			}
 			Node<V> n = cb.root;
-			if (!checkMatch(n.infix, n.posDiff)) {
+			if (!checkMatch(cb.rootKey, n.posDiff)) {
 				return;
 			}
 			stack[++stackTop] = cb.root;
+			prefixes[stackTop] = cb.rootKey;
 			findNext();
 		}
 
@@ -801,8 +819,7 @@ public class CritBit64<V> {
 				//check lower
 				if (readHigherNext[stackTop] == READ_LOWER) {
 					readHigherNext[stackTop] = READ_UPPER;
-					//TODO use bit directly to check validity
-					long valTemp = BitTools.set0(n.infix, n.posDiff);
+					long valTemp = BitTools.set0(prefixes[stackTop], n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
 						if (n.lo == null) {
 							if (checkMatchFullIntoNextVal(n.loPost, n.loVal)) {
@@ -811,6 +828,7 @@ public class CritBit64<V> {
 							//proceed to check upper
 						} else {
 							stack[++stackTop] = n.lo;
+							prefixes[stackTop] = n.loPost;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
 						}
@@ -819,7 +837,7 @@ public class CritBit64<V> {
 				//check upper
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
-					long valTemp = BitTools.set1(n.infix, n.posDiff);
+					long valTemp = BitTools.set1(prefixes[stackTop], n.posDiff);
 					if (checkMatch(valTemp, n.posDiff)) {
 						if (n.hi == null) {
 							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal)) {
@@ -829,6 +847,7 @@ public class CritBit64<V> {
 							//proceed to move up a level
 						} else {
 							stack[++stackTop] = n.hi;
+							prefixes[stackTop] = n.hiPost;
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
 						}

@@ -81,6 +81,11 @@ public class TestCritBit64 {
 	}
 	
 	@Test
+	public void testInsertIntRBug5() {
+		randomInsertCheck(6, 95109, 8);
+	}
+	
+	@Test
 	public void testInsertIntR() {
 		randomInsertCheck(1000000, 0, 32);
 	}
@@ -120,7 +125,7 @@ public class TestCritBit64 {
 			iFail = i;
 			a[i] = R.nextLong() >> shift;
 			//System.out.println((int)(a[i]>>>32) + ",");
-			//System.out.println("Inserting: " + a[i] + " / " + BitsInt.toBinary(a[i] >>> 32));
+			//System.out.println("Inserting: " + a[i] + " / " + BitTools.toBinary(a[i], 32));
 			//System.out.println("i1=" + i + " / " + a[i]);
 			if (cb.contains(a[i])) {
 				//System.out.println("i2=" + i);
@@ -151,7 +156,7 @@ public class TestCritBit64 {
 		assertEquals(N, cb.size());
 
 		for (int i = 0; i < N; i++) {
-			//System.out.println("Checking: " + i + "   " + BitsInt.toBinary(a[i] >>> 32));
+			//System.out.println("Checking: " + i + "   " + BitTools.toBinary(a[i], 32));
 			assertTrue(cb.contains(a[i]));
 			if (i != (int)cb.get(a[i])) {
 				cb.printTree();
@@ -160,7 +165,9 @@ public class TestCritBit64 {
 		}
 		
 		for (int i = 0; i < N; i++) {
-			assertTrue(cb.contains(a[i]));
+			//System.out.println("Removing: " + a[i] + " / " + BitTools.toBinary(a[i], 32));
+			//cb.printTree();
+			assertTrue("i="+ i, cb.contains(a[i]));
 			assertEquals(i, (int)cb.remove(a[i]));
 			assertEquals(null, cb.remove(a[i]));
 			assertFalse(cb.contains(a[i]));
