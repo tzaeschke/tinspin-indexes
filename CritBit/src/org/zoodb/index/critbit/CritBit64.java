@@ -191,7 +191,7 @@ public class CritBit64<V> {
 					n = n.hiN();
 					isCurrentChildLo = false;
 				} else {
-					Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal());
+					Node<V> n2 = createNode(key, val, n.hiPost, n.hi);
 					if (n2 == null) {
 						V prev = n.hiVal();
 						n.hi = val;
@@ -209,7 +209,7 @@ public class CritBit64<V> {
 					n = n.loN();
 					isCurrentChildLo = true;
 				} else {
-					Node<V> n2 = createNode(key, val, n.loPost, n.loVal());
+					Node<V> n2 = createNode(key, val, n.loPost, n.lo);
 					if (n2 == null) {
 						V prev = n.loVal();
 						n.lo = val;
@@ -684,7 +684,7 @@ public class CritBit64<V> {
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
 						} else {
-							if (checkMatchFullIntoNextVal(n.loPost, n.loVal())) {
+							if (checkMatchFullIntoNextVal(n.loPost, n.lo)) {
 								return;
 							} 
 							//proceed to check upper
@@ -702,7 +702,7 @@ public class CritBit64<V> {
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
 						} else {
-							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal())) {
+							if (checkMatchFullIntoNextVal(n.hiPost, n.hi)) {
 								--stackTop;
 								return;
 							} 
@@ -725,11 +725,12 @@ public class CritBit64<V> {
 		 * @param keyTemplate
 		 * @return Whether we have a match or not
 		 */
-		private boolean checkMatchFullIntoNextVal(long keyTemplate, V value) {
+		@SuppressWarnings("unchecked")
+		private boolean checkMatchFullIntoNextVal(long keyTemplate, Object value) {
 			if ((minOrig > keyTemplate) || (keyTemplate > maxOrig)) { 
 				return false;
 			}
-			nextValue = value;
+			nextValue = (V) value;
 			nextKey = keyTemplate;
 			return true;
 		}
@@ -852,7 +853,7 @@ public class CritBit64<V> {
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
 						} else {
-							if (checkMatchFullIntoNextVal(n.loPost, n.loVal())) {
+							if (checkMatchFullIntoNextVal(n.loPost, n.lo)) {
 								return;
 							} 
 							//proceed to check upper
@@ -870,7 +871,7 @@ public class CritBit64<V> {
 							readHigherNext[stackTop] = READ_LOWER;
 							continue;
 						} else {
-							if (checkMatchFullIntoNextVal(n.hiPost, n.hiVal())) {
+							if (checkMatchFullIntoNextVal(n.hiPost, n.hi)) {
 								--stackTop;
 								return;
 							} 
@@ -893,14 +894,15 @@ public class CritBit64<V> {
 		 * @param keyTemplate
 		 * @return Whether we have a match or not
 		 */
-		private boolean checkMatchFullIntoNextVal(long keyTemplate, V value) {
+		@SuppressWarnings("unchecked")
+		private boolean checkMatchFullIntoNextVal(long keyTemplate, Object value) {
 			if ((keyTemplate | minOrig) != keyTemplate) {
 				return false;
 			}
 			if ((keyTemplate & maxOrig) != keyTemplate) {
 				return false;
 			}
-			nextValue = value;
+			nextValue = (V) value;
 			nextKey = keyTemplate;
 			return true;
 		}
