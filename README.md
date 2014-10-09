@@ -6,6 +6,10 @@ A Critical Bit tree for k-dimensional or arbitrary length keys.
 
 Current version: 
 
+v1.3: Reduced memory consumption
+
+v1.2: Refactoring, API improvements, slight performance improvements
+
 v1.1: Slight performance improvements
   
 v1.0: Initial release
