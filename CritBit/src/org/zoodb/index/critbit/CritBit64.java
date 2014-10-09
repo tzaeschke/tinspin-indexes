@@ -51,7 +51,7 @@ package org.zoodb.index.critbit;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class CritBit64<V> {
+public class CritBit64<V> implements Iterable<V> {
 
 	private final int DEPTH = 64;
 	
