@@ -27,6 +27,9 @@ package org.zoodb.index.critbit;
  * BitTools.toSortableLong(...), also when supplying query parameters.
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
  * 
+ * Version 1.4
+ * - Fixed problem with iterators and val=null
+ * 
  * Version 1.3
  * - Removed separate field for prefix
  * - Shared reference for sub-node and value
@@ -523,6 +526,7 @@ public class CritBit64<V> implements Iterable<V> {
 		private static final byte RETURN_TO_PARENT = 2;
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
+		private boolean hasNext = true; 
 
 		@SuppressWarnings("unchecked")
 		public CBIterator(CritBit64<V> cb, int DEPTH) {
@@ -579,11 +583,12 @@ public class CritBit64<V> implements Iterable<V> {
 			//Finished
 			nextValue = null;
 			nextKey = 0;
+			hasNext = false;
 		}
 
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return hasNext;
 		}
 
 		@Override
@@ -644,6 +649,7 @@ public class CritBit64<V> implements Iterable<V> {
 		private final byte[] readHigherNext;
 		private final long[] prefixes;
 		private int stackTop = -1;
+		private boolean hasNext = true;
 
 		@SuppressWarnings("unchecked")
 		public QueryIterator(CritBit64<V> cb, long minOrig, long maxOrig, int DEPTH) {
@@ -655,14 +661,16 @@ public class CritBit64<V> implements Iterable<V> {
 
 			if (cb.size == 0) {
 				//Tree is empty
+				hasNext = false;
 				return;
 			}
 			if (cb.size == 1) {
-				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal());
+				hasNext = checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal());
 				return;
 			}
 			Node<V> n = cb.rootNode();
 			if (!checkMatch(cb.rootKey, n.posDiff)) {
+				hasNext = false;
 				return;
 			}
 			stack[++stackTop] = n;
@@ -716,6 +724,7 @@ public class CritBit64<V> implements Iterable<V> {
 			//Finished
 			nextValue = null;
 			nextKey = 0;
+			hasNext = false;
 		}
 
 
@@ -750,7 +759,7 @@ public class CritBit64<V> implements Iterable<V> {
 
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return hasNext;
 		}
 
 		@Override
@@ -813,6 +822,7 @@ public class CritBit64<V> implements Iterable<V> {
 		private final byte[] readHigherNext;
 		private final long[] prefixes;
 		private int stackTop = -1;
+		private boolean hasNext = true;
 
 		@SuppressWarnings("unchecked")
 		public QueryIteratorMask(CritBit64<V> cb, long minOrig, long maxOrig, int DEPTH) {
@@ -824,14 +834,16 @@ public class CritBit64<V> implements Iterable<V> {
 
 			if (cb.size == 0) {
 				//Tree is empty
+				hasNext = false;
 				return;
 			}
 			if (cb.size == 1) {
-				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal());
+				hasNext = checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal());
 				return;
 			}
 			Node<V> n = cb.rootNode();
 			if (!checkMatch(cb.rootKey, n.posDiff)) {
+				hasNext = false;
 				return;
 			}
 			stack[++stackTop] = n;
@@ -885,6 +897,7 @@ public class CritBit64<V> implements Iterable<V> {
 			//Finished
 			nextValue = null;
 			nextKey = 0;
+			hasNext = false;
 		}
 
 
@@ -923,7 +936,7 @@ public class CritBit64<V> implements Iterable<V> {
 
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return hasNext;
 		}
 
 		@Override

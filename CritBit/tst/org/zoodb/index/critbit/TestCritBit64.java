@@ -34,6 +34,7 @@ import org.junit.Test;
 import org.zoodb.index.critbit.CritBit64.CBIterator;
 import org.zoodb.index.critbit.CritBit64.Entry;
 import org.zoodb.index.critbit.CritBit64.QueryIterator;
+import org.zoodb.index.critbit.CritBit64.QueryIteratorMask;
 
 /**
  * 
@@ -390,6 +391,156 @@ public class TestCritBit64 {
 			}
 			assertEquals(N, n);
 		}
+	}
+
+	@Test
+	public void testIteratorsWithNull() {
+		Random R = new Random(0);
+		int N = 1000;
+		long[] a = new long[N];
+		CritBit64<Integer> cb = newCritBit(); 
+		for (int i = 0; i < N; i++) {
+			a[i] = R.nextLong();
+			if (cb.contains(a[i])) {
+				i--;
+				continue;
+			}
+			assertNull(cb.put(a[i], null));
+		}
+
+		assertEquals(N, cb.size());
+
+		//test iterators
+		//value iteration
+		CBIterator<Integer> it = cb.iterator();
+		int n = 0;
+		while (it.hasNext()) {
+			Integer val = it.next();
+			assertNull(val);
+			n++;
+		}
+		assertEquals(N, n);
+		//key iteration
+		it = cb.iterator();
+		n = 0;
+		while (it.hasNext()) {
+			long key = it.nextKey();
+			//assure same order
+			assertNull(cb.get(key));
+			n++;
+		}
+		assertEquals(N, n);
+		//entry iteration
+		it = cb.iterator();
+		n = 0;
+		while (it.hasNext()) {
+			Entry<Integer> e = it.nextEntry();
+			long key = e.key();
+			assertNull(cb.get(key));
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+	}
+
+	@Test
+	public void testQueryIteratorsWithNull() {
+		Random R = new Random(0);
+		int N = 1000;
+		long[] a = new long[N];
+		CritBit64<Integer> cb = newCritBit(); 
+		for (int i = 0; i < N; i++) {
+			a[i] = R.nextLong();
+			if (cb.contains(a[i])) {
+				i--;
+				continue;
+			}
+			assertNull(cb.put(a[i], null));
+		}
+
+		assertEquals(N, cb.size());
+
+		//test iterators
+		//value iteration
+		QueryIterator<Integer> it = cb.query(Long.MIN_VALUE, Long.MAX_VALUE);
+		int n = 0;
+		while (it.hasNext()) {
+			Integer val = it.next();
+			assertNull(val);
+			n++;
+		}
+		assertEquals(N, n);
+		//key iteration
+		it = cb.query(Long.MIN_VALUE, Long.MAX_VALUE);
+		n = 0;
+		while (it.hasNext()) {
+			long key = it.nextKey();
+			//assure same order
+			assertNull(cb.get(key));
+			n++;
+		}
+		assertEquals(N, n);
+		//entry iteration
+		it = cb.query(Long.MIN_VALUE, Long.MAX_VALUE);
+		n = 0;
+		while (it.hasNext()) {
+			Entry<Integer> e = it.nextEntry();
+			long key = e.key();
+			assertNull(cb.get(key));
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+	}
+
+	@Test
+	public void testQueryMaskWithNull() {
+		Random R = new Random(0);
+		int N = 1000;
+		long[] a = new long[N];
+		CritBit64<Integer> cb = newCritBit(); 
+		for (int i = 0; i < N; i++) {
+			a[i] = R.nextLong() >>> 1;
+			if (cb.contains(a[i])) {
+				i--;
+				continue;
+			}
+			assertNull(cb.put(a[i], null));
+		}
+
+		assertEquals(N, cb.size());
+
+		//test iterators
+		//value iteration
+		QueryIteratorMask<Integer> it = cb.queryWithMask(0, Long.MAX_VALUE);
+		int n = 0;
+		while (it.hasNext()) {
+			Integer val = it.next();
+			assertNull(val);
+			n++;
+		}
+		assertEquals(N, n);
+		//key iteration
+		it = cb.queryWithMask(0, Long.MAX_VALUE);
+		n = 0;
+		while (it.hasNext()) {
+			long key = it.nextKey();
+			//assure same order
+			assertNull(cb.get(key));
+			n++;
+		}
+		assertEquals(N, n);
+		//entry iteration
+		it = cb.queryWithMask(0, Long.MAX_VALUE);
+		n = 0;
+		while (it.hasNext()) {
+			Entry<Integer> e = it.nextEntry();
+			long key = e.key();
+			assertNull(cb.get(key));
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
 	}
 
 	@Test

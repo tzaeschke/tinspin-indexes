@@ -1000,6 +1000,134 @@ public class TestCritBitKD {
 		assertTrue(cb.containsKD(A));
 	}
 	
+//	@Test
+//	public void testIteratorsWithNull() {
+//		Random R = new Random(0);
+//		int K = 3;
+//		int N = 1000;
+//		long[][] aa = new long[N][];
+//		CritBitKD<Integer> cb = newCritBit(64, K); 
+//		for (int i = 0; i < N; i++) {
+//			long[] a = new long[K];
+//			for (int k = 0; k < K; k++) {
+//				a[k] = Math.abs(R.nextLong());
+//			}
+//			
+//			if (cb.containsKD(a)) {
+//				//System.out.println("Duplicate: " + a[i]);
+//				i--;
+//				continue;
+//			}
+//			aa[i] = a;
+//			assertNull(cb.putKD(a, null));
+//			assertTrue(cb.containsKD(a));
+//		}
+//		
+//		assertEquals(N, cb.size());
+//
+//		long[] qMin = new long[K];
+//		long[] qMax = new long[K];
+//		QueryIteratorKD<Integer> it = null;
+//		
+//		//assert all
+//		int n = 0;
+//		Arrays.fill(qMin, Long.MIN_VALUE);
+//		Arrays.fill(qMax, Long.MAX_VALUE);
+//		it = cb.iterator();
+//		while (it.hasNext()) {
+//			assertNull(it.next());
+//			n++;
+//		}
+//		assertEquals(N, n);
+//
+//		//key iteration
+//		it = cb.iterator();
+//		n = 0;
+//		while (it.hasNext()) {
+//			long[] key = it.nextKey();
+//			//assure same order
+//			assertNull(cb.get(key));
+//			n++;
+//		}
+//		assertEquals(N, n);
+//		//entry iteration
+//		it = cb.iterator();
+//		n = 0;
+//		while (it.hasNext()) {
+//			Entry<Integer> e = it.nextEntry();
+//			long[] key = e.key();
+//			assertNull(cb.get(key));
+//			assertNull(e.value());
+//			n++;
+//		}
+//		assertEquals(N, n);
+//	}
+
+	@Test
+	public void testQueryIteratorsWithNull() {
+		Random R = new Random(0);
+		int K = 3;
+		int N = 1000;
+		long[][] aa = new long[N][];
+		CritBitKD<Integer> cb = newCritBit(64, K); 
+		for (int i = 0; i < N; i++) {
+			long[] a = new long[K];
+			for (int k = 0; k < K; k++) {
+				a[k] = Math.abs(R.nextLong());
+			}
+			
+			if (cb.containsKD(a)) {
+				//System.out.println("Duplicate: " + a[i]);
+				i--;
+				continue;
+			}
+			aa[i] = a;
+			assertNull(cb.putKD(a, null));
+			assertTrue(cb.containsKD(a));
+		}
+		
+		assertEquals(N, cb.size());
+
+		long[] qMin = new long[K];
+		long[] qMax = new long[K];
+		QueryIteratorKD<Integer> it = null;
+		
+		//assert all
+		int n = 0;
+		Arrays.fill(qMin, Long.MIN_VALUE);
+		Arrays.fill(qMax, Long.MAX_VALUE);
+		it = cb.queryKD(qMin, qMax);
+		while (it.hasNext()) {
+			assertNull(it.next());
+			n++;
+		}
+		assertEquals(N, n);
+
+		//key iteration
+		it = cb.queryKD(qMin, qMax);
+		n = 0;
+		while (it.hasNext()) {
+			long[] key = it.nextKey();
+			//assure same order
+			assertNull(cb.getKD(key));
+			n++;
+		}
+		assertEquals(N, n);
+		//entry iteration
+		it = cb.queryKD(qMin, qMax);
+		n = 0;
+		while (it.hasNext()) {
+			Entry<Integer> e = it.nextEntry();
+			long[] key = e.key();
+			assertNull(cb.getKD(key));
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+	}
+
+
+	
 	private void checkValues1D(CritBitKD<Integer> cb, long[][] aa) {
 		for (int i = 0; i < aa.length; i++) {
 			Integer v = cb.getKD(aa[i]);

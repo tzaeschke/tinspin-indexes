@@ -47,6 +47,9 @@ package org.zoodb.index.critbit;
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
  * 
  * 
+ * Version 1.4
+ * - Fixed problem with iterators and val=null
+ * 
  * Version 1.2.2  
  *  - Moved tests to tst folder
  *
@@ -738,6 +741,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private static final byte RETURN_TO_PARENT = 2;
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
+		private boolean hasNext = true;
 
 		@SuppressWarnings("unchecked")
 		public FullIterator(CritBit<V> cb, int DEPTH) {
@@ -752,6 +756,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			}
 			if (cb.root == null) {
 				//Tree is empty
+				hasNext = false;
 				return;
 			}
 			Node<V> n = cb.root;
@@ -803,6 +808,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			//Finished
 			nextValue = null;
 			nextKey = null;
+			hasNext = false;
 		}
 
 
@@ -819,7 +825,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return hasNext;
 		}
 
 		@Override
@@ -876,6 +882,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private static final byte RETURN_TO_PARENT = 2;
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
+		private boolean hasNext = true;
 
 		@SuppressWarnings("unchecked")
 		public QueryIterator(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DEPTH) {
@@ -887,16 +894,18 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			this.maxOrig = maxOrig;
 
 			if (cb.rootKey != null) {
-				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
+				hasNext = checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
 				return;
 			}
 			if (cb.root == null) {
 				//Tree is empty
+				hasNext = false;
 				return;
 			}
 			Node<V> n = cb.root;
 			readInfix(n, valIntTemplate);
 			if (!checkMatch(valIntTemplate, n.posDiff)) {
+				hasNext = false;
 				return;
 			}
 			stack[++stackTop] = cb.root;
@@ -952,6 +961,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			//Finished
 			nextValue = null;
 			nextKey = null;
+			hasNext = false;
 		}
 
 
@@ -1033,7 +1043,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return hasNext;
 		}
 
 		@Override
@@ -1157,6 +1167,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private static final byte RETURN_TO_PARENT = 2;
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
+		private boolean hasNext = true;
 
 		@SuppressWarnings("unchecked")
 		public QueryIteratorKD(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DIM, int DEPTH) {
@@ -1172,16 +1183,18 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 
 			if (cb.rootKey != null) {
 				readPostFixAndSplit(cb.rootKey, 0, keyOrigTemplate);
-				checkMatchOrigKDFullIntoNextVal(keyOrigTemplate, cb.rootVal);
+				hasNext = checkMatchOrigKDFullIntoNextVal(keyOrigTemplate, cb.rootVal);
 				return;
 			}
 			if (cb.root == null) {
 				//Tree is empty
+				hasNext = false;
 				return;
 			}
 			Node<V> n = cb.root;
 			readAndSplitInfix(n, keyOrigTemplate);
 			if (!checkMatchOrigKD(keyOrigTemplate, n.posDiff)) {
+				hasNext = false;
 				return;
 			}
 			stack[++stackTop] = cb.root;
@@ -1237,6 +1250,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			//Finished
 			nextKey = null;
 			nextValue = null;
+			hasNext = false;
 		}
 
 		private void setBitAfterSplit(long[] keyOrigTemplate, int posBitInt) {
@@ -1383,7 +1397,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return hasNext;
 		}
 
 		@Override

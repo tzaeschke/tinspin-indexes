@@ -336,6 +336,114 @@ public class TestCritBit {
 	}
 
 	@Test
+	public void testIteratorsWithNull() {
+		Random R = new Random(0);
+		int N = 1000;
+		long[] a = new long[N];
+		CritBit1D<Integer> cb = newCritBit(64); 
+		for (int i = 0; i < N; i++) {
+			a[i] = R.nextLong();
+			if (cb.contains(new long[]{a[i]})) {
+				i--;
+				continue;
+			}
+			assertNull(cb.put(new long[]{a[i]}, null));
+		}
+		
+		assertEquals(N, cb.size());
+
+		//test iterators
+		long[] min = new long[1];
+		long[] max = new long[1];
+		Arrays.fill(min, Long.MIN_VALUE);
+		Arrays.fill(max, Long.MAX_VALUE);
+		//value iteration
+		FullIterator<Integer> it = cb.iterator();
+		int n = 0;
+		while (it.hasNext()) {
+			Integer val = it.next();
+			assertNull(val);
+			n++;
+		}
+		assertEquals(N, n);
+		//key iteration
+		it = cb.iterator();
+		n = 0;
+		while (it.hasNext()) {
+			long[] key = it.nextKey();
+			//assure same order
+			assertNull(cb.get(key));
+			n++;
+		}
+		assertEquals(N, n);
+		//entry iteration
+		it = cb.iterator();
+		n = 0;
+		while (it.hasNext()) {
+			Entry<Integer> e = it.nextEntry();
+			long[] key = e.key();
+			assertNull(cb.get(key));
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+	}
+
+	@Test
+	public void testQueryIteratorsWithNull() {
+		Random R = new Random(0);
+		int N = 1000;
+		long[] a = new long[N];
+		CritBit1D<Integer> cb = newCritBit(64); 
+		for (int i = 0; i < N; i++) {
+			a[i] = R.nextLong();
+			if (cb.contains(new long[]{a[i]})) {
+				i--;
+				continue;
+			}
+			assertNull(cb.put(new long[]{a[i]}, null));
+		}
+		
+		assertEquals(N, cb.size());
+
+		//test iterators
+		long[] min = new long[1];
+		long[] max = new long[1];
+		Arrays.fill(min, Long.MIN_VALUE);
+		Arrays.fill(max, Long.MAX_VALUE);
+		//value iteration
+		QueryIterator<Integer> it = cb.query(min, max);
+		int n = 0;
+		while (it.hasNext()) {
+			Integer val = it.next();
+			assertNull(val);
+			n++;
+		}
+		assertEquals(N, n);
+		//key iteration
+		it = cb.query(min, max);
+		n = 0;
+		while (it.hasNext()) {
+			long[] key = it.nextKey();
+			//assure same order
+			assertNull(cb.get(key));
+			n++;
+		}
+		assertEquals(N, n);
+		//entry iteration
+		it = cb.query(min, max);
+		n = 0;
+		while (it.hasNext()) {
+			Entry<Integer> e = it.nextEntry();
+			long[] key = e.key();
+			assertNull(cb.get(key));
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+	}
+
+	@Test
 	public void test64Bug1() {
 		Random R = new Random(0);
 		int N = 6;
