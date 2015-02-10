@@ -7,13 +7,15 @@ package org.zoodb.index.critbit;
  */
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CritBit64COW<V> implements Iterable<V> {
 
     private final int DEPTH = 64;
-    private ReadWriteLock writeLock = new ReentrantReadWriteLock();
+    private Lock writeLock = new ReentrantLock();
 
     private Node<V> root;
     //the following contains either the actual key or the prefix for the sub-node
@@ -67,6 +69,15 @@ public class CritBit64COW<V> implements Iterable<V> {
         return new CritBit64COW<V>();
     }
 
+    public CritBit64COW<V> copy() {
+        CritBit64COW<V> critBitCopy = create();
+        critBitCopy.root = this.root;
+        critBitCopy.rootKey = this.rootKey;
+        critBitCopy.rootVal = this.rootVal;
+        critBitCopy.size = size();
+        return critBitCopy;
+    }
+
     /**
      * Add a key value pair to the tree or replace the value if the key already exists.
      * @param key
@@ -74,6 +85,15 @@ public class CritBit64COW<V> implements Iterable<V> {
      * @return The previous value or {@code null} if there was no previous value
      */
     public V put(long key, V val) {
+        try {
+            writeLock.lock();
+            return doPut(key, val);
+        } finally {
+            writeLock.unlock();;
+        }
+    }
+
+    private V doPut(long key, V val) {
         if (size == 0) {
             rootKey = key;
             rootVal = val;
@@ -389,6 +409,19 @@ public class CritBit64COW<V> implements Iterable<V> {
      * @return The value of the key of {@code null} if the value was not found.
      */
     public V remove(long key) {
+        try {
+            writeLock.lock();
+            if (contains(key)) {
+                return doRemove(key);
+            } else {
+                return null;
+            }
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    private V doRemove(long key) {
         if (size == 0) {
             return null;
         }
@@ -457,7 +490,6 @@ public class CritBit64COW<V> implements Iterable<V> {
         }
         return null;
     }
-
     private void updateParentAfterRemove(Node<V> parent, long newPost, V newVal,
                                          Node<V> newSub, boolean isParentHigh) {
 
