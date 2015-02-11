@@ -8,10 +8,22 @@ package org.zoodb.index.critbit;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * A concurrency enabled version of the CritBit64 tree. 
+ * The implementation uses copy-on-write concurrency, therefore locking occurs only during updates,
+ * read-access is never locked.
+ * 
+ * Currently write/update access is limited to one thread at a time.
+ * Read access guarantees full snapshot consistency for all read access including iterators.
+ * 
+ * v1.0: initial implementation
+ * 
+ * @author bvancea
+ *
+ * @param <V>
+ */
 public class CritBit64COW<V> implements Iterable<V> {
 
     private final int DEPTH = 64;

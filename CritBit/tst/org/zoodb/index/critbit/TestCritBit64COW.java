@@ -1,11 +1,17 @@
 package org.zoodb.index.critbit;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class TestCritBit64COW {
 
@@ -241,4 +247,55 @@ public class TestCritBit64COW {
         }
         return entries;
     }
+    
+    private static class Writer implements Runnable {
+    	private final int start;
+    	private final int n;
+    	private final CritBit64COW<Integer> tree;
+
+    	Writer(CritBit64COW<Integer> tree, int start, int n) {
+    		this.tree = tree;
+    		this.start = start;
+    		this.n = n;
+    	}    	
+
+    	@Override
+    	public void run() {
+			for (int i = start; i < start+n; i++) {
+				tree.put(i, i);
+			}
+    	}
+    }
+    
+    @Test
+    public void testMultiThreading() throws InterruptedException {
+        CritBit64COW<Integer> tree = newCritBit();
+
+        int N_W = 10; //threads
+        int N = 1*1000*1000;
+        
+        ExecutorService es = Executors.newFixedThreadPool(N_W);
+    	int batchSize = N/N_W;
+        for (int i = 0; i < N_W; i++) {
+        	es.execute( new Writer(tree, i*batchSize, batchSize) );
+		}
+        es.shutdown();
+        es.awaitTermination(10, TimeUnit.SECONDS);
+		
+        if (!es.isTerminated()) {
+        	fail();
+        }
+		
+        for (int i = 0; i < N; i++) {
+            assertTrue(tree.contains(i));
+        }
+        for (int i = 0; i < N; i++) {
+            assertEquals(i, (int)tree.remove(i));
+        }
+        for (int i = 0; i < N; i++) {
+            assertFalse(tree.contains(i));
+        }
+    }
+
+
 }
