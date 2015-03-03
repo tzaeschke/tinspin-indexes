@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class CritBit64COW<V> implements Iterable<V> {
 
     private final int DEPTH = 64;
-    private Lock writeLock = new ReentrantLock();
+    private final Lock writeLock = new ReentrantLock();
 
     private AtomicInfo<V> info = new AtomicInfo<>();
 
