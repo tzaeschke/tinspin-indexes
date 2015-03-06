@@ -108,127 +108,125 @@ public class CritBit64COW<V> implements Iterable<V> {
     public V put(long key, V val) {
         try {
             writeLock.lock();
-            return doPut(key, val);
+            AtomicInfo<V> newInfo = this.info.copy();
+            V ret = doPut(key, val, newInfo);
+            this.info = newInfo;
+            return ret;
         } finally {
             writeLock.unlock();;
         }
     }
 
-    private V doPut(long key, V val) {
+    private V doPut(long key, V val, AtomicInfo<V> newInfo) {
         AtomicInfo<V> currentInfo = this.info;
-        AtomicInfo<V> newInfo = this.info.copy();
-        try {
-            int size = currentInfo.size;
-            if (size == 0) {
-                newInfo.rootKey = key;
-                newInfo.rootVal = val;
-                newInfo.size++;
-                return null;
-            }
-            if (size == 1) {
-                Node<V> n2 = createNode(key, val, info.rootKey, info.rootVal);
-                if (n2 == null) {
-                    V prev = currentInfo.rootVal;
-                    newInfo.rootVal = val;
-                    return prev;
-                }
-                newInfo.root = n2;
-                newInfo.rootKey = extractPrefix(key, n2.posDiff - 1);
-                newInfo.rootVal = null;
-                newInfo.size++;
-                return null;
-            }
-            Node<V> n = newInfo.root;
-            int parentPosDiff = -1;
-            long prefix = newInfo.rootKey;
-            Node<V> parent = null;
-            boolean isCurrentChildLo = false;
-            while (true) {
-                //perform copy on write
-                n = new Node<V>(n);
-                if (parent != null) {
-                    if (isCurrentChildLo) {
-                        parent.lo = n;
-                    } else {
-                        parent.hi = n;
-                    }
-                } else {
-                    newInfo.root = n;
-                }
+        int size = currentInfo.size;
+        if (size == 0) {
+        	newInfo.rootKey = key;
+        	newInfo.rootVal = val;
+        	newInfo.size++;
+        	return null;
+        }
+        if (size == 1) {
+        	Node<V> n2 = createNode(key, val, info.rootKey, info.rootVal);
+        	if (n2 == null) {
+        		V prev = currentInfo.rootVal;
+        		newInfo.rootVal = val;
+        		return prev;
+        	}
+        	newInfo.root = n2;
+        	newInfo.rootKey = extractPrefix(key, n2.posDiff - 1);
+        	newInfo.rootVal = null;
+        	newInfo.size++;
+        	return null;
+        }
+        Node<V> n = newInfo.root;
+        int parentPosDiff = -1;
+        long prefix = newInfo.rootKey;
+        Node<V> parent = null;
+        boolean isCurrentChildLo = false;
+        while (true) {
+        	//perform copy on write
+        	n = new Node<V>(n);
+        	if (parent != null) {
+        		if (isCurrentChildLo) {
+        			parent.lo = n;
+        		} else {
+        			parent.hi = n;
+        		}
+        	} else {
+        		newInfo.root = n;
+        	}
 
-                //insertion
-                if (parentPosDiff + 1 != n.posDiff) {
-                    //split in prefix?
-                    int posDiff = compare(key, prefix);
-                    if (posDiff < n.posDiff && posDiff != -1) {
-                        Node<V> newSub;
-                        long subPrefix = extractPrefix(prefix, posDiff - 1);
-                        if (BitTools.getBit(key, posDiff)) {
-                            newSub = new Node<V>(prefix, null, key, val, posDiff);
-                            newSub.lo = n;
-                        } else {
-                            newSub = new Node<V>(key, val, prefix, null, posDiff);
-                            newSub.hi = n;
-                        }
-                        if (parent == null) {
-                            newInfo.rootKey = subPrefix;
-                            newInfo.root = newSub;
-                        } else if (isCurrentChildLo) {
-                            parent.loPost = subPrefix;
-                            parent.lo = newSub;
-                        } else {
-                            parent.hiPost = subPrefix;
-                            parent.hi = newSub;
-                        }
-                        newInfo.size++;
-                        return null;
-                    }
-                }
+        	//insertion
+        	if (parentPosDiff + 1 != n.posDiff) {
+        		//split in prefix?
+        		int posDiff = compare(key, prefix);
+        		if (posDiff < n.posDiff && posDiff != -1) {
+        			Node<V> newSub;
+        			long subPrefix = extractPrefix(prefix, posDiff - 1);
+        			if (BitTools.getBit(key, posDiff)) {
+        				newSub = new Node<V>(prefix, null, key, val, posDiff);
+        				newSub.lo = n;
+        			} else {
+        				newSub = new Node<V>(key, val, prefix, null, posDiff);
+        				newSub.hi = n;
+        			}
+        			if (parent == null) {
+        				newInfo.rootKey = subPrefix;
+        				newInfo.root = newSub;
+        			} else if (isCurrentChildLo) {
+        				parent.loPost = subPrefix;
+        				parent.lo = newSub;
+        			} else {
+        				parent.hiPost = subPrefix;
+        				parent.hi = newSub;
+        			}
+        			newInfo.size++;
+        			return null;
+        		}
+        	}
 
-                //prefix matches, so now we check sub-nodes and postfixes
-                if (BitTools.getBit(key, n.posDiff)) {
-                    if (n.hi != null) {
-                        prefix = n.hiPost;
-                        parent = n;
-                        n = n.hi;
-                        isCurrentChildLo = false;
-                    } else {
-                        Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal);
-                        if (n2 == null) {
-                            V prev = n.hiVal;
-                            n.hiVal = val;
-                            return prev;
-                        }
-                        n.hi = n2;
-                        n.hiPost = extractPrefix(key, n2.posDiff - 1);
-                        n.hiVal = null;
-                        newInfo.size++;
-                        return null;
-                    }
-                } else {
-                    if (n.lo != null) {
-                        prefix = n.loPost;
-                        parent = n;
-                        n = n.lo;
-                        isCurrentChildLo = true;
-                    } else {
-                        Node<V> n2 = createNode(key, val, n.loPost, n.loVal);
-                        if (n2 == null) {
-                            V prev = n.loVal;
-                            n.loVal = val;
-                            return prev;
-                        }
-                        n.lo = n2;
-                        n.loPost = extractPrefix(key, n2.posDiff - 1);
-                        n.loVal = null;
-                        newInfo.size++;
-                        return null;
-                    }
-                }
-                parentPosDiff = n.posDiff;
-            }
-        } finally {
-            this.info = newInfo;
+        	//prefix matches, so now we check sub-nodes and postfixes
+        	if (BitTools.getBit(key, n.posDiff)) {
+        		if (n.hi != null) {
+        			prefix = n.hiPost;
+        			parent = n;
+        			n = n.hi;
+        			isCurrentChildLo = false;
+        		} else {
+        			Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal);
+        			if (n2 == null) {
+        				V prev = n.hiVal;
+        				n.hiVal = val;
+        				return prev;
+        			}
+        			n.hi = n2;
+        			n.hiPost = extractPrefix(key, n2.posDiff - 1);
+        			n.hiVal = null;
+        			newInfo.size++;
+        			return null;
+        		}
+        	} else {
+        		if (n.lo != null) {
+        			prefix = n.loPost;
+        			parent = n;
+        			n = n.lo;
+        			isCurrentChildLo = true;
+        		} else {
+        			Node<V> n2 = createNode(key, val, n.loPost, n.loVal);
+        			if (n2 == null) {
+        				V prev = n.loVal;
+        				n.loVal = val;
+        				return prev;
+        			}
+        			n.lo = n2;
+        			n.loPost = extractPrefix(key, n2.posDiff - 1);
+        			n.loVal = null;
+        			newInfo.size++;
+        			return null;
+        		}
+        	}
+        	parentPosDiff = n.posDiff;
         }
     }
 
@@ -416,22 +414,22 @@ public class CritBit64COW<V> implements Iterable<V> {
         Node<V> n = info.root;
         long prefix = info.rootKey;
         while (doesPrefixMatch(n.posDiff, key, prefix)) {
-            //prefix matches, so now we check sub-nodes and postfixes
-            if (BitTools.getBit(key, n.posDiff)) {
-                if (n.hi != null) {
-                    prefix = n.hiPost;
-                    n = n.hi;
-                    continue;
-                }
-                return (key == n.hiPost) ? n.hiVal : null;
-            } else {
-                if (n.lo != null) {
-                    prefix = n.loPost;
-                    n = n.lo;
-                    continue;
-                }
-                return (key == n.loPost) ? n.loVal : null;
-            }
+        	//prefix matches, so now we check sub-nodes and postfixes
+        	if (BitTools.getBit(key, n.posDiff)) {
+        		if (n.hi != null) {
+        			prefix = n.hiPost;
+        			n = n.hi;
+        			continue;
+        		}
+        		return (key == n.hiPost) ? n.hiVal : null;
+        	} else {
+        		if (n.lo != null) {
+        			prefix = n.loPost;
+        			n = n.lo;
+        			continue;
+        		}
+        		return (key == n.loPost) ? n.loVal : null;
+        	}
         }
         return null;
     }
@@ -442,92 +440,89 @@ public class CritBit64COW<V> implements Iterable<V> {
      * @return The value of the key of {@code null} if the value was not found.
      */
     public V remove(long key) {
-        try {
-            writeLock.lock();
-            if (contains(key)) {
-                return doRemove(key);
-            } else {
-                return null;
-            }
-        } finally {
-            writeLock.unlock();
-        }
+    	try {
+    		writeLock.lock();
+    		if (contains(key)) {
+    			AtomicInfo<V> newInfo = info.copy();
+    			V ret = doRemove(key, newInfo);
+    			this.info = newInfo;
+    			return ret;
+    		} else {
+    			return null;
+    		}
+    	} finally {
+    		writeLock.unlock();
+    	}
     }
 
-    private V doRemove(long key) {
-        AtomicInfo<V> info = this.info;
-        AtomicInfo<V> newInfo = info.copy();
+    private V doRemove(long key, AtomicInfo<V> newInfo) {
+    	AtomicInfo<V> info = this.info;
+    	if (info.size == 0) {
+    		return null;
+    	}
+    	if (info.size == 1) {
+    		if (key == info.rootKey) {
+    			newInfo.size--;
+    			newInfo.rootKey = 0;
+    			V prev = info.rootVal;
+    			info.rootVal = null;
+    			return prev;
+    		}
+    		return null;
+    	}
+    	Node<V> n = info.root;
+    	Node<V> parent = null;
+    	boolean isParentHigh = false;
+    	long prefix = info.rootKey;
+    	while (doesPrefixMatch(n.posDiff, key, prefix)) {
+    		//perform copy on write
+    		n = new Node<V>(n);
+    		if (parent != null) {
+    			if (!isParentHigh) {
+    				parent.lo = n;
+    			} else {
+    				parent.hi = n;
+    			}
+    		} else {
+    			newInfo.root = n;
+    		}
 
-        try {
-            if (info.size == 0) {
-                return null;
-            }
-            if (info.size == 1) {
-                if (key == info.rootKey) {
-                    newInfo.size--;
-                    newInfo.rootKey = 0;
-                    V prev = info.rootVal;
-                    info.rootVal = null;
-                    return prev;
-                }
-                return null;
-            }
-            Node<V> n = info.root;
-            Node<V> parent = null;
-            boolean isParentHigh = false;
-            long prefix = info.rootKey;
-            while (doesPrefixMatch(n.posDiff, key, prefix)) {
-                //perform copy on write
-                n = new Node<V>(n);
-                if (parent != null) {
-                    if (!isParentHigh) {
-                        parent.lo = n;
-                    } else {
-                        parent.hi = n;
-                    }
-                } else {
-                    newInfo.root = n;
-                }
-
-                //prefix matches, so now we check sub-nodes and postfixes
-                if (BitTools.getBit(key, n.posDiff)) {
-                    if (n.hi != null) {
-                        isParentHigh = true;
-                        prefix = n.hiPost;
-                        parent = n;
-                        n = n.hi;
-                        continue;
-                    } else {
-                        if (key != n.hiPost) {
-                            return null;
-                        }
-                        //match! --> delete node
-                        //replace data in parent node
-                        updateParentAfterRemove(newInfo, parent, n.loPost, n.loVal, n.lo, isParentHigh);
-                        return n.hiVal;
-                    }
-                } else {
-                    if (n.lo != null) {
-                        isParentHigh = false;
-                        prefix = n.loPost;
-                        parent = n;
-                        n = n.lo;
-                        continue;
-                    } else {
-                        if (key != n.loPost) {
-                            return null;
-                        }
-                        //match! --> delete node
-                        //replace data in parent node
-                        //for new prefixes...
-                        updateParentAfterRemove(newInfo, parent, n.hiPost, n.hiVal, n.hi, isParentHigh);
-                        return n.loVal;
-                    }
-                }
-            }
-        } finally {
-            this.info = newInfo;
-        }
+    		//prefix matches, so now we check sub-nodes and postfixes
+    		if (BitTools.getBit(key, n.posDiff)) {
+    			if (n.hi != null) {
+    				isParentHigh = true;
+    				prefix = n.hiPost;
+    				parent = n;
+    				n = n.hi;
+    				continue;
+    			} else {
+    				if (key != n.hiPost) {
+    					return null;
+    				}
+    				//match! --> delete node
+    				//replace data in parent node
+    				updateParentAfterRemove(newInfo, parent, n.loPost, n.loVal, n.lo, isParentHigh);
+    				return n.hiVal;
+    			}
+    		} else {
+    			if (n.lo != null) {
+    				isParentHigh = false;
+    				prefix = n.loPost;
+    				parent = n;
+    				n = n.lo;
+    				continue;
+    			} else {
+    				if (key != n.loPost) {
+    					return null;
+    				}
+    				//match! --> delete node
+    				//replace data in parent node
+    				//for new prefixes...
+    				updateParentAfterRemove(newInfo, parent, n.hiPost, n.hiVal, n.hi, isParentHigh);
+    				return n.loVal;
+    			}
+    		}
+    	}
         return null;
     }
     private void updateParentAfterRemove(AtomicInfo<V> newInfo, Node<V> parent, long newPost, V newVal,
