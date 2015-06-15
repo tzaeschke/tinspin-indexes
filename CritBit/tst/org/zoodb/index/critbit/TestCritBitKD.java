@@ -33,8 +33,6 @@ import java.util.Random;
 
 import org.junit.Test;
 import org.zoodb.index.critbit.CritBit.Entry;
-import org.zoodb.index.critbit.CritBit.FullIterator;
-import org.zoodb.index.critbit.CritBit.QueryIterator;
 import org.zoodb.index.critbit.CritBit.QueryIteratorKD;
 
 /**
