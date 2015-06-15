@@ -869,6 +869,48 @@ public class TestCritBit {
 		assertEquals(N, n);
 	}
 	
+	@Test
+	public void testIteratorWithNullValues() {
+		int N = 10000;
+		int k = 5;
+		Random R = new Random(0);
+
+		CritBit1D<?> cb = newCritBit(k*64);
+		long[][] data = new long[N][];
+		for (int i = 0; i < N; i++) {
+			long[] l = new long[k];
+			for (int d = 0; d < k; d++) {
+				l[d] = R.nextInt(12345); 
+			}
+			data[i] = l;
+			cb.put(l, null);
+		}
+		
+		//test extent
+		FullIterator<?> it = cb.iterator();
+		int n = 0;
+		while (it.hasNext()) {
+			Entry<?> e = it.nextEntry();
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+		
+		//test query
+		long[] min = new long[k];
+		long[] max = new long[k];
+		Arrays.fill(min, Long.MIN_VALUE);
+		Arrays.fill(max, Long.MAX_VALUE);
+		QueryIterator<?> qi = cb.query(min, max);
+		n = 0;
+		while (qi.hasNext()) {
+			Entry<?> e = qi.nextEntry();
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+	}
+	
 	private boolean isEqual(long[] a, long[] r) {
 		for (int k = 0; k < a.length; k++) {
 			if (a[k] != r[k]) {

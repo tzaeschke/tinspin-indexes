@@ -18,7 +18,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * Currently write/update access is limited to one thread at a time.
  * Read access guarantees full snapshot consistency for all read access including iterators.
  * 
- * v1.0: initial implementation
+ * Version 1.3.1
+ * - Fixed issue #3 where iterators won't work with 'null' as values.
+ * 
+ * Version 1.0: initial implementation
  * 
  * @author bvancea
  *
@@ -552,6 +555,7 @@ public class CritBit64COW<V> implements Iterable<V> {
     public static class CBIterator<V> implements Iterator<V> {
         private long nextKey = 0;
         private V nextValue = null;
+        private boolean hasNext = true;
         private final Node<V>[] stack;
         //0==read_lower; 1==read_upper; 2==go_to_parent
         private static final byte READ_LOWER = 0;
@@ -567,6 +571,7 @@ public class CritBit64COW<V> implements Iterable<V> {
             AtomicInfo<V> info = cb.info;
             if (info.size == 0) {
                 //Tree is empty
+            	hasNext = false;
                 return;
             }
             if (info.size == 1) {
@@ -615,11 +620,12 @@ public class CritBit64COW<V> implements Iterable<V> {
             //Finished
             nextValue = null;
             nextKey = 0;
+            hasNext = false;
         }
 
         @Override
         public boolean hasNext() {
-            return nextValue != null;
+            return hasNext;
         }
 
         @Override
@@ -672,6 +678,7 @@ public class CritBit64COW<V> implements Iterable<V> {
         private final long maxOrig;
         private long nextKey = 0;
         private V nextValue = null;
+        private boolean hasNext = true;
         private final Node<V>[] stack;
         //0==read_lower; 1==read_upper; 2==go_to_parent
         private static final byte READ_LOWER = 0;
@@ -691,10 +698,11 @@ public class CritBit64COW<V> implements Iterable<V> {
             AtomicInfo<V> info = cb.info;
             if (info.size == 0) {
                 //Tree is empty
+            	hasNext = false;
                 return;
             }
             if (info.size == 1) {
-                checkMatchFullIntoNextVal(info.rootKey, info.rootVal);
+                hasNext = checkMatchFullIntoNextVal(info.rootKey, info.rootVal);
                 return;
             }
             Node<V> n = info.root;
@@ -752,6 +760,7 @@ public class CritBit64COW<V> implements Iterable<V> {
             //Finished
             nextValue = null;
             nextKey = 0;
+            hasNext = false;
         }
 
 
@@ -785,7 +794,7 @@ public class CritBit64COW<V> implements Iterable<V> {
 
         @Override
         public boolean hasNext() {
-            return nextValue != null;
+            return hasNext;
         }
 
         @Override
@@ -840,6 +849,7 @@ public class CritBit64COW<V> implements Iterable<V> {
         private final long maxOrig;
         private long nextKey = 0;
         private V nextValue = null;
+        private boolean hasNext = true;
         private final Node<V>[] stack;
         //0==read_lower; 1==read_upper; 2==go_to_parent
         private static final byte READ_LOWER = 0;
@@ -860,10 +870,11 @@ public class CritBit64COW<V> implements Iterable<V> {
             AtomicInfo<V> info = cb.info;
             if (info.size == 0) {
                 //Tree is empty
+            	hasNext = false;
                 return;
             }
             if (info.size == 1) {
-                checkMatchFullIntoNextVal(info.rootKey, info.rootVal);
+                hasNext = checkMatchFullIntoNextVal(info.rootKey, info.rootVal);
                 return;
             }
             Node<V> n = info.root;
@@ -921,6 +932,7 @@ public class CritBit64COW<V> implements Iterable<V> {
             //Finished
             nextValue = null;
             nextKey = 0;
+            hasNext = false;
         }
 
 
@@ -958,7 +970,7 @@ public class CritBit64COW<V> implements Iterable<V> {
 
         @Override
         public boolean hasNext() {
-            return nextValue != null;
+            return hasNext;
         }
 
         @Override

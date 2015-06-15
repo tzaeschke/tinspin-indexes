@@ -34,6 +34,7 @@ import org.junit.Test;
 import org.zoodb.index.critbit.CritBit64.CBIterator;
 import org.zoodb.index.critbit.CritBit64.Entry;
 import org.zoodb.index.critbit.CritBit64.QueryIterator;
+import org.zoodb.index.critbit.CritBit64.QueryIteratorMask;
 
 /**
  * 
@@ -392,6 +393,52 @@ public class TestCritBit64 {
 		}
 	}
 
+	@Test
+	public void testIteratorWithNullValues() {
+		int N = 10000;
+		Random R = new Random(0);
+
+		CritBit64<?> cb = newCritBit();
+		long[] data = new long[N];
+		for (int i = 0; i < N; i++) {
+			long l = R.nextInt(123456789); 
+			data[i] = l;
+			cb.put(l, null);
+		}
+		
+		//test extent
+		CBIterator<?> it = cb.iterator();
+		int n = 0;
+		while (it.hasNext()) {
+			Entry<?> e = it.nextEntry();
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+		
+		//test query
+		long min = Long.MIN_VALUE;
+		long max = Long.MAX_VALUE;
+		QueryIterator<?> qi = cb.query(min, max);
+		n = 0;
+		while (qi.hasNext()) {
+			Entry<?> e = qi.nextEntry();
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+		
+		//test query
+		QueryIteratorMask<?> qim = cb.queryWithMask(0, Long.MAX_VALUE);
+		n = 0;
+		while (qim.hasNext()) {
+			Entry<?> e = qim.nextEntry();
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+	}
+	
 	@Test
 	public void test64Bug1() {
 		Random R = new Random(0);

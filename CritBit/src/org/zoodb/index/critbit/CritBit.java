@@ -47,6 +47,9 @@ package org.zoodb.index.critbit;
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
  * 
  * 
+ * Version 1.3.1
+ * - Fixed issue #3 where iterators won't work with 'null' as values.
+ * 
  * Version 1.2.2  
  *  - Moved tests to tst folder
  *
@@ -391,7 +394,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @param infixStart The bit-position of the first infix bits relative to the whole value
 	 * @param currentPrefix
 	 */
-	private static <T> void readInfix(Node<T> n, long[] currentPrefix) {
+	protected static <T> void readInfix(Node<T> n, long[] currentPrefix) {
 		if (n.infix == null) {
 			return;
 		}
@@ -819,7 +822,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return nextKey != null;
 		}
 
 		@Override
@@ -974,6 +977,9 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 						(!hiMatch && keyTemplate[i] > maxOrig[i])) { 
 					return false;
 				}
+				if (i >= minOrig.length || i >= keyTemplate.length) { //TODO remove me
+					System.out.print("xxxx"); 
+				}
 				if (minOrig[i] < keyTemplate[i]) { 
 					loMatch = true;
 					if (loMatch && hiMatch) {
@@ -1033,7 +1039,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return nextKey != null;
 		}
 
 		@Override
@@ -1373,17 +1379,13 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 * @return depth across dims.
 		 */
 		private int getDepthAcrossDims(int posFirstBit) {
-//			int depthAcrossDims = posFirstBit/DIM;
 			int depthAcrossDims = (posFirstBit*DIM_INV_16) >>> 16;
-//			if (depthAcrossDims != posFirstBit/DIM) {
-//				System.out.println("dad=" + depthAcrossDims + " pfb/D=" + (posFirstBit/DIM) + " DIM="+DIM + " pfb=" + posFirstBit + "  di16=" + DIM_INV_16);
-//			}
 			return depthAcrossDims;
 		}
 		
 		@Override
 		public boolean hasNext() {
-			return nextValue != null;
+			return nextKey != null;
 		}
 
 		@Override

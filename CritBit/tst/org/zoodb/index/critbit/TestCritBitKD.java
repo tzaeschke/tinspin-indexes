@@ -33,6 +33,8 @@ import java.util.Random;
 
 import org.junit.Test;
 import org.zoodb.index.critbit.CritBit.Entry;
+import org.zoodb.index.critbit.CritBit.FullIterator;
+import org.zoodb.index.critbit.CritBit.QueryIterator;
 import org.zoodb.index.critbit.CritBit.QueryIteratorKD;
 
 /**
@@ -998,6 +1000,48 @@ public class TestCritBitKD {
 		assertTrue(cb.containsKD(B));
 		cb.removeKD(B);
 		assertTrue(cb.containsKD(A));
+	}
+	
+	@Test
+	public void testIteratorWithNullValues() {
+		int N = 10000;
+		int k = 5;
+		Random R = new Random(0);
+
+		CritBitKD<?> cb = newCritBit(64, k);
+		long[][] data = new long[N][];
+		for (int i = 0; i < N; i++) {
+			long[] l = new long[k];
+			for (int d = 0; d < k; d++) {
+				l[d] = R.nextInt(12345); 
+			}
+			data[i] = l;
+			cb.putKD(l, null);
+		}
+		
+		//test extent
+//		CritBitKD<?> it = cb.iterator();
+		int n = 0;
+//		while (it.hasNext()) {
+//			Entry<?> e = it.nextEntry();
+//			assertNull(e.value());
+//			n++;
+//		}
+//		assertEquals(N, n);
+		
+		//test query
+		long[] min = new long[k];
+		long[] max = new long[k];
+		Arrays.fill(min, Long.MIN_VALUE);
+		Arrays.fill(max, Long.MAX_VALUE);
+		QueryIteratorKD<?> qi = cb.queryKD(min, max);
+		n = 0;
+		while (qi.hasNext()) {
+			Entry<?> e = qi.nextEntry();
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
 	}
 	
 	private void checkValues1D(CritBitKD<Integer> cb, long[][] aa) {
