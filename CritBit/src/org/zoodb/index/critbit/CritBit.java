@@ -995,8 +995,239 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 						(!hiMatch && keyTemplate[i] > maxOrig[i])) { 
 					return false;
 				}
-				if (i >= minOrig.length || i >= keyTemplate.length) { //TODO remove me
-					System.out.print("xxxx"); 
+				if (minOrig[i] < keyTemplate[i]) { 
+					loMatch = true;
+					if (loMatch && hiMatch) {
+						break;
+					}
+				}
+				if (keyTemplate[i] < maxOrig[i]) { 
+					hiMatch = true;
+					if (loMatch && hiMatch) {
+						break;
+					}
+				}
+			}
+			nextValue = value;
+			nextKey = CritBit.clone(keyTemplate);
+			return true;
+		}
+		
+		private boolean checkMatch(long[] keyTemplate, int startBit, int currentDepth) {
+			int i;
+			int iStart = startBit >>> BITS_LOG_64;
+			//We have to do this lo/hoMatch stuff starting from i=0 because locally exceeding
+			//the boundaries is only problematic if the node is not fully enclosed.
+			boolean loMatch = iStart == 0 ? false : loEnclosed[iStart-1];
+			boolean hiMatch = iStart == 0 ? false : hiEnclosed[iStart-1];
+			for (i = iStart; i < (currentDepth+1) >>> BITS_LOG_64; i++) {
+//				if (minOrig[i] > valTemplate[i]	|| valTemplate[i] > maxOrig[i]) {  
+//					return false;
+//				}
+				if ((!loMatch && minOrig[i] > keyTemplate[i]) || 
+						(!hiMatch && keyTemplate[i] > maxOrig[i])) { 
+					return false;
+				}
+				if (minOrig[i] < keyTemplate[i]) { 
+					loMatch = true;
+					if (loMatch && hiMatch) {
+						break;
+					}
+				}
+				if (keyTemplate[i] < maxOrig[i]) { 
+					hiMatch = true;
+					if (loMatch && hiMatch) {
+						break;
+					}
+				}
+				loEnclosed[i] = loMatch;
+				hiEnclosed[i] = hiMatch;
+			}
+
+			if (loMatch && hiMatch) {
+				for (; i < (currentDepth+1) >>> BITS_LOG_64; i++) {
+					loEnclosed[i] = loMatch;
+					hiEnclosed[i] = hiMatch;
+				}
+				return true;
+			}
+
+			int toCheck = (currentDepth+1) & BITS_MASK_6;
+			if (toCheck != 0) {
+				long mask = ~((-1L) >>> toCheck);
+				if (!loMatch && (minOrig[i] & mask) > (keyTemplate[i] & mask)) {  
+					return false;
+				}
+				if (!hiMatch && (keyTemplate[i] & mask) > (maxOrig[i] & mask)) {  
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return nextKey != null;
+		}
+
+		@Override
+		public V next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			V ret = nextValue;
+			findNext();
+			return ret;
+		}
+
+		public long[] nextKey() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			long[] ret = nextKey;
+			findNext();
+			return ret;
+		}
+
+		public Entry<V> nextEntry() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			Entry<V> ret = new Entry<V>(nextKey, nextValue);
+			findNext();
+			return ret;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+	
+	public static class QueryIteratorWithMask<V> implements Iterator<V> {
+		private final CritBit<V> cb;
+		private final long[] valIntTemplate;
+		private long[] minOrig;
+		private long[] maxOrig;
+		private long[] nextKey = null; 
+		private V nextValue = null;
+		private final Node<V>[] stack;
+		 //0==read_lower; 1==read_upper; 2==go_to_parent
+		private static final byte READ_LOWER = 0;
+		private static final byte READ_UPPER = 1;
+		private static final byte RETURN_TO_PARENT = 2;
+		private final byte[] readHigherNext;
+		private int stackTop = -1;
+		private final boolean[] loEnclosed, hiEnclosed;
+
+		@SuppressWarnings("unchecked")
+		QueryIteratorWithMask(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DEPTH) {
+			this.cb = cb;
+			this.stack = new Node[DEPTH];
+			this.readHigherNext = new byte[DEPTH];  // default = false
+			int intArrayLen = (DEPTH+63) >>> 6;
+			this.valIntTemplate = new long[intArrayLen];
+			this.loEnclosed = new boolean[intArrayLen];
+			this.hiEnclosed = new boolean[intArrayLen];
+			reset(minOrig, maxOrig);
+		}
+
+		public void reset(long[] min, long[] max) {
+			stackTop = -1;
+			nextKey = null;
+			this.minOrig = min;
+			this.maxOrig = max;
+			Arrays.fill(readHigherNext, (byte)0);
+
+			if (cb.rootKey != null) {
+				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
+				return;
+			}
+			if (cb.root == null) {
+				//Tree is empty
+				return;
+			}
+			Node<V> n = cb.root;
+			readInfix(n, valIntTemplate);
+			if (!checkMatch(valIntTemplate, 0, n.posDiff-1)) {
+				return;
+			}
+			stack[++stackTop] = cb.root;
+			findNext();
+		}
+		
+		private void findNext() {
+			while (stackTop >= 0) {
+				Node<V> n = stack[stackTop];
+				//check lower
+				if (readHigherNext[stackTop] == READ_LOWER) {
+					readHigherNext[stackTop] = READ_UPPER;
+					//TODO use bit directly to check validity
+					BitTools.setBit(valIntTemplate, n.posDiff, false);
+					if (checkMatch(valIntTemplate, n.posFirstBit, n.posDiff)) {
+						if (n.loPost != null) {
+							readPostFix(n.loPost, valIntTemplate);
+							if (checkMatchFullIntoNextVal(valIntTemplate, n.loVal)) {
+								return;
+							} 
+							//proceed to check upper
+						} else {
+							readInfix(n.lo, valIntTemplate);
+							stack[++stackTop] = n.lo;
+							readHigherNext[stackTop] = READ_LOWER;
+							continue;
+						}
+					}
+				}
+				//check upper
+				if (readHigherNext[stackTop] == READ_UPPER) {
+					readHigherNext[stackTop] = RETURN_TO_PARENT;
+					BitTools.setBit(valIntTemplate, n.posDiff, true);
+					if (checkMatch(valIntTemplate, n.posFirstBit, n.posDiff)) {
+						if (n.hiPost != null) {
+							readPostFix(n.hiPost, valIntTemplate);
+							if (checkMatchFullIntoNextVal(valIntTemplate, n.hiVal)) {
+								--stackTop;
+								return;
+							} 
+							//proceed to move up a level
+						} else {
+							readInfix(n.hi, valIntTemplate);
+							stack[++stackTop] = n.hi;
+							readHigherNext[stackTop] = READ_LOWER;
+							continue;
+						}
+					}
+				}
+				//proceed to move up a level
+				--stackTop;
+			}
+			//Finished
+			nextValue = null;
+			nextKey = null;
+		}
+
+
+		/**
+		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
+		 * fits.
+		 * @param keyTemplate
+		 * @return Whether we have a match or not
+		 */
+		private boolean checkMatchFullIntoNextVal(long[] keyTemplate, V value) {
+			//TODO optimise: do not check dimensions that can not possibly fail
+			//  --> Track dimensions that could fail.
+			// --> Check only dimensions between depth of parent and current depth.
+			//     At the same time, don't check more than (currentDept-K) dimensions (i.e. =K dim)
+
+			boolean loMatch = false;
+			boolean hiMatch = false;
+			for (int i = 0; i < keyTemplate.length; i++) {
+				if ((!loMatch && minOrig[i] > keyTemplate[i]) || 
+						(!hiMatch && keyTemplate[i] > maxOrig[i])) { 
+					return false;
 				}
 				if (minOrig[i] < keyTemplate[i]) { 
 					loMatch = true;
