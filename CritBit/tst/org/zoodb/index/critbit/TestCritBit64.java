@@ -42,7 +42,7 @@ import org.zoodb.index.critbit.CritBit64.QueryIteratorMask;
  */
 public class TestCritBit64 {
 
-	private CritBit64<Integer> newCritBit() {
+	private <T> CritBit64<T> newCritBit() {
 		return CritBit64.create();
 	}
 	
@@ -666,6 +666,44 @@ public class TestCritBit64 {
 		assertFalse(it.hasNext());
 	}
 
+	@Test
+	public void testIssue0004() {
+		CritBit64<Long> cb = newCritBit();
+		assertNull(cb.put(5L, 5L));
+		assertNull(cb.put(8L, 8L));
+		assertTrue(cb.contains(5L));
+		assertTrue(cb.contains(8L));
+		
+		QueryIterator<Long> it = cb.query(5L, 5L);
+		assertTrue(it.hasNext());
+		assertEquals(5L, it.nextKey());
+		assertFalse(it.hasNext());
+		
+		it = cb.query(8L, 8L);
+		assertTrue(it.hasNext());
+		assertEquals(8L, it.nextKey());
+		assertFalse(it.hasNext());
+	}
+
+	@Test
+	public void testIssue0004_Mask() {
+		CritBit64<Long> cb = newCritBit();
+		assertNull(cb.put(5L, 5L));
+		assertNull(cb.put(8L, 8L));
+		assertTrue(cb.contains(5L));
+		assertTrue(cb.contains(8L));
+		
+		QueryIteratorMask<Long> it = cb.queryWithMask(5L, 5L);
+		assertTrue(it.hasNext());
+		assertEquals(5L, it.nextKey());
+		assertFalse(it.hasNext());
+		
+		it = cb.queryWithMask(8L, 8L);
+		assertTrue(it.hasNext());
+		assertEquals(8L, it.nextKey());
+		assertFalse(it.hasNext());
+	}
+	
 	private void assertContains(long[] aa, long r) {
 		for (long a: aa) {
 			if (a == r) {

@@ -46,6 +46,8 @@ package org.zoodb.index.critbit;
  * BitTools.toSortableLong(...), also when supplying query parameters.
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
  * 
+ * Version 1.3.2
+ * - Added QueryIterator.reset()
  * 
  * Version 1.3.1
  * - Fixed issue #3 where iterators won't work with 'null' as values.
@@ -69,6 +71,7 @@ package org.zoodb.index.critbit;
  * 
  * @author Tilmann Zaeschke
  */
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -84,6 +87,9 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	private int size;
 	
 	private static final int SINGLE_DIM = -1;
+	
+	private static final int BITS_LOG_64 = 6;
+	private static final int BITS_MASK_6 = ~((-1) << BITS_LOG_64);
 	
 	private static class Node<V> {
 		//TODO store both post in one array
@@ -867,9 +873,10 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	}
 	
 	public static class QueryIterator<V> implements Iterator<V> {
+		private final CritBit<V> cb;
 		private final long[] valIntTemplate;
-		private final long[] minOrig;
-		private final long[] maxOrig;
+		private long[] minOrig;
+		private long[] maxOrig;
 		private long[] nextKey = null; 
 		private V nextValue = null;
 		private final Node<V>[] stack;
@@ -879,15 +886,26 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private static final byte RETURN_TO_PARENT = 2;
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
+		private final boolean[] loEnclosed, hiEnclosed;
 
 		@SuppressWarnings("unchecked")
-		public QueryIterator(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DEPTH) {
+		QueryIterator(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DEPTH) {
+			this.cb = cb;
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			int intArrayLen = (DEPTH+63) >>> 6;
 			this.valIntTemplate = new long[intArrayLen];
-			this.minOrig = minOrig;
-			this.maxOrig = maxOrig;
+			this.loEnclosed = new boolean[intArrayLen];
+			this.hiEnclosed = new boolean[intArrayLen];
+			reset(minOrig, maxOrig);
+		}
+
+		public void reset(long[] min, long[] max) {
+			stackTop = -1;
+			nextKey = null;
+			this.minOrig = min;
+			this.maxOrig = max;
+			Arrays.fill(readHigherNext, (byte)0);
 
 			if (cb.rootKey != null) {
 				checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
@@ -899,13 +917,13 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			}
 			Node<V> n = cb.root;
 			readInfix(n, valIntTemplate);
-			if (!checkMatch(valIntTemplate, n.posDiff)) {
+			if (!checkMatch(valIntTemplate, 0, n.posDiff-1)) {
 				return;
 			}
 			stack[++stackTop] = cb.root;
 			findNext();
 		}
-
+		
 		private void findNext() {
 			while (stackTop >= 0) {
 				Node<V> n = stack[stackTop];
@@ -914,7 +932,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					readHigherNext[stackTop] = READ_UPPER;
 					//TODO use bit directly to check validity
 					BitTools.setBit(valIntTemplate, n.posDiff, false);
-					if (checkMatch(valIntTemplate, n.posDiff)) {
+					if (checkMatch(valIntTemplate, n.posFirstBit, n.posDiff)) {
 						if (n.loPost != null) {
 							readPostFix(n.loPost, valIntTemplate);
 							if (checkMatchFullIntoNextVal(valIntTemplate, n.loVal)) {
@@ -933,7 +951,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				if (readHigherNext[stackTop] == READ_UPPER) {
 					readHigherNext[stackTop] = RETURN_TO_PARENT;
 					BitTools.setBit(valIntTemplate, n.posDiff, true);
-					if (checkMatch(valIntTemplate, n.posDiff)) {
+					if (checkMatch(valIntTemplate, n.posFirstBit, n.posDiff)) {
 						if (n.hiPost != null) {
 							readPostFix(n.hiPost, valIntTemplate);
 							if (checkMatchFullIntoNextVal(valIntTemplate, n.hiVal)) {
@@ -998,11 +1016,14 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			return true;
 		}
 		
-		private boolean checkMatch(long[] keyTemplate, int currentDepth) {
+		private boolean checkMatch(long[] keyTemplate, int startBit, int currentDepth) {
 			int i;
-			boolean loMatch = false;
-			boolean hiMatch = false;
-			for (i = 0; (i+1)*64 <= currentDepth; i++) {
+			int iStart = startBit >>> BITS_LOG_64;
+			//We have to do this lo/hoMatch stuff starting from i=0 because locally exceeding
+			//the boundaries is only problematic if the node is not fully enclosed.
+			boolean loMatch = iStart == 0 ? false : loEnclosed[iStart-1];
+			boolean hiMatch = iStart == 0 ? false : hiEnclosed[iStart-1];
+			for (i = iStart; i < (currentDepth+1) >>> BITS_LOG_64; i++) {
 //				if (minOrig[i] > valTemplate[i]	|| valTemplate[i] > maxOrig[i]) {  
 //					return false;
 //				}
@@ -1022,10 +1043,21 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 						break;
 					}
 				}
+				loEnclosed[i] = loMatch;
+				hiEnclosed[i] = hiMatch;
 			}
-			if ((i+1)*64 != currentDepth+1) {
-				int toIgnore = ((i+1)*64) - currentDepth;
-				long mask = (-1L) << toIgnore;
+
+			if (loMatch && hiMatch) {
+				for (; i < (currentDepth+1) >>> BITS_LOG_64; i++) {
+					loEnclosed[i] = loMatch;
+					hiEnclosed[i] = hiMatch;
+				}
+				return true;
+			}
+
+			int toCheck = (currentDepth+1) & BITS_MASK_6;
+			if (toCheck != 0) {
+				long mask = ~((-1L) >>> toCheck);
 				if (!loMatch && (minOrig[i] & mask) > (keyTemplate[i] & mask)) {  
 					return false;
 				}
@@ -1033,7 +1065,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					return false;
 				}
 			}
-			
+
 			return true;
 		}
 
@@ -1187,7 +1219,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			}
 			Node<V> n = cb.root;
 			readAndSplitInfix(n, keyOrigTemplate);
-			if (!checkMatchOrigKD(keyOrigTemplate, n.posDiff)) {
+			if (n.posDiff > 0 && !checkMatchOrigKD(keyOrigTemplate, n.posDiff-1)) {
 				return;
 			}
 			stack[++stackTop] = cb.root;
@@ -1283,13 +1315,13 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			//  --> Track dimensions that could fail.
 
 			//TODO avoid this! For example track DEPTHs separately for each k in an currentDep[]
-			int commonDepth = getDepthAcrossDims(currentDepth);//currentDepth / DIM;
-			int openBits = DEPTH-commonDepth;
+			int commonBits = (currentDepth+1) / DIM;//getDepthAcrossDims(currentDepth);//currentDepth / DIM;
+			int openBits = DEPTH-commonBits;
 			long minMask = (-1L) << openBits;  // 0xFF00
 			long maxMask = ~minMask;           // 0x00FF
 			//We don't need to check the same number of bits in all dimensions. 
 			//--> calc number of dimensions with more bits than others
-			int kLimit = currentDepth - DIM*commonDepth;
+			int kLimit = (currentDepth+1) - DIM*commonBits;
 			
 			//if all have the same length, we can use a simple loop
 			if (kLimit == 0) {
@@ -1319,7 +1351,6 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				}
 			}
 			return true;
-
 		}
 		
 		/**

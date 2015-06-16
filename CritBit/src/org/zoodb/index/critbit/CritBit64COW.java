@@ -18,6 +18,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * Currently write/update access is limited to one thread at a time.
  * Read access guarantees full snapshot consistency for all read access including iterators.
  * 
+ * Version 1.3.2
+ * - Improved mask checking in QueryWithMask
+ * 
  * Version 1.3.1
  * - Fixed issue #3 where iterators won't work with 'null' as values.
  * 
@@ -706,7 +709,7 @@ public class CritBit64COW<V> implements Iterable<V> {
                 return;
             }
             Node<V> n = info.root;
-            if (!checkMatch(info.rootKey, n.posDiff)) {
+            if (!checkMatch(info.rootKey, n.posDiff-1)) {
                 return;
             }
             stack[++stackTop] = info.root;
@@ -780,7 +783,7 @@ public class CritBit64COW<V> implements Iterable<V> {
         }
 
         private boolean checkMatch(long keyTemplate, int currentDepth) {
-            int toIgnore = 64 - currentDepth;
+            int toIgnore = 63 - currentDepth;
             long mask = (-1L) << toIgnore;
             if ((minOrig & mask) > (keyTemplate & mask)) {
                 return false;
@@ -878,7 +881,7 @@ public class CritBit64COW<V> implements Iterable<V> {
                 return;
             }
             Node<V> n = info.root;
-            if (!checkMatch(info.rootKey, n.posDiff)) {
+            if (!checkMatch(info.rootKey, n.posDiff-1)) {
                 return;
             }
             stack[++stackTop] = info.root;
@@ -943,29 +946,17 @@ public class CritBit64COW<V> implements Iterable<V> {
          * @return Whether we have a match or not
          */
         private boolean checkMatchFullIntoNextVal(long keyTemplate, V value) {
-            if ((keyTemplate | minOrig) != keyTemplate) {
-                return false;
-            }
-            if ((keyTemplate & maxOrig) != keyTemplate) {
-                return false;
-            }
+			if (((keyTemplate | minOrig) & maxOrig) != keyTemplate) {
+				return false;
+			}
             nextValue = value;
             nextKey = keyTemplate;
             return true;
         }
 
         private boolean checkMatch(long keyTemplate, int currentDepth) {
-            int toIgnore = 64 - currentDepth;
-            long mask = (-1L) << toIgnore;
-            long myKey = keyTemplate & mask;
-            if ((myKey | (minOrig&mask)) != myKey) {
-                return false;
-            }
-            if ((myKey & (maxOrig&mask)) != myKey) {
-                return false;
-            }
-
-            return true;
+            int toIgnore = 63 - currentDepth;
+			return (((keyTemplate | minOrig) & maxOrig) ^ keyTemplate) >>> toIgnore == 0;
         }
 
         @Override

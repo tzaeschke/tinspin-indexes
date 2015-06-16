@@ -26,6 +26,9 @@ package org.zoodb.index.critbit;
  * In order to store floating point values, please convert them to 'long' with
  * BitTools.toSortableLong(...), also when supplying query parameters.
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
+ *
+ * Version 1.3.2
+ * - Improved mask checking in QueryWithMask
  * 
  * Version 1.3.1
  * - Fixed issue #3 where iterators won't work with 'null' as values.
@@ -645,7 +648,7 @@ public class CritBit64<V> implements Iterable<V> {
 				return;
 			}
 			Node<V> n = cb.root;
-			if (!checkMatch(cb.rootKey, n.posDiff)) {
+			if (!checkMatch(cb.rootKey, n.posDiff-1)) {
 				hasNext = false;
 				return;
 			}
@@ -720,8 +723,8 @@ public class CritBit64<V> implements Iterable<V> {
 		}
 		
 		private boolean checkMatch(long keyTemplate, int currentDepth) {
-			int toIgnore = 64 - currentDepth;
-			long mask = (-1L) << toIgnore;
+            int toIgnore = 63 - currentDepth;
+            long mask = (-1L) << toIgnore;
 			if ((minOrig & mask) > (keyTemplate & mask)) {  
 				return false;
 			}
@@ -817,7 +820,7 @@ public class CritBit64<V> implements Iterable<V> {
 				return;
 			}
 			Node<V> n = cb.root;
-			if (!checkMatch(cb.rootKey, n.posDiff)) {
+			if (!checkMatch(cb.rootKey, n.posDiff-1)) {
 				hasNext = false;
 				return;
 			}
@@ -883,10 +886,7 @@ public class CritBit64<V> implements Iterable<V> {
 		 * @return Whether we have a match or not
 		 */
 		private boolean checkMatchFullIntoNextVal(long keyTemplate, V value) {
-			if ((keyTemplate | minOrig) != keyTemplate) {
-				return false;
-			}
-			if ((keyTemplate & maxOrig) != keyTemplate) {
+			if (((keyTemplate | minOrig) & maxOrig) != keyTemplate) {
 				return false;
 			}
 			nextValue = value;
@@ -895,17 +895,8 @@ public class CritBit64<V> implements Iterable<V> {
 		}
 		
 		private boolean checkMatch(long keyTemplate, int currentDepth) {
-			int toIgnore = 64 - currentDepth;
-			long mask = (-1L) << toIgnore;
-			long myKey = keyTemplate & mask;
-			if ((myKey | (minOrig&mask)) != myKey) {
-				return false;
-			}
-			if ((myKey & (maxOrig&mask)) != myKey) {
-				return false;
-			}
-			
-			return true;
+            int toIgnore = 63 - currentDepth;
+			return (((keyTemplate | minOrig) & maxOrig) ^ keyTemplate) >>> toIgnore == 0;
 		}
 
 		@Override
