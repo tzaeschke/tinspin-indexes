@@ -1241,8 +1241,6 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			return true;
 		}
 		
-		public static long T = 0;
-		
 		private boolean checkMatch(long[] keyTemplate, int startBit, int currentDepth) {
 			int i;
 			int iStart = startBit >>> BITS_LOG_64;
@@ -1254,7 +1252,6 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			//That means, the stored mask[] should be set whenever contain inverse masks...
 			long diffLo = (iStart == 0) ? 0 : domMaskLo[iStart-1];
 			long diffHi = (iStart == 0) ? 0 : domMaskHi[iStart-1];
-			T -= System.currentTimeMillis(); //TODO remove me
 			for (i = iStart; i < (currentDepth+1) >>> BITS_LOG_64; i++) {
 				//calculate all bits that we can ignore during the check below.
 				//calculate local diff
@@ -1266,13 +1263,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				//find unacceptable diffs by comparing global diff with local diff
 				//if ((((diffLo | localDiffLo) ^ diffLo) | ((diffHi | localDiffHi) ^ diffHi)) != 0) {
 				if ((diffLo | localDiffLo) != diffLo || (diffHi | localDiffHi) != diffHi) {
-					T += System.currentTimeMillis(); //TODO remove me
 					return false;
 				}
 				domMaskLo[i] = diffLo;
 				domMaskHi[i] = diffHi;
 			}
-			T += System.currentTimeMillis(); //TODO remove me
 
 			int toCheck = (currentDepth+1) & BITS_MASK_6;
 			if (toCheck != 0) {
