@@ -1222,11 +1222,15 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			long diffHi = (iStart == 0) ? 0 : domMaskHi[iStart-1];
 			for (int i = iStart; i < keyTemplate.length; i++) {
 				//calculate all bits that we can ignore during the check below.
-				long localDiffLo = (keyTemplate[i] ^ minOrig[i]) & ~minOrig[i];
-				long localDiffHi = (keyTemplate[i] ^ maxOrig[i]) & maxOrig[i];
-				diffLo |= localDiffLo;
-				diffHi |= localDiffHi;
-				if (((((keyTemplate[i] | (minOrig[i] & ~diffLo)) & (maxOrig[i] | diffHi)) != keyTemplate[i]))) {
+				//calculate local diff
+				long localDiffLo = keyTemplate[i] ^ minOrig[i];
+				long localDiffHi = keyTemplate[i] ^ maxOrig[i];
+				//calculate global diff by or-ing with 'acceptable' diffs
+				diffLo |= localDiffLo & ~minOrig[i];
+				diffHi |= localDiffHi & maxOrig[i];
+				//find unacceptable diffs by comparing global diff with local diff
+				//if ((((diffLo | localDiffLo) ^ diffLo) | ((diffHi | localDiffHi) ^ diffHi)) != 0) {
+				if ((diffLo | localDiffLo) != diffLo || (diffHi | localDiffHi) != diffHi) {
 					return false;
 				}
 				domMaskLo[i] = diffLo;
@@ -1236,6 +1240,8 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			nextKey = CritBit.clone(keyTemplate);
 			return true;
 		}
+		
+		public static long T = 0;
 		
 		private boolean checkMatch(long[] keyTemplate, int startBit, int currentDepth) {
 			int i;
@@ -1248,19 +1254,25 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			//That means, the stored mask[] should be set whenever contain inverse masks...
 			long diffLo = (iStart == 0) ? 0 : domMaskLo[iStart-1];
 			long diffHi = (iStart == 0) ? 0 : domMaskHi[iStart-1];
+			T -= System.currentTimeMillis(); //TODO remove me
 			for (i = iStart; i < (currentDepth+1) >>> BITS_LOG_64; i++) {
 				//calculate all bits that we can ignore during the check below.
-				long localDiffLo = (keyTemplate[i] ^ minOrig[i]) & ~minOrig[i];
-				long localDiffHi = (keyTemplate[i] ^ maxOrig[i]) & maxOrig[i];
-				diffLo |= localDiffLo;
-				diffHi |= localDiffHi;
-				if (((((keyTemplate[i] | (minOrig[i] & ~diffLo)) 
-						& (maxOrig[i] | diffHi)) != keyTemplate[i]))) {
+				//calculate local diff
+				long localDiffLo = keyTemplate[i] ^ minOrig[i];
+				long localDiffHi = keyTemplate[i] ^ maxOrig[i];
+				//calculate global diff by or-ing with 'acceptable' diffs
+				diffLo |= localDiffLo & ~minOrig[i];
+				diffHi |= localDiffHi & maxOrig[i];
+				//find unacceptable diffs by comparing global diff with local diff
+				//if ((((diffLo | localDiffLo) ^ diffLo) | ((diffHi | localDiffHi) ^ diffHi)) != 0) {
+				if ((diffLo | localDiffLo) != diffLo || (diffHi | localDiffHi) != diffHi) {
+					T += System.currentTimeMillis(); //TODO remove me
 					return false;
 				}
 				domMaskLo[i] = diffLo;
 				domMaskHi[i] = diffHi;
 			}
+			T += System.currentTimeMillis(); //TODO remove me
 
 			int toCheck = (currentDepth+1) & BITS_MASK_6;
 			if (toCheck != 0) {
