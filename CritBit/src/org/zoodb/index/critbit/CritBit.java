@@ -908,7 +908,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			Arrays.fill(readHigherNext, (byte)0);
 
 			if (cb.rootKey != null) {
-				checkMatchFullIntoNextVal(cb.rootKey, 0, cb.rootVal);
+				checkMatchIntoNextVal(cb.rootKey, 0, cb.rootVal);
 				return;
 			}
 			if (cb.root == null) {
@@ -935,7 +935,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					if (checkMatch(valIntTemplate, n.posFirstBit, n.posDiff)) {
 						if (n.loPost != null) {
 							readPostFix(n.loPost, valIntTemplate);
-							if (checkMatchFullIntoNextVal(valIntTemplate, n.posFirstBit, n.loVal)) {
+							if (checkMatchIntoNextVal(valIntTemplate, n.posDiff+1, n.loVal)) {
 								return;
 							} 
 							//proceed to check upper
@@ -954,7 +954,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					if (checkMatch(valIntTemplate, n.posFirstBit, n.posDiff)) {
 						if (n.hiPost != null) {
 							readPostFix(n.hiPost, valIntTemplate);
-							if (checkMatchFullIntoNextVal(valIntTemplate, n.posFirstBit, n.hiVal)) {
+							if (checkMatchIntoNextVal(valIntTemplate, n.posDiff+1, n.hiVal)) {
 								--stackTop;
 								return;
 							} 
@@ -977,12 +977,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 
 
 		/**
-		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
-		 * fits.
+		 * Comparison on the post-fix. Assigns the parameter to 'nextVal' if comparison fits.
 		 * @param keyTemplate
 		 * @return Whether we have a match or not
 		 */
-		private boolean checkMatchFullIntoNextVal(long[] keyTemplate, int startBit, V value) {
+		private boolean checkMatchIntoNextVal(long[] keyTemplate, int startBit, V value) {
 			int iStart = startBit >>> BITS_LOG_64;
 			//We have to remember this lo/hoMatch stuff starting from i=0 because locally exceeding
 			//the boundaries is only problematic if the node is not fully enclosed.
@@ -1143,7 +1142,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			Arrays.fill(readHigherNext, (byte)0);
 
 			if (cb.rootKey != null) {
-				checkMatchFullIntoNextVal(cb.rootKey, 0, cb.rootVal);
+				checkMatchIntoNextVal(cb.rootKey, 0, cb.rootVal);
 				return;
 			}
 			if (cb.root == null) {
@@ -1167,10 +1166,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					readHigherNext[stackTop] = READ_UPPER;
 					//TODO use bit directly to check validity
 					BitTools.setBit(valIntTemplate, n.posDiff, false);
+					//TODO this is bad, we check the whole infix twice per node....
 					if (checkMatch(valIntTemplate, n.posFirstBit, n.posDiff)) {
 						if (n.loPost != null) {
 							readPostFix(n.loPost, valIntTemplate);
-							if (checkMatchFullIntoNextVal(valIntTemplate, n.posFirstBit, n.loVal)) {
+							if (checkMatchIntoNextVal(valIntTemplate, n.posDiff+1, n.loVal)) {
 								return;
 							} 
 							//proceed to check upper
@@ -1189,7 +1189,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					if (checkMatch(valIntTemplate, n.posFirstBit, n.posDiff)) {
 						if (n.hiPost != null) {
 							readPostFix(n.hiPost, valIntTemplate);
-							if (checkMatchFullIntoNextVal(valIntTemplate, n.posFirstBit, n.hiVal)) {
+							if (checkMatchIntoNextVal(valIntTemplate, n.posDiff+1, n.hiVal)) {
 								--stackTop;
 								return;
 							} 
@@ -1212,12 +1212,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 
 
 		/**
-		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
-		 * fits.
+		 * Comparison on the post-fix. Assigns the parameter to 'nextVal' if comparison fits.
 		 * @param keyTemplate
 		 * @return Whether we have a match or not
 		 */
-		private boolean checkMatchFullIntoNextVal(long[] keyTemplate, int startBit, V value) {
+		private boolean checkMatchIntoNextVal(long[] keyTemplate, int startBit, V value) {
 			int iStart = startBit >>> BITS_LOG_64;
 			long diffLo = (iStart == 0) ? 0 : domMaskLo[iStart-1];
 			long diffHi = (iStart == 0) ? 0 : domMaskHi[iStart-1];
@@ -1263,7 +1262,6 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 				domMaskHi[i] = diffHi;
 			}
 
-			//TODO adjust this, or remove  (remove me???)
 			int toCheck = (currentDepth+1) & BITS_MASK_6;
 			if (toCheck != 0) {
 				long mask = ~((-1L) >>> toCheck);
