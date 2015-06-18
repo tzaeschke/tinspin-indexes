@@ -1166,6 +1166,224 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					readHigherNext[stackTop] = READ_UPPER;
 					//TODO use bit directly to check validity
 					BitTools.setBit(valIntTemplate, n.posDiff, false);
+					if (n.loPost != null) {
+						readPostFix(n.loPost, valIntTemplate);
+						if (checkMatchIntoNextVal(valIntTemplate, n.posDiff, n.loVal)) {
+							return;
+						} 
+						//proceed to check upper
+					} else {
+						readInfix(n.lo, valIntTemplate);
+						if (checkMatch(valIntTemplate, n.lo.posFirstBit-1, n.lo.posDiff-1)) {
+							stack[++stackTop] = n.lo;
+							readHigherNext[stackTop] = READ_LOWER;
+							continue;
+						}
+					}
+				}
+				//check upper
+				if (readHigherNext[stackTop] == READ_UPPER) {
+					readHigherNext[stackTop] = RETURN_TO_PARENT;
+					BitTools.setBit(valIntTemplate, n.posDiff, true);
+					if (n.hiPost != null) {
+						readPostFix(n.hiPost, valIntTemplate);
+						if (checkMatchIntoNextVal(valIntTemplate, n.posDiff, n.hiVal)) {
+							--stackTop;
+							return;
+						} 
+						//proceed to move up a level
+					} else {
+						//TODO checkInfix without extracting it
+						readInfix(n.hi, valIntTemplate);
+						if (checkMatch(valIntTemplate, n.hi.posFirstBit-1, n.hi.posDiff-1)) {
+							stack[++stackTop] = n.hi;
+							readHigherNext[stackTop] = READ_LOWER;
+							continue;
+						}
+					}
+				}
+				//proceed to move up a level
+				--stackTop;
+			}
+			//Finished
+			nextValue = null;
+			nextKey = null;
+		}
+
+
+		/**
+		 * Comparison on the post-fix. Assigns the parameter to 'nextVal' if comparison fits.
+		 * @param keyTemplate
+		 * @return Whether we have a match or not
+		 */
+		private boolean checkMatchIntoNextVal(long[] keyTemplate, int startBit, V value) {
+			int iStart = startBit >>> BITS_LOG_64;
+			long diffLo = (iStart == 0) ? 0 : domMaskLo[iStart-1];
+			long diffHi = (iStart == 0) ? 0 : domMaskHi[iStart-1];
+			for (int i = iStart; i < keyTemplate.length; i++) {
+				//calculate all bits that we can ignore during the check below.
+				//calculate local diff
+				long localDiffLo = keyTemplate[i] ^ minOrig[i];
+				long localDiffHi = keyTemplate[i] ^ maxOrig[i];
+				//calculate global diff by or-ing with 'acceptable' diffs
+				diffLo |= localDiffLo & ~minOrig[i];
+				diffHi |= localDiffHi & maxOrig[i];
+				//find unacceptable diffs by comparing global diff with local diff
+				//if ((((diffLo | localDiffLo) ^ diffLo) | ((diffHi | localDiffHi) ^ diffHi)) != 0) {
+				if ((diffLo | localDiffLo) != diffLo || (diffHi | localDiffHi) != diffHi) {
+					return false;
+				}
+			}
+			nextValue = value;
+			nextKey = CritBit.clone(keyTemplate);
+			return true;
+		}
+		
+		private boolean checkMatch(long[] keyTemplate, int startBit, int currentDepth) {
+			int i;
+			int iStart = startBit >>> BITS_LOG_64;
+			//if min/max encloses keyTemp in any dimension on a given depth, then, for lower depth,
+			//this dimension doesn't need to be checked anymore. 
+			//Since we can't not-check, we have to ignore any collisions resulting from the checks.
+			//Or, if possible adjust the check-mask before checking.
+			//E.g. set hiMask (loMask) to 1 (0) for any dimension that should be ignored.
+			//That means, the stored mask[] should be set whenever contain inverse masks...
+			long diffLo = (iStart == 0) ? 0 : domMaskLo[iStart-1];
+			long diffHi = (iStart == 0) ? 0 : domMaskHi[iStart-1];
+			for (i = iStart; i < (currentDepth+1) >>> BITS_LOG_64; i++) {
+				//calculate all bits that we can ignore during the check below.
+				//calculate local diff
+				long localDiffLo = keyTemplate[i] ^ minOrig[i];
+				long localDiffHi = keyTemplate[i] ^ maxOrig[i];
+				//calculate global diff by or-ing with 'acceptable' diffs
+				diffLo |= localDiffLo & ~minOrig[i];
+				diffHi |= localDiffHi & maxOrig[i];
+				//find unacceptable diffs by comparing global diff with local diff
+				//if ((((diffLo | localDiffLo) ^ diffLo) | ((diffHi | localDiffHi) ^ diffHi)) != 0) {
+				if ((diffLo | localDiffLo) != diffLo || (diffHi | localDiffHi) != diffHi) {
+					return false;
+				}
+				domMaskLo[i] = diffLo;
+				domMaskHi[i] = diffHi;
+			}
+
+			int toCheck = (currentDepth+1) & BITS_MASK_6;
+			if (toCheck != 0) {
+				long mask = ~((-1L) >>> toCheck);
+				long localDiffLo = (keyTemplate[i] ^ minOrig[i]) & ~minOrig[i];
+				long localDiffHi = (keyTemplate[i] ^ maxOrig[i]) & maxOrig[i];
+				diffLo |= localDiffLo;
+				diffHi |= localDiffHi;
+				return ((((keyTemplate[i] | (minOrig[i] & ~diffLo)) 
+						& (maxOrig[i] | diffHi)) ^ keyTemplate[i]) & mask) == 0;
+			}
+
+			return true;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return nextKey != null;
+		}
+
+		@Override
+		public V next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			V ret = nextValue;
+			findNext();
+			return ret;
+		}
+
+		public long[] nextKey() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			long[] ret = nextKey;
+			findNext();
+			return ret;
+		}
+
+		public Entry<V> nextEntry() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			Entry<V> ret = new Entry<V>(nextKey, nextValue);
+			findNext();
+			return ret;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+	
+	public static class QueryIteratorWithMask2<V> implements Iterator<V> {
+		private final CritBit<V> cb;
+		private final long[] valIntTemplate;
+		private long[] minOrig;
+		private long[] maxOrig;
+		private long[] nextKey = null; 
+		private V nextValue = null;
+		private final Node<V>[] stack;
+		 //0==read_lower; 1==read_upper; 2==go_to_parent
+		private static final byte READ_LOWER = 0;
+		private static final byte READ_UPPER = 1;
+		private static final byte RETURN_TO_PARENT = 2;
+		private final byte[] readHigherNext;
+		private int stackTop = -1;
+		//This mask remembers whether a certain dimension is fully contained or not 
+		//We have a separate mask for each possible level
+		private final long[] domMaskLo;
+		private final long[] domMaskHi;
+
+		@SuppressWarnings("unchecked")
+		public QueryIteratorWithMask2(CritBit<V> cb, long[] minOrig, long[] maxOrig) {
+			this.cb = cb;
+			this.stack = new Node[cb.DEPTH];
+			this.readHigherNext = new byte[cb.DEPTH];  // default = false
+			int intArrayLen = (cb.DEPTH+63) >>> 6;
+			this.valIntTemplate = new long[intArrayLen];
+			this.domMaskLo = new long[intArrayLen];
+			this.domMaskHi = new long[intArrayLen];
+			reset(minOrig, maxOrig);
+		}
+
+		public void reset(long[] min, long[] max) {
+			stackTop = -1;
+			nextKey = null;
+			this.minOrig = min;
+			this.maxOrig = max;
+			Arrays.fill(readHigherNext, (byte)0);
+
+			if (cb.rootKey != null) {
+				checkMatchIntoNextVal(cb.rootKey, 0, cb.rootVal);
+				return;
+			}
+			if (cb.root == null) {
+				//Tree is empty
+				return;
+			}
+			Node<V> n = cb.root;
+			readInfix(n, valIntTemplate);
+			if (!checkMatch(valIntTemplate, 0, n.posDiff-1)) {
+				return;
+			}
+			stack[++stackTop] = cb.root;
+			findNext();
+		}
+		
+		private void findNext() {
+			while (stackTop >= 0) {
+				Node<V> n = stack[stackTop];
+				//check lower
+				if (readHigherNext[stackTop] == READ_LOWER) {
+					readHigherNext[stackTop] = READ_UPPER;
+					//TODO use bit directly to check validity
+					BitTools.setBit(valIntTemplate, n.posDiff, false);
 					//TODO this is bad, we check the whole infix twice per node....
 					if (checkMatch(valIntTemplate, n.posFirstBit, n.posDiff)) {
 						if (n.loPost != null) {
