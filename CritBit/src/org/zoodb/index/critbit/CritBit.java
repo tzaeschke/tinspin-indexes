@@ -1376,6 +1376,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			//  --> can result in enclosed/diff with hi
 			domMaskLo[i] = diffLo | (domMaskLo[i] & maskFF00);
 			domMaskHi[i] = diffHi | (domMaskHi[i] & maskFF00);
+			//TODO check full enclosing?
 			return true;
 		}
 
@@ -1453,6 +1454,366 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
+		}
+
+	}
+	
+	public static class CheckEmptyWithMask {
+		private final CritBit<?> cb;
+		private final long[] valIntTemplate;
+		private long[] minOrig;
+		private long[] maxOrig;
+		private final Node<?>[] stack;
+		 //0==read_lower; 1==read_upper; 2==go_to_parent
+		private static final byte READ_LOWER = 0;
+		private static final byte READ_UPPER = 1;
+		private static final byte RETURN_TO_PARENT = 2;
+		private final byte[] readHigherNext;
+		private int stackTop = -1;
+		//This mask remembers whether a certain dimension is fully contained or not 
+		//We have a separate mask for each possible level
+		private final long[] domMaskLo;
+		private final long[] domMaskHi;
+		private final long MAX_MASK;
+		private boolean ignoreUpper;
+		private boolean pointFound; 
+
+		/**
+		 * 
+		 * @param cb
+		 * @param DIM
+		 * @param ignoreUpper Whether to ignore points in the upper right corner
+		 */
+		public CheckEmptyWithMask(CritBit<?> cb, int DIM) {
+			this.cb = cb;
+			this.stack = new Node[cb.DEPTH];
+			this.readHigherNext = new byte[cb.DEPTH];  // default = false
+			int intArrayLen = (cb.DEPTH+63) >>> 6;
+			this.valIntTemplate = new long[intArrayLen];
+			this.domMaskLo = new long[intArrayLen];
+			this.domMaskHi = new long[intArrayLen];
+			this.MAX_MASK = ~((-1L) << DIM);
+		}
+
+		public boolean isEmpty(long[] min, long[] max, boolean ignoreUpper) {
+			this.ignoreUpper = ignoreUpper;
+			this.minOrig = min;
+			this.maxOrig = max;
+			Arrays.fill(readHigherNext, (byte)0);
+			pointFound = false;
+
+			if (cb.rootKey != null) {
+				return !checkMatchIntoNextVal(cb.rootKey, 0);
+			}
+			if (cb.root == null) {
+				//Tree is empty
+				return true;
+			}
+			Node<?> n = cb.root;
+			readInfix(n, valIntTemplate);
+			if (!checkMatch(valIntTemplate, 0, n.posDiff-1)) {
+				return true;
+			}
+			return findNext();
+		}
+		
+		private boolean findNext() {
+			int stackTop = -1;
+			stack[++stackTop] = cb.root;
+			//TODO move stack into method
+			while (stackTop >= 0) {
+				Node<?> n = stack[stackTop];
+				//check lower
+				if (readHigherNext[stackTop] == READ_LOWER) {
+					readHigherNext[stackTop] = READ_UPPER;
+					if (checkMatchANdSetSingleBit0(valIntTemplate, n.posDiff)) {
+						if (n.loPost != null) {
+							readPostFix(n.loPost, valIntTemplate);
+							if (checkMatchIntoNextVal(valIntTemplate, n.posDiff+1)) {
+								return false;
+							} 
+							//proceed to check upper
+						} else {
+							readInfix(n.lo, valIntTemplate);
+							if (checkMatch(valIntTemplate, n.lo.posFirstBit, n.lo.posDiff-1)) {
+								if (pointFound) {
+									return false;
+								}
+								stack[++stackTop] = n.lo;
+								readHigherNext[stackTop] = READ_LOWER;
+								continue;
+							}
+						}
+					}
+				}
+				//check upper
+				if (readHigherNext[stackTop] == READ_UPPER) {
+					readHigherNext[stackTop] = RETURN_TO_PARENT;
+					if (checkMatchAndSetSingleBit1(valIntTemplate, n.posDiff)) {
+						if (n.hiPost != null) {
+							readPostFix(n.hiPost, valIntTemplate);
+							if (checkMatchIntoNextVal(valIntTemplate, n.posDiff+1)) {
+								return false;
+							} 
+							//proceed to move up a level
+						} else {
+							//TODO checkInfix without extracting it
+							readInfix(n.hi, valIntTemplate);
+							//int basePos = (n.hi.posFirstBit >>> BITS_LOG_64) * 64;
+							//if (checkMatch(n.hi.infix, n.hi.posFirstBit-basePos, 
+							//		n.hi.posDiff-1-basePos)) {
+							if (checkMatch(valIntTemplate, n.hi.posFirstBit, n.hi.posDiff-1)) {
+								if (pointFound) {
+									return false;
+								}
+								stack[++stackTop] = n.hi;
+								readHigherNext[stackTop] = READ_LOWER;
+								continue;
+							}
+						}
+					}
+				}
+				//proceed to move up a level
+				--stackTop;
+			}
+			//Finished
+			return true;
+		}
+
+
+		/**
+		 * Comparison on the post-fix. Assigns the parameter to 'nextVal' if comparison fits.
+		 * @param keyTemplate
+		 * @return Whether we have a match or not
+		 */
+		private boolean checkMatchIntoNextVal(long[] keyTemplate, int startBit) {
+			int iStart = startBit >>> BITS_LOG_64;
+			long diffLo = (iStart == 0) ? 0 : domMaskLo[iStart-1];
+			long diffHi = (iStart == 0) ? 0 : domMaskHi[iStart-1];
+			if (diffLo == MAX_MASK && diffHi == MAX_MASK) {
+				//if (true) throw new IllegalStateException(); //TODO remove me??!!?!?
+				pointFound = true;
+				return true;
+			}
+			//abort if post-len==0
+			if (startBit >= keyTemplate.length*64) {
+				if (ignoreUpper) {
+					//TODO diffHi && MAX_MASK???
+					if (diffHi == 0 && keyTemplate[keyTemplate.length-1] == maxOrig[maxOrig.length-1]) {
+						//TODO this can't work, 'i' is OOB.
+						if (true) throw new IllegalStateException();
+						return false;
+					}
+				}
+				return true;
+			}
+			for (int i = iStart; i < keyTemplate.length; i++) {
+				//calculate all bits that we can ignore during the check below.
+				//calculate local diff
+				long localDiffLo = keyTemplate[i] ^ minOrig[i];
+				long localDiffHi = keyTemplate[i] ^ maxOrig[i];
+				//calculate global diff by or-ing with 'acceptable' diffs
+				diffLo |= localDiffLo & ~minOrig[i];
+				diffHi |= localDiffHi & maxOrig[i];
+				//find unacceptable diffs by comparing global diff with local diff
+				//if ((((diffLo | localDiffLo) ^ diffLo) | ((diffHi | localDiffHi) ^ diffHi)) != 0) {
+				if ((diffLo | localDiffLo) != diffLo || (diffHi | localDiffHi) != diffHi) {
+					return false;
+				}
+				//abort if fully enclosed
+				if (diffLo == MAX_MASK && diffHi == MAX_MASK) {
+					pointFound = true;
+					return true;
+				}
+			}
+			if (ignoreUpper) {
+				if (diffHi == 0 && keyTemplate[keyTemplate.length-1] == maxOrig[maxOrig.length-1]) {
+					//TODO this can't work, 'i' is OOB.
+					return false;
+				}
+			}
+			pointFound = true;
+			return true;
+		}
+		
+		private boolean checkMatch(long[] keyTemplate, int startBit, int currentDepth) {
+			if (currentDepth < startBit) {
+				return true;
+			}
+			if (startBit == currentDepth) {
+				//use matchSingleBit
+				//TODO remove this? Is it worth it?
+				return checkMatchSingleBit(BitTools.getBit(keyTemplate, startBit), currentDepth);
+			}
+			int i;
+			int iStart = startBit >>> BITS_LOG_64;
+			//if min/max encloses keyTemp in any dimension on a given depth, then, for lower depth,
+			//this dimension doesn't need to be checked anymore. 
+			//Since we can't not-check, we have to ignore any collisions resulting from the checks.
+			//Or, if possible adjust the check-mask before checking.
+			//E.g. set hiMask (loMask) to 1 (0) for any dimension that should be ignored.
+			//That means, the stored mask[] should be set whenever contain inverse masks...
+			long diffLo = (iStart == 0) ? 0 : domMaskLo[iStart-1];
+			long diffHi = (iStart == 0) ? 0 : domMaskHi[iStart-1];
+			if (diffLo == MAX_MASK && diffHi == MAX_MASK) {
+				pointFound = true;
+				return true;
+			}
+			for (i = iStart; i < (currentDepth+1) >>> BITS_LOG_64; i++) {
+				//calculate all bits that we can ignore during the check below.
+				//calculate local diff
+				long localDiffLo = keyTemplate[i] ^ minOrig[i];
+				long localDiffHi = keyTemplate[i] ^ maxOrig[i];
+				//calculate global diff by or-ing with 'acceptable' diffs
+				diffLo |= localDiffLo & ~minOrig[i];
+				diffHi |= localDiffHi & maxOrig[i];
+				//find unacceptable diffs by comparing global diff with local diff
+				if ((diffLo | localDiffLo) != diffLo || (diffHi | localDiffHi) != diffHi) {
+					return false;
+				}
+				domMaskLo[i] = diffLo;
+				domMaskHi[i] = diffHi;
+				//abort for long post-fixes, non-IPP data:
+				if (diffLo == MAX_MASK && diffHi == MAX_MASK) {
+					//this cannot be the upper corner, because it is not enclosed.
+					pointFound = true;
+					return true;
+				}
+			}
+
+			int toCheck = (currentDepth+1) & BITS_MASK_6;
+			if (toCheck != 0) {
+				long mask = ~((-1L) >>> toCheck);
+				long localDiffLo = keyTemplate[i] ^ minOrig[i];
+				long localDiffHi = keyTemplate[i] ^ maxOrig[i];
+				diffLo |= localDiffLo & ~minOrig[i];
+				diffHi |= localDiffHi & maxOrig[i];
+				//find unacceptable diffs by comparing global diff with local diff
+				//if ((diffLo | localDiffLo) != diffLo || (diffHi | localDiffHi) != diffHi) {
+				boolean r = ((((diffLo | localDiffLo) ^ diffLo) | ((diffHi | localDiffHi) ^ diffHi)) 
+						& mask) == 0;
+				if (r) {
+					//TODO |= ????
+					domMaskLo[i] = diffLo;// & mask;
+					domMaskHi[i] = diffHi;// & mask;
+				}
+//				if (diffLo == MAX_MASK && diffHi == MAX_MASK) {
+//					pointFound = true;
+//					return true;
+//				}
+				return r;
+			}
+
+//TODO abort lways on full enclosure
+//TODO don't compare corner if domMask != 0 
+//pointFound = true;
+			if (diffLo == MAX_MASK && diffHi == MAX_MASK) {
+				if (true) throw new IllegalStateException();
+				pointFound = true;
+				return true;
+			}
+			return true;
+		}
+
+		private boolean checkMatchSingleBit(boolean bit, int currentDepth) {
+			int i = currentDepth >>> BITS_LOG_64;
+			long diffLo = (i == 0) ? 0 : domMaskLo[i-1];
+			long diffHi = (i == 0) ? 0 : domMaskHi[i-1];
+
+			//setting only one bit is a bit more difficult:
+			//- we need to include higher bits from domMask[i]
+			//- we need to set/unset the dom-bit at currentDepth
+			//- Maybe we need to erase lower bits? -> Probably not
+			int toCheck = currentDepth & BITS_MASK_6;
+			long mask = 0x8000000000000000L >>> toCheck;
+			long keyTemplate = bit ? mask : 0;
+
+			long localDiffLo = (keyTemplate ^ minOrig[i]) & mask;
+			diffLo |= localDiffLo & ~minOrig[i];
+			
+			long localDiffHi = (keyTemplate ^ maxOrig[i]) & mask;
+			diffHi |= localDiffHi & maxOrig[i];
+			
+			//find unacceptable diffs by comparing global diff with local diff
+			if ((diffLo | localDiffLo) != diffLo || (diffHi | localDiffHi) != diffHi) {
+				return false;
+			}
+			long maskFF00 = ~((0xFFFFFFFFFFFFFFFFL) >>> toCheck);
+			domMaskLo[i] = diffLo | (domMaskLo[i] & maskFF00);
+			domMaskHi[i] = diffHi | (domMaskHi[i] & maskFF00);
+			//TODO check full enclosing?
+			return true;
+		}
+
+		private boolean checkMatchANdSetSingleBit0(long[] valTemplate, int currentDepth) {
+			int i = currentDepth >>> BITS_LOG_64;
+			long diffLo = (i == 0) ? 0 : domMaskLo[i-1];
+
+			//setting only one bit is a bit more difficult:
+			//- we need to include higher bits from domMask[i]
+			//- we need to set/unset the dom-bit at currentDepth
+			//- Maybe we need to erase lower bits? -> Probably not
+			int toCheck = currentDepth & BITS_MASK_6;
+			long mask = 0x8000000000000000L >>> toCheck;
+
+			long localDiffLo = minOrig[i] & mask;
+			//diffLo |= localDiffLo & ~minOrig[i]; //always |= 0
+			
+			//find unacceptable diffs by comparing global diff with local diff
+			if ((diffLo | localDiffLo) != diffLo) {
+				return false;
+			}
+			valTemplate[i] &= ~mask;
+			long localDiffHi = maxOrig[i] & mask;
+			long diffHi = (i == 0) ? 0 : domMaskHi[i-1];
+			diffHi |= localDiffHi & maxOrig[i];
+
+			long maskFF00 = ~((0xFFFFFFFFFFFFFFFFL) >>> toCheck);
+			//0 --> can collide with lo 
+			//  --> can result in enclosed/diff with hi
+			domMaskLo[i] = diffLo | (domMaskLo[i] & maskFF00);
+			domMaskHi[i] = diffHi | (domMaskHi[i] & maskFF00);
+			//TODO check full enclosing here?
+			//TODO if we do, then stop checking at beginning of other matchXYZ methods
+			return true;
+		}
+
+		private boolean checkMatchAndSetSingleBit1(long[] keyTemplate, int currentDepth) {
+			int iStart = currentDepth >>> BITS_LOG_64;
+			int i = iStart;
+			//if min/max encloses keyTemp in any dimension on a given depth, then, for lower depth,
+			//this dimension doesn't need to be checked anymore. 
+			//Since we can't not-check, we have to ignore any collisions resulting from the checks.
+			//Or, if possible adjust the check-mask before checking.
+			//E.g. set hiMask (loMask) to 1 (0) for any dimension that should be ignored.
+			//That means, the stored mask[] should be set whenever contain inverse masks...
+			long diffHi = (iStart == 0) ? 0 : domMaskHi[iStart-1];
+
+			//setting only one bit is a bit more difficult:
+			//- we need to include higher bits from domMask[i]
+			//- we need to set/unset the dom-bit at currentDepth
+			//- Maybe we need to erase lower bits? -> Probably not
+			int toCheck = currentDepth & BITS_MASK_6;
+			long mask = 0x8000000000000000L >>> toCheck;
+
+			long localDiffHi = (mask ^ maxOrig[i]) & mask;
+			//diffHi |= localDiffHi & maxOrig[i]; //always |=0
+			
+			//find unacceptable diffs by comparing global diff with local diff
+			if ((diffHi | localDiffHi) != diffHi) {
+				return false;
+			}
+			keyTemplate[i] |= mask;
+			long localDiffLo = (mask ^ minOrig[i]) & mask;
+			long diffLo = (iStart == 0) ? 0 : domMaskLo[iStart-1];
+			diffLo |= localDiffLo & ~minOrig[i];
+			
+			long maskFF00 = ~((0xFFFFFFFFFFFFFFFFL) >>> toCheck);
+			//1 --> can collide with hi 
+			//  --> can result in enclosed/diff with lo
+			domMaskLo[i] = diffLo | (domMaskLo[i] & maskFF00);
+			domMaskHi[i] = diffHi | (domMaskHi[i] & maskFF00);
+			return true;
 		}
 
 	}
