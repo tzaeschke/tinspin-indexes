@@ -722,4 +722,41 @@ public class TestCritBit64 {
 		}
 		return r;
 	}
+	
+	@Test public void testEmptyQWM() {
+		CritBit64<long[]> cb = newCritBit();
+		cb.put(64, new long[]{0, 0, 0, 0, 0, 0, 0});
+		cb.put(65, new long[]{5, 2, 2, 2, 2, 2, 3});
+
+		CritBit64.QueryIteratorMask<long[]> it2 = cb.queryWithMask(0, 63);
+		while (it2.hasNext()) {
+			CritBit64.Entry<long[]> e = it2.nextEntry();
+			assertTrue("key=" + e.key(), e.key() >= 64);
+			assertNotNull(e.value());
+		}
+		CritBit64.QueryIteratorMask<long[]> it = cb.queryWithMask(0, 63);
+		while (it.hasNext()) {
+			long[] x = it.next();
+			assertNotNull(x);
+		}
+	}
+	
+	@Test public void testEmptyQuery() {
+		CritBit64<long[]> cb = newCritBit();
+		cb.put(64, new long[]{0, 0, 0, 0, 0, 0, 0});
+		cb.put(65, new long[]{5, 2, 2, 2, 2, 2, 3});
+
+		CritBit64.QueryIterator<long[]> it2 = cb.query(0, 63);
+		while (it2.hasNext()) {
+			CritBit64.Entry<long[]> e = it2.nextEntry();
+			assertTrue("key=" + e.key(), e.key() >= 64);
+			assertNotNull(e.value());
+		}
+		CritBit64.QueryIterator<long[]> it = cb.query(0, 63);
+		while (it.hasNext()) {
+			long[] x = it.next();
+			assertNotNull(x);
+		}
+	}
+
 }

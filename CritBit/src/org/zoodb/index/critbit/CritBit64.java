@@ -490,6 +490,7 @@ public class CritBit64<V> implements Iterable<V> {
 		size--;
 	}
 
+	@Override
 	public CBIterator<V> iterator() {
 		return new CBIterator<V>(this, DEPTH);
 	}

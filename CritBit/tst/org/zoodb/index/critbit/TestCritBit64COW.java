@@ -2,6 +2,7 @@ package org.zoodb.index.critbit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -388,4 +389,39 @@ public class TestCritBit64COW {
 		assertFalse(it.hasNext());
 	}
 
+	@Test public void testEmptyQWM() {
+		CritBit64COW<long[]> cb = CritBit64COW.create();
+		cb.put(64, new long[]{0, 0, 0, 0, 0, 0, 0});
+		cb.put(65, new long[]{5, 2, 2, 2, 2, 2, 3});
+
+		CritBit64COW.QueryIteratorMask<long[]> it2 = cb.queryWithMask(0, 63);
+		while (it2.hasNext()) {
+			CritBit64COW.Entry<long[]> e = it2.nextEntry();
+			assertTrue("key=" + e.key(), e.key() >= 64);
+			assertNotNull(e.value());
+		}
+		CritBit64COW.QueryIteratorMask<long[]> it = cb.queryWithMask(0, 63);
+		while (it.hasNext()) {
+			long[] x = it.next();
+			assertNotNull(x);
+		}
+	}
+	
+	@Test public void testEmptyQuery() {
+		CritBit64COW<long[]> cb = CritBit64COW.create();
+		cb.put(64, new long[]{0, 0, 0, 0, 0, 0, 0});
+		cb.put(65, new long[]{5, 2, 2, 2, 2, 2, 3});
+
+		CritBit64COW.QueryIterator<long[]> it2 = cb.query(0, 63);
+		while (it2.hasNext()) {
+			CritBit64COW.Entry<long[]> e = it2.nextEntry();
+			assertTrue("key=" + e.key(), e.key() >= 64);
+			assertNotNull(e.value());
+		}
+		CritBit64COW.QueryIterator<long[]> it = cb.query(0, 63);
+		while (it.hasNext()) {
+			long[] x = it.next();
+			assertNotNull(x);
+		}
+	}
 }
