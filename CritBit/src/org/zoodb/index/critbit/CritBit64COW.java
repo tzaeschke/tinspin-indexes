@@ -56,27 +56,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class CritBit64COW<V> extends CritBit64<V> implements Iterable<V> {
 
-    private final int DEPTH = 64;
     private final Lock writeLock = new ReentrantLock();
-
-    private AtomicInfo<V> info = new AtomicInfo<>();
-
-    private static class AtomicInfo<V> {
-        private Node<V> root;
-        //the following contains either the actual key or the prefix for the sub-node
-        private long rootKey;
-        private V rootVal;
-        private int size;
-
-        public AtomicInfo<V> copy() {
-            AtomicInfo<V> c = new AtomicInfo<>();
-            c.root = this.root;
-            c.rootKey = this.rootKey;
-            c.rootVal = this.rootVal;
-            c.size = this.size;
-            return c;
-        }
-    }
 
     private CritBit64COW() {
         //private
@@ -530,6 +510,7 @@ public class CritBit64COW<V> extends CritBit64<V> implements Iterable<V> {
     	}
         return null;
     }
+    
     private void updateParentAfterRemove(AtomicInfo<V> newInfo, Node<V> parent, long newPost, 
     		V newVal, Node<V> newSub, boolean isParentHigh) {
 
@@ -548,42 +529,6 @@ public class CritBit64COW<V> extends CritBit64<V> implements Iterable<V> {
             parent.lo = newSub;
         }
         newInfo.size--;
-    }
-
-    @Override
-	public CBIterator<V> iterator() {
-    	AtomicInfo<V> local  = info;
-        return new CBIterator<V>(local.size, DEPTH, local.rootKey, local.rootVal, local.root);
-    }
-
-
-    /**
-     * Queries the tree for entries with min<=key<=max.
-     * @param min
-     * @param max
-     * @return An iterator over the matching entries.
-     */
-    @Override
-    public QueryIterator<V> query(long min, long max) {
-    	AtomicInfo<V> local  = info;
-        return new QueryIterator<V>(local.size, min, max, DEPTH, 
-        		local.rootKey, local.rootVal, local.root);
-    }
-
-
-    /**
-     * Queries the tree for entries with min<=key<=max. Unlike the normal query, this
-     * query also excludes all elements with (key|min)!=key and (key&max!=max).
-     * See PH-Tree for a discussion.
-     * @param min
-     * @param max
-     * @return An iterator over the matching entries.
-     */
-    @Override
-    public QueryIteratorMask<V> queryWithMask(long min, long max) {
-    	AtomicInfo<V> local  = info;
-    	return new QueryIteratorMask<V>(local.size, min, max, DEPTH, 
-        		local.rootKey, local.rootVal, local.root);
     }
 
 }

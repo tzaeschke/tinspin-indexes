@@ -338,6 +338,67 @@ public class TestCritBit64 {
 	}
 
 	@Test
+	public void testQueries64WithReset() {
+		for (int r = 0; r < 1000; r++) {
+			Random R = new Random(r);
+			int N = 10000;
+			long[] a = new long[N];
+			CritBit64<Integer> cb = newCritBit(); 
+			for (int i = 0; i < N; i++) {
+				a[i] = R.nextLong();
+				//System.out.println(a[i]>>>32 + ",");
+				//System.out.println("Inserting: " + a[i] + " / " + BitTools.toBinary(a[i], 64));
+				if (cb.contains(a[i])) {
+					i--;
+					continue;
+				}
+				assertNull(cb.put(a[i], i));
+			}
+			
+			assertEquals(N, cb.size());
+	
+			//test iterators
+			long min = Long.MIN_VALUE;
+			long max = Long.MAX_VALUE;
+			//value iteration
+			QueryIterator<Integer> it = cb.query(min, max);
+			it.reset(cb, min, max);
+			int n = 0;
+			ArrayList<Integer> sortedResults = new ArrayList<>();
+			while (it.hasNext()) {
+				Integer val = it.next();
+				assertNotNull(val);
+				sortedResults.add(val);
+				n++;
+			}
+			assertEquals(N, n);
+
+			//key iteration
+			it.reset(cb, min, max);
+			n = 0;
+			while (it.hasNext()) {
+				long key = it.nextKey();
+				//assure same order
+				assertEquals(sortedResults.get(n), cb.get(key));
+				n++;
+			}
+			assertEquals(N, n);
+			
+			//entry iteration
+			it.reset(cb, min, max);
+			n = 0;
+			while (it.hasNext()) {
+				Entry<Integer> e = it.nextEntry();
+				long key = e.key();
+				assertEquals(sortedResults.get(n), cb.get(key));
+				assertEquals(sortedResults.get(n), e.value());
+				n++;
+			}
+			assertEquals(N, n);
+		}
+	}
+
+	@Test
 	public void testIterators64() {
 		for (int r = 0; r < 1000; r++) {
 			Random R = new Random(r);
@@ -394,11 +455,70 @@ public class TestCritBit64 {
 	}
 
 	@Test
+	public void testIterators64WithReset() {
+		for (int r = 0; r < 1000; r++) {
+			Random R = new Random(r);
+			int N = 10000;
+			long[] a = new long[N];
+			CritBit64<Integer> cb = newCritBit(); 
+			for (int i = 0; i < N; i++) {
+				a[i] = R.nextLong();
+				//System.out.println(a[i]>>>32 + ",");
+				//System.out.println("Inserting: " + a[i] + " / " + BitTools.toBinary(a[i], 64));
+				if (cb.contains(a[i])) {
+					i--;
+					continue;
+				}
+				assertNull(cb.put(a[i], i));
+			}
+			
+			assertEquals(N, cb.size());
+	
+			//test iterators
+			//value iteration
+			CBIterator<Integer> it = cb.iterator();
+			it.reset(cb);
+			int n = 0;
+			ArrayList<Integer> sortedResults = new ArrayList<>();
+			while (it.hasNext()) {
+				Integer val = it.next();
+				assertNotNull(val);
+				sortedResults.add(val);
+				n++;
+			}
+			assertEquals(N, n);
+			
+			//key iteration
+			it.reset(cb);
+			n = 0;
+			while (it.hasNext()) {
+				long key = it.nextKey();
+				//assure same order
+				assertEquals(sortedResults.get(n), cb.get(key));
+				n++;
+			}
+			assertEquals(N, n);
+			
+			//entry iteration
+			it.reset(cb);
+			n = 0;
+			while (it.hasNext()) {
+				Entry<Integer> e = it.nextEntry();
+				long key = e.key();
+				assertEquals(sortedResults.get(n), cb.get(key));
+				assertEquals(sortedResults.get(n), e.value());
+				n++;
+			}
+			assertEquals(N, n);
+		}
+	}
+
+	@Test
 	public void testIteratorWithNullValues() {
 		int N = 10000;
 		Random R = new Random(0);
 
-		CritBit64<?> cb = newCritBit();
+		CritBit64<Object> cb = newCritBit();
 		long[] data = new long[N];
 		for (int i = 0; i < N; i++) {
 			long l = R.nextInt(123456789); 
@@ -407,7 +527,7 @@ public class TestCritBit64 {
 		}
 		
 		//test extent
-		CBIterator<?> it = cb.iterator();
+		CBIterator<Object> it = cb.iterator();
 		int n = 0;
 		while (it.hasNext()) {
 			Entry<?> e = it.nextEntry();
@@ -416,10 +536,31 @@ public class TestCritBit64 {
 		}
 		assertEquals(N, n);
 		
+		//test reset
+		it.reset(cb);
+		n = 0;
+		while (it.hasNext()) {
+			Entry<?> e = it.nextEntry();
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+
+		
 		//test query
 		long min = Long.MIN_VALUE;
 		long max = Long.MAX_VALUE;
-		QueryIterator<?> qi = cb.query(min, max);
+		QueryIterator<Object> qi = cb.query(min, max);
+		n = 0;
+		while (qi.hasNext()) {
+			Entry<?> e = qi.nextEntry();
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+
+		//test rest
+		qi.reset(cb, min, max);
 		n = 0;
 		while (qi.hasNext()) {
 			Entry<?> e = qi.nextEntry();
@@ -429,7 +570,17 @@ public class TestCritBit64 {
 		assertEquals(N, n);
 		
 		//test query
-		QueryIteratorMask<?> qim = cb.queryWithMask(0, Long.MAX_VALUE);
+		QueryIteratorMask<Object> qim = cb.queryWithMask(0, Long.MAX_VALUE);
+		n = 0;
+		while (qim.hasNext()) {
+			Entry<?> e = qim.nextEntry();
+			assertNull(e.value());
+			n++;
+		}
+		assertEquals(N, n);
+
+		//test reset
+		qim.reset(cb, 0, Long.MAX_VALUE);
 		n = 0;
 		while (qim.hasNext()) {
 			Entry<?> e = qim.nextEntry();

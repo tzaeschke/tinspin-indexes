@@ -2,6 +2,7 @@ v 1.3.4
 =======
 [2015-10-20]
 - Merged CB64 and CB64COW
+- Implemented resetable iterators
 
 v 1.3.3
 =======
