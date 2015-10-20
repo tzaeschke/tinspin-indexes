@@ -68,7 +68,7 @@ public class CritBit64<V> implements Iterable<V> {
 
 	private int size;
 	
-	private static class Node<V> {
+	protected static class Node<V> {
 		//TODO replace posDiff with posMask 
 		//     --> Possibly easier to calculate (non-log?)
 		//     --> Similarly powerful....
@@ -89,9 +89,19 @@ public class CritBit64<V> implements Iterable<V> {
 			this.hiVal = hiVal;
 			this.posDiff = (byte) posDiff;
 		}
+
+        Node(Node<V> original) {
+            this.loVal = original.loVal;
+            this.hiVal = original.hiVal;
+            this.lo = original.lo;
+            this.hi = original.hi;
+            this.loPost = original.loPost;
+            this.hiPost = original.hiPost;
+            this.posDiff = original.posDiff;
+        }
 	}
 	
-	private CritBit64() {
+	protected CritBit64() {
 		//private 
 	}
 	
@@ -492,7 +502,7 @@ public class CritBit64<V> implements Iterable<V> {
 
 	@Override
 	public CBIterator<V> iterator() {
-		return new CBIterator<V>(this, DEPTH);
+		return new CBIterator<V>(size(), DEPTH, rootKey, rootVal, root);
 	}
 	
 	public static class CBIterator<V> implements Iterator<V> {
@@ -508,21 +518,21 @@ public class CritBit64<V> implements Iterable<V> {
 		private int stackTop = -1;
 
 		@SuppressWarnings("unchecked")
-		public CBIterator(CritBit64<V> cb, int DEPTH) {
+		public CBIterator(int size, int DEPTH, long rootKey, V rootVal, Node<V> root) {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
 
-			if (cb.size == 0) {
+			if (size == 0) {
 				//Tree is empty
 				hasNext = false;
 				return;
 			}
-			if (cb.size == 1) {
-				nextValue = cb.rootVal;
-				nextKey = cb.rootKey;
+			if (size == 1) {
+				nextValue = rootVal;
+				nextKey = rootKey;
 				return;
 			}
-			stack[++stackTop] = cb.root;
+			stack[++stackTop] = root;
 			findNext();
 		}
 
@@ -613,7 +623,7 @@ public class CritBit64<V> implements Iterable<V> {
 	 * @return An iterator over the matching entries.
 	 */
 	public QueryIterator<V> query(long min, long max) {
-		return new QueryIterator<V>(this, min, max, DEPTH);
+		return new QueryIterator<V>(size(), min, max, DEPTH, rootKey, rootVal, root);
 	}
 	
 	public static class QueryIterator<V> implements Iterator<V> {
@@ -632,29 +642,30 @@ public class CritBit64<V> implements Iterable<V> {
 		private int stackTop = -1;
 
 		@SuppressWarnings("unchecked")
-		public QueryIterator(CritBit64<V> cb, long minOrig, long maxOrig, int DEPTH) {
+		public QueryIterator(int size, long minOrig, long maxOrig, int DEPTH,
+				long rootKey, V rootVal, Node<V> root) {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			this.prefixes = new long[DEPTH];
 			this.minOrig = minOrig;
 			this.maxOrig = maxOrig;
 
-			if (cb.size == 0) {
+			if (size == 0) {
 				//Tree is empty
 				hasNext = false;
 				return;
 			}
-			if (cb.size == 1) {
-				hasNext = checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
+			if (size == 1) {
+				hasNext = checkMatchFullIntoNextVal(rootKey, rootVal);
 				return;
 			}
-			Node<V> n = cb.root;
-			if (!checkMatch(cb.rootKey, n.posDiff-1)) {
+			Node<V> n = root;
+			if (!checkMatch(rootKey, n.posDiff-1)) {
 				hasNext = false;
 				return;
 			}
-			stack[++stackTop] = cb.root;
-			prefixes[stackTop] = cb.rootKey;
+			stack[++stackTop] = root;
+			prefixes[stackTop] = rootKey;
 			findNext();
 		}
 
@@ -785,7 +796,7 @@ public class CritBit64<V> implements Iterable<V> {
 	 * @return An iterator over the matching entries.
 	 */
 	public QueryIteratorMask<V> queryWithMask(long min, long max) {
-		return new QueryIteratorMask<V>(this, min, max, DEPTH);
+		return new QueryIteratorMask<V>(size(), min, max, DEPTH, rootKey, rootVal, root);
 	}
 	
 	public static class QueryIteratorMask<V> implements Iterator<V> {
@@ -804,29 +815,30 @@ public class CritBit64<V> implements Iterable<V> {
 		private int stackTop = -1;
 
 		@SuppressWarnings("unchecked")
-		public QueryIteratorMask(CritBit64<V> cb, long minOrig, long maxOrig, int DEPTH) {
+		public QueryIteratorMask(int size, long minOrig, long maxOrig, int DEPTH,
+				long rootKey, V rootVal, Node<V> root) {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			this.prefixes = new long[DEPTH];
 			this.minOrig = minOrig;
 			this.maxOrig = maxOrig;
 
-			if (cb.size == 0) {
+			if (size == 0) {
 				//Tree is empty
 				hasNext = false;
 				return;
 			}
-			if (cb.size == 1) {
-				hasNext = checkMatchFullIntoNextVal(cb.rootKey, cb.rootVal);
+			if (size == 1) {
+				hasNext = checkMatchFullIntoNextVal(rootKey, rootVal);
 				return;
 			}
-			Node<V> n = cb.root;
-			if (!checkMatch(cb.rootKey, n.posDiff-1)) {
+			Node<V> n = root;
+			if (!checkMatch(rootKey, n.posDiff-1)) {
 				hasNext = false;
 				return;
 			}
-			stack[++stackTop] = cb.root;
-			prefixes[stackTop] = cb.rootKey;
+			stack[++stackTop] = root;
+			prefixes[stackTop] = rootKey;
 			findNext();
 		}
 
