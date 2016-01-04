@@ -1,2 +1,2 @@
-before_script: cd project
+before_script: cd CritBit
 language: java
