@@ -12,25 +12,21 @@
 		<maven>3.0.3</maven>
 	</prerequisites>
 
-	<parent>
-		<groupId>org.sonatype.oss</groupId>
-		<artifactId>oss-parent</artifactId>
-		<version>7</version>
-	</parent>
-	<name>CritBit</name>
-	<description>ZooDB CritBit Index.</description>
-	<url>https://github.com/tzaeschke/critbit</url>
+	<name>zoodb-indexes</name>
+	<description>ZooDB in-memory indexes</description>
+	<url>https://github.com/tzaeschke/zoodb-indexes</url>
 	<licenses>
-		<license>
-			<name>GNU Lesser General Public License</name>
-			<url>http://www.gnu.org/licenses/lgpl.html</url>
-			<distribution>repo</distribution>
+	    <license>
+	        <name>Apache License, Version 2.0</name>
+    	    <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
 	<scm>
-		<url>https://github.com/tzaeschke/critbit</url>
-		<connection>scm:git:git@github.com:tzaeschke/critbit.git</connection>
-		<developerConnection>scm:git:git@github.com:tzaeschke/critbit.git</developerConnection>
+		<url>https://github.com/tzaeschke/zoodb-indexes</url>
+		<connection>scm:git:git@github.com:tzaeschke/zoodb-indexes.git</connection>
+		<developerConnection>scm:git:git@github.com:tzaeschke/zoodb-indexes.git</developerConnection>
 	</scm>
 	<developers>
 		<developer>
@@ -41,7 +37,7 @@
 	</developers>
 	<issueManagement>
 		<system>github</system>
-		<url>https://github.com/tzaeschke/critbit/issues</url>
+		<url>https://github.com/tzaeschke/zoodb-indexes/issues</url>
 	</issueManagement>
 
 	<repositories>
@@ -67,8 +63,6 @@
 	</dependencies>
 
 	<build>
-		<sourceDirectory>src</sourceDirectory>
-		<testSourceDirectory>tst</testSourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
