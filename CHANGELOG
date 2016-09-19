@@ -1,4 +1,10 @@
 
+[2016-09-19]
+- Changed structure to standard maven structure
+- Changed License to Apache License 2.0
+- Renamed project from CritBit to zoodb-indexes
+- Added quadtree and R*Tree implementations
+
 [2016-01-04]
 - Added .travis.yml
 
