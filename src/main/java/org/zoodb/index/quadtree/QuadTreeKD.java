@@ -362,6 +362,9 @@ public class QuadTreeKD<T> {
     			//scale search dist with dimensions.
     			dist = dist * Math.pow(k/(double)n, 1/(double)dims);
     		}
+    		if (dist <= 0.0) {
+    			return node.getSideLength();
+    		}
     		return dist;
     	} else {
     		QNode<T>[] nodes = node.getChildNodes(); 
@@ -374,10 +377,7 @@ public class QuadTreeKD<T> {
     		//okay, this directory node contains the point, but none of the leaves does.
     		//We just return the size of this node, because all it's leaf nodes should
     		//contain more than enough candidate in proximity of 'point'.
-    		double distMin = QUtil.distance(point, node.getMin()); 
-    		double distMax = QUtil.distance(point, node.getMax());
-    		//Return distance to farthest corner as approximation
-    		return distMin < distMax ? distMax : distMin;
+   			return node.getSideLength();
     	}
     }
     

@@ -363,6 +363,9 @@ public class QuadTreeKD<T> {
     			//scale search dist with dimensions.
     			dist = dist * Math.pow(k/(double)n, 1/(double)dims);
     		}
+    		if (dist <= 0.0) {
+    			return node.getRadius();
+    		}
     		return dist;
     	} else {
     		QNode<T>[] nodes = node.getChildNodes(); 

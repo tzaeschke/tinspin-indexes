@@ -79,7 +79,8 @@ public class QuadTreeRKD<T> {
 	
 	/**
 	 * Insert a key-value pair.
-	 * @param key the key
+	 * @param keyL the lower key
+	 * @param keyU the upper key
 	 * @param value the value
 	 */
 	@SuppressWarnings("unchecked")
@@ -121,7 +122,8 @@ public class QuadTreeRKD<T> {
 	
 	/**
 	 * Check whether a given key exists.
-	 * @param key the key to check
+	 * @param keyL the lower key to check
+	 * @param keyU the upper key to check
 	 * @return true iff the key exists
 	 */
 	public boolean containsExact(double[] keyL, double[] keyU) {
@@ -133,7 +135,8 @@ public class QuadTreeRKD<T> {
 	
 	/**
 	 * Get the value associates with the key.
-	 * @param key the key to look up
+	 * @param keyL the lower key to look up
+	 * @param keyU the upper key to look up
 	 * @return the value for the key or 'null' if the key was not found
 	 */
 	public T getExact(double[] keyL, double[] keyU) {
@@ -146,7 +149,8 @@ public class QuadTreeRKD<T> {
 	
 	/**
 	 * Remove a key.
-	 * @param key key to remove
+	 * @param keyL key to remove
+	 * @param keyU key to remove
 	 * @return the value associated with the key or 'null' if the key was not found
 	 */
 	public T removeExact(double[] keyL, double[] keyU) {
@@ -165,8 +169,10 @@ public class QuadTreeRKD<T> {
 
 	/**
 	 * Reinsert the key.
-	 * @param oldKey old key
-	 * @param newKey new key
+	 * @param oldKeyL old key
+	 * @param oldKeyU old key
+	 * @param newKeyL new key
+	 * @param newKeyU new key
 	 * @return the value associated with the key or 'null' if the key was not found.
 	 */
 	@SuppressWarnings("unchecked")
@@ -371,10 +377,7 @@ public class QuadTreeRKD<T> {
     		//okay, this directory node contains the point, but none of the leaves does.
     		//We just return the size of this node, because all it's leaf nodes should
     		//contain more than enough candidate in proximity of 'point'.
-    		double distMin = QUtil.distance(point, node.getMin()); 
-    		double distMax = QUtil.distance(point, node.getMax());
-    		//Return distance to farthest corner as approximation
-    		return distMin < distMax ? distMax : distMin;
+   			return node.getSideLength();
     	}
 
     	//This is a leaf that would contain a good candidate.
@@ -387,6 +390,9 @@ public class QuadTreeRKD<T> {
     		//scale search dist with dimensions.
     		dist = dist * Math.pow(k/(double)n, 1/(double)dims);
     	}
+		if (dist <= 0.0) {
+			return node.getSideLength();
+		}
     	return dist;
     }
     

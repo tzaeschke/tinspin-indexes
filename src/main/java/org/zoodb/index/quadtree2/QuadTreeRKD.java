@@ -393,7 +393,10 @@ public class QuadTreeRKD<T> {
     		//scale search dist with dimensions.
     		dist = dist * Math.pow(k/(double)n, 1/(double)dims);
     	}
-    	return dist;
+		if (dist <= 0.0) {
+			return node.getSideLength();
+		}
+		return dist;
     }
     
     private void knnSearchNew(QRNode<T> start, double[] center, int k, double range,
