@@ -186,9 +186,12 @@ public class RTree<T> {
 	 * @param entries entries to bulk-load.
 	 */
 	public void load(Entry<T>[] entries) {
-		Arrays.sort(entries);
-		size += entries.length;
-		throw new UnsupportedOperationException();
+		STRLoader<T> bulkLoader = new STRLoader<>();
+		bulkLoader.load(entries);
+		size = bulkLoader.getSize();
+		nNodes = bulkLoader.getNNodes();
+		root = bulkLoader.getRoot();
+		depth = bulkLoader.getDepth();
 	}
 	
 	/**

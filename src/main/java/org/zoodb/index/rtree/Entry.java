@@ -153,6 +153,16 @@ public class Entry<T> implements Comparable<Entry<T>> {
 		return true;
 	}
 
+	public static boolean calcIncludes(double[] minOut, double[] maxOut, 
+			double[] minIn, double[] maxIn) {
+		for (int i = 0; i < minOut.length; i++) {
+			if (minOut[i] > minIn[i] || maxOut[i] < maxIn[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	/**
 	 * Calculates the bounding boxes and the estimated dead space.
 	 * @param entries
