@@ -18,7 +18,9 @@ package org.zoodb.index.quadtree2;
 
 import java.util.Arrays;
 
-public class QREntry<T> {
+import org.zoodb.index.RectangleEntry;
+
+public class QREntry<T> implements RectangleEntry<T> {
 
 	private double[] pointL;
 	private double[] pointU;
@@ -30,15 +32,18 @@ public class QREntry<T> {
 		this.value = value;
 	}
 	
-	public double[] getPointL() {
+	@Override
+	public double[] lower() {
 		return pointL;
 	}
 	
-	public double[] getPointU() {
+	@Override
+	public double[] upper() {
 		return pointU;
 	}
 	
-	public T getValue() {
+	@Override
+	public T value() {
 		return value;
 	}
 
@@ -47,8 +52,8 @@ public class QREntry<T> {
 	}
 
 	public boolean isExact(QREntry<T> e) {
-		return QUtil.isPointEqual(pointL, e.getPointL()) 
-				&& QUtil.isPointEqual(pointU, e.getPointU());
+		return QUtil.isPointEqual(pointL, e.lower()) 
+				&& QUtil.isPointEqual(pointU, e.upper());
 	}
 
 	@Override

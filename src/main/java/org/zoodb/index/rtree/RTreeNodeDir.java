@@ -45,7 +45,7 @@ class RTreeNodeDir<T> extends RTreeNode<T> {
 		}
 		if (RTree.DEBUG && false) {
 			for (int i = 0; i < children.size()-1; i++) {
-				if (Entry.checkOverlap(e.min(), e.max(), children.get(i))) {
+				if (Entry.checkOverlap(e.lower(), e.upper(), children.get(i))) {
 					System.out.println("Overlap 1: " + e);
 					System.out.println("Overlap 2: " + children.get(i));
 					System.out.println("Overlap 1 parent : " + ((RTreeNode)e).getParent());
@@ -97,7 +97,7 @@ class RTreeNodeDir<T> extends RTreeNode<T> {
 	@Override
 	public String toString() {
 		return "NodeDir;n=" + children.size() + 
-				";min/max=" + Arrays.toString(min) + "/" + Arrays.toString(max) +
+				";min/max=" + Arrays.toString(lower()) + "/" + Arrays.toString(upper()) +
 				";id=" + System.identityHashCode(this);
 	}
 

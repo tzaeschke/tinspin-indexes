@@ -55,7 +55,7 @@ public class QNode<T> {
 	@SuppressWarnings("unchecked")
 	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
 		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
-			throw new IllegalStateException("e=" + Arrays.toString(e.getPoint()) + 
+			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 					" min/max=" + Arrays.toString(center) + "/" + radius);
 		}
 		
@@ -93,7 +93,7 @@ public class QNode<T> {
 	}
 
 	private QNode<T> getOrCreateSub(QEntry<T> e) {
-		int pos = calcSubPosition(e.getPoint());
+		int pos = calcSubPosition(e.point());
 		QNode<T> n = subs[pos];
 		if (n == null) {
 			n = createSubForEntry(pos);
@@ -149,7 +149,7 @@ public class QNode<T> {
 		
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.getPoint(), key)) {
+			if (QUtil.isPointEqual(e.point(), key)) {
 				values.remove(i);
 				//TODO provide threshold for re-insert
 				//i.e. do not always merge.
@@ -174,7 +174,7 @@ public class QNode<T> {
 			QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
 					currentDepth+1, maxDepth);
 			if (ret != null && requiresReinsert[0] && 
-					QUtil.isPointEnclosed(ret.getPoint(), center, radius)) {
+					QUtil.isPointEnclosed(ret.point(), center, radius)) {
 				requiresReinsert[0] = false;
 				Object r = this;
 				while (r instanceof QNode) {
@@ -186,7 +186,7 @@ public class QNode<T> {
 		
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.getPoint(), keyOld)) {
+			if (QUtil.isPointEqual(e.point(), keyOld)) {
 				values.remove(i);
 				e.setKey(keyNew);
 				if (QUtil.isPointEnclosed(keyNew, center, radius)) {
@@ -255,7 +255,7 @@ public class QNode<T> {
 		
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.getPoint(), key)) {
+			if (QUtil.isPointEqual(e.point(), key)) {
 				return e;
 			}
 		}
@@ -338,7 +338,7 @@ public class QNode<T> {
 		if (values != null) {
 			for (int i = 0; i < values.size(); i++) {
 				QEntry<T> e = values.get(i);
-				if (!QUtil.isPointEnclosed(e.getPoint(), center, radius)) {
+				if (!QUtil.isPointEnclosed(e.point(), center, radius)) {
 					throw new IllegalStateException();
 				}
 			}

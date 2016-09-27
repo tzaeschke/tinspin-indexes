@@ -16,7 +16,9 @@
  */
 package org.zoodb.index.rtree;
 
-public class DistEntry<T> extends Entry<T> {
+import org.zoodb.index.RectangleEntryDist;
+
+public class DistEntry<T> extends Entry<T> implements RectangleEntryDist<T> {
 	private double dist;
 	
 	/**
@@ -34,6 +36,7 @@ public class DistEntry<T> extends Entry<T> {
 	/**
 	 * @return the distance
 	 */
+	@Override
 	public double dist() {
 		return dist;
 	}

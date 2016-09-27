@@ -19,6 +19,9 @@ package org.zoodb.index.rtree;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.zoodb.index.Index;
+import org.zoodb.index.RectangleIndex;
+
 /**
  * R*Tree implementation based on the paper from
  * Beckmann, N.; Kriegel, H. P.; Schneider, R.; Seeger, B. (1990). 
@@ -35,7 +38,7 @@ import java.util.Arrays;
  *
  * @param <T>
  */
-public class RTree<T> {
+public class RTree<T> implements RectangleIndex<T> {
 
 	static final int NODE_MAX_DIR = 10;//56; //PAPER: M=56 for 1KB pages
 	static final int NODE_MAX_DATA = 10;//50; //PAPER: M=50 for 1KB pages
@@ -65,7 +68,7 @@ public class RTree<T> {
 		init();
 	} 
 	
-	public static <T> RTree<T> createRStar(int dims) {
+	public static <T> Index<T> createRStar(int dims) {
 		return new RTree<>(dims);
 	}
 	
@@ -76,34 +79,28 @@ public class RTree<T> {
 		this.size = 0;
 	}
 
-	/**
-	 * @return the number of dimensions
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#getDims()
 	 */
+	@Override
 	public int getDims() {
 		return dims;
 	}
 	
-	/**
-	 * @return the number of entries
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#size()
 	 */
+	@Override
 	public int size() {
 		return size;
 	}
 	
-	/**
-	 * Clear all entries.
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#clear()
 	 */
+	@Override
 	public void clear() {
 		init();
-	}
-	
-	/**
-	 * Insert a point.
-	 * @param key point
-	 * @param value value
-	 */
-	public void insert(double[] key, T value) {
-		insert(new Entry<T>(key, key, value));
 	}
 	
 	/**
@@ -112,6 +109,7 @@ public class RTree<T> {
 	 * @param keyMax max
 	 * @param value value
 	 */
+	@Override
 	public void insert(double[] keyMin, double[] keyMax, T value) {
 		insert(new Entry<T>(keyMin, keyMax, value));
 	}
@@ -181,10 +179,6 @@ public class RTree<T> {
 		}
 	}
 
-	/**
-	 * Bulk load data.
-	 * @param entries entries to bulk-load.
-	 */
 	public void load(Entry<T>[] entries) {
 		STRLoader<T> bulkLoader = new STRLoader<>();
 		bulkLoader.load(entries);
@@ -195,24 +189,16 @@ public class RTree<T> {
 	}
 	
 	/**
-	 * Remove a point entry.
-	 * @param point the point
-	 * @return the value of the entry or null if the entry was not found
-	 */
-	public T remove(double[] point) {
-		return remove(point, point);
-	}
-	
-	/**
 	 * Remove an entry.
 	 * @param min min
 	 * @param max max
 	 * @return the value of the entry or null if the entry was not found
 	 */
+	@Override
 	public T remove(double[] min, double[] max) {
 		return findNodeEntry(min, max, true);
 	}
-	
+
 	/**
 	 * Update the position of an entry.
 	 * @param lo1 old min
@@ -221,6 +207,7 @@ public class RTree<T> {
 	 * @param up2 new max
 	 * @return the value, or null if the entries was not found
 	 */
+	@Override
 	public T update(double[] lo1, double[] up1, double[] lo2, double[] up2) {
 		T val = remove(lo1, up1);
 		if (val != null) {
@@ -256,7 +243,7 @@ public class RTree<T> {
 						if (delete) {
 							deleteFromNode(node, i);
 						}
-						return e.val;
+						return e.value();
 					}
 				}
 			}
@@ -295,14 +282,18 @@ public class RTree<T> {
 		}
 	}
 
-	public T queryEntry(Entry<T> e) {
-		return queryEntry(e.min, e.max);
-	}
-	
-	public T queryEntry(double[] min, double[] max) {
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#queryEntry(double[], double[])
+	 */
+	@Override
+	public T queryExact(double[] min, double[] max) {
 		return findNodeEntry(min, max, false);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#iterator()
+	 */
+	@Override
 	public RTreeIterator<T> iterator() {
 		double[] min = new double[dims];
 		double[] max = new double[dims];
@@ -311,16 +302,22 @@ public class RTree<T> {
 		return new RTreeIterator<>(this, min, max);
 	}
 	
-	public RTreeIterator<T> queryOverlap(double[] min, double[] max) {
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#queryOverlap(double[], double[])
+	 */
+	@Override
+	public RTreeIterator<T> queryIntersect(double[] min, double[] max) {
 		return new RTreeIterator<>(this, min, max);
 	}
 	
-	/**
-	 * @param center center point
-	 * @param k number of neighbours
-	 * @param dist distance function, 'null' indicated euclidean center distance
-	 * @return list of nearest neighbours
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#queryKNN(double[], int, org.zoodb.index.rtree.DistanceFunction)
 	 */
+	@Override
+	public RTreeIteratorKnn<T> queryKNN(double[] center, int k) {
+		return new RTreeIteratorKnn<>(this, center, k, DistanceFunction.EDGE);
+	}
+	
 	public RTreeIteratorKnn<T> queryKNN(double[] center, int k, DistanceFunction dist) {
 		return new RTreeIteratorKnn<>(this, center, k, dist);
 	}
@@ -358,6 +355,10 @@ public class RTree<T> {
 		int depth;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#getStats()
+	 */
+	@Override
 	public RTreeStats getStats() {
 		RTreeStats stats = new RTreeStats();
 		stats.dims = dims;
@@ -412,7 +413,7 @@ public class RTree<T> {
 			for (int i = 0; i < entries.size(); i++) {
 				Entry<T> e = entries.get(i);
 				for (int j = i+1; j < entries.size(); j++) {
-					if (Entry.checkOverlap(e.min(), e.max(), entries.get(j))) {
+					if (Entry.checkOverlap(e.lower(), e.upper(), entries.get(j))) {
 						System.out.println("Overlap 1: " + e);
 						System.out.println("Overlap 2: " + entries.get(j));
 						System.out.println("Overlap 1 parent : " + ((RTreeNode)e).getParent());
@@ -428,6 +429,10 @@ public class RTree<T> {
 		return depth;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#getNodeCount()
+	 */
+	@Override
 	public int getNodeCount() {
 		return nNodes;
 	}

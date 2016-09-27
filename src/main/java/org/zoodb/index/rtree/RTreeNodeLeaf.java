@@ -57,7 +57,7 @@ class RTreeNodeLeaf<T> extends RTreeNode<T> {
 	@Override
 	public String toString() {
 		return "NodeData;n=" + entries.size() + 
-				";min/max=" + Arrays.toString(min) + "/" + Arrays.toString(max) +
+				";min/max=" + Arrays.toString(lower()) + "/" + Arrays.toString(upper()) +
 				";id=" + System.identityHashCode(this);
 	}
 

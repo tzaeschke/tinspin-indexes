@@ -45,7 +45,7 @@ public class STRLoader<T> {
 
 	@SuppressWarnings("unchecked")
 	public void load(Entry<T>[] entries) {
-		int dims = entries[0].min().length;
+		int dims = entries[0].lower().length;
 		int N = entries.length;
 		int M = RTree.NODE_MAX_DATA;
 		int slicesPerAxis = (int) Math.pow(N/M, 1/(double)dims);
@@ -117,7 +117,7 @@ public class STRLoader<T> {
 		int nNodes = 0;
 		for (int i = 0; i < el.size(); i++) {
 			Entry<T> e = el.get(i);
-			if (!Entry.calcIncludes(node.min, node.max, e.min, e.max)) {
+			if (!Entry.calcIncludes(node.lower(), node.upper(), e.lower(), e.upper())) {
 				throw new IllegalStateException();
 			}
 			if (level == 0) {
@@ -188,8 +188,8 @@ public class STRLoader<T> {
 		
 		@Override
 		public int compare(Entry<T> o1, Entry<T> o2) {
-			double c1 = o1.max()[dim] + o1.min()[dim]; // *0.5
-			double c2 = o2.max()[dim] + o2.min()[dim]; // *0.5
+			double c1 = o1.upper()[dim] + o1.lower()[dim]; // *0.5
+			double c2 = o2.upper()[dim] + o2.lower()[dim]; // *0.5
 			return c1 < c2 ? -1 : c1 > c2 ? 1 : 0;
 		}
 	}

@@ -43,7 +43,7 @@ public class QUtil {
 	}
 
 	public static <T> boolean isRectEqual(QREntry<T> e, double[] keyL, double[] keyU) {
-		return isRectEqual(e.getPointL(), e.getPointU(), keyL, keyU);
+		return isRectEqual(e.lower(), e.upper(), keyL, keyU);
 	}
 	
 	public static boolean overlap(double[] min, double[] max, double[] min2, double[] max2) {
@@ -97,7 +97,7 @@ public class QUtil {
 	 * @return distance to center point
 	 */
 	public static double distanceToRect(double[] p, QREntry<?> e) {
-		return distanceToRect(p, e.getPointL(), e.getPointU());
+		return distanceToRect(p, e.lower(), e.upper());
 	}
 	
 }

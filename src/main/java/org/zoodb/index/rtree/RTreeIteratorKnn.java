@@ -144,11 +144,11 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		//At this point we have the lowest node that includes 'center'.
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {
-			if (Math.abs(node.max()[i]-center[i]) > dist) {
-				dist = Math.abs(node.max()[i]-center[i]);
+			if (Math.abs(node.upper()[i]-center[i]) > dist) {
+				dist = Math.abs(node.upper()[i]-center[i]);
 			}
-			if (Math.abs(node.min()[i]-center[i]) > dist) {
-				dist = Math.abs(node.min()[i]-center[i]);
+			if (Math.abs(node.lower()[i]-center[i]) > dist) {
+				dist = Math.abs(node.lower()[i]-center[i]);
 			}
 		}
 		
@@ -190,11 +190,11 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 	private double checkCandidate(Entry<T> e, double distEst) {
 		double d = dist.dist(center, e.min, e.max);
 		if (candidates.size() < k) {
-			candidates.add(new DistEntry<T>(e.min(), e.max(), e.value(), d));
+			candidates.add(new DistEntry<T>(e.lower(), e.upper(), e.value(), d));
 			candidates.sort(COMP);
 		} else if (candidates.get(k-1).dist() > d) {
 			candidates.remove(k-1);
-			candidates.add(new DistEntry<T>(e.min(), e.max(), e.value(), d));
+			candidates.add(new DistEntry<T>(e.lower(), e.upper(), e.value(), d));
 			candidates.sort(COMP);
 			distEst = candidates.get(k-1).dist(); 
 		}

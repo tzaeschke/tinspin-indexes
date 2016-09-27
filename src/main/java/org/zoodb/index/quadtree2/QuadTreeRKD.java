@@ -25,6 +25,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.zoodb.index.RectangleEntry;
+import org.zoodb.index.RectangleEntryDist;
+import org.zoodb.index.RectangleIndex;
 import org.zoodb.index.quadtree2.QuadTreeKD.QStats;
 
 /**
@@ -35,7 +38,7 @@ import org.zoodb.index.quadtree2.QuadTreeKD.QStats;
  *
  * @param <T>
  */
-public class QuadTreeRKD<T> {
+public class QuadTreeRKD<T> implements RectangleIndex<T> {
 
 	private static final int MAX_DEPTH = 50;
 	
@@ -83,8 +86,9 @@ public class QuadTreeRKD<T> {
 	 * @param keyU the upper part of the key
 	 * @param value the value
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public void put(double[] keyL, double[] keyU, T value) {
+	public void insert(double[] keyL, double[] keyU, T value) {
 		size++;
 		QREntry<T> e = new QREntry<>(keyL, keyU, value);
 		if (root == null) {
@@ -139,12 +143,13 @@ public class QuadTreeRKD<T> {
 	 * @param keyU the upper key to look up
 	 * @return the value for the key or 'null' if the key was not found
 	 */
-	public T getExact(double[] keyL, double[] keyU) {
+	@Override
+	public T queryExact(double[] keyL, double[] keyU) {
 		if (root == null) {
 			return null;
 		}
 		QREntry<T> e = root.getExact(keyL, keyU);
-		return e == null ? null : e.getValue();
+		return e == null ? null : e.value();
 	}
 	
 	/**
@@ -153,7 +158,8 @@ public class QuadTreeRKD<T> {
 	 * @param keyU key to remove
 	 * @return the value associated with the key or 'null' if the key was not found
 	 */
-	public T removeExact(double[] keyL, double[] keyU) {
+	@Override
+	public T remove(double[] keyL, double[] keyU) {
 		if (root == null) {
 			System.err.println("Failed remove 1: " + Arrays.toString(keyL)); //TODO
 			return null;
@@ -164,7 +170,7 @@ public class QuadTreeRKD<T> {
 			return null;
 		}
 		size--;
-		return e.getValue();
+		return e.value();
 	}
 
 	/**
@@ -175,6 +181,7 @@ public class QuadTreeRKD<T> {
 	 * @param newKeyU new key
 	 * @return the value associated with the key or 'null' if the key was not found.
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public T update(double[] oldKeyL, double[] oldKeyU, double[] newKeyL, double[] newKeyU) {
 		if (root == null) {
@@ -198,7 +205,7 @@ public class QuadTreeRKD<T> {
 				r = ((QRNode<T>)r).tryPut(e, maxNodeSize, depth++>MAX_DEPTH);
 			}
 		}
-		return e.getValue();
+		return e.value();
 	}
 	
 	/**
@@ -206,7 +213,7 @@ public class QuadTreeRKD<T> {
 	 * @param e Entry to cover.
 	 */
 	private void ensureCoverage(QREntry<T> e) {
-		double[] pMin = e.getPointL();
+		double[] pMin = e.lower();
 		//double[] pMax = e.getPointU();
 		while(!e.enclosedByXX(root.getMin(), root.getMax())) {
 			double len = root.getSideLength();
@@ -230,8 +237,8 @@ public class QuadTreeRKD<T> {
 				}
 			}
 			if (QuadTreeRKD.DEBUG && !QUtil.isRectEnclosed(min, max, min2, max2)) {
-				throw new IllegalStateException("e=" + Arrays.toString(e.getPointL()) + 
-						"/" + Arrays.toString(e.getPointU()) + 
+				throw new IllegalStateException("e=" + Arrays.toString(e.lower()) + 
+						"/" + Arrays.toString(e.upper()) + 
 						" min/max=" + Arrays.toString(min) + "/" + Arrays.toString(max));
 			}
 			root = new QRNode<>(min2, max2, root, subNodePos);
@@ -242,6 +249,7 @@ public class QuadTreeRKD<T> {
 	 * Get the number of key-value pairs in the tree.
 	 * @return the size
 	 */
+	@Override
 	public int size() {
 		return size;
 	}
@@ -249,6 +257,7 @@ public class QuadTreeRKD<T> {
 	/**
 	 * Removes all elements from the tree.
 	 */
+	@Override
 	public void clear() {
 		size = 0;
 		root = null;
@@ -260,7 +269,8 @@ public class QuadTreeRKD<T> {
 	 * @param max upper right corner of query
 	 * @return all entries in the rectangle
 	 */
-	public QIterator<T> query(double[] min, double[] max) {
+	@Override
+	public QIterator<T> queryIntersect(double[] min, double[] max) {
 		return new QIterator<>(this, min, max);
 	}
 
@@ -298,7 +308,7 @@ public class QuadTreeRKD<T> {
 						continue;
 					}
 					QREntry<T> e = (QREntry<T>) o;
-					if (QUtil.overlap(min, max, e.getPointL(), e.getPointU())) {
+					if (QUtil.overlap(min, max, e.lower(), e.upper())) {
 						next = e;
 						return;
 					}
@@ -341,7 +351,7 @@ public class QuadTreeRKD<T> {
 		}
 	}
 	
-	public List<QREntryDist<T>> knnSearch(double[] center, int k) {
+	public List<QREntryDist<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
     		return Collections.emptyList();
 		}
@@ -449,7 +459,7 @@ public class QuadTreeRKD<T> {
         	candidates.remove(candidates.size()-1);
         }
         
-        double range = candidates.get(candidates.size()-1).getDistance();
+        double range = candidates.get(candidates.size()-1).dist();
         for (int i = 0; i < dims; i++) {
             min[i] = center[i] - range;
             max[i] = center[i] + range;
@@ -491,8 +501,8 @@ public class QuadTreeRKD<T> {
 				toStringTree(sb, sub, depth+1, pos);
 			} else if (o instanceof QEntry) {
 				QEntry<T> e = (QEntry<T>) o;
-				sb.append(prefix + Arrays.toString(e.getPoint()));
-				sb.append(" v=" + e.getValue() + NL);
+				sb.append(prefix + Arrays.toString(e.point()));
+				sb.append(" v=" + e.value() + NL);
 			}
 			pos++;
 		}
@@ -508,11 +518,34 @@ public class QuadTreeRKD<T> {
 				Arrays.toString(root.getMax())));
 	}
 	
+	@Override
 	public QStats getStats() {
 		QStats s = new QStats();
 		if (root != null) {
 			root.checkNode(s, null, 0);
 		}
 		return s;
+	}
+
+	@Override
+	public int getDims() {
+		return dims;
+	}
+
+	@Override
+	public int getNodeCount() {
+		return -1;
+	}
+
+	@Override
+	public Iterator<? extends RectangleEntry<T>> iterator() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public Iterator<? extends RectangleEntryDist<T>> queryKNN(double[] center, int k) {
+		return knnQuery(center, k).iterator();
 	}
 }

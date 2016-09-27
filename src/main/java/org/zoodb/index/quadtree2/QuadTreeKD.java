@@ -25,6 +25,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.zoodb.index.PointEntryDist;
+import org.zoodb.index.PointIndex;
+
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
  * (if desired) automatic guessing of root rectangle. 
@@ -38,7 +41,7 @@ import java.util.NoSuchElementException;
  *
  * @param <T>
  */
-public class QuadTreeKD<T> {
+public class QuadTreeKD<T> implements PointIndex<T> {
 
 	private static final int MAX_DEPTH = 50;
 	
@@ -83,8 +86,9 @@ public class QuadTreeKD<T> {
 	 * @param key the key
 	 * @param value the value
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public void put(double[] key, T value) {
+	public void insert(double[] key, T value) {
 		size++;
 		QEntry<T> e = new QEntry<>(key, value);
 		if (root == null) {
@@ -137,12 +141,13 @@ public class QuadTreeKD<T> {
 	 * @param key the key to look up
 	 * @return the value for the key or 'null' if the key was not found
 	 */
-	public T getExact(double[] key) {
+	@Override
+	public T queryExact(double[] key) {
 		if (root == null) {
 			return null;
 		}
 		QEntry<T> e = root.getExact(key);
-		return e == null ? null : e.getValue();
+		return e == null ? null : e.value();
 	}
 	
 	/**
@@ -150,7 +155,8 @@ public class QuadTreeKD<T> {
 	 * @param key key to remove
 	 * @return the value associated with the key or 'null' if the key was not found
 	 */
-	public T removeExact(double[] key) {
+	@Override
+	public T remove(double[] key) {
 		if (root == null) {
 			return null;
 		}
@@ -159,7 +165,7 @@ public class QuadTreeKD<T> {
 			return null;
 		}
 		size--;
-		return e.getValue();
+		return e.value();
 	}
 
 	/**
@@ -168,6 +174,7 @@ public class QuadTreeKD<T> {
 	 * @param newKey new key
 	 * @return the value associated with the key or 'null' if the key was not found.
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public T update(double[] oldKey, double[] newKey) {
 		if (root == null) {
@@ -189,7 +196,7 @@ public class QuadTreeKD<T> {
 				r = ((QNode<T>)r).tryPut(e, maxNodeSize, depth++>MAX_DEPTH);
 			}
 		}
-		return e.getValue();
+		return e.value();
 	}
 	
 	/**
@@ -197,7 +204,7 @@ public class QuadTreeKD<T> {
 	 * @param e Entry to cover.
 	 */
 	private void ensureCoverage(QEntry<T> e) {
-		double[] p = e.getPoint();
+		double[] p = e.point();
 		while(!e.enclosedBy(root.getCenter(), root.getRadius())) {
 			double[] center = root.getCenter();
 			double radius = root.getRadius();
@@ -217,7 +224,7 @@ public class QuadTreeKD<T> {
 				}
 			}
 			if (QuadTreeKD.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
-				throw new IllegalStateException("e=" + Arrays.toString(e.getPoint()) + 
+				throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 						" min/max=" + Arrays.toString(center2) + 
 						"/"+ radius);
 			}
@@ -229,6 +236,7 @@ public class QuadTreeKD<T> {
 	 * Get the number of key-value pairs in the tree.
 	 * @return the size
 	 */
+	@Override
 	public int size() {
 		return size;
 	}
@@ -236,6 +244,7 @@ public class QuadTreeKD<T> {
 	/**
 	 * Removes all elements from the tree.
 	 */
+	@Override
 	public void clear() {
 		size = 0;
 		root = null;
@@ -247,6 +256,7 @@ public class QuadTreeKD<T> {
 	 * @param max upper right corner of query
 	 * @return all entries in the rectangle
 	 */
+	@Override
 	public QIterator<T> query(double[] min, double[] max) {
 		return new QIterator<>(this, min, max);
 	}
@@ -328,15 +338,15 @@ public class QuadTreeKD<T> {
 		}
 	}
 	
-	public List<QEntryDist<T>> knnSearch(double[] center, int k) {
+	public List<QEntryDist<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
     		return Collections.emptyList();
 		}
         Comparator<QEntry<T>> comp =  
         		(QEntry<T> point1, QEntry<T> point2) -> {
         			double deltaDist = 
-        					QUtil.distance(center, point1.getPoint()) - 
-        					QUtil.distance(center, point2.getPoint());
+        					QUtil.distance(center, point1.point()) - 
+        					QUtil.distance(center, point2.point());
         			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
         		};
         double distEstimate = distanceEstimate(root, center, k, comp);
@@ -358,7 +368,7 @@ public class QuadTreeKD<T> {
     		QEntry<T>[] data = node.getEntries().toArray(new QEntry[n]);
     		Arrays.sort(data, comp);
     		int pos = n < k ? n : k;
-    		double dist = QUtil.distance(point, data[pos-1].getPoint());
+    		double dist = QUtil.distance(point, data[pos-1].point());
     		if (n < k) {
     			//scale search dist with dimensions.
     			dist = dist * Math.pow(k/(double)n, 1/(double)dims);
@@ -403,7 +413,7 @@ public class QuadTreeKD<T> {
     		ArrayList<QEntry<T>> points = node.getEntries();
     		for (int i = 0; i < points.size(); i++) {
     			QEntry<T> p = points.get(i);
-   				double dist = QUtil.distance(center, p.getPoint());
+   				double dist = QUtil.distance(center, p.point());
    				if (dist < maxRange) {
     				candidates.add(new QEntryDist<>(p, dist));
   				}
@@ -435,7 +445,7 @@ public class QuadTreeKD<T> {
         	candidates.remove(candidates.size()-1);
         }
         
-        double range = candidates.get(candidates.size()-1).getDistance();
+        double range = candidates.get(candidates.size()-1).dist();
         for (int i = 0; i < dims; i++) {
             min[i] = center[i] - range;
             max[i] = center[i] + range;
@@ -477,8 +487,8 @@ public class QuadTreeKD<T> {
 				toStringTree(sb, sub, depth+1, pos);
 			} else if (o instanceof QEntry) {
 				QEntry<T> e = (QEntry<T>) o;
-				sb.append(prefix + Arrays.toString(e.getPoint()));
-				sb.append(" v=" + e.getValue() + NL);
+				sb.append(prefix + Arrays.toString(e.point()));
+				sb.append(" v=" + e.value() + NL);
 			}
 			pos++;
 		}
@@ -494,6 +504,7 @@ public class QuadTreeKD<T> {
 				root.getRadius()));
 	}
 	
+	@Override
 	public QStats getStats() {
 		QStats s = new QStats();
 		if (root != null) {
@@ -514,5 +525,30 @@ public class QuadTreeKD<T> {
 		public int getMaxDepth() {
 			return maxDepth;
 		}
+	}
+
+	@Override
+	public int getDims() {
+		return dims;
+	}
+
+	@Override
+	public QIterator<T> iterator() {
+		if (root == null) {
+			return query(new double[dims], new double[dims]);
+		}
+		//return query(root.);
+		//TODO
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterator<? extends PointEntryDist<T>> queryKNN(double[] center, int k) {
+		return knnQuery(center, k).iterator();
+	}
+
+	@Override
+	public int getNodeCount() {
+		return -1;
 	}
 }

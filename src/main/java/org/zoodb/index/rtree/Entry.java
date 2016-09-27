@@ -18,11 +18,12 @@ package org.zoodb.index.rtree;
 
 import java.util.Arrays;
 
-public class Entry<T> implements Comparable<Entry<T>> {
-	double[] min;
-	double[] max;
-	T val;
-	RTreeNode<T> sub;
+import org.zoodb.index.RectangleEntry;
+
+public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
+	protected double[] min;
+	protected double[] max;
+	private T val;
 	
 	public Entry(double[] min, double[] max, T val) {
 		this.min = min;
@@ -30,14 +31,17 @@ public class Entry<T> implements Comparable<Entry<T>> {
 		this.val = val;
 	}
 
-	public double[] min() {
+	@Override
+	public double[] lower() {
 		return min;
 	}
 
-	public double[] max() {
+	@Override
+	public double[] upper() {
 		return max;
 	}
 
+	@Override
 	public T value() {
 		return val;
 	}

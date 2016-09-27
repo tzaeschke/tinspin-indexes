@@ -18,15 +18,18 @@ package org.zoodb.index.quadtree;
 
 import java.util.Comparator;
 
-public class QREntryDist<T> extends QREntry<T> {
+import org.zoodb.index.RectangleEntryDist;
+
+public class QREntryDist<T> extends QREntry<T> implements RectangleEntryDist<T> {
 	private double distance;
 	
 	public QREntryDist(QREntry<T> e, double dist) {
-		super(e.getPointL(), e.getPointU(), e.getValue());
+		super(e.lower(), e.upper(), e.value());
 		this.distance = dist;
 	}
 	
-	public double getDistance() {
+	@Override
+	public double dist() {
 		return distance;
 	}
 	
@@ -47,7 +50,7 @@ public class QREntryDist<T> extends QREntry<T> {
 	    */
 	    @Override
 	    public int compare(QREntryDist<?> o1, QREntryDist<?> o2) {
-	        double d = o1.getDistance() - o2.getDistance();
+	        double d = o1.dist() - o2.dist();
 	        return d < 0 ? -1 : (d > 0 ? 1 : 0);
 	    }
 	}

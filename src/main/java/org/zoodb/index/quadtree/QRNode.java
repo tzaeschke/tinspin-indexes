@@ -61,7 +61,7 @@ public class QRNode<T> {
 		}
 		
 		//traverse subs?
-		int pos = calcSubPositionR(e.getPointL(), e.getPointU());
+		int pos = calcSubPositionR(e.lower(), e.upper());
 		if (subs != null && pos != OVERLAP_WITH_CENTER) {
 			return getOrCreateSubR(pos);
 		}
@@ -89,7 +89,7 @@ public class QRNode<T> {
 		subs = new QRNode[1 << min.length];
 		for (int i = 0; i < vals.size(); i++) {
 			QREntry<T> e2 = vals.get(i); 
-			int pos2 = calcSubPositionR(e2.getPointL(), e2.getPointU());
+			int pos2 = calcSubPositionR(e2.lower(), e2.upper());
 			if (pos2 == OVERLAP_WITH_CENTER) {
 				if (values == null) {
 					values = new ArrayList<>();
@@ -208,7 +208,7 @@ public class QRNode<T> {
 				QREntry<T> ret = sub.update(this, keyOldL, keyOldU, keyNewL, keyNewU, 
 						maxNodeSize, requiresReinsert, currentDepth+1, maxDepth);
 				if (ret != null && requiresReinsert[0] && 
-						QUtil.isRectEnclosed(ret.getPointL(), ret.getPointU(), min, max)) {
+						QUtil.isRectEnclosed(ret.lower(), ret.upper(), min, max)) {
 					requiresReinsert[0] = false;
 					Object r = this;
 					while (r instanceof QRNode) {
@@ -396,7 +396,7 @@ public class QRNode<T> {
 		if (values != null) {
 			for (int i = 0; i < values.size(); i++) {
 				QREntry<T> e = values.get(i);
-				if (!QUtil.isRectEnclosed(e.getPointL(), e.getPointU(), min, max)) {
+				if (!QUtil.isRectEnclosed(e.lower(), e.upper(), min, max)) {
 					throw new IllegalStateException();
 				}
 				//TODO check that they overlap with the centerpoint or that subs==null
