@@ -68,7 +68,7 @@ public class RTree<T> implements RectangleIndex<T> {
 		init();
 	} 
 	
-	public static <T> Index<T> createRStar(int dims) {
+	public static <T> RTree<T> createRStar(int dims) {
 		return new RTree<>(dims);
 	}
 	
@@ -103,6 +103,10 @@ public class RTree<T> implements RectangleIndex<T> {
 		init();
 	}
 	
+	public void insert(double[] point, T value) {
+		insert(new Entry<T>(point, point, value));
+	}
+
 	/**
 	 * Insert a rectangle.
 	 * @param keyMin min
@@ -188,6 +192,12 @@ public class RTree<T> implements RectangleIndex<T> {
 		depth = bulkLoader.getDepth();
 	}
 	
+
+	public Object remove(double[] point) {
+		//TODO speed up
+		return remove(point, point);
+	}
+
 	/**
 	 * Remove an entry.
 	 * @param min min
