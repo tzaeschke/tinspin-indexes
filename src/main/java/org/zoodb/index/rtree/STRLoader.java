@@ -109,7 +109,6 @@ public class STRLoader<T> {
 	}
 
 	
-	
 	private int verifyNode(RTreeNode<T> node, int level) {
 		System.out.println("Checking node: " + node);
 		ArrayList<Entry<T>> el = node.getEntries();
