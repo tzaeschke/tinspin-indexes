@@ -166,8 +166,7 @@ public class STRLoader<T> {
 			int nodesPerAxis, CenterComp comp) {
 		comp.setDim(0);
 		Arrays.sort(entries, comp);
-		//TODO last dimension does not need to be sorted.....
-		for (int d = 1; d < dims-1; d++) {
+		for (int d = 1; d < dims; d++) {
 			comp.setDim(d);
 			int chunkSize = (int) Math.pow(nodesPerAxis*M, dims-d);
 			int pos = 0;
