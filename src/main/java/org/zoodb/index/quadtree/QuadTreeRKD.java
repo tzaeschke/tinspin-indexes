@@ -53,9 +53,9 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	private int size = 0; 
 	
 	private QuadTreeRKD(int dims, int maxNodeSize) {
-		if (dims > 6) {
-			throw new UnsupportedOperationException();
-		}
+//		if (dims > 10) {
+//			throw new UnsupportedOperationException();
+//		}
 		if (DEBUG) {
 			System.err.println("Warning: DEBUG enabled");
 		}

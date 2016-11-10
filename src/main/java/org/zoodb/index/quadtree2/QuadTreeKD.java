@@ -56,9 +56,9 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	private int size = 0; 
 	
 	private QuadTreeKD(int dims, int maxNodeSize) {
-		if (dims > 6) {
-			throw new UnsupportedOperationException();
-		}
+//		if (dims > 6) {
+//			throw new UnsupportedOperationException();
+//		}
 		if (DEBUG) {
 			System.err.println("Warning: DEBUG enabled");
 		}
