@@ -17,9 +17,17 @@
 package org.zoodb.index.rtree;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
+/**
+ * kNN search with EDGE distance and presorting of entries.
+ * 
+ * @author Tilmann Zäschke
+ *
+ * @param <T>
+ */
 public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 	
 	private class IteratorStack {
@@ -43,6 +51,9 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 			}
 			
 			ni.init(node);
+			if (ni.node instanceof RTreeNodeDir) {
+				ni.subNodes = sortEntries(((RTreeNodeDir<T>)ni.node).getEntries());
+			}
 			return ni;
 		}
 
@@ -55,15 +66,15 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		}
 	}
 
-	private static class DEComparator<T> implements Comparator<DistEntry<T>> {
+	private static class DEComparator implements Comparator<DistEntry<?>> {
 		@Override
-		public int compare(DistEntry<T> o1, DistEntry<T> o2) {
+		public int compare(DistEntry<?> o1, DistEntry<?> o2) {
 			double d = o1.dist() - o2.dist();
 			return d < 0 ? -1 : d > 0 ? 1 : 0;
 		}
 	}
 
-	private final DEComparator<T> COMP = new DEComparator<>();
+	private final DEComparator COMP = new DEComparator();
 	private final RTree<T> tree;
 	private double[] center;
 	private int k;
@@ -73,10 +84,11 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 	private DistanceFunction dist;
 	
 	private static class IterPos<T> {
-		private RTreeNode<T> node;
-		private int pos;
+		DistEntry<RTreeNode<T>>[] subNodes;
+		RTreeNode<T> node;
+		int pos;
 		
-		public void init(RTreeNode<T> node) {
+		void init(RTreeNode<T> node) {
 			this.node = node;
 			this.pos = 0;
 		}
@@ -167,6 +179,14 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		nextSub:
 		while (!stack.isEmpty()) {
 			IterPos<T> ip = stack.peek();
+			if (ip.node instanceof RTreeNodeDir) {
+				while (ip.pos < ip.subNodes.length && 
+						ip.subNodes[ip.pos].dist() <= currentDist) {
+					stack.prepareAndPush(ip.subNodes[ip.pos].value());
+					ip.pos++;
+					continue nextSub;
+				}
+			} else {
 			ArrayList<Entry<T>> entries = ip.node.getEntries(); 
 			while (ip.pos < entries.size()) {
 				Entry<T> e = entries.get(ip.pos);
@@ -174,10 +194,6 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 				//if (Entry.checkOverlap(min, max, e)) {
 				//TODO this works only for EDGE distance
 				if (dist.dist(center, e.min, e.max) <= currentDist) {
-					if (e instanceof RTreeNode) {
-						stack.prepareAndPush((RTreeNode<T>) e);
-						continue nextSub;
-					} else {
 						currentDist = checkCandidate(e, currentDist);
 					}
 				}
@@ -187,6 +203,20 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		iter = candidates.iterator();
 	}
 	
+	@SuppressWarnings("unchecked")
+	private DistEntry<RTreeNode<T>>[] sortEntries(
+			ArrayList<Entry<T>> entries) {
+		DistEntry<RTreeNode<T>>[] ret = new DistEntry[entries.size()];
+		for (int i = 0; i < entries.size(); i++) {
+			Entry<T> e = entries.get(i);
+			double d = dist.dist(center, e.min, e.max);
+			ret[i] = new DistEntry<RTreeNode<T>>(
+					e.lower(), e.upper(), (RTreeNode<T>) e, d);
+		}
+		Arrays.sort(ret, COMP);
+		return ret;
+	}
+
 	private double checkCandidate(Entry<T> e, double distEst) {
 		double d = dist.dist(center, e.min, e.max);
 		if (candidates.size() < k) {

@@ -59,7 +59,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	 * Create an RTree. By default it is an R*tree.
 	 * @param dims dimensionality
 	 */
-	private RTree(int dims) {
+	protected RTree(int dims) {
 		this.dims = dims;
 		if (DEBUG) {
 			System.err.println("WARNING: Using DEBUG mode.");
