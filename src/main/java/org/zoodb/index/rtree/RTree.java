@@ -19,7 +19,6 @@ package org.zoodb.index.rtree;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.zoodb.index.Index;
 import org.zoodb.index.RectangleIndex;
 
 /**

@@ -48,7 +48,7 @@ public class STRLoader<T> {
 		int dims = entries[0].lower().length;
 		int N = entries.length;
 		int M = RTree.NODE_MAX_DATA;
-		int slicesPerAxis = (int) Math.pow(N/M, 1/(double)dims);
+		int slicesPerAxis = (int) Math.pow(N/M, 1.0/(double)dims);
 		CenterComp comp = new CenterComp();
 		
 		sortChunks(entries, dims, M, slicesPerAxis, comp);
@@ -75,7 +75,7 @@ public class STRLoader<T> {
 		
 		int MDir = RTree.NODE_MAX_DIR;
 		RTreeNodeDir<T>[] parentNodes = null; 
-		slicesPerAxis = (int) Math.pow(N/MDir, 1/(double)dims);
+		slicesPerAxis = (int) Math.pow(nodes.length/MDir, 1.0/(double)dims);
 		do {
 			depth++;
 			parentNodes = new RTreeNodeDir[(int) Math.ceil(nodes.length/(double)MDir)];
@@ -109,17 +109,34 @@ public class STRLoader<T> {
 	}
 
 	
-	
 	private int verifyNode(RTreeNode<T> node, int level) {
 		System.out.println("Checking node: " + node);
 		ArrayList<Entry<T>> el = node.getEntries();
 		int nEntries = 0;
 		int nNodes = 0;
+		int dim = el.get(0).min.length;
+		double[] mbbMin = new double[dim];
+		double[] mbbMax = new double[dim];
+		Arrays.fill(mbbMin, Double.POSITIVE_INFINITY);
+		Arrays.fill(mbbMax, Double.NEGATIVE_INFINITY);
 		for (int i = 0; i < el.size(); i++) {
 			Entry<T> e = el.get(i);
+			//System.out.println("Entry: " + e);
+			//check MBB is big enough
 			if (!Entry.calcIncludes(node.lower(), node.upper(), e.lower(), e.upper())) {
 				throw new IllegalStateException();
 			}
+			
+			//check MBB is not too big
+			for (int d = 0; d < dim; d++) {
+				if (e.min[d] < mbbMin[d]) {
+					mbbMin[d] = e.min[d];
+				}
+				if (e.max[d] > mbbMax[d]) {
+					mbbMax[d] = e.max[d];
+				}
+			}
+			
 			if (level == 0) {
 				if (e instanceof RTreeNode) {
 					throw new IllegalStateException();
@@ -159,6 +176,10 @@ public class STRLoader<T> {
 //				}
 //			}			
 		}
+		if (!Arrays.equals(mbbMin, node.min) || 
+				!Arrays.equals(mbbMax, node.max)) {
+			throw new IllegalStateException();
+		}
 		return nEntries;
 	}
 
@@ -166,10 +187,9 @@ public class STRLoader<T> {
 			int nodesPerAxis, CenterComp comp) {
 		comp.setDim(0);
 		Arrays.sort(entries, comp);
-		//TODO last dimension does not need to be sorted.....
-		for (int d = 1; d < dims-1; d++) {
+		for (int d = 1; d < dims; d++) {
 			comp.setDim(d);
-			int chunkSize = (int) Math.pow(nodesPerAxis*M, dims-d);
+			int chunkSize = (int) Math.pow(nodesPerAxis, dims-d)*M;
 			int pos = 0;
 			while (pos < entries.length) {
 				int end = Math.min(pos+chunkSize, entries.length);

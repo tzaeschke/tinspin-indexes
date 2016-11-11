@@ -18,7 +18,7 @@ package org.zoodb.index.quadtree2;
 
 public class QUtil {
 	
-	static final double EPS_MUL = 1.000000001;
+	static final double EPS_MUL = 1.00000002;
 
 	public static boolean isPointEnclosed(double[] point,
 			double[] min, double[] max) {
