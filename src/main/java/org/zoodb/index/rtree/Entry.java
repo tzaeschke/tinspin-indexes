@@ -219,6 +219,9 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 	
 	@Override
 	public String toString() {
-		return Arrays.toString(min) + "/" + Arrays.toString(max) + ";v=" + val;
+		double[] len = new double[min.length];
+		Arrays.setAll(len, (i)->(max[i]-min[i]));
+		return Arrays.toString(min) + "/" + Arrays.toString(max) + ";len=" + 
+		Arrays.toString(len) + ";v=" + val;
 	}
 }

@@ -339,6 +339,19 @@ public class QNode<T> {
 			for (int i = 0; i < values.size(); i++) {
 				QEntry<T> e = values.get(i);
 				if (!QUtil.isPointEnclosed(e.point(), center, radius)) {
+					System.out.println("Node: " + radius + " " + Arrays.toString(center));
+					System.out.println("Child: " + Arrays.toString(e.point()));
+					for (int d = 0; d < center.length; d++) {
+//						if ((centerOuter[d]+radiusOuter) / (centerEnclosed[d]+radiusEnclosed) < 0.9999999 || 
+//								(centerOuter[d]-radiusOuter) / (centerEnclosed[d]-radiusEnclosed) > 1.0000001) {
+//							return false;
+//						}
+						System.out.println("min/max for " + d);
+						System.out.println("min: " + (center[d]-radius) + " vs " + (e.point()[d]));
+						System.out.println("r=" + (center[d]-radius) / (e.point()[d]));
+						System.out.println("max: " + (center[d]+radius) + " vs " + (e.point()[d])); 
+						System.out.println("r=" + (center[d]+radius) / (e.point()[d])); 
+					}
 					throw new IllegalStateException();
 				}
 			}
