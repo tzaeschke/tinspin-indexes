@@ -48,10 +48,9 @@ public class STRLoader<T> {
 		int dims = entries[0].lower().length;
 		int N = entries.length;
 		int M = RTree.NODE_MAX_DATA;
-		int slicesPerAxis = (int) Math.pow(N/M, 1.0/(double)dims);
 		CenterComp comp = new CenterComp();
 		
-		sortChunks(entries, dims, M, slicesPerAxis, comp);
+		sortChunks(entries, dims, M, comp);
 		
 		RTreeNode<T>[] nodes = new RTreeNode[(int) Math.ceil(N/(double)M)];
 		int posNode = 0;
@@ -75,12 +74,11 @@ public class STRLoader<T> {
 		
 		int MDir = RTree.NODE_MAX_DIR;
 		RTreeNodeDir<T>[] parentNodes = null; 
-		slicesPerAxis = (int) Math.pow(nodes.length/MDir, 1.0/(double)dims);
 		do {
 			depth++;
 			parentNodes = new RTreeNodeDir[(int) Math.ceil(nodes.length/(double)MDir)];
 			//sort
-			sortChunks(nodes, dims, MDir, slicesPerAxis, comp);
+			sortChunks(nodes, dims, MDir, comp);
 			nNodes += parentNodes.length;
 			RTreeNodeDir<T> p = null;
 			int posParent = 0;
@@ -106,8 +104,12 @@ public class STRLoader<T> {
 		if (n != entries.length) {
 			throw new IllegalStateException("n=" + n + "/" + entries.length);
 		}
+		
+		//double[][] data = rects.toArray(new double[rects.size()][]);
+		//TestDraw.draw(data, 2, MODE.RECTANGLES);
 	}
 
+	//private static ArrayList<double[]> rects = new ArrayList<>();
 	
 	private int verifyNode(RTreeNode<T> node, int level) {
 		System.out.println("Checking node: " + node);
@@ -121,6 +123,11 @@ public class STRLoader<T> {
 		Arrays.fill(mbbMax, Double.NEGATIVE_INFINITY);
 		for (int i = 0; i < el.size(); i++) {
 			Entry<T> e = el.get(i);
+			//if (!(e instanceof RTreeNode)) {
+			//	rects.add(e.min);
+			//	rects.add(e.max);
+			//}
+			
 			//System.out.println("Entry: " + e);
 			//check MBB is big enough
 			if (!Entry.calcIncludes(node.lower(), node.upper(), e.lower(), e.upper())) {
@@ -182,23 +189,28 @@ public class STRLoader<T> {
 		}
 		return nEntries;
 	}
-
-	private void sortChunks(Entry<T>[] entries, int dims, int M,
-			int nodesPerAxis, CenterComp comp) {
+	
+	private void sortChunks(Entry<T>[] entries, int dims, int M, CenterComp comp) {
 		comp.setDim(0);
 		Arrays.sort(entries, comp);
+		int nToSplit = entries.length;
 		for (int d = 1; d < dims; d++) {
+			int nodesPerAxis = (int) Math.pow(nToSplit/M, 1.0/(double)(dims-d+1));
 			comp.setDim(d);
-			int chunkSize = (int) Math.pow(nodesPerAxis, dims-d)*M;
+			int chunkSize = (int) Math.ceil( Math.pow(nodesPerAxis, dims-d)*M );
+			if (chunkSize < M) {
+				break;
+			}
 			int pos = 0;
 			while (pos < entries.length) {
 				int end = Math.min(pos+chunkSize, entries.length);
 				Arrays.sort(entries, pos, end, comp);
 				pos += chunkSize;
 			}
+			nToSplit /= nodesPerAxis;
 		}
 	}
-	
+
 	private class CenterComp implements Comparator<Entry<T>> {
 		int dim = -1;
 		
