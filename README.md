@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/tzaeschke/critbit.svg?branch=master)](https://travis-ci.org/tzaeschke/critbit)
-[![codecov](https://codecov.io/gh/tzaeschke/critbit/branch/master/graph/badge.svg)](https://codecov.io/gh/tzaeschke/critbit)
+[![Build Status](https://travis-ci.org/tzaeschke/zoodb-indexes.svg?branch=master)](https://travis-ci.org/tzaeschke/zoodb-indexes)
+[![codecov](https://codecov.io/gh/tzaeschke/zoodb-indexes/branch/master/graph/badge.svg)](https://codecov.io/gh/tzaeschke/zoodb-indexes)
 
 ZooDB Indexes
 =============
@@ -8,6 +8,7 @@ This is a library of in-memory indexes. The library includes:
  - Several versions of **critbit** index, with support for 64bit keys (fastest), very long keys, or multi-dimensional keys (interleaved with z-ordering). See details below.
  - Several multi-dimensional **quadtree** indexes with separate implementations for point data and rectangle data. The implementations are 'region-quadtrees', they split space in 2^k quadratic quadrants in each level.
  - A multi-dimensional **R*Tree** index.
+ - A multi-dimensional **STR-Tree** index (same as R*Tree, but with sort-tile-recursive bulk loading). 
  
   
 
