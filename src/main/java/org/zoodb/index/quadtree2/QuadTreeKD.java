@@ -56,9 +56,6 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	private int size = 0; 
 	
 	private QuadTreeKD(int dims, int maxNodeSize) {
-//		if (dims > 6) {
-//			throw new UnsupportedOperationException();
-//		}
 		if (DEBUG) {
 			System.err.println("Warning: DEBUG enabled");
 		}
@@ -116,7 +113,6 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 		maxDistOrigin = Math.abs(maxDistOrigin);
 		//no we use (0,0)/(+-maxDistOrigin*2,+-maxDistOrigin*2) as root.
 		double[] center = new double[dims];
-//		double[] max = new double[dims];
 		for (int d = 0; d < dims; d++) {
 			center[d] = key[d] > 0 ? maxDistOrigin : -maxDistOrigin;
 //			max[d] = key[d] < 0 ? 0 : (maxDistOrigin*2);
@@ -158,10 +154,12 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	@Override
 	public T remove(double[] key) {
 		if (root == null) {
+			System.err.println("Failed remove 1: " + Arrays.toString(key)); //TODO
 			return null;
 		}
 		QEntry<T> e = root.remove(null, key, maxNodeSize);
 		if (e == null) {
+			System.err.println("Failed remove 2: " + Arrays.toString(key)); //TODO
 			return null;
 		}
 		size--;
@@ -185,9 +183,11 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 				0, MAX_DEPTH);
 		if (e == null) {
 			//not found
+			System.err.println("Failed reinsert 1: " + Arrays.toString(newKey)); //TODO
 			return null;
 		}
 		if (requiresReinsert[0]) {
+			System.err.println("Failed reinsert 2: " + Arrays.toString(newKey)); //TODO
 			//does not fit in root node...
 			ensureCoverage(e);
 			Object r = root;
@@ -225,7 +225,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 			}
 			if (QuadTreeKD.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
 				throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
-						" min/max=" + Arrays.toString(center2) + 
+						" center/radius=" + Arrays.toString(center2) + 
 						"/"+ radius);
 			}
 			root = new QNode<>(center2, radius2, root, subNodePos);
@@ -363,7 +363,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	private double distanceEstimate(QNode<T> node, double[] point, int k,
     		Comparator<QEntry<T>> comp) {
     	if (node.isLeaf()) {
-    		//This is a lead that would contain the point.
+    		//This is a leaf that would contain the point.
     		int n = node.getEntries().size();
     		QEntry<T>[] data = node.getEntries().toArray(new QEntry[n]);
     		Arrays.sort(data, comp);
@@ -388,10 +388,6 @@ public class QuadTreeKD<T> implements PointIndex<T> {
     		//okay, this directory node contains the point, but none of the leaves does.
     		//We just return the size of this node, because all it's leaf nodes should
     		//contain more than enough candidate in proximity of 'point'.
-//    		double distMin = QUtil.distance(point, node.getMin()); 
-//    		double distMax = QUtil.distance(point, node.getMax());
-//    		//Return distance to farthest corner as approximation
-//    		return distMin < distMax ? distMax : distMin;
     		return node.getRadius() * Math.sqrt(point.length);
     	}
     }

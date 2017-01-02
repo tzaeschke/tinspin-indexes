@@ -53,9 +53,6 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	private int size = 0; 
 	
 	private QuadTreeRKD(int dims, int maxNodeSize) {
-		if (dims > 6) {
-			throw new UnsupportedOperationException();
-		}
 		if (DEBUG) {
 			System.err.println("Warning: DEBUG enabled");
 		}
@@ -67,16 +64,28 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 		return new QuadTreeRKD<>(dims, DEFAULT_MAX_NODE_SIZE);
 	}
 	
+	@Deprecated
 	public static <T> QuadTreeRKD<T> create(int dims, int maxNodeSize) {
 		return new QuadTreeRKD<>(dims, maxNodeSize);
 	}
 	
 	public static <T> QuadTreeRKD<T> create(int dims, int maxNodeSize, 
 			double[] min, double[] max) {
+		double radius = 0;
+		double[] center = new double[dims];
+		for (int i = 0; i < dims; i++) {
+			center[i] = (max[i]+min[i])/2.0;
+			if (max[i]-min[i]>radius) {
+				radius = max[i]-min[i];
+			}
+		}
+		return create(dims, maxNodeSize, center, radius);
+	}
+	
+	public static <T> QuadTreeRKD<T> create(int dims, int maxNodeSize, 
+			double[] center, double radius) {
 		QuadTreeRKD<T> t = new QuadTreeRKD<>(dims, maxNodeSize);
-		t.root = new QRNode<>( 
-				Arrays.copyOf(min, min.length), 
-				Arrays.copyOf(max, max.length));
+		t.root = new QRNode<>(Arrays.copyOf(center, center.length), radius);
 		return t;
 	}
 	
@@ -103,25 +112,16 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	}
 	
 	private void initializeRoot(double[] keyL, double[] keyU) {
-		double lo = Double.MAX_VALUE;
-		double hi = -Double.MAX_VALUE;
+		double[] center = new double[dims];
+		double radius = 0;
 		for (int d = 0; d < dims; d++) {
-			lo = lo > keyL[d] ? keyL[d] : lo;
-			hi = hi < keyU[d] ? keyU[d] : hi;
-		}
-		if (lo == 0 && hi == 0) {
-			hi = 1.0; 
-		}
-		double maxDistOrigin = Math.abs(hi) > Math.abs(lo) ? hi : lo;
-		maxDistOrigin = Math.abs(maxDistOrigin);
-		//no we use (0,0)/(+-maxDistOrigin*2,+-maxDistOrigin*2) as root.
-		double[] min = new double[dims];
-		double[] max = new double[dims];
-		for (int d = 0; d < dims; d++) {
-			min[d] = keyL[d] > 0 ? 0 : -(maxDistOrigin*2);
-			max[d] = keyU[d] < 0 ? 0 : (maxDistOrigin*2);
+			center[d] = (keyU[d] + keyL[d]) / 2.0;
+			if (keyU[d]-keyL[d] > radius) {
+				radius = keyU[d] -keyL[d];
+			}
 		}			
-		root = new QRNode<>(min, max);
+		radius *= 5; //for good measure
+		root = new QRNode<>(center, radius);
 	}
 	
 	/**
@@ -213,35 +213,32 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	 * @param e Entry to cover.
 	 */
 	private void ensureCoverage(QREntry<T> e) {
-		double[] pMin = e.lower();
-		//double[] pMax = e.getPointU();
-		while(!e.enclosedByXX(root.getMin(), root.getMax())) {
-			double len = root.getSideLength();
-			double[] min = root.getMin();
-			double[] max = root.getMax();
-			double[] min2 = new double[min.length];
-			double[] max2 = new double[max.length];
+		double[] pLow = e.lower();
+		//double[] pUpp = e.upper();
+		while (!e.enclosedBy(root.getCenter(), root.getRadius())) {
+			double[] center = root.getCenter();
+			double radius = root.getRadius();
+			double[] center2 = new double[center.length];
+			double radius2 = radius*2/QUtil.EPS_MUL; //TODO???
 			int subNodePos = 0;
-			for (int d = 0; d < min.length; d++) {
+			for (int d = 0; d < center.length; d++) {
 				subNodePos <<= 1;
-				if (pMin[d] < min[d]) {
-					min2[d] = min[d]-len;
-					max2[d] = max[d];
+				if (pLow[d] < center[d]-radius) {
+					center2[d] = center[d]-radius;
 					//root will end up in upper quadrant in this 
 					//dimension
 					subNodePos |= 1;
 				} else {
 					//extend upwards, even if extension unnecessary for this dimension.
-					min2[d] = min[d];
-					max2[d] = max[d]+len; 
+					center2[d] = center[d]+radius; 
 				}
 			}
-			if (QuadTreeRKD.DEBUG && !QUtil.isRectEnclosed(min, max, min2, max2)) {
+			if (QuadTreeRKD.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
 				throw new IllegalStateException("e=" + Arrays.toString(e.lower()) + 
 						"/" + Arrays.toString(e.upper()) + 
-						" min/max=" + Arrays.toString(min) + "/" + Arrays.toString(max));
+						" center/radius=" + Arrays.toString(center) + "/" + radius);
 			}
-			root = new QRNode<>(min2, max2, root, subNodePos);
+			root = new QRNode<>(center2, radius2, root, subNodePos);
 		}
 	}
 	
@@ -301,7 +298,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 					Object o = it.next();
 					if (o instanceof QRNode) {
 						QRNode<T> node = (QRNode<T>)o;
-						if (QUtil.overlap(min, max, node.getMin(), node.getMax())) {
+						if (QUtil.overlap(min, max, node.getCenter(), node.getRadius())) {
 							it = node.getChildIterator();
 							stack.push(it);
 						}
@@ -380,19 +377,17 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
     		QRNode<T>[] nodes = node.getChildNodes(); 
     		for (int i = 0; i < nodes.length; i++) {
     			if (nodes[i] != null && 
-    					QUtil.isPointEnclosed(point, nodes[i].getMin(), nodes[i].getMax())) {
+    					QUtil.isPointEnclosed(point, nodes[i].getCenter(), nodes[i].getRadius())) {
     				return distanceEstimate(nodes[i], point, k, comp);
     			}
     		}
     		//okay, this directory node contains the point, but none of the leaves does.
     		//We just return the size of this node, because all it's leaf nodes should
     		//contain more than enough candidate in proximity of 'point'.
-    		double distMin = QUtil.distance(point, node.getMin()); 
-    		double distMax = QUtil.distance(point, node.getMax());
-    		//Return distance to farthest corner as approximation
-    		return distMin < distMax ? distMax : distMin;
+    		return node.getRadius() * Math.sqrt(point.length); //TODO scale???
     	}
 
+    	//TODO do we need this stuff?? Simplify???
     	//This is a leaf that would contain a good candidate.
     	int n = node.getEntries().size();
     	QREntry<T>[] data = node.getEntries().toArray(new QREntry[n]);
@@ -404,7 +399,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
     		dist = dist * Math.pow(k/(double)n, 1/(double)dims);
     	}
 		if (dist <= 0.0) {
-			return node.getSideLength();
+			return node.getRadius() * 2;
 		}
 		return dist;
     }
@@ -438,7 +433,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
    		if (nodes != null) {
     		for (int i = 0; i < nodes.length; i++) {
     			QRNode<T> sub = nodes[i];
-    			if (sub != null && QUtil.overlap(min, max, sub.getMin(), sub.getMax())) {
+    			if (sub != null && QUtil.overlap(min, max, sub.getCenter(), sub.getRadius())) {
     				maxRange = rangeSearchKNN(sub, center, min, max, candidates, k, maxRange);
     			}
     		}
@@ -490,8 +485,8 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 			prefix += ".";
 		}
 		sb.append(prefix + posInParent + " d=" + depth);
-		sb.append(" " + Arrays.toString(node.getMin()));
-		sb.append("/" + Arrays.toString(node.getMax())+ NL);
+		sb.append(" " + Arrays.toString(node.getCenter()));
+		sb.append("/" + node.getRadius() + NL);
 		prefix += " ";
 		int pos = 0;
 		while (it.hasNext()) {
@@ -513,9 +508,9 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 		return "QuadTreeRKD;maxNodeSize=" + maxNodeSize + 
 				";maxDepth=" + MAX_DEPTH + 
 				";DEBUG=" + DEBUG + 
-				";min/max=" + (root==null ? "null" : 
-					(Arrays.toString(root.getMin()) + "/" + 
-				Arrays.toString(root.getMax())));
+				";center/radius=" + (root==null ? "null" : 
+					(Arrays.toString(root.getCenter()) + "/" +
+				root.getRadius()));
 	}
 	
 	@Override
@@ -526,7 +521,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 		}
 		return s;
 	}
-
+	
 	@Override
 	public int getDims() {
 		return dims;

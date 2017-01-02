@@ -56,7 +56,7 @@ public class QNode<T> {
 	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
 		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
-					" min/max=" + Arrays.toString(center) + "/" + radius);
+					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
 		
 		//traverse subs?
