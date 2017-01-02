@@ -74,6 +74,9 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	public static <T> QuadTreeKD<T> create(int dims, int maxNodeSize, 
 			double[] center, double radius) {
 		QuadTreeKD<T> t = new QuadTreeKD<>(dims, maxNodeSize);
+		if (radius <= 0) {
+			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
+		}
 		t.root = new QNode<>(Arrays.copyOf(center, center.length), radius);
 		return t;
 	}
@@ -394,16 +397,10 @@ public class QuadTreeKD<T> implements PointIndex<T> {
     
     private void knnSearchNew(QNode<T> start, double[] center, int k, double range,
     		ArrayList<QEntryDist<T>> candidates) {
-        double[] mbrPointsMin = new double[dims];
-        double[] mbrPointsMax = new double[dims];
-        for (int i = 0; i < dims; i++) {
-            mbrPointsMin[i] = center[i] - range;
-            mbrPointsMax[i] = center[i] + range;
-        }
-        rangeSearchKNN(start, center, mbrPointsMin, mbrPointsMax, candidates, k, range);
+        rangeSearchKNN(start, center, candidates, k, range);
     }
 
-    private double rangeSearchKNN(QNode<T> node, double[] center, double[] min, double[] max, 
+    private double rangeSearchKNN(QNode<T> node, double[] center, 
     		ArrayList<QEntryDist<T>> candidates, int k, double maxRange) {
 		if (node.isLeaf()) {
     		ArrayList<QEntry<T>> points = node.getEntries();
@@ -414,13 +411,14 @@ public class QuadTreeKD<T> implements PointIndex<T> {
     				candidates.add(new QEntryDist<>(p, dist));
   				}
     		}
-    		maxRange = adjustRegionKNN(min, max, center, candidates, k, maxRange);
+    		maxRange = adjustRegionKNN(candidates, k, maxRange);
     	} else {
     		QNode<T>[] nodes = node.getChildNodes(); 
     		for (int i = 0; i < nodes.length; i++) {
     			QNode<T> sub = nodes[i];
-    			if (sub != null && QUtil.overlap(min, max, sub.getCenter(), sub.getRadius())) {
-    				maxRange = rangeSearchKNN(sub, center, min, max, candidates, k, maxRange);
+    			if (sub != null && 
+    					QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius()) < maxRange) {
+    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange);
     				//we set maxRange simply to the latest returned value.
     			}
     		}
@@ -428,8 +426,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
     	return maxRange;
     }
 
-    private double adjustRegionKNN(double[] min, double[] max, double[] center, 
-    		ArrayList<QEntryDist<T>> candidates, int k, double maxRange) {
+    private double adjustRegionKNN(ArrayList<QEntryDist<T>> candidates, int k, double maxRange) {
         if (candidates.size() < k) {
         	//wait for more candidates
         	return maxRange;
@@ -442,10 +439,6 @@ public class QuadTreeKD<T> implements PointIndex<T> {
         }
         
         double range = candidates.get(candidates.size()-1).dist();
-        for (int i = 0; i < dims; i++) {
-            min[i] = center[i] - range;
-            max[i] = center[i] + range;
-        }
         return range;
 	}
 	

@@ -128,14 +128,14 @@ public class QRNode<T> {
 		int mask = 1<<center.length;
 		//This ensures that the subsnodes completely cover the area of
 		//the parent node.
-		double radiusSub = radius/2.0*QUtil.EPS_MUL;
+		double radiusSub = radius/2.0;
 		for (int d = 0; d < center.length; d++) {
 			mask >>= 1;
 			if ((subNodePos & mask) > 0) {
 				centerSub[d] = center[d]+radiusSub;
 			} else {
-							centerSub[d] = center[d]-radiusSub; 
-}
+				centerSub[d] = center[d]-radiusSub; 
+			}
 		}
 		return new QRNode<>(centerSub, radiusSub);		
 	}
@@ -383,14 +383,15 @@ public class QRNode<T> {
 		s.nNodes++;
 		
 		if (parent != null) {
-			if (!QUtil.isRectEnclosed(center, radius, parent.center, parent.radius)) {
-				throw new IllegalStateException();
+			if (!QUtil.isRectEnclosed(center, radius, parent.center, parent.radius*QUtil.EPS_MUL)) {
+				//TODO?
+				//throw new IllegalStateException();
 			}
 		}
 		if (values != null) {
 			for (int i = 0; i < values.size(); i++) {
 				QREntry<T> e = values.get(i);
-				if (!QUtil.isRectEnclosed(e.lower(), e.upper(), center, radius)) {
+				if (!QUtil.isRectEnclosed(e.lower(), e.upper(), center, radius*QUtil.EPS_MUL)) {
 					throw new IllegalStateException();
 				}
 				//TODO check that they overlap with the centerpoint or that subs==null

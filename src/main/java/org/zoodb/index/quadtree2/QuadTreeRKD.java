@@ -85,6 +85,9 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	public static <T> QuadTreeRKD<T> create(int dims, int maxNodeSize, 
 			double[] center, double radius) {
 		QuadTreeRKD<T> t = new QuadTreeRKD<>(dims, maxNodeSize);
+		if (radius <= 0) {
+			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
+		}
 		t.root = new QRNode<>(Arrays.copyOf(center, center.length), radius);
 		return t;
 	}
@@ -161,12 +164,14 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	@Override
 	public T remove(double[] keyL, double[] keyU) {
 		if (root == null) {
-			System.err.println("Failed remove 1: " + Arrays.toString(keyL)); //TODO
+			System.err.println("Failed remove 1: " + 
+					Arrays.toString(keyL) + Arrays.toString(keyU)); //TODO
 			return null;
 		}
 		QREntry<T> e = root.remove(null, keyL, keyU, maxNodeSize);
 		if (e == null) {
-			System.err.println("Failed remove 2: " + Arrays.toString(keyL)); //TODO
+			System.err.println("Failed remove 2: " + 
+					Arrays.toString(keyL) + Arrays.toString(keyU)); //TODO
 			return null;
 		}
 		size--;
@@ -192,11 +197,13 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 				maxNodeSize, requiresReinsert, 0, MAX_DEPTH);
 		if (e == null) {
 			//not found
-			System.err.println("Failed reinsert 1: " + Arrays.toString(newKeyL)); //TODO
+			System.err.println("Failed reinsert 1: " + 
+					Arrays.toString(oldKeyL) + Arrays.toString(oldKeyU)); //TODO
 			return null;
 		}
 		if (requiresReinsert[0]) {
-			System.err.println("Failed reinsert 2: " + Arrays.toString(newKeyL)); //TODO
+			System.err.println("Failed reinsert 2: " + 
+					Arrays.toString(oldKeyL) + Arrays.toString(oldKeyU)); //TODO
 			//does not fit in root node...
 			ensureCoverage(e);
 			Object r = root;
@@ -355,12 +362,12 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
         Comparator<QREntry<T>> comp =  
         		(QREntry<T> e1, QREntry<T> e2) -> {
         			double deltaDist = 
-        					QUtil.distanceToRect(center, e1) - 
-        					QUtil.distanceToRect(center, e2);
+        					QUtil.distToRectEdge(center, e1) - 
+        					QUtil.distToRectEdge(center, e2);
         			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
         		};
         double distEstimate = distanceEstimate(root, center, k, comp);
-    	ArrayList<QREntryDist<T>> candidates = new ArrayList<>();
+        ArrayList<QREntryDist<T>> candidates = new ArrayList<>();
     	while (candidates.size() < k) {
     		candidates.clear();
     		knnSearchNew(root, center, k, distEstimate, candidates);
@@ -393,7 +400,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
     	QREntry<T>[] data = node.getEntries().toArray(new QREntry[n]);
     	Arrays.sort(data, comp);
     	int pos = n < k ? n : k;
-    	double dist = QUtil.distanceToRect(point, data[pos-1]);
+    	double dist = QUtil.distToRectEdge(point, data[pos-1]);
     	if (n < k) {
     		//scale search dist with dimensions.
     		dist = dist * Math.pow(k/(double)n, 1/(double)dims);
@@ -406,43 +413,37 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
     
     private void knnSearchNew(QRNode<T> start, double[] center, int k, double range,
     		ArrayList<QREntryDist<T>> candidates) {
-        double[] mbrPointsMin = new double[dims];
-        double[] mbrPointsMax = new double[dims];
-        for (int i = 0; i < dims; i++) {
-            mbrPointsMin[i] = center[i] - range;
-            mbrPointsMax[i] = center[i] + range;
-        }
-        rangeSearchKNN(start, center, mbrPointsMin, mbrPointsMax, candidates, k, range);
+        rangeSearchKNN(start, center, candidates, k, range);
     }
 
-    private double rangeSearchKNN(QRNode<T> node, double[] center, double[] min, double[] max, 
+    private double rangeSearchKNN(QRNode<T> node, double[] center, 
     		ArrayList<QREntryDist<T>> candidates, int k, double maxRange) {
 		ArrayList<QREntry<T>> points = node.getEntries();
     	if (points != null) {
     		for (int i = 0; i < points.size(); i++) {
     			QREntry<T> p = points.get(i);
-    			double dist = QUtil.distanceToRect(center, p);
+    			double dist = QUtil.distToRectEdge(center, p);
     			if (dist < maxRange) {
     				candidates.add(new QREntryDist<>(p, dist));
     			}
     		}
-    		maxRange = adjustRegionKNN(min, max, center, candidates, k, maxRange);
+    		maxRange = adjustRegionKNN(candidates, k, maxRange);
     	} 
     	
    		QRNode<T>[] nodes = node.getChildNodes();
    		if (nodes != null) {
     		for (int i = 0; i < nodes.length; i++) {
     			QRNode<T> sub = nodes[i];
-    			if (sub != null && QUtil.overlap(min, max, sub.getCenter(), sub.getRadius())) {
-    				maxRange = rangeSearchKNN(sub, center, min, max, candidates, k, maxRange);
+    			if (sub != null && 
+    					QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius()) < maxRange) {
+    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange);
     			}
     		}
     	}
     	return maxRange;
     }
 
-    private double adjustRegionKNN(double[] min, double[] max, double[] center, 
-    		ArrayList<QREntryDist<T>> candidates, int k, double maxRange) {
+    private double adjustRegionKNN(ArrayList<QREntryDist<T>> candidates, int k, double maxRange) {
         if (candidates.size() < k) {
         	//wait for more candidates
         	return maxRange;
@@ -455,10 +456,6 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
         }
         
         double range = candidates.get(candidates.size()-1).dist();
-        for (int i = 0; i < dims; i++) {
-            min[i] = center[i] - range;
-            max[i] = center[i] + range;
-        }
         return range;
 	}
 	
@@ -494,9 +491,9 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 			if (o instanceof QRNode) {
 				QRNode<T> sub = (QRNode<T>) o;
 				toStringTree(sb, sub, depth+1, pos);
-			} else if (o instanceof QEntry) {
-				QEntry<T> e = (QEntry<T>) o;
-				sb.append(prefix + Arrays.toString(e.point()));
+			} else {
+				QREntry<T> e = (QREntry<T>) o;
+				sb.append(prefix + Arrays.toString(e.lower()) + Arrays.toString(e.upper()));
 				sb.append(" v=" + e.value() + NL);
 			}
 			pos++;

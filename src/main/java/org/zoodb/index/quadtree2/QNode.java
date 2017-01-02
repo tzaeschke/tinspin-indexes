@@ -107,7 +107,7 @@ public class QNode<T> {
 		int mask = 1<<center.length;
 		//This ensures that the subsnodes completely cover the area of
 		//the parent node.
-		double radiusSub = radius/2.0*QUtil.EPS_MUL;
+		double radiusSub = radius/2.0;
 		for (int d = 0; d < center.length; d++) {
 			mask >>= 1;
 			if ((subNodePos & mask) > 0) {
@@ -318,7 +318,7 @@ public class QNode<T> {
 		
 		if (parent != null) {
 			if (!QUtil.isRectEnclosed(center, radius, 
-					parent.center, parent.radius)) {
+					parent.center, parent.radius*QUtil.EPS_MUL)) {
 				for (int d = 0; d < center.length; d++) {
 //					if ((centerOuter[d]+radiusOuter) / (centerEnclosed[d]+radiusEnclosed) < 0.9999999 || 
 //							(centerOuter[d]-radiusOuter) / (centerEnclosed[d]-radiusEnclosed) > 1.0000001) {
@@ -338,7 +338,7 @@ public class QNode<T> {
 		if (values != null) {
 			for (int i = 0; i < values.size(); i++) {
 				QEntry<T> e = values.get(i);
-				if (!QUtil.isPointEnclosed(e.point(), center, radius)) {
+				if (!QUtil.isPointEnclosed(e.point(), center, radius*QUtil.EPS_MUL)) {
 					System.out.println("Node: " + radius + " " + Arrays.toString(center));
 					System.out.println("Child: " + Arrays.toString(e.point()));
 					for (int d = 0; d < center.length; d++) {
