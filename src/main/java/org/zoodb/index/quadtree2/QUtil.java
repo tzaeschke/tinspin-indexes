@@ -18,7 +18,7 @@ package org.zoodb.index.quadtree2;
 
 public class QUtil {
 	
-	static final double EPS_MUL = 1.00000000002;
+	static final double EPS_MUL = 1.000000001;
 
 	public static boolean isPointEnclosed(double[] point,
 			double[] min, double[] max) {
@@ -98,7 +98,7 @@ public class QUtil {
 	public static boolean isRectEnclosed(double[] minEnclosed, double[] maxEnclosed,
 			double[] centerOuter, double radiusOuter) {
 		for (int d = 0; d < centerOuter.length; d++) {
-			double radOuter = radiusOuter * EPS_MUL;
+			double radOuter = radiusOuter;
 			if ((centerOuter[d]+radOuter) < maxEnclosed[d] || 
 					(centerOuter[d]-radOuter) > minEnclosed[d]) {
 				return false;
@@ -110,7 +110,7 @@ public class QUtil {
 	public static boolean isRectEnclosed(double[] centerEnclosed, double radiusEnclosed,
 			double[] centerOuter, double radiusOuter) {
 		for (int d = 0; d < centerOuter.length; d++) {
-			double radOuter = radiusOuter * EPS_MUL * EPS_MUL;
+			double radOuter = radiusOuter;
 			double radEncl = radiusEnclosed;
 			if ((centerOuter[d]+radOuter) < (centerEnclosed[d]+radEncl) || 
 					(centerOuter[d]-radOuter) > (centerEnclosed[d]-radEncl)) {

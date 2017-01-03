@@ -212,7 +212,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 			double[] center = root.getCenter();
 			double radius = root.getRadius();
 			double[] center2 = new double[center.length];
-			double radius2 = radius*2/QUtil.EPS_MUL;
+			double radius2 = radius*2;
 			int subNodePos = 0;
 			for (int d = 0; d < center.length; d++) {
 				subNodePos <<= 1;
