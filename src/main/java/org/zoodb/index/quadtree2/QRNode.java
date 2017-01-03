@@ -205,8 +205,10 @@ public class QRNode<T> {
 				}
 				QREntry<T> ret = sub.update(this, keyOldL, keyOldU, keyNewL, keyNewU, 
 						maxNodeSize, requiresReinsert, currentDepth+1, maxDepth);
+				//Divide by EPS to ensure that we do not reinsert to low
 				if (ret != null && requiresReinsert[0] && 
-						QUtil.isRectEnclosed(ret.lower(), ret.upper(), center, radius)) {
+						QUtil.isRectEnclosed(ret.lower(), ret.upper(), 
+								center, radius/QUtil.EPS_MUL)) {
 					requiresReinsert[0] = false;
 					Object r = this;
 					while (r instanceof QRNode) {
@@ -226,7 +228,8 @@ public class QRNode<T> {
 			if (QUtil.isRectEqual(e, keyOldL, keyOldU)) {
 				values.remove(i);
 				e.setKey(keyNewL, keyNewU);
-				if (QUtil.isRectEnclosed(keyNewL, keyNewU, center, radius)) {
+				//Divide by EPS to ensure that we do not reinsert to low
+				if (QUtil.isRectEnclosed(keyNewL, keyNewU, center, radius/QUtil.EPS_MUL)) {
 					requiresReinsert[0] = false;
 					int pos = calcSubPositionR(keyNewL, keyNewU);
 					if (pos == OVERLAP_WITH_CENTER) {

@@ -174,7 +174,7 @@ public class QNode<T> {
 			QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
 					currentDepth+1, maxDepth);
 			if (ret != null && requiresReinsert[0] && 
-					QUtil.isPointEnclosed(ret.point(), center, radius)) {
+					QUtil.isPointEnclosed(ret.point(), center, radius/QUtil.EPS_MUL)) {
 				requiresReinsert[0] = false;
 				Object r = this;
 				while (r instanceof QNode) {
@@ -189,7 +189,7 @@ public class QNode<T> {
 			if (QUtil.isPointEqual(e.point(), keyOld)) {
 				values.remove(i);
 				e.setKey(keyNew);
-				if (QUtil.isPointEnclosed(keyNew, center, radius)) {
+				if (QUtil.isPointEnclosed(keyNew, center, radius/QUtil.EPS_MUL)) {
 					//reinsert locally;
 					values.add(e);
 					requiresReinsert[0] = false;
