@@ -26,7 +26,6 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Random;
 
 import org.junit.Test;
@@ -1020,8 +1019,8 @@ public class TestCritBitKD {
 //		long[] qPP = new long[]{ 11,  11};
 //		QueryIteratorKD<Integer> it;
 //		
-////		it = cb.queryKD(qMM, qPP);
-////		checkResult(it, 11, 22, 33, 44);
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 11, 22, 33, 44);
 //		
 //		//test negative quadrants
 //		qMM = new long[]{ -11,  -11};
@@ -1096,21 +1095,21 @@ public class TestCritBitKD {
 //		checkResult(it);
 //
 //	}
-	
-	@SuppressWarnings("unchecked")
-	private <T> void checkResult(QueryIteratorKD<T> it, T...ts) {
-		HashSet<T> hs = new HashSet<>();
-		hs.addAll(Arrays.asList(ts));
-		while (it.hasNext()) {
-			T t = it.next();
-			System.out.println("Found: " + t);
-			assertTrue(hs.remove(t));
-		}
-		for (T t: hs) {
-			System.out.println("Expected to find: " + t);
-		}
-		assertTrue(hs.isEmpty());
-	}
+//	
+//	@SuppressWarnings("unchecked")
+//	private <T> void checkResult(QueryIteratorKD<T> it, T...ts) {
+//		HashSet<T> hs = new HashSet<>();
+//		hs.addAll(Arrays.asList(ts));
+//		while (it.hasNext()) {
+//			T t = it.next();
+//			System.out.println("Found: " + t);
+//			assertTrue(hs.remove(t));
+//		}
+//		for (T t: hs) {
+//			System.out.println("Expected to find: " + t);
+//		}
+//		assertTrue(hs.isEmpty());
+//	}
 	
 	
 	@Test
