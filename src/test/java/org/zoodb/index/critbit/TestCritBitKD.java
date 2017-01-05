@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
 
 import org.junit.Test;
@@ -996,6 +997,121 @@ public class TestCritBitKD {
 		cb.removeKD(B);
 		assertTrue(cb.containsKD(A));
 	}
+	
+//	@Test
+//	public void testNegativeKeys() {
+//		final int K = 2;
+//		CritBitKD<Integer> cb = newCritBit(64, K); 
+//		long[] MM = new long[]{-10, -10};
+//		long[] MP = new long[]{-10,  10};
+//		long[] PM = new long[]{ 10, -10};
+//		long[] PP = new long[]{ 10,  10};
+//		cb.putKD(MM, 11);
+//		cb.putKD(MP, 22);
+//		cb.putKD(PM, 33);
+//		cb.putKD(PP, 44);
+//		assertTrue(cb.containsKD(MM));
+//		assertTrue(cb.containsKD(MP));
+//		assertTrue(cb.containsKD(PM));
+//		assertTrue(cb.containsKD(PP));
+//		
+//		//test all 4
+//		long[] qMM = new long[]{-11, -11};
+//		long[] qPP = new long[]{ 11,  11};
+//		QueryIteratorKD<Integer> it;
+//		
+////		it = cb.queryKD(qMM, qPP);
+////		checkResult(it, 11, 22, 33, 44);
+//		
+//		//test negative quadrants
+//		qMM = new long[]{ -11,  -11};
+//		qPP = new long[]{  -1,   -1};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 11);
+//		
+//		qMM = new long[]{ -11, -11};
+//		qPP = new long[]{   1,   1};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 11);
+//		
+//		qMM = new long[]{ -1,  -11};
+//		qPP = new long[]{ 11,   -1};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 33);
+//		
+//		qMM = new long[]{ -11,  -1};
+//		qPP = new long[]{  -1,  11};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 22);
+//
+//		//test 2-s
+//		qMM = new long[]{  1,  11};
+//		qPP = new long[]{ 11,  11};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 33, 44);
+//		
+//		qMM = new long[]{ -1,  11};
+//		qPP = new long[]{ 11,  11};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 33, 44);
+//
+//		
+//		qMM = new long[]{ 11,   1};
+//		qPP = new long[]{ 11,  11};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 22, 44);
+//		
+//		qMM = new long[]{ 11,  -1};
+//		qPP = new long[]{ 11,  11};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 22, 44);
+//
+//		
+//		qMM = new long[]{ -11, -11};
+//		qPP = new long[]{   1,  11};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 11, 33);
+//		
+//		qMM = new long[]{ -11, -11};
+//		qPP = new long[]{  -1,  11};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 11, 33);
+//
+//		
+//		qMM = new long[]{ -11, -11};
+//		qPP = new long[]{  11,   1};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 11, 22);
+//		
+//		qMM = new long[]{ -11, -11};
+//		qPP = new long[]{  11,  -1};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it, 11, 22);
+//
+//	
+//		//test 00
+//		qMM = new long[]{ -1,  -1};
+//		qPP = new long[]{  1,   1};
+//		it = cb.queryKD(qMM, qPP);
+//		checkResult(it);
+//
+//	}
+	
+	@SuppressWarnings("unchecked")
+	private <T> void checkResult(QueryIteratorKD<T> it, T...ts) {
+		HashSet<T> hs = new HashSet<>();
+		hs.addAll(Arrays.asList(ts));
+		while (it.hasNext()) {
+			T t = it.next();
+			System.out.println("Found: " + t);
+			assertTrue(hs.remove(t));
+		}
+		for (T t: hs) {
+			System.out.println("Expected to find: " + t);
+		}
+		assertTrue(hs.isEmpty());
+	}
+	
 	
 	@Test
 	public void testIteratorWithNullValues() {
