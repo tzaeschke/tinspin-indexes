@@ -1,10 +1,10 @@
 
 [2017-01-07]
- Version 1.3.5 
+v 1.3.5 
+======= 
  - Fixed rare problem with postfix creation. This solves a problem
-   with kd-queries and slightly reduces memory consumption.
+   with kd-queries and slightly reduces memory consumption. See issue #7.
  
-
 
 [2016-09-19]
 - Changed structure to standard maven structure
