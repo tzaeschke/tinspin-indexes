@@ -1154,6 +1154,133 @@ public class TestCritBitKD {
 		assertEquals(N, n);
 	}
 	
+	@Test
+	public void test64_3_10000_queries() {
+		final int K = 2;
+		final int W = 64; //bit depth
+		final int N = 1000;
+		for (int r = 0; r < 100; r++) {
+			Random R = new Random(r);
+			long[][] aa = new long[N][];
+			CritBitKD<Integer> cb = newCritBit(W, K); 
+			for (int i = 0; i < N; i++) {
+				long[] a = new long[K];
+				for (int k = 0; k < K; k++) {
+					a[k] = BitTools.toSortableLong(0.5+R.nextDouble()*0.001);
+				}
+				
+				if (cb.containsKD(a)) {
+					//System.out.println("Duplicate: " + a[i]);
+					i--;
+					continue;
+				}
+				aa[i] = a;
+				assertNull(cb.putKD(a, i));
+				assertTrue(cb.containsKD(a));
+			}
+			
+			assertEquals(N, cb.size());
+	
+			long[] qMin = new long[K];
+			long[] qMax = new long[K];
+			QueryIteratorKD<Integer> it = null;
+			
+			//test normal queries
+			for (int i = 0; i < 100; i++) {
+				for (int k = 0; k < K; k++) {
+					qMin[k] = BitTools.toSortableLong(0.5 + R.nextDouble()*0.001);
+					qMax[k] = BitTools.toSortableLong(0.5 + R.nextDouble()*0.001);
+					if (qMax[k] < qMin[k]) {
+						long l = qMin[k];
+						qMin[k] = qMax[k];
+						qMax[k] = l;
+					}
+				}
+			
+				ArrayList<long[]> result = executeQuery(aa, qMin, qMax);
+				it = cb.queryKD(qMin, qMax);
+				
+				int nResult = 0;
+				while (it.hasNext()) {
+					long[] ra = it.nextKey();
+					nResult++;
+					//TODO
+					//System.out.println("i=" + i + " nResult=" + nResult);
+					//System.out.println("keyL=" + Arrays.toString(ra));
+					//System.out.println("keyB=" + BitTools.toBinary(ra, 64));
+					assertContains(aa, ra);
+				}
+				
+				//keyL=[4602687542558506853, 4602682256177218620]
+				//keyB=00111111.11100000.00000111.11101111.00010010.01010000.10111111.01100101, 00111111.11100000.00000011.00100000.00111101.01101111.11000100.00111100, 
+				//i=7 nResult=45
+				//keyL=[4602686748753921846, 4602683742276813946]
+				//keyB=00111111.11100000.00000111.00110110.00111111.11100000.00000111.00110110, 00111111.11100000.00000100.01111010.00111111.11100000.00000100.01111010, 
+					
+				System.out.println(result.size()); //TODO
+				assertEquals("r=" + r + " i=" + i, result.size(), nResult);
+			}			
+
+			//assert all
+//			int n = 0;
+//			Arrays.fill(qMin, Long.MIN_VALUE);
+//			Arrays.fill(qMax, Long.MAX_VALUE);
+//			it = cb.queryKD(qMin, qMax);
+//			while (it.hasNext()) {
+//				it.next();
+//				n++;
+//			}
+//			assertEquals(aa.length, n);
+			
+			//TODO
+			if (r < 8) {
+//				continue;
+			}
+			
+			//assert point search
+			int i = 0;
+			for (long[] a: aa) {
+//				a = aa[462];//TODO
+//				System.out.println("i=" + i++ + " r=" + r);
+//				long[] vi = BitTools.mergeLong(64, a);
+//				System.out.println("merged:" + Arrays.toString(vi));
+//				System.out.println("merged:" + BitTools.toBinary(vi, 64));
+//				System.out.println("keyL2= " + Arrays.toString(a));
+//				System.out.println("keyB2= " + BitTools.toBinary(a, 64));
+				it = cb.queryKD(a, a);
+//				System.out.println("Checking: " + Bits.toBinary(a, 32));
+//				System.out.println("Checking: " + Bits.toBinary(BitTools.mergeLong(W, a), 64));
+//				System.out.println(cb.containsKD(a));
+				assertTrue(it.hasNext());
+				long[] r2 = it.nextKey();
+				assertFalse(it.hasNext());
+				assertTrue(isEqual(a, r2));
+			}
+			
+			
+			//assert none on invert
+			Arrays.fill(qMin, Long.MIN_VALUE);
+			Arrays.fill(qMax, Long.MAX_VALUE);
+			it = cb.queryKD(qMax, qMin);
+			assertFalse(it.hasNext());
+			
+			((CritBit<?>)cb).checkTree();
+			
+			// delete stuff
+			for (long[] a: aa) {
+				assertNotNull(cb.removeKD(a));
+			}
+			
+			// assert none on empty tree
+			Arrays.fill(qMin, Long.MIN_VALUE);
+			Arrays.fill(qMax, Long.MAX_VALUE);
+			it = cb.queryKD(qMin, qMax);
+			assertFalse(it.hasNext());
+		}
+	}
+
+
+	
 	private void checkValues1D(CritBitKD<Integer> cb, long[][] aa) {
 		for (int i = 0; i < aa.length; i++) {
 			Integer v = cb.getKD(aa[i]);

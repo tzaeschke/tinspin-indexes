@@ -1,3 +1,13 @@
+
+CritBit
+=======
+- Memory optimisation: Nodes should have 'long' instead of 'long[]' for infixes.
+  Infixes that cross 64bit boundaries can be stored in two separate nodes. 
+  This would introduce a special case where a node may have only a single child
+  which contains a continuation of the infix -> 'null' would not indicate that value is 'null'
+  -> use NULL indicator object, see next point
+- Memory optimisation: Merge children and subnodes into single field, -> saves
+  2*32bits per Node. 
 - Fix warnings in CritBit.x.checkMatchOrigKD()
 - Fix warnings in CritBit.x.unsetBitAfterSplit()
 - Why do Point queries scale much worse than kd-Tree? Because of merging???? O(k)

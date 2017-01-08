@@ -1,4 +1,11 @@
 
+[2017-01-07]
+ Version 1.3.5 
+ - Fixed rare problem with postfix creation. This solves a problem
+   with kd-queries and slightly reduces memory consumption.
+ 
+
+
 [2016-09-19]
 - Changed structure to standard maven structure
 - Changed License to Apache License 2.0

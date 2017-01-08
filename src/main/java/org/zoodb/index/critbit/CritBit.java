@@ -43,6 +43,10 @@ package org.zoodb.index.critbit;
  * BitTools.toSortableLong(...), also when supplying query parameters.
  * Extracted values can be converted back with BitTools.toDouble() or toFloat().
  * 
+ * Version 1.3.5 
+ * - Fixed rare problem with postfix creation. This solves a problem
+ *   with kd-queries and slightly reduces memory consumption.
+ * 
  * Version 1.3.2
  * - Added QueryIterator.reset()
  * 
@@ -366,7 +370,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	 * @return the postfix.
 	 */
 	private long[] createPostFix(long[] val, int posDiff) {
-		int preLen = posDiff >>> 6;
+		int preLen = (posDiff+1) >>> 6;
 		long[] p = new long[val.length - preLen];
 		System.arraycopy(val, preLen, p, 0, p.length);
 		return p;
@@ -2011,6 +2015,15 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 					return false;
 				}
 			}
+			//TODO
+			//TODO
+			//TODO
+			//TODO
+			//TODO
+			//TODO
+			//TODO
+			//TODO
+
 			nextKey = CritBit.clone(keyOrigTemplate);
 			nextValue = value;
 			return true;
