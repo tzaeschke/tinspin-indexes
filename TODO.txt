@@ -1,6 +1,7 @@
 
 CritBit
 =======
+- Remove Node.posFirstBit this should always be (parent.posDiff+1)
 - Memory optimisation: Nodes should have 'long' instead of 'long[]' for infixes.
   Infixes that cross 64bit boundaries can be stored in two separate nodes. 
   This would introduce a special case where a node may have only a single child
