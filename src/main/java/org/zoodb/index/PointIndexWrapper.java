@@ -66,9 +66,14 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 			RectangleEntry<T> e = it.next();
 			return new PointW<T>(e.lower(), e.value());
 		}
-		
 	}
 	
+	@Override
+	public PointEntryDist<T> query1NN(double[] center) {
+		RectangleEntryDist<T> r = ind.query1NN(center);
+		return new PointDistW<>(r.lower(), r.value(), r.dist());
+	}
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Iterator<? extends PointEntryDist<T>> queryKNN(double[] center, int k) {
@@ -88,7 +93,6 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 		public double dist() {
 			return dist;
 		}
-		
 	}
 	
 	private static class PointDIter<T> implements Iterator<PointEntryDist<T>> {
@@ -109,7 +113,6 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 			RectangleEntryDist<T> e = it.next();
 			return new PointDistW<>(e.lower(), e.value(), e.dist());
 		}
-		
 	}
 	
 	@Override

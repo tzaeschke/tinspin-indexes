@@ -65,12 +65,27 @@ public interface RectangleIndex<T> extends Index<T> {
 	Iterator<? extends RectangleEntry<T>> queryIntersect(double[] min, double[] max);
 
 	/**
+	 * Finds the nearest neighbor. This uses euclidean 'edge distance'.
+	 * Other distance types can only be specified directly on the index implementations. 
+	 * @param center center point
+	 * @return the nearest neighbor
+	 */
+	default RectangleEntryDist<T> query1NN(double[] center) {
+		Iterator<? extends RectangleEntryDist<T>> it = queryKNN(center, 1);
+		if (it.hasNext()) {
+			return it.next();
+		}
+		return null;
+	}
+
+	/**
+	 * Finds the nearest neighbor. 
 	 * This uses euclidean 'edge distance', i.e. the distance to the edge of rectangle.
 	 * Distance is 0 is the rectangle overlaps with the search point.
 	 * Other distance types can only be specified directly on the index implementations. 
 	 * @param center center point
-	 * @param k number of neighbours
-	 * @return list of nearest neighbours
+	 * @param k number of neighbors
+	 * @return list of nearest neighbors
 	 */
 	Iterator<? extends RectangleEntryDist<T>> queryKNN(double[] center, int k);
 

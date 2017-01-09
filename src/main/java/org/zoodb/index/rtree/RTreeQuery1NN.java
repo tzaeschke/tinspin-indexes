@@ -19,16 +19,15 @@ package org.zoodb.index.rtree;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Iterator;
 
 /**
- * kNN search with EDGE distance and presorting of entries.
+ * 1-NN search with EDGE distance and presorting of entries.
  * 
  * @author Tilmann Zäschke
  *
  * @param <T>
  */
-public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
+public class RTreeQuery1NN<T> {
 	
 	private class IteratorStack {
 		private final IterPos<T>[] stack;
@@ -77,10 +76,7 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 	private final DEComparator COMP = new DEComparator();
 	private final RTree<T> tree;
 	private double[] center;
-	private int k;
 	private IteratorStack stack;
-	private final ArrayList<DistEntry<T>> candidates;
-	private Iterator<DistEntry<T>> iter;
 	private DistanceFunction dist;
 	
 	private static class IterPos<T> {
@@ -94,15 +90,12 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		}
 	}
 	
-	public RTreeIteratorKnn(RTree<T> tree, double[] center, int k, 
-			DistanceFunction dist) {
+	public RTreeQuery1NN(RTree<T> tree) {
 		this.stack = new IteratorStack(tree.getDepth());
 		this.tree = tree;
-		this.candidates = new ArrayList<>();
-		reset(center, k, dist == null ? DistanceFunction.EDGE : dist);
 	}
 
-	public void reset(double[] center, int k, DistanceFunction dist) {
+	public DistEntry<T> reset(double[] center, DistanceFunction dist) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth());
 		} else {
@@ -111,24 +104,25 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		if (dist != null) {
 			this.dist = dist;
 		}
+		//set default if none is given
+		if (this.dist == null) {
+			this.dist = DistanceFunction.EDGE;
+		}
 		if (!(this.dist instanceof DistanceFunction.EdgeDistance)) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
-		this.k = k;
 		this.center = center;
-		this.candidates.clear();
-		if (k <= 0 || tree.size() == 0) {
-			iter = candidates.iterator();
-			return;
+		if (tree.size() == 0) {
+			return null;
 		}
 		
-		//estimate distance
-		double distEst = Double.MAX_VALUE;
 		this.stack.prepareAndPush(tree.getRoot());
-		findCandidates(distEst);
+		return findCandidate();
 	}
 	
-	private void findCandidates(double currentDist) {
+	private DistEntry<T> findCandidate() {
+		DistEntry<T> candidate  = new DistEntry<>(null, null, null, Double.POSITIVE_INFINITY);
+		double currentDist = Double.MAX_VALUE;
 		nextSub:
 		while (!stack.isEmpty()) {
 			IterPos<T> ip = stack.peek();
@@ -144,16 +138,17 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 				while (ip.pos < entries.size()) {
 					Entry<T> e = entries.get(ip.pos);
 					ip.pos++;
-					//this works only for EDGE distance!!!
-					double eDist = dist.dist(center, e.min, e.max);
-					if (eDist < currentDist) {
-						currentDist = checkCandidate(e, eDist, currentDist);
+					//this works only for EDGE distance !!!
+					double d = dist.dist(center, e.min, e.max);
+					if (candidate.dist() > d) {
+						candidate.set(e, d);
+						currentDist = d; 
 					}
 				}
 			}
 			stack.pop();
 		}
-		iter = candidates.iterator();
+		return candidate;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -168,29 +163,6 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		}
 		Arrays.sort(ret, COMP);
 		return ret;
-	}
-
-	private double checkCandidate(Entry<T> e, double eDist, double distEst) {
-		if (candidates.size() < k) {
-			candidates.add(new DistEntry<T>(e.lower(), e.upper(), e.value(), eDist));
-			candidates.sort(COMP);
-		} else if (candidates.get(k-1).dist() > eDist) {
-			candidates.get(k-1).set(e, eDist);
-			//candidates.add(new DistEntry<T>(e.lower(), e.upper(), e.value(), eDist));
-			candidates.sort(COMP);
-			distEst = candidates.get(k-1).dist(); 
-		}
-		return distEst;
-	}
-
-	@Override
-	public boolean hasNext() {
-		return iter.hasNext();
-	}
-
-	@Override
-	public DistEntry<T> next() {
-		return iter.next();
 	}
 	
 }

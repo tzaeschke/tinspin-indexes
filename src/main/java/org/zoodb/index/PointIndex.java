@@ -60,11 +60,25 @@ public interface PointIndex<T> extends Index<T> {
 	Iterator<? extends PointEntry<T>> query(double[] min, double[] max);
 
 	/**
-	 * This uses euclidean distance. 
+	 * Finds the nearest neighbor. This uses euclidean distance. 
 	 * Other distance types can only be specified directly on the index implementations. 
 	 * @param center center point
-	 * @param k number of neighbours
-	 * @return list of nearest neighbours
+	 * @return the nearest neighbor
+	 */
+	default PointEntryDist<T> query1NN(double[] center) {
+		Iterator<? extends PointEntryDist<T>> it = queryKNN(center, 1);
+		if (it.hasNext()) {
+			return it.next();
+		}
+		return null;
+	}
+
+	/**
+	 * Finds the nearest neighbor. This uses euclidean distance. 
+	 * Other distance types can only be specified directly on the index implementations. 
+	 * @param center center point
+	 * @param k number of neighbors
+	 * @return list of nearest neighbors
 	 */
 	Iterator<? extends PointEntryDist<T>> queryKNN(double[] center, int k);
 

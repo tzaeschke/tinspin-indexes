@@ -224,4 +224,10 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 		return Arrays.toString(min) + "/" + Arrays.toString(max) + ";len=" + 
 		Arrays.toString(len) + ";v=" + val;
 	}
+
+	protected void set(Entry<T> e) {
+		min = e.min;
+		max = e.max;
+		val = e.val;
+	}
 }

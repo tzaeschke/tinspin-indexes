@@ -45,4 +45,9 @@ public class DistEntry<T> extends Entry<T> implements RectangleEntryDist<T> {
 	public String toString() {
 		return super.toString() + ";dist=" + dist;
 	}
+
+	protected void set(Entry<T> e, double distance) {
+		super.set(e);
+		dist = distance;
+	}
 }

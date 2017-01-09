@@ -19,6 +19,7 @@ package org.zoodb.index.rtree;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.zoodb.index.RectangleEntryDist;
 import org.zoodb.index.RectangleIndex;
 
 /**
@@ -317,6 +318,14 @@ public class RTree<T> implements RectangleIndex<T> {
 	@Override
 	public RTreeIterator<T> queryIntersect(double[] min, double[] max) {
 		return new RTreeIterator<>(this, min, max);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.zoodb.index.rtree.Index#query1N
+	 */
+	@Override
+	public RectangleEntryDist<T> query1NN(double[] center) {
+		return new RTreeQuery1NN<>(this).reset(center, DistanceFunction.EDGE);
 	}
 	
 	/* (non-Javadoc)
