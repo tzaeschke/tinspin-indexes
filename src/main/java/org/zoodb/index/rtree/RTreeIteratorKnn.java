@@ -52,7 +52,7 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 			
 			ni.init(node);
 			if (ni.node instanceof RTreeNodeDir) {
-				ni.subNodes = sortEntries(((RTreeNodeDir<T>)ni.node).getEntries());
+				ni.subNodes = sortEntries(ni);
 			}
 			return ni;
 		}
@@ -157,11 +157,12 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private DistEntry<RTreeNode<T>>[] sortEntries(
-			ArrayList<Entry<T>> entries) {
+	private DistEntry<RTreeNode<T>>[] sortEntries(IterPos<T> ni) {
+		ArrayList<RTreeNode<T>> entries = ((RTreeNodeDir<T>)ni.node).getChildren();
 		DistEntry<RTreeNode<T>>[] ret = new DistEntry[entries.size()];
+		//TODO see query1NN: Add only those with d<minDist 
 		for (int i = 0; i < entries.size(); i++) {
-			Entry<T> e = entries.get(i);
+			RTreeNode<T> e = entries.get(i);
 			double d = dist.dist(center, e.min, e.max);
 			ret[i] = new DistEntry<RTreeNode<T>>(
 					e.lower(), e.upper(), (RTreeNode<T>) e, d);

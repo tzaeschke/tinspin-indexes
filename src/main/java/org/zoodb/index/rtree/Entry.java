@@ -230,4 +230,10 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 		max = e.max;
 		val = e.val;
 	}
+
+	public void set(double[] lower, double[] upper, T val) {
+		this.min = lower;
+		this.max = upper;
+		this.val = val;
+	}
 }
