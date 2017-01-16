@@ -186,6 +186,7 @@ public class RStarTreeLogic implements RTreeLogic {
 		return chooseSplitIndex(node, children, splitAxis);
 	}
 	
+	@SuppressWarnings("unused")
 	private <T> int chooseSplitAxis(Entry<T>[] children) {
 		int dims = children[0].min.length;
 		double[] bufMin = new double[dims];

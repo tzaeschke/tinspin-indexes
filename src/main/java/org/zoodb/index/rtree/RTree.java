@@ -332,12 +332,12 @@ public class RTree<T> implements RectangleIndex<T> {
 	 * @see org.zoodb.index.rtree.Index#queryKNN(double[], int, org.zoodb.index.rtree.DistanceFunction)
 	 */
 	@Override
-	public RTreeIteratorKnn<T> queryKNN(double[] center, int k) {
-		return new RTreeIteratorKnn<>(this, center, k, DistanceFunction.EDGE);
+	public RTreeQueryKnn<T> queryKNN(double[] center, int k) {
+		return new RTreeQueryKnn<>(this, center, k, DistanceFunction.EDGE);
 	}
 	
-	public RTreeIteratorKnn<T> queryKNN(double[] center, int k, DistanceFunction dist) {
-		return new RTreeIteratorKnn<>(this, center, k, dist);
+	public RTreeQueryKnn<T> queryKNN(double[] center, int k, DistanceFunction dist) {
+		return new RTreeQueryKnn<>(this, center, k, dist);
 	}
 	
 	public String toStringTree() {
@@ -391,6 +391,7 @@ public class RTree<T> implements RectangleIndex<T> {
 		return stats;
 	}
 	
+	@SuppressWarnings("unused")
 	private void getStats(RTreeStats stats, RTreeNode<T> node, int level) {
 		if (level < 0) {
 			throw new IllegalStateException();
@@ -427,15 +428,17 @@ public class RTree<T> implements RectangleIndex<T> {
 			throw new IllegalStateException();
 		}
 		
-		if (true && DEBUG && node instanceof RTreeNodeLeaf) {
+		if (DEBUG && node instanceof RTreeNodeLeaf) {
 			for (int i = 0; i < entries.size(); i++) {
 				Entry<T> e = entries.get(i);
 				for (int j = i+1; j < entries.size(); j++) {
 					if (Entry.checkOverlap(e.lower(), e.upper(), entries.get(j))) {
 						System.out.println("Overlap 1: " + e);
 						System.out.println("Overlap 2: " + entries.get(j));
-						System.out.println("Overlap 1 parent : " + ((RTreeNode)e).getParent());
-						System.out.println("Overlap 2 parent : " + ((RTreeNode)entries.get(j)).getParent());
+						System.out.println("Overlap 1 parent : " + 
+								((RTreeNode<T>)e).getParent());
+						System.out.println("Overlap 2 parent : " + 
+								((RTreeNode<T>)entries.get(j)).getParent());
 						throw new IllegalStateException();
 					}
 				}

@@ -21,7 +21,6 @@ import org.zoodb.index.RectangleEntryDist;
 public class DistEntry<T> extends Entry<T> implements RectangleEntryDist<T> {
 	
 	private double dist;
-	private double minMaxDist;
 	
 	/**
 	 * Create a new entry with distance
@@ -56,18 +55,5 @@ public class DistEntry<T> extends Entry<T> implements RectangleEntryDist<T> {
 	public void set(double[] lower, double[] upper, T val, double distance) {
 		super.set(lower, upper, val);
 		this.dist = distance;
-	}
-	
-	/**
-	 * @return the distance
-	 */
-	public double distMinMax() {
-		return minMaxDist;
-	}
-
-	public void set(double[] lower, double[] upper, T val, double distance, double distMinMax) {
-		super.set(lower, upper, val);
-		this.dist = distance;
-		this.minMaxDist = distMinMax;
 	}
 }

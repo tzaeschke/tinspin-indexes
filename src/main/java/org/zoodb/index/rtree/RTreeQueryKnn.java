@@ -28,7 +28,7 @@ import java.util.Iterator;
  *
  * @param <T>
  */
-public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
+public class RTreeQueryKnn<T> implements Iterator<DistEntry<T>> {
 	
 	private class IteratorStack {
 		private final IterPos<T>[] stack;
@@ -77,9 +77,8 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 	private final DEComparator COMP = new DEComparator();
 	private final RTree<T> tree;
 	private double[] center;
-	private int k;
 	private IteratorStack stack;
-	private final ArrayList<DistEntry<T>> candidates;
+	private final KnnResult<T> candidates;
 	private Iterator<DistEntry<T>> iter;
 	private DistanceFunction dist;
 	
@@ -94,11 +93,11 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		}
 	}
 	
-	public RTreeIteratorKnn(RTree<T> tree, double[] center, int k, 
+	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, 
 			DistanceFunction dist) {
 		this.stack = new IteratorStack(tree.getDepth());
 		this.tree = tree;
-		this.candidates = new ArrayList<>();
+		this.candidates = new KnnResult<>(k);
 		reset(center, k, dist == null ? DistanceFunction.EDGE : dist);
 	}
 
@@ -114,9 +113,8 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		if (!(this.dist instanceof DistanceFunction.EdgeDistance)) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
-		this.k = k;
 		this.center = center;
-		this.candidates.clear();
+		this.candidates.clear(k);
 		if (k <= 0 || tree.size() == 0) {
 			iter = candidates.iterator();
 			return;
@@ -147,7 +145,7 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 					//this works only for EDGE distance!!!
 					double eDist = dist.dist(center, e.min, e.max);
 					if (eDist < currentDist) {
-						currentDist = checkCandidate(e, eDist, currentDist);
+						currentDist = checkCandidate(e, eDist);
 					}
 				}
 			}
@@ -164,24 +162,14 @@ public class RTreeIteratorKnn<T> implements Iterator<DistEntry<T>> {
 		for (int i = 0; i < entries.size(); i++) {
 			RTreeNode<T> e = entries.get(i);
 			double d = dist.dist(center, e.min, e.max);
-			ret[i] = new DistEntry<RTreeNode<T>>(
-					e.lower(), e.upper(), (RTreeNode<T>) e, d);
+			ret[i] = new DistEntry<RTreeNode<T>>(e.lower(), e.upper(), e, d);
 		}
 		Arrays.sort(ret, COMP);
 		return ret;
 	}
 
-	private double checkCandidate(Entry<T> e, double eDist, double distEst) {
-		if (candidates.size() < k) {
-			candidates.add(new DistEntry<T>(e.lower(), e.upper(), e.value(), eDist));
-			candidates.sort(COMP);
-		} else if (candidates.get(k-1).dist() > eDist) {
-			candidates.get(k-1).set(e, eDist);
-			//candidates.add(new DistEntry<T>(e.lower(), e.upper(), e.value(), eDist));
-			candidates.sort(COMP);
-			distEst = candidates.get(k-1).dist(); 
-		}
-		return distEst;
+	private double checkCandidate(Entry<T> e, double eDist) {
+		return candidates.add(e, eDist);
 	}
 
 	@Override

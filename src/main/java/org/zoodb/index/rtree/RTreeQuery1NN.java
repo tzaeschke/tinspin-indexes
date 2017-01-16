@@ -190,16 +190,15 @@ public class RTreeQuery1NN<T> {
 			double d = dist.dist(center, e.min, e.max);
 			//Strategy #1/#3
 			if (d < minDist) {
-				double minMaxDist = minMaxDist(e);
-				ret[pos++].set(e.lower(), e.upper(), e, d, minMaxDist);
+				ret[pos++].set(e.lower(), e.upper(), e, d);
 				//Strategy #2
-				minDist = Math.min(minMaxDist, minDist);
+				//minDist = d;
 			}
 		}
 		
 		Arrays.sort(ret, 0, pos, COMP);
 
-		//prune with minMaxDist/dist again
+		//prune with dist again
 		for (int i = 0; i < pos; i++) {
 			if (ret[i].dist() > minDist) {
 				//discard the rest
@@ -211,45 +210,4 @@ public class RTreeQuery1NN<T> {
 		iPos.maxPos = pos;
 	}
 
-	/**
-	 * MinMax dist calculation, see
-	 * "Nearest Neighbor Query" by
-	 * N. Roussopoulos, and S. Kelley, and F. Vincent.
-	 * 
-	 * @param e
-	 * @return min max dist
-	 */
-	private double minMaxDist(RTreeNode<T> e) {
-    	double minimum = Double.POSITIVE_INFINITY;
-    	double S = 0;
-
-        double[] min = e.lower();
-        double[] max = e.upper();
-        
-        for (int i = 0; i < center.length; i++) {
-            double rMi = (center[i] >= (min[i]+max[i])/2) ? min[i] : max[i];
-            double d = center[i] - rMi;
-            S += d * d;
-        }
-
-        for (int k = 0; k < center.length; k++) {
-        	double minMaxAvg = (min[k]+max[k]) / 2;
-        	double rmk;
-        	double rMi;
-        	if (center[k] >= minMaxAvg) {
-        		rMi = min[k];
-        		rmk = max[k];
-        	} else {
-        		rMi = max[k];
-        		rmk = min[k];
-        	}
-
-        	double sum = center[k] - rmk;
-        	double sum2 = center[k] - rMi;
-        	double x = S + sum*sum - sum2*sum2;
-        	minimum = Math.min(minimum, x);
-        }
-
-        return Math.sqrt(minimum);
-	}
 }

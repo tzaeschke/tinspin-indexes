@@ -43,17 +43,18 @@ class RTreeNodeDir<T> extends RTreeNode<T> {
 		} else {
 			setMBB(e);
 		}
-		if (RTree.DEBUG && false) {
-			for (int i = 0; i < children.size()-1; i++) {
-				if (Entry.checkOverlap(e.lower(), e.upper(), children.get(i))) {
-					System.out.println("Overlap 1: " + e);
-					System.out.println("Overlap 2: " + children.get(i));
-					System.out.println("Overlap 1 parent : " + ((RTreeNode)e).getParent());
-					System.out.println("Overlap 2 parent : " + ((RTreeNode)children.get(i)).getParent());
-					throw new IllegalStateException();
-				}
-			}
-		}
+//		if (RTree.DEBUG) {
+//			for (int i = 0; i < children.size()-1; i++) {
+//				if (Entry.checkOverlap(e.lower(), e.upper(), children.get(i))) {
+//					System.out.println("Overlap 1: " + e);
+//					System.out.println("Overlap 2: " + children.get(i));
+//					System.out.println("Overlap 1 parent : " + ((RTreeNode<T>)e).getParent());
+//					System.out.println("Overlap 2 parent : " + 
+//							((RTreeNode<T>)children.get(i)).getParent());
+//					throw new IllegalStateException();
+//				}
+//			}
+//		}
 	}
 
 	public void removeChildByIdentity(Entry<T> e) {

@@ -21,17 +21,19 @@ import java.util.NoSuchElementException;
 
 public class KnnResult<T> implements Iterable<DistEntry<T>> {
 
-	private final int capacity;
-	private final DistEntry<T>[] entries;
+	private int capacity;
+	private DistEntry<T>[] entries;
 	private int size;
+	private double maxDist;
 	
 	@SuppressWarnings("unchecked")
 	public KnnResult(int capacity) {
 		this.capacity = capacity;
 		this.entries = new DistEntry[capacity];
+		this.maxDist = Double.MAX_VALUE;
 	}
 	
-	public void add(Entry<T> e, double distance) {
+	public double add(Entry<T> e, double distance) {
 		DistEntry<T> de;
 		if (size < capacity) {
 			de = new DistEntry<T>(e.min, e.max, e.value(), distance);
@@ -40,9 +42,9 @@ public class KnnResult<T> implements Iterable<DistEntry<T>> {
 			de = entries[size-1];
 			if (distance >= de.dist()) {
 				//nothing to add
-				return;
+				return maxDist;
 			}
-			de.set(e);
+			de.set(e, distance);
 		}
 		
 		//TODO use binary search for capacity>10
@@ -54,6 +56,10 @@ public class KnnResult<T> implements Iterable<DistEntry<T>> {
 			pos--;
 		}
 		entries[pos] = de;
+		if (size == capacity) {
+			maxDist = entries[size-1].dist();
+		}
+		return maxDist;
 	}
 
 	@Override
@@ -77,6 +83,20 @@ public class KnnResult<T> implements Iterable<DistEntry<T>> {
 			}
 			return entries[pos++];
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public void clear(int k) {
+		if (k > entries.length) {
+			entries = new DistEntry[k];
+		} else {
+			for (int i = 0; i < size; i++) {
+				entries[i] = null;
+			}
+		}
+		capacity = k;
+		size = 0;
+		maxDist = Double.MAX_VALUE;
 	}
 	
 }
