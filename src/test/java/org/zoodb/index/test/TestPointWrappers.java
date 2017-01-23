@@ -49,7 +49,7 @@ public class TestPointWrappers extends AbstractWrapperTest {
 		l.add(new Object[]{INDEX.QUAD});
 		l.add(new Object[]{INDEX.RSTAR});
 		l.add(new Object[]{INDEX.STR});
-		l.add(new Object[]{INDEX.CRITBIT});
+//		l.add(new Object[]{INDEX.CRITBIT});
 		return l;
 	}
 
