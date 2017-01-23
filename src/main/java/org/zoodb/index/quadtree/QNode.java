@@ -52,7 +52,7 @@ public class QNode<T> {
 		subs[subNodePos] = subNode;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "unused" })
 	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
 		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 

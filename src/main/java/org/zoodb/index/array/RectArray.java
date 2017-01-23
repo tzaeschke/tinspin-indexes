@@ -12,7 +12,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import org.zoodb.index.PointEntry;
 import org.zoodb.index.QueryIterator;
 import org.zoodb.index.QueryIteratorKNN;
 import org.zoodb.index.RectangleEntry;

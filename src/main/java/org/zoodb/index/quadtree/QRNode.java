@@ -53,7 +53,7 @@ public class QRNode<T> {
 		subs[subNodePos] = subNode;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "unused" })
 	QRNode<T> tryPut(QREntry<T> e, int maxNodeSize, boolean enforceLeaf) {
 		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
 			throw new IllegalStateException("e=" + e + 

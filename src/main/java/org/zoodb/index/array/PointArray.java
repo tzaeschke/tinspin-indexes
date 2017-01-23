@@ -166,11 +166,11 @@ public class PointArray<T> implements PointIndex<T> {
 			double[] p = phc[i];
 			double dist = dist(center, p);
 			if (ret.size() < k) {
-				ret.add(new KnnEntry(p, values[i], dist));
+				ret.add(new KnnEntry<>(p, values[i].value(), dist));
 				ret.sort(COMP);
 			} else if (ret.get(k-1).dist > dist) {
 				ret.remove(k-1);
-				ret.add(new KnnEntry(p, values[i], dist));
+				ret.add(new KnnEntry<>(p, values[i].value(), dist));
 				ret.sort(COMP);
 			}
 		}

@@ -221,6 +221,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	 * Ensure that the tree covers the entry.
 	 * @param e Entry to cover.
 	 */
+	@SuppressWarnings("unused")
 	private void ensureCoverage(QREntry<T> e) {
 		double[] pLow = e.lower();
 		//double[] pUpp = e.upper();

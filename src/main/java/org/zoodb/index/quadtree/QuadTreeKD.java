@@ -209,6 +209,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	 * Ensure that the tree covers the entry.
 	 * @param e Entry to cover.
 	 */
+	@SuppressWarnings("unused")
 	private void ensureCoverage(QEntry<T> e) {
 		double[] p = e.point();
 		while(!e.enclosedBy(root.getCenter(), root.getRadius())) {
