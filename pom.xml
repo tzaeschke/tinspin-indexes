@@ -14,7 +14,7 @@
 
 	<name>zoodb-indexes</name>
 	<description>ZooDB in-memory indexes</description>
-	<url>https://github.com/tzaeschke/zoodb-indexes</url>
+	<url>https://github.com/tzaeschke/tinspin-indexes</url>
 	<licenses>
 	    <license>
 	        <name>Apache License, Version 2.0</name>
@@ -24,9 +24,9 @@
 		</license>
 	</licenses>
 	<scm>
-		<url>https://github.com/tzaeschke/zoodb-indexes</url>
-		<connection>scm:git:git@github.com:tzaeschke/zoodb-indexes.git</connection>
-		<developerConnection>scm:git:git@github.com:tzaeschke/zoodb-indexes.git</developerConnection>
+		<url>https://github.com/tzaeschke/tinspin-indexes</url>
+		<connection>scm:git:git@github.com:tzaeschke/tinspin-indexes.git</connection>
+		<developerConnection>scm:git:git@github.com:tzaeschke/tinspin-indexes.git</developerConnection>
 	</scm>
 	<developers>
 		<developer>
@@ -37,7 +37,7 @@
 	</developers>
 	<issueManagement>
 		<system>github</system>
-		<url>https://github.com/tzaeschke/zoodb-indexes/issues</url>
+		<url>https://github.com/tzaeschke/tinspin-indexes/issues</url>
 	</issueManagement>
 
 	<distributionManagement>
