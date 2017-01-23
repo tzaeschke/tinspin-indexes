@@ -17,10 +17,12 @@
 package org.zoodb.index.rtree;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class RTreeIterator<T> implements Iterator<Entry<T>> {
+import org.zoodb.index.QueryIterator;
+import org.zoodb.index.RectangleEntry;
+
+public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 	
 	private class IteratorStack {
 		private final IterPos<T>[] stack;
@@ -78,6 +80,7 @@ public class RTreeIterator<T> implements Iterator<Entry<T>> {
 		reset(min, max);
 	}
 
+	@Override
 	public void reset(double[] min, double[] max) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth());

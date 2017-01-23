@@ -446,6 +446,7 @@ public class RTree<T> implements RectangleIndex<T> {
 		}
 	}
 
+	@Override
 	public int getDepth() {
 		return depth;
 	}

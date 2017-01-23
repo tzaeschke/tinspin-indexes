@@ -16,27 +16,10 @@
  */
 package org.zoodb.index;
 
-public interface Index<T> {
+import java.util.Iterator;
 
-	/**
-	 * @return the number of dimensions
-	 */
-	int getDims();
+public interface QueryIteratorKNN<T> extends Iterator<T> {
 
-	/**
-	 * @return the number of entries
-	 */
-	int size();
-
-	/**
-	 * Clear all entries.
-	 */
-	void clear();
-
-	Object getStats();
-
-	int getNodeCount();
+	void reset(double[] center, int k);
 	
-	int getDepth();
-
 }

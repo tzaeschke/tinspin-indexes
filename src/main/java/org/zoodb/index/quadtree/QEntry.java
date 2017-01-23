@@ -44,6 +44,10 @@ public class QEntry<T> implements PointEntry<T> {
 		return QUtil.isPointEnclosed(point, min, max);
 	}
 
+	public boolean enclosedBy(double[] center, double radius) {
+		return QUtil.isPointEnclosed(point, center, radius);
+	}
+
 	public boolean isExact(QEntry<T> e) {
 		return QUtil.isPointEqual(point, e.point());
 	}

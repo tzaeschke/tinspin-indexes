@@ -20,7 +20,7 @@ public interface RectangleEntryDist<T> extends RectangleEntry<T> {
 
 	/**
 	 * An entry with distance property. This is, for example, used
-	 * as a return value for nearest neighbour queries.
+	 * as a return value for nearest neighbor queries.
 	 * @return the distance
 	 */
 	double dist();

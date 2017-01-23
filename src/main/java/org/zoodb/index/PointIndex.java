@@ -52,12 +52,12 @@ public interface PointIndex<T> extends Index<T> {
 	/**
 	 * @return An iterator over all entries.
 	 */
-	Iterator<? extends PointEntry<T>> iterator();
+	QueryIterator<? extends PointEntry<T>> iterator();
 
 	/**
 	 * @return All points that lie inside the query rectangle.
 	 */
-	Iterator<? extends PointEntry<T>> query(double[] min, double[] max);
+	QueryIterator<PointEntry<T>> query(double[] min, double[] max);
 
 	/**
 	 * Finds the nearest neighbor. This uses euclidean distance. 
@@ -80,6 +80,6 @@ public interface PointIndex<T> extends Index<T> {
 	 * @param k number of neighbors
 	 * @return list of nearest neighbors
 	 */
-	Iterator<? extends PointEntryDist<T>> queryKNN(double[] center, int k);
+	QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k);
 
 }

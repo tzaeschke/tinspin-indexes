@@ -28,7 +28,6 @@ public class QEntryDist<T> extends QEntry<T> implements PointEntryDist<T> {
 		this.distance = dist;
 	}
 	
-	@Override
 	public double dist() {
 		return distance;
 	}

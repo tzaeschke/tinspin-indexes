@@ -54,12 +54,88 @@ public class BitTools {
 	}
 
 	/**
+	 * @param value
+	 * @param ret The array used to store the return value
+	 * @return long representation.
+	 */
+	public static long[] toSortableLong(double[] value, long[] ret) {
+		//To create a sortable long, we convert the double to a long using the IEEE-754 standard,
+		//which stores floats in the form <sign><exponent-127><mantissa> .
+		//This result is properly ordered longs for all positive doubles. Negative values have
+		//inverse ordering. For negative doubles, we therefore simply invert them to make them 
+		//sortable, however the sign must be inverted again to stay negative.
+		for (int i = 0; i < value.length; i++) {
+			long r = Double.doubleToRawLongBits(value[i]);
+			ret[i] = (r >= 0) ? r : r ^ 0x7FFFFFFFFFFFFFFFL;
+		} 
+		return ret;
+	}
+
+	public static long[] toSortableLong(float[] value, long[] ret) {
+		//see toSortableLong(double)
+		for (int i = 0; i < value.length; i++) {
+			int r =  Float.floatToRawIntBits(value[i]);
+			ret[i] = (r >= 0) ? r : r ^ 0x7FFFFFFF;
+		}
+		return ret;
+	}
+
+	public static double[] toDouble(long value[], double[] ret) {
+		for (int i = 0; i < value.length; i++) {
+			ret[i] = Double.longBitsToDouble(
+					value[i] >= 0.0 ? value[i] : value[i] ^ 0x7FFFFFFFFFFFFFFFL);
+		}
+		return ret;
+	}
+
+	public static float[] toFloat(long[] value, float[] ret) {
+		for (int i = 0; i < value.length; i++) {
+			int iVal = (int) value[i];
+			ret[i] = Float.intBitsToFloat(iVal >= 0.0 ? iVal : iVal ^ 0x7FFFFFFF);
+		}
+		return ret;
+	}
+
+	public static long toSortableLong(String s) {
+		// store magic number: 6 chars + (hash >> 16)
+		long n = 0;
+		int i = 0;
+		for ( ; i < 6 && i < s.length(); i++ ) {
+			n |= (byte) s.charAt(i);
+			n = n << 8;
+		}
+		//Fill with empty spaces if string is too short
+		for ( ; i < 6; i++) {
+			n = n << 8;
+		}
+		n = n << 8;
+
+		//add hashcode
+		n |= (0xFFFF & s.hashCode());
+		return n;
+	}
+
+
+	/**
+	 * Reverses the value, considering that not all 64bits of the long value are used.
+	 * @param l
+	 * @param usedBits
+	 * @return Reversed value
+	 */
+	public static long reverse(long l, int usedBits) {
+		long r = Long.reverse(l);
+		r >>>= (64-usedBits);
+		return r;
+	}
+
+
+	/**
 	 * Splits a value and write it to trgV at position trg1 and trg2.
 	 * This is the inverse operation to merge(...).
-	 * @param toSplit
-	 * @param trgV
-	 * @param trg1
-	 * @param trg2
+	 * @param toSplit value to split
+	 * @param trgV return value
+	 * @param trg1 return position part 1
+	 * @param trg2 return position part 2
 	 * @param nBits Number of bits of source value
 	 */
 	public static void split(final long toSplit, long[] trgV, final int trg1, final int trg2, 

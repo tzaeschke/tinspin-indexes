@@ -1,6 +1,23 @@
+/*
+ * Copyright 2016 Tilmann Zaeschke
+ * 
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.zoodb.index;
 
-import java.util.Iterator;
+import org.zoodb.index.rtree.Entry;
+import org.zoodb.index.rtree.RTree;
 
 public class PointIndexWrapper<T> implements PointIndex<T> {
 
@@ -16,13 +33,13 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public Iterator<? extends PointEntry<T>> iterator() {
+	public QueryIterator<PointEntry<T>> iterator() {
 		return new PointIter(ind.iterator());
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public Iterator<? extends PointEntry<T>> query(double[] min, double[] max) {
+	public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
 		return new PointIter(ind.queryIntersect(min, max));
 	}
 
@@ -48,11 +65,11 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 		
 	}
 	
-	private static class PointIter<T> implements Iterator<PointEntry<T>> {
+	private static class PointIter<T> implements QueryIterator<PointEntry<T>> {
 
-		private final Iterator<RectangleEntry<T>> it;
+		private final QueryIterator<RectangleEntry<T>> it;
 		
-		PointIter(Iterator<RectangleEntry<T>> it) {
+		PointIter(QueryIterator<RectangleEntry<T>> it) {
 			this.it = it;
 		}
 		
@@ -66,6 +83,11 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 			RectangleEntry<T> e = it.next();
 			return new PointW<T>(e.lower(), e.value());
 		}
+
+		@Override
+		public void reset(double[] min, double[] max) {
+			it.reset(min, max);
+		}
 	}
 	
 	@Override
@@ -76,7 +98,7 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public Iterator<? extends PointEntryDist<T>> queryKNN(double[] center, int k) {
+	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
 		return new PointDIter(ind.queryKNN(center, k));
 	}
 
@@ -95,11 +117,11 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 		}
 	}
 	
-	private static class PointDIter<T> implements Iterator<PointEntryDist<T>> {
+	private static class PointDIter<T> implements QueryIteratorKNN<PointEntryDist<T>> {
 
-		private final Iterator<RectangleEntryDist<T>> it;
+		private final QueryIteratorKNN<RectangleEntryDist<T>> it;
 		
-		PointDIter(Iterator<RectangleEntryDist<T>> it) {
+		PointDIter(QueryIteratorKNN<RectangleEntryDist<T>> it) {
 			this.it = it;
 		}
 		
@@ -112,6 +134,11 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 		public PointEntryDist<T> next() {
 			RectangleEntryDist<T> e = it.next();
 			return new PointDistW<>(e.lower(), e.value(), e.dist());
+		}
+
+		@Override
+		public void reset(double[] center, int k) {
+			it.reset(center, k);
 		}
 	}
 	
@@ -158,5 +185,18 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 	@Override
 	public int getNodeCount() {
 		return ind.getNodeCount();
+	}
+
+	@Override
+	public int getDepth() {
+		return ind.getDepth();
+	}
+
+	public void load(Entry<T>[] entries) {
+		if (!(ind instanceof RTree)) {
+			throw new UnsupportedOperationException(
+					"Bulkloading is only supported for RTrees");
+		}
+		((RTree<T>)ind).load(entries);
 	}
 }

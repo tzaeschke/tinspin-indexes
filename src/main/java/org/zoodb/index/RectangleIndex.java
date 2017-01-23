@@ -57,12 +57,12 @@ public interface RectangleIndex<T> extends Index<T> {
 	/**
 	 * @return An iterator over all entries.
 	 */
-	Iterator<? extends RectangleEntry<T>> iterator();
+	QueryIterator<RectangleEntry<T>> iterator();
 
 	/**
 	 * @return All rectangles that intersect with the query rectangle.
 	 */
-	Iterator<? extends RectangleEntry<T>> queryIntersect(double[] min, double[] max);
+	QueryIterator<RectangleEntry<T>> queryIntersect(double[] min, double[] max);
 
 	/**
 	 * Finds the nearest neighbor. This uses euclidean 'edge distance'.
@@ -87,6 +87,6 @@ public interface RectangleIndex<T> extends Index<T> {
 	 * @param k number of neighbors
 	 * @return list of nearest neighbors
 	 */
-	Iterator<? extends RectangleEntryDist<T>> queryKNN(double[] center, int k);
+	QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k);
 
 }

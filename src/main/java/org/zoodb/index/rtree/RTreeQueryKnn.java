@@ -21,6 +21,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
+import org.zoodb.index.QueryIteratorKNN;
+import org.zoodb.index.RectangleEntryDist;
+
 /**
  * kNN search with EDGE distance and presorting of entries.
  * 
@@ -28,7 +31,7 @@ import java.util.Iterator;
  *
  * @param <T>
  */
-public class RTreeQueryKnn<T> implements Iterator<DistEntry<T>> {
+public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>> {
 	
 	private class IteratorStack {
 		private final IterPos<T>[] stack;
@@ -101,6 +104,11 @@ public class RTreeQueryKnn<T> implements Iterator<DistEntry<T>> {
 		reset(center, k, dist == null ? DistanceFunction.EDGE : dist);
 	}
 
+	@Override
+	public void reset(double[] center, int k) {
+		reset(center, k, null);
+	}
+	
 	public void reset(double[] center, int k, DistanceFunction dist) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth());

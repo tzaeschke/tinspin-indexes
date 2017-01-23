@@ -31,32 +31,32 @@ import org.zoodb.index.quadtree.QuadTreeKD.QStats;
  */
 public class QNode<T> {
 
-	private double[] min;
-	private double[] max;
+	private double[] center;
+	private double radius;
 	//null indicates that we have sub-nopde i.o. values
 	private ArrayList<QEntry<T>> values;
 	private QNode<T>[] subs;
 	
-	QNode(double[] min, double[] max) {
-		this.min = min;
-		this.max = max;
+	QNode(double[] center, double radius) {
+		this.center = center;
+		this.radius = radius;
 		this.values = new ArrayList<>(2); 
 	}
 
 	@SuppressWarnings("unchecked")
-	QNode(double[] min, double[] max, QNode<T> subNode, int subNodePos) {
-		this.min = min;
-		this.max = max;
+	QNode(double[] center, double radius, QNode<T> subNode, int subNodePos) {
+		this.center = center;
+		this.radius = radius;
 		this.values = null;
-		this.subs = new QNode[1 << min.length];
+		this.subs = new QNode[1 << center.length];
 		subs[subNodePos] = subNode;
 	}
 
 	@SuppressWarnings("unchecked")
 	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
-		if (QuadTreeKD.DEBUG && !e.enclosedBy(min, max)) {
+		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
-					" min/max=" + Arrays.toString(min) + Arrays.toString(max));
+					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
 		
 		//traverse subs?
@@ -79,7 +79,7 @@ public class QNode<T> {
 		//split
 		ArrayList<QEntry<T>> vals = values;
 		values = null;
-		subs = new QNode[1 << min.length];
+		subs = new QNode[1 << center.length];
 		for (int i = 0; i < vals.size(); i++) {
 			QEntry<T> e2 = vals.get(i); 
 			QNode<T> sub = getOrCreateSub(e2);
@@ -103,21 +103,20 @@ public class QNode<T> {
 	}
 	
 	private QNode<T> createSubForEntry(int subNodePos) {
-		double[] minSub = new double[min.length];
-		double[] maxSub = new double[max.length];
-		double len = (max[0]-min[0])/2;
-		int mask = 1<<min.length;
-		for (int d = 0; d < min.length; d++) {
+		double[] centerSub = new double[center.length];
+		int mask = 1<<center.length;
+		//This ensures that the subsnodes completely cover the area of
+		//the parent node.
+		double radiusSub = radius/2.0;
+		for (int d = 0; d < center.length; d++) {
 			mask >>= 1;
 			if ((subNodePos & mask) > 0) {
-				minSub[d] = min[d]+len;
-				maxSub[d] = max[d];
+				centerSub[d] = center[d]+radiusSub;
 			} else {
-				minSub[d] = min[d];
-				maxSub[d] = max[d]-len; 
+				centerSub[d] = center[d]-radiusSub; 
 			}
 		}
-		return new QNode<>(minSub, maxSub);		
+		return new QNode<>(centerSub, radiusSub);		
 	}
 	
 	/**
@@ -129,10 +128,9 @@ public class QNode<T> {
 	 */
 	private int calcSubPosition(double[] p) {
 		int subNodePos = 0;
-		double len = (max[0]-min[0])/2;
-		for (int d = 0; d < min.length; d++) {
+		for (int d = 0; d < center.length; d++) {
 			subNodePos <<= 1;
-			if (p[d] >= min[d]+len) {
+			if (p[d] >= center[d]) {
 				subNodePos |= 1;
 			}
 		}
@@ -176,7 +174,7 @@ public class QNode<T> {
 			QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
 					currentDepth+1, maxDepth);
 			if (ret != null && requiresReinsert[0] && 
-					QUtil.isPointEnclosed(ret.point(), min, max)) {
+					QUtil.isPointEnclosed(ret.point(), center, radius/QUtil.EPS_MUL)) {
 				requiresReinsert[0] = false;
 				Object r = this;
 				while (r instanceof QNode) {
@@ -191,7 +189,7 @@ public class QNode<T> {
 			if (QUtil.isPointEqual(e.point(), keyOld)) {
 				values.remove(i);
 				e.setKey(keyNew);
-				if (QUtil.isPointEnclosed(keyNew, min, max)) {
+				if (QUtil.isPointEnclosed(keyNew, center, radius/QUtil.EPS_MUL)) {
 					//reinsert locally;
 					values.add(e);
 					requiresReinsert[0] = false;
@@ -237,16 +235,12 @@ public class QNode<T> {
 		subs = null;
 	}
 
-	double getSideLength() {
-		return max[0]-min[0];
+	double[] getCenter() {
+		return center;
 	}
 
-	double[] getMin() {
-		return min;
-	}
-
-	double[] getMax() {
-		return max;
+	double getRadius() {
+		return radius;
 	}
 
 	QEntry<T> getExact(double[] key) {
@@ -312,7 +306,7 @@ public class QNode<T> {
 	
 	@Override
 	public String toString() {
-		return "min/max=" + Arrays.toString(min) + Arrays.toString(max) + 
+		return "center/radius=" + Arrays.toString(center) + "/" + radius + 
 				" " + System.identityHashCode(this);
 	}
 
@@ -323,14 +317,41 @@ public class QNode<T> {
 		s.nNodes++;
 		
 		if (parent != null) {
-			if (!QUtil.isRectEnclosed(min, max, parent.min, parent.max)) {
+			if (!QUtil.isRectEnclosed(center, radius, 
+					parent.center, parent.radius*QUtil.EPS_MUL)) {
+				for (int d = 0; d < center.length; d++) {
+//					if ((centerOuter[d]+radiusOuter) / (centerEnclosed[d]+radiusEnclosed) < 0.9999999 || 
+//							(centerOuter[d]-radiusOuter) / (centerEnclosed[d]-radiusEnclosed) > 1.0000001) {
+//						return false;
+//					}
+					System.out.println("Outer: " + parent.radius + " " + 
+						Arrays.toString(parent.center));
+					System.out.println("Child: " + radius + " " + Arrays.toString(center));
+					System.out.println((parent.center[d]+parent.radius) + " vs " + (center[d]+radius)); 
+					System.out.println("r=" + (parent.center[d]+parent.radius) / (center[d]+radius)); 
+					System.out.println((parent.center[d]-parent.radius) + " vs " + (center[d]-radius));
+					System.out.println("r=" + (parent.center[d]-parent.radius) / (center[d]-radius));
+				}
 				throw new IllegalStateException();
 			}
 		}
 		if (values != null) {
 			for (int i = 0; i < values.size(); i++) {
 				QEntry<T> e = values.get(i);
-				if (!QUtil.isPointEnclosed(e.point(), min, max)) {
+				if (!QUtil.isPointEnclosed(e.point(), center, radius*QUtil.EPS_MUL)) {
+					System.out.println("Node: " + radius + " " + Arrays.toString(center));
+					System.out.println("Child: " + Arrays.toString(e.point()));
+					for (int d = 0; d < center.length; d++) {
+//						if ((centerOuter[d]+radiusOuter) / (centerEnclosed[d]+radiusEnclosed) < 0.9999999 || 
+//								(centerOuter[d]-radiusOuter) / (centerEnclosed[d]-radiusEnclosed) > 1.0000001) {
+//							return false;
+//						}
+						System.out.println("min/max for " + d);
+						System.out.println("min: " + (center[d]-radius) + " vs " + (e.point()[d]));
+						System.out.println("r=" + (center[d]-radius) / (e.point()[d]));
+						System.out.println("max: " + (center[d]+radius) + " vs " + (e.point()[d])); 
+						System.out.println("r=" + (center[d]+radius) / (e.point()[d])); 
+					}
 					throw new IllegalStateException();
 				}
 			}
