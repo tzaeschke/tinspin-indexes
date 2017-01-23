@@ -8,14 +8,14 @@ package org.zoodb.index.test.util;
 
 import java.util.Arrays;
 
-import org.zoodb.index.Index;
-import org.zoodb.index.PointEntry;
-import org.zoodb.index.PointEntryDist;
-import org.zoodb.index.PointIndex;
-import org.zoodb.index.PointIndexWrapper;
-import org.zoodb.index.QueryIterator;
-import org.zoodb.index.QueryIteratorKNN;
-import org.zoodb.index.rtree.Entry;
+import org.tinspin.index.Index;
+import org.tinspin.index.PointEntry;
+import org.tinspin.index.PointEntryDist;
+import org.tinspin.index.PointIndex;
+import org.tinspin.index.PointIndexWrapper;
+import org.tinspin.index.QueryIterator;
+import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.rtree.Entry;
 import org.zoodb.index.test.util.TestStats.INDEX;
 
 public class PointIndexTester extends Candidate {

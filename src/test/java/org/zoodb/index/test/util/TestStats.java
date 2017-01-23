@@ -9,14 +9,14 @@ package org.zoodb.index.test.util;
 import java.io.Serializable;
 import java.util.List;
 
-import org.zoodb.index.PointIndex;
-import org.zoodb.index.PointIndexWrapper;
-import org.zoodb.index.RectangleIndex;
-import org.zoodb.index.array.PointArray;
-import org.zoodb.index.array.RectArray;
-import org.zoodb.index.quadtree.QuadTreeKD;
-import org.zoodb.index.quadtree.QuadTreeRKD;
-import org.zoodb.index.rtree.RTree;
+import org.tinspin.index.PointIndex;
+import org.tinspin.index.PointIndexWrapper;
+import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.array.PointArray;
+import org.tinspin.index.array.RectArray;
+import org.tinspin.index.quadtree.QuadTreeKD;
+import org.tinspin.index.quadtree.QuadTreeRKD;
+import org.tinspin.index.rtree.RTree;
 
 public class TestStats implements Serializable, Cloneable {
 

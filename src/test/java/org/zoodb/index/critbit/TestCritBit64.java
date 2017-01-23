@@ -28,10 +28,11 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import org.junit.Test;
-import org.zoodb.index.critbit.CritBit64.CBIterator;
-import org.zoodb.index.critbit.CritBit64.Entry;
-import org.zoodb.index.critbit.CritBit64.QueryIterator;
-import org.zoodb.index.critbit.CritBit64.QueryIteratorMask;
+import org.tinspin.index.critbit.CritBit64;
+import org.tinspin.index.critbit.CritBit64.CBIterator;
+import org.tinspin.index.critbit.CritBit64.Entry;
+import org.tinspin.index.critbit.CritBit64.QueryIterator;
+import org.tinspin.index.critbit.CritBit64.QueryIteratorMask;
 
 /**
  * 

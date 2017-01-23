@@ -32,10 +32,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
-import org.zoodb.index.critbit.CritBit64.QueryIterator;
-import org.zoodb.index.critbit.CritBit64.CBIterator;
-import org.zoodb.index.critbit.CritBit64.QueryIteratorMask;
-import org.zoodb.index.critbit.CritBit64.Entry;
+import org.tinspin.index.critbit.CritBit64COW;
+import org.tinspin.index.critbit.CritBit64.CBIterator;
+import org.tinspin.index.critbit.CritBit64.Entry;
+import org.tinspin.index.critbit.CritBit64.QueryIterator;
+import org.tinspin.index.critbit.CritBit64.QueryIteratorMask;
 
 /**
  * 

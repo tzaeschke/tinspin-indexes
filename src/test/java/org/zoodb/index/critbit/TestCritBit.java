@@ -29,9 +29,11 @@ import java.util.Arrays;
 import java.util.Random;
 
 import org.junit.Test;
-import org.zoodb.index.critbit.CritBit.Entry;
-import org.zoodb.index.critbit.CritBit.FullIterator;
-import org.zoodb.index.critbit.CritBit.QueryIterator;
+import org.tinspin.index.critbit.CritBit;
+import org.tinspin.index.critbit.CritBit1D;
+import org.tinspin.index.critbit.CritBit.Entry;
+import org.tinspin.index.critbit.CritBit.FullIterator;
+import org.tinspin.index.critbit.CritBit.QueryIterator;
 
 /**
  * 

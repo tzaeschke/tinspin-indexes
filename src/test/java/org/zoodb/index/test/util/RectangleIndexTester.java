@@ -8,14 +8,14 @@ package org.zoodb.index.test.util;
 
 import java.util.Arrays;
 
-import org.zoodb.index.Index;
-import org.zoodb.index.QueryIterator;
-import org.zoodb.index.QueryIteratorKNN;
-import org.zoodb.index.RectangleEntry;
-import org.zoodb.index.RectangleEntryDist;
-import org.zoodb.index.RectangleIndex;
-import org.zoodb.index.rtree.Entry;
-import org.zoodb.index.rtree.RTree;
+import org.tinspin.index.Index;
+import org.tinspin.index.QueryIterator;
+import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.RectangleEntry;
+import org.tinspin.index.RectangleEntryDist;
+import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.rtree.Entry;
+import org.tinspin.index.rtree.RTree;
 import org.zoodb.index.test.util.TestStats.INDEX;
 
 public class RectangleIndexTester extends Candidate {

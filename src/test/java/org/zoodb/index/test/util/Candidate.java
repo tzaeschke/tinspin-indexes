@@ -9,7 +9,7 @@ package org.zoodb.index.test.util;
 import java.util.List;
 import java.util.Random;
 
-import org.zoodb.index.critbit.BitTools;
+import org.tinspin.index.critbit.BitTools;
 
 public abstract class Candidate {
 	
