@@ -127,14 +127,24 @@ public class QNode<T> {
 	 * @return subnode position
 	 */
 	private int calcSubPosition(double[] p) {
-		int subNodePos = 0;
-		for (int d = 0; d < center.length; d++) {
-			subNodePos <<= 1;
-			if (p[d] >= center[d]) {
-				subNodePos |= 1;
+		if (QuadTreeKD.ENABLE_HCI_0) {
+			int subNodePos = 0;
+			for (int d = 0; d < center.length; d++) {
+				subNodePos <<= 1;
+				if (p[d] >= center[d]) {
+					subNodePos |= 1;
+				}
 			}
+			return subNodePos;
+		} else {
+			for (int i = 0; i < subs.length; i++) {
+				QNode<T> n = subs[i];
+				if (QUtil.isPointEnclosed(p, n.center, n.radius)) {
+					return i;
+				}
+			}
+			throw new IllegalStateException();
 		}
-		return subNodePos;
 	}
 
 	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize) {

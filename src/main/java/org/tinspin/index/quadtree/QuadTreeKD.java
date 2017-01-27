@@ -16,14 +16,12 @@
  */
 package org.tinspin.index.quadtree;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.tinspin.index.PointEntry;
 import org.tinspin.index.PointEntryDist;
@@ -46,6 +44,13 @@ import org.tinspin.index.QueryIteratorKNN;
  */
 public class QuadTreeKD<T> implements PointIndex<T> {
 
+	/** Enable basic HCI navigation with Algo #0, for example for exact match queries. */
+	public static boolean ENABLE_HCI_0 = true;
+	/** Enable basic HCI navigation with Algo #1 isInI(), for example for window queries. */
+	public static boolean ENABLE_HCI_1 = true;
+	/** Enable basic HCI navigation with Algo #2 inc(), for example for window queries. */
+	public static boolean ENABLE_HCI_2 = true;
+	
 	private static final int MAX_DEPTH = 50;
 	
 	private static final String NL = System.lineSeparator();
@@ -264,88 +269,18 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	 * @return all entries in the rectangle
 	 */
 	@Override
-	public QIterator<T> query(double[] min, double[] max) {
-		return new QIterator<>(this, min, max);
+	public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
+		if (ENABLE_HCI_2) {
+			return new QIterator2<>(this, min, max);
+		} else if (ENABLE_HCI_1) {
+			return new QIterator1<>(this, min, max);
+		} //else if (ENABLE_HCI_0) {
+		//This does not use min/max but is really very basic. 
+		return new QIterator0<>(this, min, max);
+		//}
+		//return new QIterator<>(this, min, max);
 	}
 
-	/**
-	 * Resettable query iterator.
-	 *
-	 * @param <T>
-	 */
-	public static class QIterator<T> implements QueryIterator<PointEntry<T>> {
-
-		private final QuadTreeKD<T> tree;
-		private ArrayDeque<Iterator<?>> stack;
-		private QEntry<T> next = null;
-		private double[] min;
-		private double[] max;
-		
-		QIterator(QuadTreeKD<T> tree, double[] min, double[] max) {
-			this.stack = new ArrayDeque<>();
-			this.tree = tree;
-			reset(min, max);
-		}
-		
-		@SuppressWarnings("unchecked")
-		private void findNext() {
-			while(!stack.isEmpty()) {
-				Iterator<?> it = stack.peek();
-				while (it.hasNext()) {
-					Object o = it.next();
-					if (o instanceof QNode) {
-						QNode<T> node = (QNode<T>)o;
-						if (QUtil.overlap(min, max, node.getCenter(), node.getRadius())) {
-							it = node.getChildIterator();
-							stack.push(it);
-						}
-						continue;
-					}
-					QEntry<T> e = (QEntry<T>) o;
-					if (e.enclosedBy(min, max)) {
-						next = e;
-						return;
-					}
-				}
-				stack.pop();
-			}
-			next = null;
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return next != null;
-		}
-
-		@Override
-		public QEntry<T> next() {
-			if (!hasNext()) {
-				throw new NoSuchElementException();
-			}
-			QEntry<T> ret = next;
-			findNext();
-			return ret;
-		}
-
-		/**
-		 * Reset the iterator. This iterator can be reused in order to reduce load on the
-		 * garbage collector.
-		 * @param min lower left corner of query
-		 * @param max upper right corner of query
-		 */
-		@Override
-		public void reset(double[] min, double[] max) {
-			stack.clear();
-			this.min = min;
-			this.max = max;
-			next = null;
-			if (tree.root != null) {
-				stack.push(tree.root.getChildIterator());
-				findNext();
-			}
-		}
-	}
-	
 	public List<QEntryDist<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
     		return Collections.emptyList();
@@ -515,7 +450,8 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 				";DEBUG=" + DEBUG + 
 				";center/radius=" + (root==null ? "null" : 
 					(Arrays.toString(root.getCenter()) + "/" +
-				root.getRadius()));
+				root.getRadius())) + 
+				";HCI-0/1/2=" + ENABLE_HCI_0 + "/" + ENABLE_HCI_1 + "/" + ENABLE_HCI_2;
 	}
 	
 	@Override
@@ -569,5 +505,9 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	@Override
 	public int getDepth() {
 		return getStats().getMaxDepth();
+	}
+	
+	protected QNode<T> getRoot() {
+		return root;
 	}
 }
