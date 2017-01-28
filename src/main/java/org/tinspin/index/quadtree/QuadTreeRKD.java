@@ -16,14 +16,12 @@
  */
 package org.tinspin.index.quadtree;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
@@ -281,84 +279,6 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 		return new QRIterator<>(this, min, max);
 	}
 
-	/**
-	 * Resetable query iterator.
-	 *
-	 * @param <T>
-	 */
-	public static class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
-
-		private final QuadTreeRKD<T> tree;
-		private ArrayDeque<Iterator<?>> stack;
-		private QREntry<T> next = null;
-		private double[] min;
-		private double[] max;
-		
-		QRIterator(QuadTreeRKD<T> tree, double[] min, double[] max) {
-			this.stack = new ArrayDeque<>();
-			this.tree = tree;
-			reset(min, max);
-		}
-		
-		@SuppressWarnings("unchecked")
-		private void findNext() {
-			while(!stack.isEmpty()) {
-				Iterator<?> it = stack.peek();
-				while (it.hasNext()) {
-					Object o = it.next();
-					if (o instanceof QRNode) {
-						QRNode<T> node = (QRNode<T>)o;
-						if (QUtil.overlap(min, max, node.getCenter(), node.getRadius())) {
-							it = node.getChildIterator();
-							stack.push(it);
-						}
-						continue;
-					}
-					QREntry<T> e = (QREntry<T>) o;
-					if (QUtil.overlap(min, max, e.lower(), e.upper())) {
-						next = e;
-						return;
-					}
-				}
-				stack.pop();
-			}
-			next = null;
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return next != null;
-		}
-
-		@Override
-		public QREntry<T> next() {
-			if (!hasNext()) {
-				throw new NoSuchElementException();
-			}
-			QREntry<T> ret = next;
-			findNext();
-			return ret;
-		}
-
-		/**
-		 * Reset the iterator. This iterator can be reused in order to reduce load on the
-		 * garbage collector.
-		 * @param min lower left corner of query
-		 * @param max upper right corner of query
-		 */
-		@Override
-		public void reset(double[] min, double[] max) {
-			stack.clear();
-			this.min = min;
-			this.max = max;
-			next = null;
-			if (tree.root != null) {
-				stack.push(tree.root.getChildIterator());
-				findNext();
-			}
-		}
-	}
-	
 	public List<QREntryDist<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
     		return Collections.emptyList();
@@ -568,5 +488,10 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	@Override
 	public int getDepth() {
 		return getStats().getMaxDepth();
+	}
+	
+	protected QRNode<T> getRoot() {
+		return root;
+		
 	}
 }

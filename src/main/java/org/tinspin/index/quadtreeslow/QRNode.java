@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.tinspin.index.quadtreeslow.QuadTreeKD.QStats;
+import org.tinspin.index.quadtreeslow.QuadTreeKD0.QStats;
 
 /**
  * Node class for the quadtree.
@@ -55,7 +55,7 @@ public class QRNode<T> {
 
 	@SuppressWarnings({ "unchecked", "unused" })
 	QRNode<T> tryPut(QREntry<T> e, int maxNodeSize, boolean enforceLeaf) {
-		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
+		if (QuadTreeKD0.DEBUG && !e.enclosedBy(center, radius)) {
 			throw new IllegalStateException("e=" + e + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
@@ -85,6 +85,7 @@ public class QRNode<T> {
 		
 		//split
 		ArrayList<QREntry<T>> vals = values;
+		vals.add(e);
 		values = null;
 		subs = new QRNode[1 << center.length];
 		for (int i = 0; i < vals.size(); i++) {
@@ -103,13 +104,6 @@ public class QRNode<T> {
 				//into the same subnode
 				sub = (QRNode<T>) sub.tryPut(e2, maxNodeSize, false);
 			}
-		}
-		if (pos == OVERLAP_WITH_CENTER) {
-			if (values == null) {
-				values = new ArrayList<>();
-			}
-			values.add(e);
-			return null;
 		}
 		return getOrCreateSubR(pos);
 	}
@@ -148,17 +142,16 @@ public class QRNode<T> {
 	 * @return subnode position
 	 */
 	private int calcSubPositionR(double[] pMin, double[] pMax) {
-		int subNodePos = 0;
-		for (int d = 0; d < center.length; d++) {
-			subNodePos <<= 1;
-			if (pMin[d] >= center[d]) {
-				subNodePos |= 1;
-			} else if (pMax[d] >= center[d]) {
-				//overlap with center point
-				return OVERLAP_WITH_CENTER;
+		if (subs != null) {
+			for (int i = 0; i < subs.length; i++) {
+				QRNode<T> n = subs[i];
+				if (QUtil.isRectEnclosed(pMin, pMax, n.center, n.radius)) {
+					return i;
+				}
 			}
 		}
-		return subNodePos;
+		//overlap with center point
+		return OVERLAP_WITH_CENTER;
 	}
 
 	QREntry<T> remove(QRNode<T> parent, double[] keyL, double[] keyU, int maxNodeSize) {

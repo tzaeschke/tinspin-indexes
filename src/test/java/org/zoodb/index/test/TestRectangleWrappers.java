@@ -46,9 +46,10 @@ public class TestRectangleWrappers extends AbstractWrapperTest {
 	public static Iterable<Object[]> data1() {
 		ArrayList<Object[]> l = new ArrayList<>();
 		l.add(new Object[]{INDEX.ARRAY});
+		l.add(new Object[]{INDEX.QUAD_OLD});
+		l.add(new Object[]{INDEX.QUAD});
 		l.add(new Object[]{INDEX.RSTAR});
 		l.add(new Object[]{INDEX.STR});
-		l.add(new Object[]{INDEX.QUAD});
 		return l;
 	}
 

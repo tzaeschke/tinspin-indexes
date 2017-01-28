@@ -16,6 +16,8 @@ import org.tinspin.index.array.PointArray;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.quadtree.QuadTreeKD;
 import org.tinspin.index.quadtree.QuadTreeRKD;
+import org.tinspin.index.quadtreeslow.QuadTreeKD0;
+import org.tinspin.index.quadtreeslow.QuadTreeRKD0;
 import org.tinspin.index.rtree.RTree;
 
 public class TestStats implements Serializable, Cloneable {
@@ -27,6 +29,8 @@ public class TestStats implements Serializable, Cloneable {
 		CRITBIT,
 		/** Quadtree */
 		QUAD,
+		/** Quadtree without HC navigation. */
+		QUAD_OLD,
 		/** RStarTree */
 		RSTAR,
 		/** STR-loaded RStarTree */
@@ -38,6 +42,7 @@ public class TestStats implements Serializable, Cloneable {
 		case ARRAY: return new PointArray<>(dims, size);
 		//case CRITBIT: return new PointArray<>(dims, size);
 		case QUAD: return QuadTreeKD.create(dims);
+		case QUAD_OLD: return QuadTreeKD0.create(dims);
 		case RSTAR: 
 		case STR: return PointIndexWrapper.create(RTree.createRStar(dims));
 		default:
@@ -50,6 +55,7 @@ public class TestStats implements Serializable, Cloneable {
 		case ARRAY: return new RectArray<>(dims, size);
 		//case CRITBIT: return new PointArray<>(dims, size);
 		case QUAD: return QuadTreeRKD.create(dims);
+		case QUAD_OLD: return QuadTreeRKD0.create(dims);
 		case RSTAR: 
 		case STR: return RTree.createRStar(dims);
 		default:

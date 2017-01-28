@@ -47,6 +47,7 @@ public class TestPointWrappers extends AbstractWrapperTest {
 		ArrayList<Object[]> l = new ArrayList<>();
 		l.add(new Object[]{INDEX.ARRAY});
 		l.add(new Object[]{INDEX.QUAD});
+		l.add(new Object[]{INDEX.QUAD_OLD});
 		l.add(new Object[]{INDEX.RSTAR});
 		l.add(new Object[]{INDEX.STR});
 //		l.add(new Object[]{INDEX.CRITBIT});

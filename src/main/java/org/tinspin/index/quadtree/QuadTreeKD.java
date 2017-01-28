@@ -30,8 +30,13 @@ import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
 
 /**
- * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
+ * This is a MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
  * (if desired) automatic guessing of root rectangle. 
+ * 
+ * For navigation during insert/delete/update/queries, it uses 
+ * hypercube navigation as described by 
+ * T. Zaeschke and M. Norrie, "Efficient Z-Ordered Traversal of Hypercube Indexes, 
+ * BTW proceedings, 2017.
  * 
  * This version of the quadtree stores for each node only the center point and the
  * distance (radius) to the edges.
@@ -44,8 +49,6 @@ import org.tinspin.index.QueryIteratorKNN;
  */
 public class QuadTreeKD<T> implements PointIndex<T> {
 
-	/** Enable basic HCI navigation with Algo #0, for example for exact match queries. */
-	public static boolean ENABLE_HCI_0 = true;
 	/** Enable basic HCI navigation with Algo #1 isInI(), for example for window queries. */
 	public static boolean ENABLE_HCI_1 = true;
 	/** Enable basic HCI navigation with Algo #2 inc(), for example for window queries. */
@@ -451,7 +454,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 				";center/radius=" + (root==null ? "null" : 
 					(Arrays.toString(root.getCenter()) + "/" +
 				root.getRadius())) + 
-				";HCI-0/1/2=" + ENABLE_HCI_0 + "/" + ENABLE_HCI_1 + "/" + ENABLE_HCI_2;
+				";HCI-1/2=" + ENABLE_HCI_1 + "/" + ENABLE_HCI_2;
 	}
 	
 	@Override

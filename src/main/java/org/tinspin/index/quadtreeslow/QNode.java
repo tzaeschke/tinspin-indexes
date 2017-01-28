@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.tinspin.index.quadtreeslow.QuadTreeKD.QStats;
+import org.tinspin.index.quadtreeslow.QuadTreeKD0.QStats;
 
 /**
  * Node class for the quadtree.
@@ -54,7 +54,7 @@ public class QNode<T> {
 
 	@SuppressWarnings({ "unchecked", "unused" })
 	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
-		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
+		if (QuadTreeKD0.DEBUG && !e.enclosedBy(center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
@@ -127,14 +127,13 @@ public class QNode<T> {
 	 * @return subnode position
 	 */
 	private int calcSubPosition(double[] p) {
-		int subNodePos = 0;
-		for (int d = 0; d < center.length; d++) {
-			subNodePos <<= 1;
-			if (p[d] >= center[d]) {
-				subNodePos |= 1;
+		for (int i = 0; i < subs.length; i++) {
+			QNode<T> n = subs[i];
+			if (n != null && QUtil.isPointEnclosed(p, n.center, n.radius)) {
+				return i;
 			}
 		}
-		return subNodePos;
+		throw new IllegalStateException();
 	}
 
 	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize) {

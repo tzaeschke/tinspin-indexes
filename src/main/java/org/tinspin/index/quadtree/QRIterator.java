@@ -19,16 +19,88 @@ package org.tinspin.index.quadtree;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.tinspin.index.PointEntry;
 import org.tinspin.index.QueryIterator;
+import org.tinspin.index.RectangleEntry;
 
 /**
- * Resettable query iterator.
+ * Resetable query iterator.
  *
  * @param <T>
  */
-public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
+public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 
+	private final QuadTreeRKD<T> tree;
+	private IteratorStack stack;
+	private QREntry<T> next = null;
+	private double[] min;
+	private double[] max;
+	
+	QRIterator(QuadTreeRKD<T> tree, double[] min, double[] max) {
+		this.stack = new IteratorStack();
+		this.tree = tree;
+		reset(min, max);
+	}
+	
+	private void findNext() {
+		while(!stack.isEmpty()) {
+			StackEntry<T> se = stack.peek();
+			while (se.posSub < se.lenSub) {
+				int pos = (int) se.posSub;
+				se.inc();
+				//abort in next round if no increment is detected
+				if (se.posSub <= pos) {
+					se.posSub = Long.MAX_VALUE;
+				}
+				QRNode<T> node = se.subs[pos];
+				if (node != null) {
+					se = stack.prepareAndPush(node, min, max);
+				}
+			}
+			while (se.posE < se.lenE) {
+				QREntry<T> e = se.vals.get((int) se.posE++);
+				if (QUtil.overlap(min, max, e.lower(), e.upper())) {
+					next = e;
+					return;
+				}
+			}
+			stack.pop();
+		}
+		next = null;
+	}
+	
+	@Override
+	public boolean hasNext() {
+		return next != null;
+	}
+
+	@Override
+	public QREntry<T> next() {
+		if (!hasNext()) {
+			throw new NoSuchElementException();
+		}
+		QREntry<T> ret = next;
+		findNext();
+		return ret;
+	}
+
+	/**
+	 * Reset the iterator. This iterator can be reused in order to reduce load on the
+	 * garbage collector.
+	 * @param min lower left corner of query
+	 * @param max upper right corner of query
+	 */
+	@Override
+	public void reset(double[] min, double[] max) {
+		stack.clear();
+		this.min = min;
+		this.max = max;
+		next = null;
+		if (tree.getRoot() != null) {
+			stack.prepareAndPush(tree.getRoot(), min, max);
+			findNext();
+		}
+	}
+	
 	private class IteratorStack {
 		private final ArrayList<StackEntry<T>> stack;
 		private int size = 0;
@@ -41,7 +113,7 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 			return size == 0;
 		}
 
-		StackEntry<T> prepareAndPush(QNode<T> node, double[] min, double[] max) {
+		StackEntry<T> prepareAndPush(QRNode<T> node, double[] min, double[] max) {
 			if (size == stack.size()) {
 				stack.add(new StackEntry<>());
 			}
@@ -64,29 +136,24 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 		}
 	}
 
-	private final QuadTreeKD<T> tree;
-	private IteratorStack stack;
-	private QEntry<T> next = null;
-	private double[] min;
-	private double[] max;
-	
 	private static class StackEntry<T> {
-		long pos;
+		int posE;
+		long posSub;
 		long m0;
 		long m1;
-		QNode<T>[] subs;
-		ArrayList<QEntry<T>> vals;
-		public int len;
+		QRNode<T>[] subs;
+		ArrayList<QREntry<T>> vals;
+		int lenE;
+		int lenSub;
 		
-		void set(QNode<T> node, double[] min, double[] max) {
+		void set(QRNode<T> node, double[] min, double[] max) {
 			this.vals = node.getEntries();
 			this.subs = node.getChildNodes();
 
-			if (this.vals != null) {
-				len = this.vals.size();
-				pos = 0;
-			} else {
-				len = this.subs.length;
+			lenE = this.vals != null ? this.vals.size() : 0;
+			posE = 0;
+			if (subs != null) {
+				lenSub = this.subs.length;
 				m0 = 0;
 				m1 = 0;
 				double[] center = node.getCenter();
@@ -100,12 +167,11 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 						}
 					}
 				}
-				pos = m0;
+				posSub = m0;
+			} else {
+				lenSub = 0;
+				posSub = 0;
 			}
-		}
-		
-		public boolean isLeaf() {
-			return vals != null;
 		}
 		
 		boolean checkHcPos(long pos) {
@@ -114,11 +180,11 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 
 		void inc() {
 			//first, fill all 'invalid' bits with '1' (bits that can have only one value).
-			long r = pos | (~m1);
+			long r = posSub | (~m1);
 			//increment. The '1's in the invalid bits will cause bitwise overflow to the next valid bit.
 			r++;
 			//remove invalid bits.
-			pos = (r & m1) | m0;
+			posSub = (r & m1) | m0;
 
 			//return -1 if we exceed 'max' and cause an overflow or return the original value. The
 			//latter can happen if there is only one possible value (all filter bits are set).
@@ -126,74 +192,5 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 			//return (r <= v) ? -1 : r;
 		}
 	}
-	
-	
-	QIterator2(QuadTreeKD<T> tree, double[] min, double[] max) {
-		this.stack = new IteratorStack();
-		this.tree = tree;
-		reset(min, max);
-	}
-	
-	private void findNext() {
-		while(!stack.isEmpty()) {
-			StackEntry<T> se = stack.peek();
-			while (se.pos < se.len) {
-				if (se.isLeaf()) {
-					QEntry<T> e = se.vals.get((int) se.pos++);
-					if (e.enclosedBy(min, max)) {
-						next = e;
-						return;
-					}
-				} else {
-					int pos = (int) se.pos;
-					se.inc();
-					//abort in next round if no increment is detected
-					if (se.pos <= pos) {
-						se.pos = Long.MAX_VALUE;
-					}
-					QNode<T> node = se.subs[pos];
-					if (node != null) {
-						se = stack.prepareAndPush(node, min, max);
-					}
-				}
-			}
-			stack.pop();
-		}
-		next = null;
-	}
-	
 
-	
-	@Override
-	public boolean hasNext() {
-		return next != null;
-	}
-
-	@Override
-	public QEntry<T> next() {
-		if (!hasNext()) {
-			throw new NoSuchElementException();
-		}
-		QEntry<T> ret = next;
-		findNext();
-		return ret;
-	}
-
-	/**
-	 * Reset the iterator. This iterator can be reused in order to reduce load on the
-	 * garbage collector.
-	 * @param min lower left corner of query
-	 * @param max upper right corner of query
-	 */
-	@Override
-	public void reset(double[] min, double[] max) {
-		stack.clear();
-		this.min = min;
-		this.max = max;
-		next = null;
-		if (tree.getRoot() != null) {
-			stack.prepareAndPush(tree.getRoot(), min, max);
-			findNext();
-		}
-	}
 }
