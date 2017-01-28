@@ -108,9 +108,9 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 			return vals != null;
 		}
 		
-		boolean checkHcPos(long pos) {
-			return ((pos | m0) & m1) == pos;
-		}
+		//boolean checkHcPos(long pos) {
+		//	return ((pos | m0) & m1) == pos;
+		//}
 
 		void inc() {
 			//first, fill all 'invalid' bits with '1' (bits that can have only one value).

@@ -108,14 +108,15 @@ public class QRNode<T> {
 	private QRNode<T> getOrCreateSubR(QREntry<T> e) {
 		QRNode<T> n = findSubNode(e.lower(), e.upper());
 		if (n == null) {
-			n = createSubForEntry(e.lower(), e.upper());
+			n = createSubForEntry(e);
 			subs.add(n);
 		}
 		return n;
 	}
 	
-	private QRNode<T> createSubForEntry(double[] pMin, double[] pMax) {
+	private QRNode<T> createSubForEntry(QREntry<T> e) {
 		double[] centerSub = new double[center.length];
+		double[] pMin = e.lower();
 		//This ensures that the subsnodes completely cover the area of
 		//the parent node.
 		double radiusSub = radius/2.0;
@@ -224,6 +225,9 @@ public class QRNode<T> {
 						//reinsert locally;
 						values.add(e);
 					} else {
+						if (false) {
+							//create warning!!!
+						}
 						//TODO
 						//TODO
 						//TODO
