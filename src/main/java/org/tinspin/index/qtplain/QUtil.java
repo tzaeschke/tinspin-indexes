@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.quadtreeslow;
+package org.tinspin.index.qtplain;
 
 public class QUtil {
 	

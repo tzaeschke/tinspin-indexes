@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.quadtreeslow;
+package org.tinspin.index.qtplain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.tinspin.index.quadtreeslow.QuadTreeKD0.QStats;
+import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
 
 /**
  * Node class for the quadtree.
@@ -35,7 +35,7 @@ public class QNode<T> {
 	private double radius;
 	//null indicates that we have sub-nopde i.o. values
 	private ArrayList<QEntry<T>> values;
-	private QNode<T>[] subs;
+	private ArrayList<QNode<T>> subs;
 	
 	QNode(double[] center, double radius) {
 		this.center = center;
@@ -43,16 +43,15 @@ public class QNode<T> {
 		this.values = new ArrayList<>(2); 
 	}
 
-	@SuppressWarnings("unchecked")
-	QNode(double[] center, double radius, QNode<T> subNode, int subNodePos) {
+	QNode(double[] center, double radius, QNode<T> subNode) {
 		this.center = center;
 		this.radius = radius;
 		this.values = null;
-		this.subs = new QNode[1 << center.length];
-		subs[subNodePos] = subNode;
+		this.subs = new ArrayList<>();
+		subs.add(subNode);
 	}
 
-	@SuppressWarnings({ "unchecked", "unused" })
+	@SuppressWarnings("unused")
 	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
 		if (QuadTreeKD0.DEBUG && !e.enclosedBy(center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
@@ -79,7 +78,7 @@ public class QNode<T> {
 		//split
 		ArrayList<QEntry<T>> vals = values;
 		values = null;
-		subs = new QNode[1 << center.length];
+		subs = new ArrayList<>();
 		for (int i = 0; i < vals.size(); i++) {
 			QEntry<T> e2 = vals.get(i); 
 			QNode<T> sub = getOrCreateSub(e2);
@@ -93,24 +92,21 @@ public class QNode<T> {
 	}
 
 	private QNode<T> getOrCreateSub(QEntry<T> e) {
-		int pos = calcSubPosition(e.point());
-		QNode<T> n = subs[pos];
+		QNode<T> n = findSubNode(e.point());
 		if (n == null) {
-			n = createSubForEntry(pos);
-			subs[pos] = n;
+			n = createSubForEntry(e.point());
+			subs.add(n);
 		}
 		return n;
 	}
 	
-	private QNode<T> createSubForEntry(int subNodePos) {
+	private QNode<T> createSubForEntry(double[] p) {
 		double[] centerSub = new double[center.length];
-		int mask = 1<<center.length;
 		//This ensures that the subsnodes completely cover the area of
 		//the parent node.
 		double radiusSub = radius/2.0;
 		for (int d = 0; d < center.length; d++) {
-			mask >>= 1;
-			if ((subNodePos & mask) > 0) {
+			if (p[d] >= center[d]) {
 				centerSub[d] = center[d]+radiusSub;
 			} else {
 				centerSub[d] = center[d]-radiusSub; 
@@ -126,20 +122,19 @@ public class QNode<T> {
 	 * @param p point
 	 * @return subnode position
 	 */
-	private int calcSubPosition(double[] p) {
-		for (int i = 0; i < subs.length; i++) {
-			QNode<T> n = subs[i];
-			if (n != null && QUtil.isPointEnclosed(p, n.center, n.radius)) {
-				return i;
+	private QNode<T> findSubNode(double[] p) {
+		for (int i = 0; i < subs.size(); i++) {
+			QNode<T> n = subs.get(i);
+			if (QUtil.isPointEnclosed(p, n.center, n.radius)) {
+				return n;
 			}
 		}
-		throw new IllegalStateException();
+		return null;
 	}
 
 	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize) {
 		if (values == null) {
-			int pos = calcSubPosition(key);
-			QNode<T> sub = subs[pos];
+			QNode<T> sub = findSubNode(key);
 			if (sub != null) {
 				return sub.remove(this, key, maxNodeSize);
 			}
@@ -165,8 +160,7 @@ public class QNode<T> {
 	QEntry<T> update(QNode<T> parent, double[] keyOld, double[] keyNew, int maxNodeSize,
 			boolean[] requiresReinsert, int currentDepth, int maxDepth) {
 		if (values == null) {
-			int pos = calcSubPosition(keyOld);
-			QNode<T> sub = subs[pos];
+			QNode<T> sub = findSubNode(keyOld);
 			if (sub == null) {
 				return null;
 			}
@@ -210,26 +204,22 @@ public class QNode<T> {
 	private void checkAndMergeLeafNodes(int maxNodeSize) {
 		//check
 		int nTotal = 0;
-		for (int i = 0; i < subs.length; i++) {
-			if (subs[i] != null) {
-				if (subs[i].values == null) {
-					//can't merge directory nodes.
-					return; 
-				}
-				nTotal += subs[i].values.size();
-				if (nTotal > maxNodeSize) {
-					//too many children
-					return;
-				}
+		for (int i = 0; i < subs.size(); i++) {
+			if (subs.get(i).values == null) {
+				//can't merge directory nodes.
+				return; 
+			}
+			nTotal += subs.get(i).values.size();
+			if (nTotal > maxNodeSize) {
+				//too many children
+				return;
 			}
 		}
 		
 		//okay, let's merge
 		values = new ArrayList<>(nTotal);
-		for (int i = 0; i < subs.length; i++) {
-			if (subs[i] != null) {
-				values.addAll(subs[i].values);
-			}
+		for (int i = 0; i < subs.size(); i++) {
+			values.addAll(subs.get(i).values);
 		}
 		subs = null;
 	}
@@ -244,8 +234,7 @@ public class QNode<T> {
 
 	QEntry<T> getExact(double[] key) {
 		if (values == null) {
-			int pos = calcSubPosition(key);
-			QNode<T> sub = subs[pos];
+			QNode<T> sub = findSubNode(key);
 			if (sub != null) {
 				return sub.getExact(key);
 			}
@@ -269,40 +258,9 @@ public class QNode<T> {
 		if (values != null) {
 			return values.iterator();
 		}
-		return new ArrayIterator<>(subs);
+		return subs.iterator();
 	}
 
-	private static class ArrayIterator<E> implements Iterator<E> {
-
-		private final E[] data;
-		private int pos;
-		
-		ArrayIterator(E[] data) {
-			this.data = data;
-			this.pos = 0;
-			findNext();
-		}
-		
-		private void findNext() {
-			while (pos < data.length && data[pos] == null) {
-				pos++;
-			}
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return pos < data.length;
-		}
-
-		@Override
-		public E next() {
-			E ret = data[pos++];
-			findNext();
-			return ret;
-		}
-		
-	}
-	
 	@Override
 	public String toString() {
 		return "center/radius=" + Arrays.toString(center) + "/" + radius + 
@@ -358,12 +316,9 @@ public class QNode<T> {
 				throw new IllegalStateException();
 			}
 		} else {
-			for (int i = 0; i < subs.length; i++) {
-				QNode<T> n = subs[i];
-				//TODO check pos
-				if (n != null) {
-					n.checkNode(s, this, depth+1);
-				}
+			for (int i = 0; i < subs.size(); i++) {
+				QNode<T> n = subs.get(i);
+				n.checkNode(s, this, depth+1);
 			}
 		}
 	}
@@ -372,7 +327,7 @@ public class QNode<T> {
 		return values != null;
 	}
 
-	QNode<T>[] getChildNodes() {
+	ArrayList<QNode<T>> getChildNodes() {
 		return subs;
 	}
 }

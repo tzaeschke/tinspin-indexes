@@ -14,10 +14,10 @@ import org.tinspin.index.PointIndexWrapper;
 import org.tinspin.index.RectangleIndex;
 import org.tinspin.index.array.PointArray;
 import org.tinspin.index.array.RectArray;
+import org.tinspin.index.qtplain.QuadTreeKD0;
+import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.quadtree.QuadTreeKD;
 import org.tinspin.index.quadtree.QuadTreeRKD;
-import org.tinspin.index.quadtreeslow.QuadTreeKD0;
-import org.tinspin.index.quadtreeslow.QuadTreeRKD0;
 import org.tinspin.index.rtree.RTree;
 
 public class TestStats implements Serializable, Cloneable {
