@@ -1,4 +1,6 @@
-
+[2017-01-23]
+- Proper HCI usage for quadtree
+- Added qtplain
 
 [2017-01-23]
 - Moved project to org.tinpin
