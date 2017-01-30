@@ -119,6 +119,10 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 		double maxDistOrigin = Math.abs(hi) > Math.abs(lo) ? hi : lo;
 		maxDistOrigin = Math.abs(maxDistOrigin);
 		//no we use (0,0)/(+-maxDistOrigin*2,+-maxDistOrigin*2) as root.
+		
+		//HACK: To avoid precision problems, we ensure that at least the initial
+		//point is not exactly on the border of the quadrants:
+		maxDistOrigin *= QUtil.EPS_MUL*QUtil.EPS_MUL;
 		double[] center = new double[dims];
 		for (int d = 0; d < dims; d++) {
 			center[d] = key[d] > 0 ? maxDistOrigin : -maxDistOrigin;
@@ -161,12 +165,16 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 	@Override
 	public T remove(double[] key) {
 		if (root == null) {
-			System.err.println("Failed remove 1: " + Arrays.toString(key)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed remove 1: " + Arrays.toString(key));
+			}
 			return null;
 		}
 		QEntry<T> e = root.remove(null, key, maxNodeSize);
 		if (e == null) {
-			System.err.println("Failed remove 2: " + Arrays.toString(key)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed remove 2: " + Arrays.toString(key));
+			}
 			return null;
 		}
 		size--;
@@ -190,11 +198,17 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 				0, MAX_DEPTH);
 		if (e == null) {
 			//not found
-			System.err.println("Failed reinsert 1: " + Arrays.toString(newKey)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed reinsert 1: " + Arrays.toString(oldKey) + "/" + 
+						Arrays.toString(newKey));
+			}
 			return null;
 		}
 		if (requiresReinsert[0]) {
-			System.err.println("Failed reinsert 2: " + Arrays.toString(newKey)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed reinsert 2: " + Arrays.toString(oldKey) + "/" +
+						Arrays.toString(newKey));
+			}
 			//does not fit in root node...
 			ensureCoverage(e);
 			Object r = root;
