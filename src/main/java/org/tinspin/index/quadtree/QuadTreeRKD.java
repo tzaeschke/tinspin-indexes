@@ -165,14 +165,18 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	@Override
 	public T remove(double[] keyL, double[] keyU) {
 		if (root == null) {
-			System.err.println("Failed remove 1: " + 
-					Arrays.toString(keyL) + Arrays.toString(keyU)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed remove 1: " + 
+						Arrays.toString(keyL) + Arrays.toString(keyU));
+			}
 			return null;
 		}
 		QREntry<T> e = root.remove(null, keyL, keyU, maxNodeSize);
 		if (e == null) {
-			System.err.println("Failed remove 2: " + 
-					Arrays.toString(keyL) + Arrays.toString(keyU)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed remove 2: " + 
+						Arrays.toString(keyL) + Arrays.toString(keyU));
+			}
 			return null;
 		}
 		size--;
@@ -198,13 +202,17 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 				maxNodeSize, requiresReinsert, 0, MAX_DEPTH);
 		if (e == null) {
 			//not found
-			System.err.println("Failed reinsert 1: " + 
-					Arrays.toString(oldKeyL) + Arrays.toString(oldKeyU)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed reinsert 1: " + 
+						Arrays.toString(oldKeyL) + Arrays.toString(oldKeyU));
+			}
 			return null;
 		}
 		if (requiresReinsert[0]) {
-			System.err.println("Failed reinsert 2: " + 
-					Arrays.toString(oldKeyL) + Arrays.toString(oldKeyU)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed reinsert 2: " + 
+						Arrays.toString(oldKeyL) + Arrays.toString(oldKeyU));
+			}
 			//does not fit in root node...
 			ensureCoverage(e);
 			Object r = root;

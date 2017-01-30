@@ -169,12 +169,16 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	@Override
 	public T remove(double[] key) {
 		if (root == null) {
-			System.err.println("Failed remove 1: " + Arrays.toString(key)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed remove 1: " + Arrays.toString(key));
+			}
 			return null;
 		}
 		QEntry<T> e = root.remove(null, key, maxNodeSize);
 		if (e == null) {
-			System.err.println("Failed remove 2: " + Arrays.toString(key)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed remove 2: " + Arrays.toString(key));
+			}
 			return null;
 		}
 		size--;
@@ -198,11 +202,15 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 				0, MAX_DEPTH);
 		if (e == null) {
 			//not found
-			System.err.println("Failed reinsert 1: " + Arrays.toString(newKey)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed reinsert 1: " + Arrays.toString(newKey));
+			}
 			return null;
 		}
 		if (requiresReinsert[0]) {
-			System.err.println("Failed reinsert 2: " + Arrays.toString(newKey)); //TODO
+			if (DEBUG) {
+				System.err.println("Failed reinsert 2: " + Arrays.toString(newKey));
+			}
 			//does not fit in root node...
 			ensureCoverage(e);
 			Object r = root;
