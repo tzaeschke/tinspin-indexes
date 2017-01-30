@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/tzaeschke/zoodb-indexes.svg?branch=master)](https://travis-ci.org/tzaeschke/zoodb-indexes)
-[![codecov](https://codecov.io/gh/tzaeschke/zoodb-indexes/branch/master/graph/badge.svg)](https://codecov.io/gh/tzaeschke/zoodb-indexes)
+[![Build Status](https://travis-ci.org/tzaeschke/tinspin-indexes.svg?branch=master)](https://travis-ci.org/tzaeschke/tinspin-indexes)
+[![codecov](https://codecov.io/gh/tzaeschke/tinspin-indexes/branch/master/graph/badge.svg)](https://codecov.io/gh/tzaeschke/tinspin-indexes)
 
 TinSpin Indexes
 ===============

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2017 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.index.test.util;
+package org.tinspin.index.test.util;
 
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;

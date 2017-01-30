@@ -1,17 +1,17 @@
 /*
- * Copyright 2011-2016 ETH Zurich. All Rights Reserved.
+ * Copyright 2011-2017 ETH Zurich. All Rights Reserved.
  *
  * This software is the proprietary information of ETH Zurich.
  * Use is subject to license terms.
  */
-package org.zoodb.index.test;
+package org.tinspin.index.test;
 
 import static org.junit.Assert.assertEquals;
 
-import org.zoodb.index.test.util.Candidate;
-import org.zoodb.index.test.util.TestStats;
-import org.zoodb.index.test.util.TestStats.INDEX;
-import org.zoodb.index.test.util.TestStats.TST;
+import org.tinspin.index.test.util.Candidate;
+import org.tinspin.index.test.util.TestStats;
+import org.tinspin.index.test.util.TestStats.INDEX;
+import org.tinspin.index.test.util.TestStats.TST;
 
 public abstract class AbstractWrapperTest {
 

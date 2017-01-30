@@ -1,7 +1,7 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2017 Tilmann Zaeschke. All rights reserved.
  * 
- * This file is part of ZooDB.
+ * This file is part of TinSpin.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

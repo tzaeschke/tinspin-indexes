@@ -1,10 +1,10 @@
 /*
- * Copyright 2011-2016 ETH Zurich. All Rights Reserved.
+ * Copyright 2011-2017 ETH Zurich. All Rights Reserved.
  *
  * This software is the proprietary information of ETH Zurich.
  * Use is subject to license terms.
  */
-package org.zoodb.index.test.util;
+package org.tinspin.index.test.util;
 
 import java.util.Arrays;
 import java.util.Random;

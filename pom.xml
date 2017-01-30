@@ -12,8 +12,8 @@
 		<maven>3.0.3</maven>
 	</prerequisites>
 
-	<name>zoodb-indexes</name>
-	<description>ZooDB in-memory indexes</description>
+	<name>tinspin-indexes</name>
+	<description>TinSpin in-memory index library</description>
 	<url>https://github.com/tzaeschke/tinspin-indexes</url>
 	<licenses>
 	    <license>

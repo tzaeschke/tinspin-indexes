@@ -1,6 +1,7 @@
 /*
- * Copyright 2016 Tilmann Zaeschke
+ * Copyright 2016-2017 Tilmann Zaeschke
  * 
+ * This file is part of TinSpin.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
