@@ -418,6 +418,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	 * Returns a printable list of the tree.
 	 * @return the tree as String
 	 */
+	@Override
 	public String toStringTree() {
 		StringBuilder sb = new StringBuilder();
 		if (root == null) {
@@ -428,10 +429,8 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 		return sb.toString();
 	}
 	
-	@SuppressWarnings("unchecked")
 	private void toStringTree(StringBuilder sb, QNode<T> node, 
 			int depth, int posInParent) {
-		Iterator<?> it = node.getChildIterator();
 		String prefix = "";
 		for (int i = 0; i < depth; i++) {
 			prefix += ".";
@@ -441,13 +440,17 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 		sb.append("/" + node.getRadius() + NL);
 		prefix += " ";
 		int pos = 0;
-		while (it.hasNext()) {
-			Object o = it.next();
-			if (o instanceof QNode) {
-				QNode<T> sub = (QNode<T>) o;
-				toStringTree(sb, sub, depth+1, pos);
-			} else if (o instanceof QEntry) {
-				QEntry<T> e = (QEntry<T>) o;
+		if (node.getChildNodes() != null) {
+			for (int i = 0; i < node.getChildNodes().length; i++) {
+				QNode<T> sub = node.getChildNodes()[i];
+				if (sub != null) {
+					toStringTree(sb, sub, depth+1, pos);
+				}
+			}
+		}
+		if (node.getEntries() != null) {
+			for (int i = 0; i < node.getEntries().size(); i++) {
+				QEntry<T> e = node.getEntries().get(i);
 				sb.append(prefix + Arrays.toString(e.point()));
 				sb.append(" v=" + e.value() + NL);
 			}

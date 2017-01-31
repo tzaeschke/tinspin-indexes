@@ -19,7 +19,6 @@ package org.tinspin.index.quadtree;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 
 import org.tinspin.index.quadtree.QuadTreeKD.QStats;
 
@@ -328,52 +327,6 @@ public class QRNode<T> {
 		return values;
 	}
 
-	Iterator<?> getChildIterator() {
-		if (subs == null) {
-			return values.iterator();
-		}
-		return new ArrayIterator<>(subs, values != null ? values.toArray() : null);
-	}
-
-	private static class ArrayIterator<E> implements Iterator<E> {
-
-		private E[] data;
-		private E[] data2;
-		private int pos;
-		
-		ArrayIterator(E[] data1, E[] data2) {
-			this.data = data1;
-			this.data2 = data2;
-			this.pos = 0;
-			findNext();
-		}
-		
-		private void findNext() {
-			while (pos < data.length && data[pos] == null) {
-				pos++;
-			}
-			if (pos >= data.length && data2 != null) {
-				data = data2;
-				data2 = null;
-				pos = 0;
-				findNext();
-			}
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return pos < data.length;
-		}
-
-		@Override
-		public E next() {
-			E ret = data[pos++];
-			findNext();
-			return ret;
-		}
-		
-	}
-	
 	@Override
 	public String toString() {
 		return "center/radius=" + Arrays.toString(center) + "/" + radius + 

@@ -54,10 +54,8 @@ public abstract class AbstractWrapperTest {
 			assertEquals(expected.statDqk10_1, ts.statDqk10_1, EPS);
 			assertEquals(expected.statDqk10_2, ts.statDqk10_2, EPS);
 		}
-		assertNotNull(c.toString());
-		assertNotNull(c.toStringTree());
-		c.clear();
 		assertEquals(0, c.size());
+		assertNotNull(c.toString());
 	}
 	
 }

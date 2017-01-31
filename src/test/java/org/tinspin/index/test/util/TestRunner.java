@@ -6,6 +6,8 @@
  */
 package org.tinspin.index.test.util;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
@@ -82,6 +84,8 @@ public class TestRunner {
 //			TestDraw.draw(data, 2);
 //			return S;
 //		}
+
+		assertNotNull(tree.toStringTree());
 		
 		//window queries
 		if (tree.supportsWindowQuery()) {
@@ -133,6 +137,7 @@ public class TestRunner {
 		}
 
 		if (tree != null) {
+			tree.clear();
 			tree.release();
 		}
 		
