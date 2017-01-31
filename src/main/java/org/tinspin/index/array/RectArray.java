@@ -288,7 +288,8 @@ public class RectArray<T> implements RectangleIndex<T> {
 	@Override
 	public void clear() {
 		for (int i = 0; i < N; i++) {
-			values[i] = null;
+			values[2*i] = null;
+			values[2*i+1] = null;
 			phc[i] = null;
 		}
 	}
@@ -307,5 +308,15 @@ public class RectArray<T> implements RectangleIndex<T> {
 	@Override
 	public int getDepth() {
 		return 0;
+	}
+
+	@Override
+	public String toStringTree() {
+		StringBuilder s = new StringBuilder();
+		for (int i = 0; i < N; i++) {
+			s.append(Arrays.toString(phc[i*2]) + "/" + Arrays.toString(phc[i*2+1]) + 
+					" v=" + values[i]);
+		}
+		return s.toString();
 	}
 }

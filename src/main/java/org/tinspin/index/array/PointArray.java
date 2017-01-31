@@ -289,6 +289,12 @@ public class PointArray<T> implements PointIndex<T> {
 		return 0;
 	}
 
-
-
+	@Override
+	public String toStringTree() {
+		StringBuilder s = new StringBuilder();
+		for (int i = 0; i < N; i++) {
+			s.append(Arrays.toString(phc[i]) + " v=" + values[i]);
+		}
+		return s.toString();
+	}
 }

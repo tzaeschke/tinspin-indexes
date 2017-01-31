@@ -201,4 +201,9 @@ public class RectangleIndexTester extends Candidate {
 	public String toString() {
 		return idx.toString(); 
 	}
+	
+	@Override
+	public String toStringTree() {
+		return idx.toStringTree();
+	}
 }

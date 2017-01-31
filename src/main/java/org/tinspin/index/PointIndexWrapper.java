@@ -200,4 +200,9 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 		}
 		((RTree<T>)ind).load(entries);
 	}
+
+	@Override
+	public String toStringTree() {
+		return ind.toStringTree();
+	}
 }

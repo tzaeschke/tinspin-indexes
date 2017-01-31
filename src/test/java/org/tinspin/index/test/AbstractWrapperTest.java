@@ -7,6 +7,7 @@
 package org.tinspin.index.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import org.tinspin.index.test.util.Candidate;
 import org.tinspin.index.test.util.TestStats;
@@ -53,6 +54,8 @@ public abstract class AbstractWrapperTest {
 			assertEquals(expected.statDqk10_1, ts.statDqk10_1, EPS);
 			assertEquals(expected.statDqk10_2, ts.statDqk10_2, EPS);
 		}
+		assertNotNull(c.toString());
+		assertNotNull(c.toStringTree());
 	}
 	
 }

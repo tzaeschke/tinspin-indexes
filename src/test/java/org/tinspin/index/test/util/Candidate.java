@@ -282,4 +282,6 @@ public abstract class Candidate {
 		return "Please provide configuration information for "
 				+ " every test candidate class in the toString() method.";
 	}
+
+	public abstract String toStringTree();
 }

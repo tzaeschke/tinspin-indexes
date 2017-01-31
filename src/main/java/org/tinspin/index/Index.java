@@ -39,5 +39,11 @@ public interface Index<T> {
 	int getNodeCount();
 	
 	int getDepth();
+	
+	/**
+	 * 
+	 * @return a full string output of the tree structure with all entries 
+	 */
+	String toStringTree();
 
 }
