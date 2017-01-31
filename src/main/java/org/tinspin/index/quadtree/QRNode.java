@@ -86,6 +86,7 @@ public class QRNode<T> {
 		
 		//split
 		ArrayList<QREntry<T>> vals = values;
+		vals.add(e);
 		values = null;
 		subs = new QRNode[1 << center.length];
 		for (int i = 0; i < vals.size(); i++) {
@@ -105,14 +106,7 @@ public class QRNode<T> {
 				sub = (QRNode<T>) sub.tryPut(e2, maxNodeSize, false);
 			}
 		}
-		if (pos == OVERLAP_WITH_CENTER) {
-			if (values == null) {
-				values = new ArrayList<>();
-			}
-			values.add(e);
-			return null;
-		}
-		return getOrCreateSubR(pos);
+		return null;
 	}
 
 	private QRNode<T> getOrCreateSubR(int pos) {
@@ -206,10 +200,8 @@ public class QRNode<T> {
 				}
 				QREntry<T> ret = sub.update(this, keyOldL, keyOldU, keyNewL, keyNewU, 
 						maxNodeSize, requiresReinsert, currentDepth+1, maxDepth);
-				//Divide by EPS to ensure that we do not reinsert to low
 				if (ret != null && requiresReinsert[0] && 
-						QUtil.isRectEnclosed(ret.lower(), ret.upper(), 
-								center, radius/QUtil.EPS_MUL)) {
+						QUtil.isRectEnclosed(ret.lower(), ret.upper(), center, radius)) {
 					requiresReinsert[0] = false;
 					Object r = this;
 					while (r instanceof QRNode) {
@@ -230,14 +222,22 @@ public class QRNode<T> {
 				values.remove(i);
 				e.setKey(keyNewL, keyNewU);
 				//Divide by EPS to ensure that we do not reinsert to low
-				if (QUtil.isRectEnclosed(keyNewL, keyNewU, center, radius/QUtil.EPS_MUL)) {
+				if (QUtil.isRectEnclosed(keyNewL, keyNewU, center, radius)) {
 					requiresReinsert[0] = false;
 					int pos = calcSubPositionR(keyNewL, keyNewU);
 					if (pos == OVERLAP_WITH_CENTER) {
 						//reinsert locally;
 						values.add(e);
 					} else {
-						Object r = this;
+						Object r;
+						//we try to use subnode directly, if there is one.
+						if (subs == null || subs[pos] == null) {
+							//create node locally for insert
+							r = this;
+						} else {
+							r = subs[pos];
+							currentDepth++;
+						}
 						while (r instanceof QRNode) {
 							r = ((QRNode<T>)r).tryPut(e, maxNodeSize, currentDepth++ > maxDepth);
 						}

@@ -61,8 +61,11 @@ public class QRNode<T> {
 		
 		//traverse subs?
 		QRNode<T> sub1 = findSubNode(e.lower(), e.upper());
-		if (sub1 != null && sub1 != this) {
-			return getOrCreateSubR(e);
+		if (subs != null && sub1 != this) {
+			if (sub1 == null) {
+				sub1 = createSubForEntry(e);
+			}
+			return sub1;
 		}
 		
 		//add if:
@@ -84,37 +87,31 @@ public class QRNode<T> {
 		
 		//split
 		ArrayList<QREntry<T>> vals = values;
+		vals.add(e);
 		values = null;
 		subs = new ArrayList<>();
 		for (int i = 0; i < vals.size(); i++) {
 			QREntry<T> e2 = vals.get(i); 
-			QRNode<T> sub2 = findSubNode(e2.lower(), e2.upper());
-			if (sub2 == this) {
+			QRNode<T> sub = findSubNode(e2.lower(), e2.upper());
+			if (sub == this) {
 				if (values == null) {
 					values = new ArrayList<>();
 				}
 				values.add(e2);
 				continue;
 			}
-			QRNode<T> sub = getOrCreateSubR(e2);
+			if (sub == null) {
+				sub = createSubForEntry(e2);
+			}
 			while (sub != null) {
 				//This may recurse if all entries fall 
 				//into the same subnode
 				sub = (QRNode<T>) sub.tryPut(e2, maxNodeSize, false);
 			}
 		}
-		return getOrCreateSubR(e);
+		return null;
 	}
 
-	private QRNode<T> getOrCreateSubR(QREntry<T> e) {
-		QRNode<T> n = findSubNode(e.lower(), e.upper());
-		if (n == null) {
-			n = createSubForEntry(e);
-			subs.add(n);
-		}
-		return n;
-	}
-	
 	private QRNode<T> createSubForEntry(QREntry<T> e) {
 		double[] centerSub = new double[center.length];
 		double[] pMin = e.lower();
@@ -128,7 +125,9 @@ public class QRNode<T> {
 				centerSub[d] = center[d]-radiusSub; 
 			}
 		}
-		return new QRNode<>(centerSub, radiusSub);		
+		QRNode<T> n = new QRNode<>(centerSub, radiusSub);		
+		subs.add(n);
+		return n;
 	}
 	
 	/**
@@ -147,9 +146,17 @@ public class QRNode<T> {
 				}
 			}
 		}
-		if (QUtil.isPointEnclosed(center, pMin, pMax)) {
-			return this;
+		
+		//Okay, we have to check whether the entry should at all go into a subnode.
+		//It it crosses at least one border between quadrants, it belongs into
+		//the local node. Pairwise check:
+		for (int i = 0; i < center.length; i++) {
+			if (pMin[i] < center[i] && pMax[i] >= center[i]) {
+				//found crossing border
+				return this;
+			}
 		}
+		
 		return null;
 	}
 
@@ -198,7 +205,7 @@ public class QRNode<T> {
 				//Divide by EPS to ensure that we do not reinsert to low
 				if (ret != null && requiresReinsert[0] && 
 						QUtil.isRectEnclosed(ret.lower(), ret.upper(), 
-								center, radius/QUtil.EPS_MUL)) {
+								center, radius)) {
 					requiresReinsert[0] = false;
 					Object r = this;
 					while (r instanceof QRNode) {
@@ -219,24 +226,22 @@ public class QRNode<T> {
 				values.remove(i);
 				e.setKey(keyNewL, keyNewU);
 				//Divide by EPS to ensure that we do not reinsert to low
-				if (QUtil.isRectEnclosed(keyNewL, keyNewU, center, radius/QUtil.EPS_MUL)) {
+				if (QUtil.isRectEnclosed(keyNewL, keyNewU, center, radius)) {
 					requiresReinsert[0] = false;
 					QRNode<T> sub = findSubNode(keyNewL, keyNewU);
 					if (sub == this) {
 						//reinsert locally;
 						values.add(e);
 					} else {
-						if (false) {
-							//create warning!!!
+						//we try to use subnode directly, if there is one.
+						Object r;
+						if (sub == null) {
+							//create node locally for insert
+							r = this;
+						} else {
+							r = sub;
+							currentDepth++;
 						}
-						//TODO
-						//TODO
-						//TODO
-						//This is unnecessary, at this point I already located the subnode,
-						//but in tryPut we do it again....
-						//TODO
-						//TODO
-						Object r = this;
 						while (r instanceof QRNode) {
 							r = ((QRNode<T>)r).tryPut(e, maxNodeSize, currentDepth++ > maxDepth);
 						}

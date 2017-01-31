@@ -43,14 +43,14 @@ public class TestRunner {
 		final int N = 1*1000*1000;
 						
 		//TestStats s0 = new TestStats(TST.CLUSTER, IDX.QKDZ, N, DIM, true, 5);
-		//TestStats s0 = new TestStats(TST.CUBE, IDX.QKDZ, N, DIM, true, 1.0);
+		TestStats s0 = new TestStats(TST.CUBE, INDEX.QUAD, N, DIM, true, 1.0);
 		//TestStats s0 = new TestStats(TST.OSM, IDX.PHC, N, 2, true, 1.0);
 		//TestStats s0 = new TestStats(TST.CUBE, IDX.PHC, N, DIM, true, 1.0E-5);
 		//TestStats s0 = new TestStats(TST.CLUSTER, IDX.RSZ, N, DIM, false, 3.4);
-		TestStats s0 = new TestStats(TST.CUBE, INDEX.RSTAR, N, DIM, false, 1.0);
+		//TestStats s0 = new TestStats(TST.CUBE, INDEX.QUAD_OLD, N, DIM, false, 1.0);
 		//TestStats s0 = new TestStats(TST.OSM, INDEX.RSTAR, N, 2, false, 1.0);
 		//s0.cfgWindowQueryRepeat = 1000;
-		//s0.cfgPointQueryRepeat = 1000000;
+		s0.cfgPointQueryRepeat = 1000*1000;
 		//s0.cfgUpdateSize = 1000;
 
 //		s0.cfgWindowQuerySize = 1;
@@ -405,7 +405,7 @@ public class TestRunner {
 	
 	private double[] generateQueryPointD(final int N, final int dims) {
 		double[] xyz = new double[dims];
-		int pos = R.nextInt(N*2);
+		int pos = R.nextInt(N*2); 
 		if (pos >= N) {
 			//randomise
 			for (int d = 0; d < dims; d++) {

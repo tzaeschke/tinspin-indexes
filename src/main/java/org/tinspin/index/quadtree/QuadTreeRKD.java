@@ -501,6 +501,5 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	
 	protected QRNode<T> getRoot() {
 		return root;
-		
 	}
 }
