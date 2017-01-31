@@ -56,6 +56,8 @@ public abstract class AbstractWrapperTest {
 		}
 		assertNotNull(c.toString());
 		assertNotNull(c.toStringTree());
+		c.clear();
+		assertEquals(0, c.size());
 	}
 	
 }

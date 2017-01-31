@@ -22,7 +22,7 @@ public class RectArray<T> implements RectangleIndex<T> {
 
 	private final double[][] phc;
 	private final int dims;
-	private final int N;
+	private int N;
 	private RectangleEntry<T>[] values;
 	private int insPos = 0; 
 
@@ -288,10 +288,12 @@ public class RectArray<T> implements RectangleIndex<T> {
 	@Override
 	public void clear() {
 		for (int i = 0; i < N; i++) {
-			values[2*i] = null;
-			values[2*i+1] = null;
+			values[i] = null;
+		}
+		for (int i = 0; i < 2*N; i++) {
 			phc[i] = null;
 		}
+		N = 0;
 	}
 
 	@Override

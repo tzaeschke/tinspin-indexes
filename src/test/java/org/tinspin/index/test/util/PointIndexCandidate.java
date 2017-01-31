@@ -18,7 +18,7 @@ import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.test.util.TestStats.INDEX;
 
-public class PointIndexTester extends Candidate {
+public class PointIndexCandidate extends Candidate {
 	
 	private final PointIndex<double[]> idx;
 	private final int dims;
@@ -33,7 +33,7 @@ public class PointIndexTester extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public PointIndexTester(PointIndex<?> pi, TestStats ts) {
+	public PointIndexCandidate(PointIndex<?> pi, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
 		idx = (PointIndex<double[]>) pi;
@@ -199,5 +199,15 @@ public class PointIndexTester extends Candidate {
 	@Override
 	public String toStringTree() {
 		return idx.toStringTree();
+	}
+
+	@Override
+	public void clear() {
+		idx.clear();
+	}
+
+	@Override
+	public int size() {
+		return idx.size();
 	}
 }

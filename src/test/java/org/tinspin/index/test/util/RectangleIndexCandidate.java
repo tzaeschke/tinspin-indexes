@@ -18,7 +18,7 @@ import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
 import org.tinspin.index.test.util.TestStats.INDEX;
 
-public class RectangleIndexTester extends Candidate {
+public class RectangleIndexCandidate extends Candidate {
 	
 	private final RectangleIndex<Object> idx;
 	private final int dims;
@@ -34,7 +34,7 @@ public class RectangleIndexTester extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public RectangleIndexTester(RectangleIndex<?> ri, TestStats ts) {
+	public RectangleIndexCandidate(RectangleIndex<?> ri, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
 		this.idx = (RectangleIndex<Object>) ri;
@@ -205,5 +205,15 @@ public class RectangleIndexTester extends Candidate {
 	@Override
 	public String toStringTree() {
 		return idx.toStringTree();
+	}
+
+	@Override
+	public void clear() {
+		idx.clear();
+	}
+
+	@Override
+	public int size() {
+		return idx.size();
 	}
 }

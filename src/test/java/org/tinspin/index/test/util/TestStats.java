@@ -476,10 +476,10 @@ public class TestStats implements Serializable, Cloneable {
 	public Candidate createTree(int size, TestStats ts) {
 		if (isRangeData) {
 			RectangleIndex<?> ri = createRI(INDEX, cfgNDims, size);
-			return new RectangleIndexTester(ri, ts);
+			return new RectangleIndexCandidate(ri, ts);
 		} else {
 			PointIndex<?> pi = createPI(INDEX, cfgNDims, size);
-			return new PointIndexTester(pi, ts);
+			return new PointIndexCandidate(pi, ts);
 		}
 	}
 }

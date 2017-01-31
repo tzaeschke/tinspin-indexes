@@ -284,4 +284,9 @@ public abstract class Candidate {
 	}
 
 	public abstract String toStringTree();
+
+	public abstract void clear();
+
+	public abstract int size();
+
 }

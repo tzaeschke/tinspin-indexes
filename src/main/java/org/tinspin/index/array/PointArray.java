@@ -22,7 +22,7 @@ public class PointArray<T> implements PointIndex<T> {
 	
 	private final double[][] phc;
 	private final int dims;
-	private final int N;
+	private int N;
 	private PointEntry<T>[] values;
 	private int insPos = 0; 
 	
@@ -271,6 +271,7 @@ public class PointArray<T> implements PointIndex<T> {
 			values[i] = null;
 			phc[i] = null;
 		}
+		N = 0;
 	}
 
 	@Override
