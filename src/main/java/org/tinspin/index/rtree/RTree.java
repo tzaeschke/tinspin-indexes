@@ -265,7 +265,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	}
 
 	
-	private void deleteFromNode(RTreeNode<T> node, int pos) {
+	void deleteFromNode(RTreeNode<T> node, int pos) {
 		size--;
 		//this also adjusts parent MBBs
 		//Question: Should we adjust parent MBBs later if we have to remove the sub-node?
@@ -277,12 +277,13 @@ public class RTree<T> implements RectangleIndex<T> {
 		int level = 0;
 		while (node != root && node.isUnderfull()) {
 			ArrayList<Entry<T>> entries = node.getEntries();
-			node.getParent().removeChildByIdentity(node);
+			RTreeNodeDir<T> parent = node.getParent();
+			parent.removeChildByIdentity(node);
+			node = parent;
 			nNodes--;
 			for (int i = 0; i < entries.size(); i++) {
 				insertAtDepth(entries.get(i), level);
 			}
-			node = node.getParent();
 			level++;
 		}
 		if (root.getEntries().size() == 1 && root instanceof RTreeNodeDir) {

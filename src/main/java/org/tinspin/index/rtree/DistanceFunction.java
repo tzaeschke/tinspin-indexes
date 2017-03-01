@@ -16,12 +16,13 @@
  */
 package org.tinspin.index.rtree;
 
+@FunctionalInterface
 public interface DistanceFunction {
 
 	public static CenterDistance CENTER = new CenterDistance();
 	public static EdgeDistance EDGE = new EdgeDistance();
-	public static CenterSquareDistance CENTER_SQUARE = new CenterSquareDistance();
-	public static EdgeSquareDistance EDGE_SQUARE = new EdgeSquareDistance();
+	public static DistanceFunction CENTER_SQUARE = DistanceFunction::centerSquareDistance;
+	public static DistanceFunction EDGE_SQUARE = DistanceFunction::edgeSquareDistance;
 
 	double dist(double[] center, double[] min, double[] max);
 	
@@ -59,38 +60,30 @@ public interface DistanceFunction {
 	/**
 	 * The square root is costly, and generally not required for sorting.
 	 */
-	public static class CenterSquareDistance implements DistanceFunction {
-
-		@Override
-		public double dist(double[] center, double[] min, double[] max) {
-			double dist = 0;
-			for (int i = 0; i < center.length; i++) {
-				double d = (min[i] + max[i]) * 0.5 - center[i];
-				dist += d * d;
-			}
-			return dist;
+	public static double centerSquareDistance(double[] center, double[] min, double[] max) {
+		double dist = 0;
+		for (int i = 0; i < center.length; i++) {
+			double d = (min[i] + max[i]) * 0.5 - center[i];
+			dist += d * d;
 		}
+		return dist;
 	}
 	
 	/**
 	 * The square root is costly, and generally not required for sorting.
 	 */
-	public static class EdgeSquareDistance implements DistanceFunction {
-
-		@Override
-		public double dist(double[] center, double[] min, double[] max) {
-			double dist = 0;
-			for (int i = 0; i < center.length; i++) {
-				double d = 0;
-				if (min[i] > center[i]) {
-					d = min[i] - center[i];
-				} else if (max[i] < center[i]) {
-					d = center[i] - max[i];
-				}
-				dist += d * d;
+	public static double edgeSquareDistance(double[] center, double[] min, double[] max) {
+		double dist = 0;
+		for (int i = 0; i < center.length; i++) {
+			double d = 0;
+			if (min[i] > center[i]) {
+				d = min[i] - center[i];
+			} else if (max[i] < center[i]) {
+				d = center[i] - max[i];
 			}
-			return dist;
+			dist += d * d;
 		}
+		return dist;
 	}
 	
 }

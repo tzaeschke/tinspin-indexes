@@ -3,12 +3,15 @@ package org.tinspin.index.rtree;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.tinspin.index.RectangleEntryDist;
 
@@ -21,10 +24,19 @@ public class RTreeMixedQueryTest {
 	@Test
 	public void test() {
 		RTree<String> tree = RTree.createRStar(3);
+		
+		System.out.println(tree.getDepth());
 
-		for (int i = 0; i < 100000; i++) {
-			tree.insert(randDouble(3), "#" + i);
+		int N_ELEMENTS = 100000;
+		for (int i = 0; i < N_ELEMENTS; i++) {
+			double[] position = randDouble(3);
+			assert tree.queryExact(position, position) == null;
+			tree.insert(position, "#" + i);
+			
 		}
+		System.out.println(tree.getDepth());
+			validateTreeParent(tree);
+//		if(true)return;
 		
 		Iterable<RectangleEntryDist<String>> q = tree.queryMixed(new double[] { 1, 1, 1 }, DistanceFunction.CENTER_SQUARE, DistanceFunction.EDGE_SQUARE,
 				new double[] { 0.5, 0.5, 0.5 }, new double[] { 1, 1, 1 });
@@ -33,22 +45,46 @@ public class RTreeMixedQueryTest {
 		double d = 0;
 		int maxQueueSize = 0;
 		int nElements = 0;
+		Set<String> duplicateCheck = new HashSet<>();
 		for (Iterator<RectangleEntryDist<String>> iterator = q.iterator(); iterator.hasNext();) {
 			RectangleEntryDist<String> e = iterator.next();
-				System.out.println(iterator + " " + e);
+			System.out.println(iterator + " " + e);
+
+			assertTrue(e.value()+" @"+nElements, duplicateCheck.add(e.value()));
 			assertTrue(d <= e.dist());
 			d = e.dist();
 			nElements++;
 			maxQueueSize = Math.max(maxQueueSize, ((RTreeMixedQuery) iterator).queueSize());
+			
+			if (true) {
+				iterator.remove();
+				assertEquals(tree.size(), N_ELEMENTS - nElements);
+			}
 		}
 
 		
 		perfTestNN(tree);
-		
 		// should be about the size of the tree
 		System.out.println(nElements * (1 << tree.getDims()));
 		System.out.println(nElements);
 		System.out.println(maxQueueSize);
+	}
+
+	private void validateTreeParent(RTree<?> tree) {
+		assertNull(tree.getRoot().getParent());
+		tree.getRoot().getEntries().forEach(e-> {
+			validateTreeParent(e, tree.getRoot());
+		});
+	}
+
+	private void validateTreeParent(Entry e, RTreeNode<?> parent) {
+		if (e instanceof RTreeNode<?>) {
+			RTreeNode<?> node = (RTreeNode) e;
+			assertEquals(parent, node.getParent());
+			node.getEntries().forEach(cld-> {
+				validateTreeParent(cld, node);
+			});
+		}
 	}
 
 	private void perfTestNN(RTree<String> tree) {
