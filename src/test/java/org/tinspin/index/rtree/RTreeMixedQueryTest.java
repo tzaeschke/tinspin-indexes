@@ -62,7 +62,7 @@ public class RTreeMixedQueryTest {
 		Set<String> duplicateCheck = new HashSet<>();
 		for (Iterator<RectangleEntryDist<String>> iterator = q.iterator(); iterator.hasNext();) {
 			RectangleEntryDist<String> e = iterator.next();
-			System.out.println(iterator + " " + e);
+//			System.out.println(iterator + " " + e);
 
 			assertTrue(e.value() + " @" + nElements, duplicateCheck.add(e.value()));
 			assertTrue("Order should be ascending", lastDistance <= e.dist());
@@ -78,9 +78,8 @@ public class RTreeMixedQueryTest {
 
 		perfTestNN(tree);
 		// should be about the size of the tree
-		System.out.println(nElements * (1 << tree.getDims()));
 		assertEquals("Test should be reproducible thanks to fixed seed", 12582, nElements);
-		System.out.println(maxQueueSize);
+		System.out.println("maxQueueSize=" + maxQueueSize);
 	}
 
 	private void perfTestNN(RTree<String> tree) {
@@ -147,7 +146,7 @@ public class RTreeMixedQueryTest {
 		
 		
 		
-		System.out.println("timeMixed=" + timeMixed + ", timeRef=" + timeRef + " # " + (timeRef / (double)timeMixed));
+		System.out.println("timeMixed=" + timeMixed + ", timeRef=" + timeRef + " # speedup:" + (timeRef / (double)timeMixed));
 	}
 	
 	private void fillProcessorCache() {
