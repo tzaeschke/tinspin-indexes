@@ -18,6 +18,7 @@ package org.tinspin.index.rtree;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import org.tinspin.index.RectangleEntryDist;
 import org.tinspin.index.RectangleIndex;
@@ -338,6 +339,23 @@ public class RTree<T> implements RectangleIndex<T> {
 	
 	public RTreeQueryKnn<T> queryKNN(double[] center, int k, DistanceFunction dist) {
 		return new RTreeQueryKnn<>(this, center, k, dist);
+	}
+	
+	public Iterable<RectangleEntryDist<T>> queryMixed(double[] center, DistanceFunction dist,
+			DistanceFunction closestDist, double[] minBound, double[] maxBound) {
+		return queryMixed(center, dist, closestDist, new Filter.RectangleIntersectFilter(minBound, maxBound));
+	}
+	
+	public Iterable<RectangleEntryDist<T>> queryMixed(double[] center, DistanceFunction dist,
+			DistanceFunction closestDist, Filter filter) {
+		RTree<T> self = this;
+		return new Iterable<RectangleEntryDist<T>>() {
+
+			@Override
+			public Iterator<RectangleEntryDist<T>> iterator() {
+				return new RTreeMixedQuery<T>(self, center, filter, dist, closestDist);
+			}
+		};
 	}
 	
 	public String toStringTree() {
