@@ -1,4 +1,21 @@
+/*
+ * Copyright 2017 Christophe Schmaltz
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.tinspin.index.rtree;
+
+import org.tinspin.index.RectangleEntry;
 
 public interface Filter {
 	
@@ -26,12 +43,11 @@ public interface Filter {
 	 * This is used on the actual entries. Anything that matches will be
 	 * returned.
 	 * 
-	 * @param min
-	 * @param max
-	 * @return
+	 * @param  entry  An entry with an existing value()
+	 * @return        True if this entry is part of the result set
 	 */
-	default boolean matches(double[] min, double[] max) {
-		return intersects(min, max);
+	default <T> boolean matches(RectangleEntry<T> entry) {
+		return intersects(entry.lower(), entry.upper());
 	}
 	
 	public static class RectangleIntersectFilter implements Filter {

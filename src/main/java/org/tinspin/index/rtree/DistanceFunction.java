@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Tilmann Zaeschke
+ * Modification Copyright 2017 Christophe Schmaltz
  * 
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,8 @@
  */
 package org.tinspin.index.rtree;
 
+import org.tinspin.index.RectangleEntry;
+
 @FunctionalInterface
 public interface DistanceFunction {
 
@@ -25,6 +28,14 @@ public interface DistanceFunction {
 	public static DistanceFunction EDGE_SQUARE = DistanceFunction::edgeSquareDistance;
 
 	double dist(double[] center, double[] min, double[] max);
+
+	/**
+	 * Some algorithm use this method on the entries containing user supplied values.
+	 * This can be overridden if the min/max coordinates only represent the bounding-box of the object.
+	 */
+	default <T> double dist(double[] center, RectangleEntry<T> entry) {
+		return dist(center, entry.lower(), entry.upper());
+	}
 	
 	public static class CenterDistance implements DistanceFunction {
 
