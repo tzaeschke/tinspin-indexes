@@ -52,7 +52,7 @@ public class RTreeMixedQueryTest {
 			tree.insert(position, "#" + i);
 		}
 		
-		Iterable<RectangleEntryDist<String>> q = tree.queryMixed(new double[] { 1, 1, 1 }, DistanceFunction.CENTER_SQUARE, DistanceFunction.EDGE_SQUARE,
+		Iterable<RectangleEntryDist<String>> q = tree.queryRangedNearestNeighbor(new double[] { 1, 1, 1 }, DistanceFunction.CENTER_SQUARE, DistanceFunction.EDGE_SQUARE,
 				new double[] { 0.5, 0.5, 0.5 }, new double[] { 1, 1, 1 });
 		
 		
@@ -62,7 +62,7 @@ public class RTreeMixedQueryTest {
 		Set<String> duplicateCheck = new HashSet<>();
 		for (Iterator<RectangleEntryDist<String>> iterator = q.iterator(); iterator.hasNext();) {
 			RectangleEntryDist<String> e = iterator.next();
-//			System.out.println(iterator + " " + e);
+			//System.out.println(nElements + " " + iterator + " " + e);
 
 			assertTrue(e.value() + " @" + nElements, duplicateCheck.add(e.value()));
 			assertTrue("Order should be ascending", lastDistance <= e.dist());
@@ -77,9 +77,8 @@ public class RTreeMixedQueryTest {
 		}
 
 		perfTestNN(tree);
-		// should be about the size of the tree
-		assertEquals("Test should be reproducible thanks to fixed seed", 12582, nElements);
 		System.out.println("maxQueueSize=" + maxQueueSize);
+		assertEquals("Test should be reproducible thanks to fixed seed", 12582, nElements);
 	}
 
 	private void perfTestNN(RTree<String> tree) {
@@ -87,7 +86,7 @@ public class RTreeMixedQueryTest {
 		double[] center = new double[] { 1, 1, 1 };
 		
 		{
-			Iterable<RectangleEntryDist<String>> q = tree.queryMixed(center, DistanceFunction.EDGE,
+			Iterable<RectangleEntryDist<String>> q = tree.queryRangedNearestNeighbor(center, DistanceFunction.EDGE,
 					DistanceFunction.EDGE, Filter.ALL);
 			RTreeQueryKnn<String> res = tree.queryKNN(center, k, DistanceFunction.EDGE);
 			// test that we get the same results
@@ -119,7 +118,7 @@ public class RTreeMixedQueryTest {
 		fillProcessorCache();
 		
 		long timeMixed = timeOf(() -> {
-			Iterable<RectangleEntryDist<String>> q = tree.queryMixed(center, DistanceFunction.EDGE,
+			Iterable<RectangleEntryDist<String>> q = tree.queryRangedNearestNeighbor(center, DistanceFunction.EDGE,
 					DistanceFunction.EDGE, Filter.ALL);
 			int cnt = 0;
 			if (false) {

@@ -24,7 +24,9 @@ public interface DistanceFunction {
 
 	public static CenterDistance CENTER = new CenterDistance();
 	public static EdgeDistance EDGE = new EdgeDistance();
+	// The square root is costly, and generally not required for sorting.
 	public static DistanceFunction CENTER_SQUARE = DistanceFunction::centerSquareDistance;
+	// The square root is costly, and generally not required for sorting.
 	public static DistanceFunction EDGE_SQUARE = DistanceFunction::edgeSquareDistance;
 
 	double dist(double[] center, double[] min, double[] max);
@@ -32,9 +34,78 @@ public interface DistanceFunction {
 	/**
 	 * Some algorithm use this method on the entries containing user supplied values.
 	 * This can be overridden if the min/max coordinates only represent the bounding-box of the object.
+	 * 
+	 * If your entry is actually a sphere, a car, an human or a cat, you may need this.
 	 */
-	default <T> double dist(double[] center, RectangleEntry<T> entry) {
+	default double dist(double[] center, RectangleEntry<?> entry) {
 		return dist(center, entry.lower(), entry.upper());
+	}
+	
+	/**
+	 * This class calculates the distance to a rectangular shaped object.
+	 * 
+	 * This class completely ignores the center given as parameter to the interface.
+	 * 
+	 * TODO: maybe we could get rid of the center parameter altogether and always let the DistanceFunction
+	 *       hold it's reference points?
+	 */
+	public static class RectangleDist implements DistanceFunction {
+		private final double[] lower;
+		private final double[] upper;
+
+		public RectangleDist(double[] lower, double[] upper) {
+			this.lower = lower;
+			this.upper = upper;
+		}
+
+		@Override
+		public double dist(double[] ignored, double[] min, double[] max) {
+			double dist = 0;
+			for (int i = 0; i < lower.length; i++) {
+				double d = 0;
+				if (min[i] > upper[i]) {
+					// "right" side of our rectangle
+					d = min[i] - upper[i];
+				} else if (max[i] < lower[i]) {
+					// "left" side of our rectangle
+					d = lower[i] - max[i];
+				} // else intersecting
+				dist += d * d;
+			}
+			return dist;
+		}
+	}
+	
+	/**
+	 * Special wrapper class which takes the inverse or the given function.
+	 * Can be used to get the farthest neighbors using the nearest neighbor algorithm.
+	 */
+	public static class FarthestNeighbor implements DistanceFunction {
+		private static final double EPSILON = 2 * Double.MIN_VALUE;
+		private final DistanceFunction dist;
+
+		public FarthestNeighbor(DistanceFunction dist) {
+			this.dist = dist;
+		}
+
+		@Override
+		public double dist(double[] center, double[] min, double[] max) {
+			double d = dist.dist(center, min, max);
+			if (d < EPSILON) {
+				// no divide by zero
+				return Double.POSITIVE_INFINITY;
+			}
+			return 1 / d;
+		}
+
+		@Override
+		public double dist(double[] center, RectangleEntry<?> entry) {
+			double d = dist.dist(center, entry);
+			if (d < EPSILON) {
+				return Double.POSITIVE_INFINITY;
+			}
+			return 1 / d;
+		}
 	}
 	
 	public static class CenterDistance implements DistanceFunction {
@@ -68,9 +139,6 @@ public interface DistanceFunction {
 		}
 	}
 	
-	/**
-	 * The square root is costly, and generally not required for sorting.
-	 */
 	public static double centerSquareDistance(double[] center, double[] min, double[] max) {
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {
@@ -80,9 +148,6 @@ public interface DistanceFunction {
 		return dist;
 	}
 	
-	/**
-	 * The square root is costly, and generally not required for sorting.
-	 */
 	public static double edgeSquareDistance(double[] center, double[] min, double[] max) {
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {

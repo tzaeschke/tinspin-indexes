@@ -218,7 +218,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 		if (!filter.matches(ent)) {
 			return;
 		}
-		assert isTreeNode(parent);
+		assert parent.getParent() == null || isTreeNode(parent);
 		assert !(ent instanceof RTreeNode);
 		double distance = dist.dist(center, ent.min, ent.max);
 

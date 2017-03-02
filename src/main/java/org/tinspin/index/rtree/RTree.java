@@ -343,28 +343,23 @@ public class RTree<T> implements RectangleIndex<T> {
 		return new RTreeQueryKnn<>(this, center, k, dist);
 	}
 	
-	public Iterable<RectangleEntryDist<T>> queryMixed(double[] center, DistanceFunction dist,
+	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(double[] center, DistanceFunction dist,
 			DistanceFunction closestDist, double[] minBound, double[] maxBound) {
-		return queryMixed(center, dist, closestDist, new Filter.RectangleIntersectFilter(minBound, maxBound));
+		return queryRangedNearestNeighbor(center, dist, closestDist, new Filter.RectangleIntersectFilter(minBound, maxBound));
 	}
 	
 	/**
 	 * This methods returns an Iterable which returns the nodes by a combined range and nearest number search.
-	 * The Iterator supports the {@code remove()} method. 
+	 * The Iterator supports the {@code Iterator.remove()} method. 
 	 * 
-	 * 
-	 * Note: if you are not interested in the distance, defining {@code DistanceFunction::none() { return 0; }} is a very BAD idea.
-	 * The sorting algorithm relies on a PriorityQueue which would degenerate into a FIFO queue without appropriate distance function.
-	 * This would load a large part in the tree in the PriorityQueue.
-	 * What you need for a pure range query is a LIFO queue.
-	 * 
-	 * @param center       Target position
+	 * @param center       Target position passed as parameter to the distance functions. 
+	 *                     Can be {@code null} if your distance function supports it (like {@code DistanceFunction.RectangleDist}).
 	 * @param dist         Distance function used to compare entries (example: {@code DistanceFunction.EDGE} or {@code DistanceFunction.CENTER})
-	 * @param closestDist  Distance of the closest point in a given rectangle  (example: {@code DistanceFunction.EDGE})
+	 * @param closestDist  Distance of the closest point in a given rectangle  (example: {@code DistanceFunction.EDGE} but *not* {@code DistanceFunction.CENTER})
 	 * @param filter       Filter to limit the results for range queries (example: {@code new Filter.RectangleIntersectFilter(min, max)})
 	 * @return             An Iterable which lazily calculates the nearest neighbors. 
 	 */
-	public Iterable<RectangleEntryDist<T>> queryMixed(double[] center, DistanceFunction dist,
+	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(double[] center, DistanceFunction dist,
 			DistanceFunction closestDist, Filter filter) {
 		RTree<T> self = this;
 		return new Iterable<RectangleEntryDist<T>>() {
