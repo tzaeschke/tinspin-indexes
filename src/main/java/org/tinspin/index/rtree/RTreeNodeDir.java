@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Tilmann Zaeschke
+ * Modification Copyright 2017 Christophe Schmaltz
  * 
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,9 +58,10 @@ class RTreeNodeDir<T> extends RTreeNode<T> {
 //		}
 	}
 
-	public void removeChildByIdentity(Entry<T> e) {
+	public void removeChildByIdentity(RTreeNode<T> e) {
 		for (int i = 0; i < children.size(); i++) {
 			if (children.get(i) == e) {
+				e.setParent(null);
 				children.remove(i);
 				recalcMBB();
 				recalcParentMBB();
