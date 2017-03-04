@@ -18,7 +18,7 @@ package org.tinspin.index.rtree;
 import org.tinspin.index.RectangleEntry;
 
 public interface Filter {
-	
+
 	/**
 	 * Doesn't filter anything.
 	 */
@@ -28,7 +28,7 @@ public interface Filter {
 			return true;
 		}
 	};
-	
+
 	/**
 	 * Intersects is used for the tree nodes and should only check for
 	 * intersection.
@@ -49,7 +49,7 @@ public interface Filter {
 	default boolean matches(RectangleEntry<?> entry) {
 		return intersects(entry.lower(), entry.upper());
 	}
-	
+
 	/**
 	 * Rectangular region filter.
 	 */
@@ -74,12 +74,12 @@ public interface Filter {
 		}
 
 	}
-	
+
 	/**
 	 * Union of different "ranges".
 	 */
 	public static class UnionFilter implements Filter {
-		
+
 		private final Filter filter1;
 		private final Filter filter2;
 
@@ -92,19 +92,19 @@ public interface Filter {
 		public boolean intersects(double[] min, double[] max) {
 			return filter1.intersects(min, max) || filter2.intersects(min, max);
 		}
-		
+
 		@Override
 		public boolean matches(RectangleEntry<?> entry) {
 			return filter1.matches(entry) || filter2.matches(entry);
 		}
-		
+
 		/**
 		 * Chaining another filter.
 		 */
 		public UnionFilter union(Filter anotherFilter) {
 			return new UnionFilter(this, anotherFilter);
 		}
-		
+
 	}
-	
+
 }

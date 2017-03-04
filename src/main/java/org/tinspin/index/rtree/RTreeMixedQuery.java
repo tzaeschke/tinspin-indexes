@@ -57,7 +57,8 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 
 		@Override
 		public String toString() {
-			return "RTreeNodeWrapper [lower()=" + Arrays.toString(lower()) + ", upper()=" + Arrays.toString(upper())
+			return "RTreeNodeWrapper [lower()=" + Arrays.toString(lower()) + 
+					", upper()=" + Arrays.toString(upper())
 					+ ", value()=" + value() + ", dist()=" + dist() + "]";
 		}
 
@@ -97,7 +98,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 
 	}
 	
-	/*
+	/**
 	 * Subclass which holds a reference to the parent node for optimized support
 	 *  of the iterator.remove() Method.
 	 */
@@ -133,7 +134,8 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 	private int remove_pointerLoss;
 	private int remove_hit;
 
-	public RTreeMixedQuery(RTree<T> tree, double[] center, Filter filter, DistanceFunction dist, DistanceFunction closestDist) {
+	public RTreeMixedQuery(RTree<T> tree, double[] center, Filter filter, 
+			DistanceFunction dist, DistanceFunction closestDist) {
 		this.tree = tree;
 		this.center = center;
 		this.closestDist = closestDist;
@@ -151,7 +153,8 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 		if (!filter.intersects(node.min, node.max)) {
 			return null;
 		}
-		RTreeNodeWrapper<T> wrapped = new RTreeNodeWrapper<>(node, closestDist.dist(center, node.min, node.max));
+		RTreeNodeWrapper<T> wrapped = 
+				new RTreeNodeWrapper<>(node, closestDist.dist(center, node.min, node.max));
 		queue.add(wrapped);
 		return wrapped;
 	}
@@ -256,7 +259,8 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 
 	@Override
 	public String toString() {
-		return "RTreeMixedQuery [queueSize=" + queueSize() + ", rm.loss=" + remove_pointerLoss + ", rm.hit="
+		return "RTreeMixedQuery [queueSize=" + queueSize() 
+				+ ", rm.loss=" + remove_pointerLoss + ", rm.hit="
 				+ remove_hit + ", center=" + Arrays.toString(center) + ", dist=" + dist + "]";
 	}
 	
@@ -327,7 +331,8 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 	 * TODO: the iterator could register itself as listener for node modification at the tree.
 	 *  - When a node changes dimension, it notifies the tree which forwards to the listeners.
 	 *  - It the distance was reduced, we add the node a second time in the queue.
-	 *  - We hold a set of nodes which are duplicated in the queue to be able to skip them when they appear for the second time.
+	 *  - We hold a set of nodes which are duplicated in the queue to be able to skip them when 
+	 *    they appear for the second time.
 	 *  </pre> 
 	 */
 	void checkQueueAfterRemove() {

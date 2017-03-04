@@ -1,3 +1,9 @@
+
+[2017-03-04]
+- Integrated pull request from chris0385 with improved R-Tree kNN queries
+  for large k.
+
+
 [2017-01-23]
 - Proper HCI usage for quadtree
 - Added qtplain
