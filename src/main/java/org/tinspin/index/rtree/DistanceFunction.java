@@ -22,16 +22,8 @@ import org.tinspin.index.RectangleEntry;
 @FunctionalInterface
 public interface DistanceFunction {
 
-	public static CenterDistance CENTER = new CenterDistance();
-	public static EdgeDistance EDGE = new EdgeDistance();
-	// The square root is costly, and generally not required for sorting.
-	@Deprecated
-	public static DistanceFunction CENTER_SQUARE = DistanceFunction::centerSquareDistance;
-	// The square root is costly, and generally not required for sorting.
-	/** SQRT should be quit cheap nowadays, do we have any tests that confirm demonstrate
-	 * an improvement? (tzaeschke) */
-	@Deprecated
-	public static DistanceFunction EDGE_SQUARE = DistanceFunction::edgeSquareDistance;
+	public static DistanceFunction CENTER = DistanceFunction::centerDistance;
+	public static DistanceFunction EDGE = DistanceFunction::edgeDistance;
 
 	double dist(double[] center, double[] min, double[] max);
 
@@ -113,47 +105,16 @@ public interface DistanceFunction {
 		}
 	}
 
-	public static class CenterDistance implements DistanceFunction {
-
-		@Override
-		public double dist(double[] center, double[] min, double[] max) {
-			double dist = 0;
-			for (int i = 0; i < center.length; i++) {
-				double d = (min[i] + max[i]) * 0.5 - center[i];
-				dist += d*d;
-			}
-			return Math.sqrt(dist);
-		}
-	}
-
-	public static class EdgeDistance implements DistanceFunction {
-
-		@Override
-		public double dist(double[] center, double[] min, double[] max) {
-			double dist = 0;
-			for (int i = 0; i < center.length; i++) {
-				double d = 0;
-				if (min[i] > center[i]) {
-					d = min[i] - center[i];
-				} else if (max[i] < center[i]) {
-					d = center[i] - max[i];
-				}
-				dist += d*d;
-			}
-			return Math.sqrt(dist);
-		}
-	}
-
-	public static double centerSquareDistance(double[] center, double[] min, double[] max) {
+	public static double centerDistance(double[] center, double[] min, double[] max) {
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {
 			double d = (min[i] + max[i]) * 0.5 - center[i];
-			dist += d * d;
+			dist += d*d;
 		}
-		return dist;
+		return Math.sqrt(dist);
 	}
 
-	public static double edgeSquareDistance(double[] center, double[] min, double[] max) {
+	public static double edgeDistance(double[] center, double[] min, double[] max) {
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {
 			double d = 0;
@@ -162,9 +123,8 @@ public interface DistanceFunction {
 			} else if (max[i] < center[i]) {
 				d = center[i] - max[i];
 			}
-			dist += d * d;
+			dist += d*d;
 		}
-		return dist;
+		return Math.sqrt(dist);
 	}
-
 }

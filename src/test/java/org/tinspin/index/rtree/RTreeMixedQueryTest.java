@@ -40,6 +40,7 @@ public class RTreeMixedQueryTest {
 		assertEquals(-4969378402838085704l, rnd.nextLong());
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Test
 	public void test() {
 		RTree<String> tree = RTree.createRStar(3);
@@ -53,7 +54,7 @@ public class RTreeMixedQueryTest {
 
 		Iterable<RectangleEntryDist<String>> q = tree.queryRangedNearestNeighbor(
 				new double[] { 1, 1, 1 }, 
-				DistanceFunction.CENTER_SQUARE, DistanceFunction.EDGE_SQUARE,
+				DistanceFunction.CENTER, DistanceFunction.EDGE,
 				new double[] { 0.5, 0.5, 0.5 }, new double[] { 1, 1, 1 });
 
 
@@ -145,8 +146,6 @@ public class RTreeMixedQueryTest {
 					break;
 			}
 		});
-
-
 
 		System.out.println("timeMixed=" + timeMixed + ", timeRef=" + timeRef + " # speedup:" + (timeRef / (double)timeMixed));
 	}

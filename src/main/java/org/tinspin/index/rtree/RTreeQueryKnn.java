@@ -118,7 +118,7 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 		if (dist != null) {
 			this.dist = dist;
 		}
-		if (!(this.dist instanceof DistanceFunction.EdgeDistance)) {
+		if (this.dist != DistanceFunction.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
 		this.center = center;

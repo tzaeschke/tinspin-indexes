@@ -268,6 +268,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 		return queue.size();
 	}
 	
+	@SuppressWarnings("unused")
 	public void remove(RTreeEntryWrapper<T> e) {
 		Entry<T> toDelete = e.node;
 		int pos = e.idx;

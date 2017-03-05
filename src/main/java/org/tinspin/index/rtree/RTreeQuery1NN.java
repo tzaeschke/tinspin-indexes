@@ -115,7 +115,7 @@ public class RTreeQuery1NN<T> {
 		if (this.dist == null) {
 			this.dist = DistanceFunction.EDGE;
 		}
-		if (!(this.dist instanceof DistanceFunction.EdgeDistance)) {
+		if (this.dist != DistanceFunction.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
 		this.center = center;
