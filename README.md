@@ -7,6 +7,8 @@ This is a library of in-memory indexes. They are used in the TinSpin [TinSpin pr
 
  - Several versions of **critbit** index, with support for 64bit keys (fastest), very long keys, or multi-dimensional keys (interleaved with z-ordering). See details below.
  - Several multi-dimensional **quadtree** indexes with separate implementations for point data and rectangle data. The implementations are 'region-quadtrees', they split space in 2^k quadratic quadrants in each level.
+     - **qtplain** is a standard quadtree implementation
+     - **quadtree** is a quadtree that has a fixed node size of 2^k slots per node, even if not all slots are filled with subnodes or entries. This causes much worse scaling of memory requirements (with dimensionality k), however, it allows much better scaling (also with k) of query and update times. 
  - A multi-dimensional **R*Tree** index.
  - A multi-dimensional **STR-Tree** index (same as R*Tree, but with sort-tile-recursive bulk loading). 
  
