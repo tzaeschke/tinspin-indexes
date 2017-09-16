@@ -76,16 +76,6 @@ public class QUtil {
 		return true;
 	}
 
-	public static boolean overlap(double[] center, double radius, 
-			double[] center2, double radius2) {
-		for (int d = 0; d < center.length; d++) {
-			if (center[d]+radius < center2[d]-radius2 || center[d]-radius > center2[d]+radius2) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	public static boolean isRectEnclosed(double[] minEnclosed, double[] maxEnclosed,
 			double[] minOuter, double[] maxOuter) {
 		for (int d = 0; d < minOuter.length; d++) {

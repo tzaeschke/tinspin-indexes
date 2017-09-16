@@ -34,6 +34,7 @@ import org.tinspin.index.critbit.CritBit1D;
 import org.tinspin.index.critbit.CritBit.Entry;
 import org.tinspin.index.critbit.CritBit.FullIterator;
 import org.tinspin.index.critbit.CritBit.QueryIterator;
+import org.tinspin.index.critbit.CritBit.QueryIteratorWithMask;
 
 /**
  * 
@@ -908,6 +909,65 @@ public class TestCritBit {
 			n++;
 		}
 		assertEquals(N, n);
+	}
+	
+	@Test
+	public void testIteratorWithMask() {
+		int N = 10000;
+		int k = 5;
+		int w = 64;
+		Random R = new Random(0);
+
+		CritBit1D<Integer> cb = newCritBit(64*w);
+		long[][] data = new long[N][];
+		for (int i = 0; i < N; i++) {
+			long[] l = new long[k];
+			for (int d = 0; d < k; d++) {
+				l[d] = R.nextInt(12345); 
+			}
+			data[i] = l;
+			cb.put(l, i);
+		}
+		
+		long[] minMask = new long[64];
+		long[] maxMask = new long[64];
+		Arrays.fill(maxMask, 0x7FFFFFFFFFFFFFFFL);
+		
+		//test
+		QueryIteratorWithMask<Integer> it = new QueryIteratorWithMask<>((CritBit<Integer>)cb, minMask, maxMask, k);
+		int n = 0;
+		while (it.hasNext()) {
+			Entry<Integer> e = it.nextEntry();
+			//TODO proper test
+			//assertTrue(isEqual(data[e.value()], e.key()));
+			n++;
+		}
+		assertEquals(N, n);
+	}
+	
+	@Test
+	public void testPrint() {
+		int N = 100;
+		int k = 5;
+		Random R = new Random(0);
+
+		CritBit1D<?> cb = newCritBit(k*64);
+		long[][] data = new long[N][];
+		for (int i = 0; i < N; i++) {
+			long[] l = new long[k];
+			for (int d = 0; d < k; d++) {
+				l[d] = R.nextInt(12345); 
+			}
+			data[i] = l;
+			cb.put(l, null);
+		}
+
+		String s = cb.toString();
+		for (long[] d : data) {
+			//This works for now, because we store all bits, not just the trailing postfix
+			String x = BitTools.toBinary(d, 64);
+			assertTrue(s.contains(x));
+		}
 	}
 	
 	private boolean isEqual(long[] a, long[] r) {
