@@ -31,6 +31,7 @@ import java.util.Random;
 import org.junit.Test;
 import org.tinspin.index.critbit.CritBit;
 import org.tinspin.index.critbit.CritBit1D;
+import org.tinspin.index.critbit.CritBit.CheckEmptyWithMask;
 import org.tinspin.index.critbit.CritBit.Entry;
 import org.tinspin.index.critbit.CritBit.FullIterator;
 import org.tinspin.index.critbit.CritBit.QueryIterator;
@@ -943,6 +944,37 @@ public class TestCritBit {
 			n++;
 		}
 		assertEquals(N, n);
+	}
+	
+	@Test
+	public void testCheckEmptyWithMask() {
+		int N = 10000;
+		int k = 5;
+		int w = 64;
+		Random R = new Random(0);
+
+		CritBit1D<Integer> cb = newCritBit(64*w);
+		long[][] data = new long[N][];
+		for (int i = 0; i < N; i++) {
+			long[] l = new long[k];
+			for (int d = 0; d < k; d++) {
+				l[d] = R.nextInt(12345); 
+			}
+			data[i] = l;
+			cb.put(l, i);
+		}
+		
+		long[] minMask = new long[w];
+		long[] maxMask = new long[w];
+		Arrays.fill(maxMask, 0x7FFFFFFFFFFFFFFFL);
+		
+		//test
+		CheckEmptyWithMask it = new CheckEmptyWithMask((CritBit<Integer>)cb, k);
+		//TODO proper test
+		assertFalse(it.isEmpty(minMask, maxMask, false));
+		assertFalse(it.isEmpty(minMask, maxMask, false));
+		assertTrue(it.isEmpty(minMask, minMask, false));
+		assertTrue(it.isEmpty(minMask, minMask, false));
 	}
 	
 	@Test
