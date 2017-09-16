@@ -447,4 +447,27 @@ public class TestCritBit64COW {
 			assertNotNull(x);
 		}
 	}
+	
+	@Test
+	public void testPrint() {
+		int N = 100;
+		Random R = new Random(0);
+
+		CritBit64COW<?> cb = newCritBit();
+		long[] data = new long[N];
+		for (int i = 0; i < N; i++) {
+			long l = R.nextInt(123456789); 
+			data[i] = l;
+			cb.put(l, null);
+		}
+
+		assertTrue(cb.checkTree());
+		
+		String s = cb.toString();
+		for (long l : data) {
+			//This works for now, because we store all bits, not just the trailing postfix
+			assertTrue(s.contains(BitTools.toBinary(l, 64)));
+		}
+	}
+	
 }
