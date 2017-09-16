@@ -939,6 +939,7 @@ public class TestCritBit {
 		int n = 0;
 		while (it.hasNext()) {
 			Entry<Integer> e = it.nextEntry();
+			assertNotNull(e);
 			//TODO proper test
 			//assertTrue(isEqual(data[e.value()], e.key()));
 			n++;
@@ -1077,6 +1078,11 @@ public class TestCritBit {
 		assertFalse(doesInfixMatch(a3, 128, a4, 0)); 
 	}
 	
+	@Test
+	public void testExamples() {
+		//just test that it does not fail
+		Examples.main(null);
+	}
 	
 	private boolean doesInfixMatch(long[] currentVal, int posDiff, long[] v,
 			int startSlot) {
