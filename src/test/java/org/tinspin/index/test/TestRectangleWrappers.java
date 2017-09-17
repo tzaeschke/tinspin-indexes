@@ -38,18 +38,19 @@ public class TestRectangleWrappers extends AbstractWrapperTest {
 		expectedCube = createUnitTestStats(INDEX.ARRAY, TST.CUBE, N, dims, true, 1.0);
 		new TestRunner(expectedCube).run();
 
-		expectedCluster = createUnitTestStats(INDEX.ARRAY, TST.CLUSTER, N, dims, true, 5.0);
-		new TestRunner(expectedCluster).run();
+		//expectedCluster = createUnitTestStats(INDEX.ARRAY, TST.CLUSTER, N, dims, true, 5.0);
+		//new TestRunner(expectedCluster).run();
 	}
 	
 	@Parameters
 	public static Iterable<Object[]> data1() {
 		ArrayList<Object[]> l = new ArrayList<>();
 		l.add(new Object[]{INDEX.ARRAY});
-		l.add(new Object[]{INDEX.QUAD_OLD});
-		l.add(new Object[]{INDEX.QUAD});
-		l.add(new Object[]{INDEX.RSTAR});
-		l.add(new Object[]{INDEX.STR});
+		l.add(new Object[]{INDEX.PHTREE});
+//		l.add(new Object[]{INDEX.QUAD_OLD});
+//		l.add(new Object[]{INDEX.QUAD});
+//		l.add(new Object[]{INDEX.RSTAR});
+//		l.add(new Object[]{INDEX.STR});
 		return l;
 	}
 

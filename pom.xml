@@ -101,6 +101,11 @@
 			<artifactId>junit</artifactId>
 			<version>4.10</version>
 		</dependency>
+		<dependency>
+			<groupId>ch.ethz.globis.phtree</groupId>
+			<artifactId>phtree</artifactId>
+			<version>0.3.4-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>
