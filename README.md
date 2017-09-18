@@ -13,6 +13,15 @@ This is a library of in-memory indexes. They are used in the TinSpin [TinSpin pr
  - A multi-dimensional **R*Tree** index.
  - A multi-dimensional **STR-Tree** index (same as R*Tree, but with sort-tile-recursive bulk loading). 
  
+TinSpin indexes are also available via maven:
+
+```
+<dependency>
+	<groupId>org.tinspin</groupId>
+	<artifactId>tinspin-indexes</artifactId>
+	<version>1.3.6</version>
+</dependency>
+```
   
 
 CritBit
