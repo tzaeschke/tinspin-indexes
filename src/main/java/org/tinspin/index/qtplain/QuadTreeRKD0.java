@@ -484,6 +484,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 	 * Returns a printable list of the tree.
 	 * @return the tree as String
 	 */
+    @Override
 	public String toStringTree() {
 		StringBuilder sb = new StringBuilder();
 		if (root == null) {
