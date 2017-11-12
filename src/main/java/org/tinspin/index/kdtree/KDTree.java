@@ -61,8 +61,8 @@ public class KDTree<T> implements PointIndex<T> {
 	private Node<T> root;
 	
 	public static void main(String ... args) {
-		//double[][] point_list = {{2,3}, {5,4}, {9,6}, {4,7}, {8,1}, {7,2}};
-		double[][] point_list = new double[20][2];
+//		double[][] point_list = {{2,3}, {5,4}, {9,6}, {4,7}, {8,1}, {7,2}};
+		double[][] point_list = new double[100][2];
 		Random R = new Random(0);
 		for (double[] p : point_list) {
 			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
@@ -85,8 +85,12 @@ public class KDTree<T> implements PointIndex<T> {
 		for (double[] key : point_list) {
 			System.out.println(tree.toStringTree());
 			System.out.println("Removing: " + Arrays.toString(key));
-			if (tree.remove(key) != key) {
-				throw new IllegalStateException("" + key);
+			if (key[0] == 52) {
+				System.out.println("Hello"); //TODO
+			}
+			double[] answer = tree.remove(key); 
+			if (answer != key) {
+				throw new IllegalStateException("Expected " + Arrays.toString(key) + " but got " + Arrays.toString(answer));
 			}
 		}
 	}
@@ -186,13 +190,6 @@ public class KDTree<T> implements PointIndex<T> {
 			pos = depth % dims;
 			double nodeX = nodeKey[pos];
 			double keyX = key[pos];
-//			if (keyX != nodeX) {
-//				parent = n;
-//				n = (keyX >= nodeX) ? n.getRight() : n.getLeft();
-//			} else {
-//				eToRemove = Arrays.equals(key, nodeKey) ? n : null;
-//				break;
-//			}
 			if (keyX == nodeX && Arrays.equals(key, nodeKey)) {
 				eToRemove = n;
 				break;
@@ -216,9 +213,10 @@ public class KDTree<T> implements PointIndex<T> {
 		//find replacement
 		RemoveResult<T> removeResult = new RemoveResult<>();
 		removeResult.nodeParent = parent; //in case we skip the loop??? TODO we can't skip the loop...
-		do {
+		while (eToRemove != null && !eToRemove.isLeaf()) {
 			//recurse
 			removeResult.node = null; 
+			pos = depth % dims;
 			//randomize search direction (modCount)
 			if (((modCount & 0x1) == 0 || eToRemove.getRight() == null) && eToRemove.getLeft() != null) {
 				//get replacement from left
@@ -232,7 +230,10 @@ public class KDTree<T> implements PointIndex<T> {
 			eToRemove.setKeyValue(removeResult.node.getKey(), removeResult.node.getValue());
 			eToRemove = removeResult.node;
 			depth = removeResult.depth;
-		} while (eToRemove != null && !eToRemove.isLeaf());
+			if (eToRemove != null && eToRemove.getKey()[0] == 19) {
+				System.out.println("Helloe2: ");
+			}
+		} 
 		//leaf node
 		parent = removeResult.nodeParent; 
 		if (parent != null) {
@@ -590,13 +591,18 @@ public class KDTree<T> implements PointIndex<T> {
 		for (int i = 0; i < depth; i++) {
 			prefix += ".";
 		}
-		sb.append(prefix + " d=" + depth + NL);
+		//sb.append(prefix + " d=" + depth + NL);
 		prefix += " ";
 		if (node.getLeft() != null) {
 			toStringTree(sb, node.getLeft(), depth+1);
 		}
 		sb.append(prefix + Arrays.toString(node.point()));
-		sb.append(" v=" + node.value() + NL);
+		sb.append(" v=" + node.value());
+		sb.append(" l/r=");
+		sb.append(node.getLeft() == null ? null : Arrays.toString(node.getLeft().point()));
+		sb.append("/");
+		sb.append(node.getRight() == null ? null : Arrays.toString(node.getRight().point()));
+		sb.append(NL);
 		if (node.getRight() != null) {
 			toStringTree(sb, node.getRight(), depth+1);
 		}
