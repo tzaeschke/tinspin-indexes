@@ -360,7 +360,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	 *                     it (like {@code DistanceFunction.RectangleDist}).
 	 * @param dist         Distance function used to compare entries 
 	 * 				       (example: {@code DistanceFunction.EDGE} or {@code DistanceFunction.CENTER})
-	 * @param closestDist  Distance of the closest point in a given rectangle  
+	 * @param closestDist  Distance of the best point in a given rectangle  
 	 *                     (example: {@code DistanceFunction.EDGE} but *not* {@code DistanceFunction.CENTER})
 	 * @param filter       Filter to limit the results for range queries 
 	 *                     (example: {@code new Filter.RectangleIntersectFilter(min, max)})

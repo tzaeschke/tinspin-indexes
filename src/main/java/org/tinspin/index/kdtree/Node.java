@@ -42,7 +42,7 @@ public class Node<T> implements PointEntry<T> {
 	}
 	
 	Node<T> getClosestNodeOrAddPoint(double[] p, T value, int depth, int dims) {
-		//Find closest sub-node.
+		//Find best sub-node.
 		//If there is no node, we create one and return null
 		int pos = depth % dims;
 		if (p[pos] >= coordinate[pos]) {
@@ -114,5 +114,9 @@ public class Node<T> implements PointEntry<T> {
 	@Override
 	public String toString() {
 		return "center=" + Arrays.toString(point()) + " " + System.identityHashCode(this);
+	}
+
+	boolean isLeaf() {
+		return this.left == null && this.right == null;
 	}
 }

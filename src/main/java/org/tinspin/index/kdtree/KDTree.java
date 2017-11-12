@@ -25,12 +25,15 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Random;
 
 import org.tinspin.index.PointEntry;
 import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.PointIndex;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
+
+import ch.ethz.globis.phtree.util.Tools;
 
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
@@ -53,25 +56,39 @@ public class KDTree<T> implements PointIndex<T> {
 	
 	private final int dims;
 	private int size = 0; 
-	
+	private int modCount = 0;
 	
 	private Node<T> root;
 	
 	public static void main(String ... args) {
-		double[][] point_list = {{2,3}, {5,4}, {9,6}, {4,7}, {8,1}, {7,2}};
+		//double[][] point_list = {{2,3}, {5,4}, {9,6}, {4,7}, {8,1}, {7,2}};
+		double[][] point_list = new double[20][2];
+		Random R = new Random(0);
+		for (double[] p : point_list) {
+			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		}
 		KDTree<double[]> tree = create(2);
 		for (double[] data : point_list) {
 			tree.insert(data, data);
 		}
+	    System.out.println(tree.toStringTree());
 		for (double[] key : point_list) {
 			if (!tree.containsExact(key)) {
-				throw new IllegalStateException("" + key);
+				throw new IllegalStateException("" + Arrays.toString(key));
 			}
 		}
 		for (double[] key : point_list) {
 			System.out.println(Arrays.toString(tree.queryExact(key)));
 		}
 	    System.out.println(tree.toStringTree());
+	    
+		for (double[] key : point_list) {
+			System.out.println(tree.toStringTree());
+			System.out.println("Removing: " + Arrays.toString(key));
+			if (tree.remove(key) != key) {
+				throw new IllegalStateException("" + key);
+			}
+		}
 	}
 	
 	private KDTree(int dims) {
@@ -94,6 +111,7 @@ public class KDTree<T> implements PointIndex<T> {
 	@SuppressWarnings("unchecked")
 	public void insert(double[] key, T value) {
 		size++;
+		modCount++;
 		if (root == null) {
 			root = new Node<>(key, value);
 			return;
@@ -137,11 +155,10 @@ public class KDTree<T> implements PointIndex<T> {
 			int pos = depth % dims;
 			double nodeX = nodeKey[pos];
 			double keyX = key[pos];
-			if (keyX != nodeX) {
-				n = (keyX > nodeX) ? n.getRight() : n.getLeft();
-			} else {
-				return Arrays.equals(key, nodeKey) ? n : null;
+			if (keyX == nodeX && Arrays.equals(key, nodeKey)) {
+				return n;
 			}
+			n = (keyX >= nodeX) ? n.getRight() : n.getLeft();
 			depth++;
 		} while (n != null);
 		return n;
@@ -169,20 +186,27 @@ public class KDTree<T> implements PointIndex<T> {
 			pos = depth % dims;
 			double nodeX = nodeKey[pos];
 			double keyX = key[pos];
-			if (keyX != nodeX) {
-				parent = n;
-				n = (keyX > nodeX) ? n.getRight() : n.getLeft();
-			} else {
-				eToRemove = Arrays.equals(key, nodeKey) ? n : null;
+//			if (keyX != nodeX) {
+//				parent = n;
+//				n = (keyX >= nodeX) ? n.getRight() : n.getLeft();
+//			} else {
+//				eToRemove = Arrays.equals(key, nodeKey) ? n : null;
+//				break;
+//			}
+			if (keyX == nodeX && Arrays.equals(key, nodeKey)) {
+				eToRemove = n;
 				break;
+			}
+			parent = n;
+			n = (keyX >= nodeX) ? n.getRight() : n.getLeft();
+			if (n == null) {
+				return null;
 			}
 			depth++;
 		} while (true); 
 
 		//remove
-		if (eToRemove == null) {
-			return null;
-		}
+		modCount++;
 		T value = eToRemove.getValue();
 		if (eToRemove == root && size == 1) {
 			root = null;
@@ -190,62 +214,106 @@ public class KDTree<T> implements PointIndex<T> {
 		}
 		
 		//find replacement
-		//TODO randomize better
-		if (size % 2 == 0 && eToRemove.getLeft() != null) {
-			//get replacement from left
-			//TODO
-		} else if (eToRemove.getRight() != null) {
-			//get replacement from right
-			//minRef[0] = minNode; minRef[1] = minRef's parent
-			Node<T>[] minRef = new Node[2];
-			do {
-				//recurse
-				removeMinLeaf(eToRemove.getRight(), eToRemove, pos, depth, new double[] {Double.MAX_VALUE}, minRef);
-				eToRemove.setKeyValue(minRef[0].getKey(), minRef[0].getValue());
-				eToRemove = minRef[0];
-			} while (eToRemove != null || eToRemove != null);
-			//leaf node
-			parent = minRef[1]; 
-			if (parent.getLeft() == eToRemove) {
-				parent.setLeft(null);
-			} else {
-				parent.setRight(null);
+		RemoveResult<T> removeResult = new RemoveResult<>();
+		removeResult.nodeParent = parent; //in case we skip the loop??? TODO we can't skip the loop...
+		do {
+			//recurse
+			removeResult.node = null; 
+			//randomize search direction (modCount)
+			if (((modCount & 0x1) == 0 || eToRemove.getRight() == null) && eToRemove.getLeft() != null) {
+				//get replacement from left
+				removeResult.best = Double.NEGATIVE_INFINITY;
+				removeMaxLeaf(eToRemove.getLeft(), eToRemove, pos, depth+1, removeResult);
+			} else if (eToRemove.getRight() != null) {
+				//get replacement from right
+				removeResult.best = Double.POSITIVE_INFINITY;
+				removeMinLeaf(eToRemove.getRight(), eToRemove, pos, depth+1, removeResult);
 			}
-		} else {
-			//leaf node
+			eToRemove.setKeyValue(removeResult.node.getKey(), removeResult.node.getValue());
+			eToRemove = removeResult.node;
+			depth = removeResult.depth;
+		} while (eToRemove != null && !eToRemove.isLeaf());
+		//leaf node
+		parent = removeResult.nodeParent; 
+		if (parent != null) {
 			if (parent.getLeft() == eToRemove) {
 				parent.setLeft(null);
-			} else {
+			} else if (parent.getRight() == eToRemove) {
 				parent.setRight(null);
+			} else { 
+				throw new IllegalStateException();
 			}
 		}
 		size--;
 		return value;
 	}
 
-	private void removeMinLeaf(Node<T> node, Node<T> parent, int pos, int depth, double[] currentMin, Node<T>[] minRef) {
+	private static class RemoveResult<T> {
+		Node<T> node = null;
+		Node<T> nodeParent = null;
+		double best;
+		int depth;
+		
+	}
+	
+	private void removeMinLeaf(Node<T> node, Node<T> parent, int pos, int depth, RemoveResult<T> result) {
 		//Split in 'interesting' dimension
 		if (pos == depth % dims) {
 			//We strictly look for leaf nodes with left==null
 			if (node.getLeft() != null) {
-				removeMinLeaf(node.getLeft(), node, pos, depth + 1, currentMin, minRef);
-			} else if (node.getKey()[pos] < currentMin[0]) {
-				minRef[0] = node;
-				minRef[1] = parent;
-				currentMin[0] = node.getKey()[pos];
+				removeMinLeaf(node.getLeft(), node, pos, depth + 1, result);
+			} else if (node.getKey()[pos] <= result.best) {
+				result.node = node;
+				result.nodeParent = parent;
+				result.best = node.getKey()[pos];
+				result.depth = depth;
 			}
 		} else {
-			//split in any other dimension
+			//split in any other dimension.
+			//First, check local key. 
+			if (node.getKey()[pos] <= result.best) {
+				result.node = node;
+				result.nodeParent = parent;
+				result.best = node.getKey()[pos];
+				result.depth = depth;
+			}
 			if (node.getLeft() != null) {
-				removeMinLeaf(node.getLeft(), node, pos, depth + 1, currentMin, minRef);
+				removeMinLeaf(node.getLeft(), node, pos, depth + 1, result);
 			}
 			if (node.getRight() != null) {
-				 removeMinLeaf(node.getRight(), node, pos, depth + 1, currentMin, minRef);
+				 removeMinLeaf(node.getRight(), node, pos, depth + 1, result);
 			}
-			if (node.getKey()[pos] < currentMin[0]) {
-				minRef[0] = node;
-				minRef[1] = parent;
-				currentMin[0] = node.getKey()[pos];
+			//TODO we should create a list of 10 (or so) 'best' nodes, this would avoid traversing
+			//the whole subtree again to get the 2nd smallest node ...
+		}
+	}
+	
+	private void removeMaxLeaf(Node<T> node, Node<T> parent, int pos, int depth, RemoveResult<T> result) {
+		//Split in 'interesting' dimension
+		if (pos == depth % dims) {
+			//We strictly look for leaf nodes with left==null
+			if (node.getRight() != null) {
+				removeMaxLeaf(node.getRight(), node, pos, depth + 1, result);
+			} else if (node.getKey()[pos] >= result.best) {
+				result.node = node;
+				result.nodeParent = parent;
+				result.best = node.getKey()[pos];
+				result.depth = depth;
+			}
+		} else {
+			//split in any other dimension.
+			//First, check local key. 
+			if (node.getKey()[pos] >= result.best) {
+				result.node = node;
+				result.nodeParent = parent;
+				result.best = node.getKey()[pos];
+				result.depth = depth;
+			}
+			if (node.getLeft() != null) {
+				removeMaxLeaf(node.getLeft(), node, pos, depth + 1, result);
+			}
+			if (node.getRight() != null) {
+				 removeMaxLeaf(node.getRight(), node, pos, depth + 1, result);
 			}
 			//TODO we should create a list of 10 (or so) 'best' nodes, this would avoid traversing
 			//the whole subtree again to get the 2nd smallest node ...
@@ -438,50 +506,13 @@ public class KDTree<T> implements PointIndex<T> {
     	return candidates;
     }
 
-    @SuppressWarnings("unchecked")
-	private double distanceEstimate(Node<T> node, double[] point, int k,
-    		Comparator<Node<T>> comp) {
-    	if (node.isLeaf()) {
-    		//This is a leaf that would contain the point.
-    		int n = node.getEntries().size();
-    		Node<T>[] data = node.getEntries().toArray(new Node[n]);
-    		Arrays.sort(data, comp);
-    		int pos = n < k ? n : k;
-    		double dist = distance(point, data[pos-1].point());
-    		if (n < k) {
-    			//scale search dist with dimensions.
-    			dist = dist * Math.pow(k/(double)n, 1/(double)dims);
-    		}
-    		if (dist <= 0.0) {
-    			return node.getRadius();
-    		}
-    		return dist;
-    	} else {
-    		ArrayList<Node<T>> nodes = node.getChildNodes(); 
-    		for (int i = 0; i < nodes.size(); i++) {
-    			Node<T> sub = nodes.get(i);
-    			if (QUtil.isPointEnclosed(point, sub.getCenter(), sub.getRadius())) {
-    				return distanceEstimate(sub, point, k, comp);
-    			}
-    		}
-    		//okay, this directory node contains the point, but none of the leaves does.
-    		//We just return the size of this node, because all it's leaf nodes should
-    		//contain more than enough candidate in proximity of 'point'.
-    		return node.getRadius() * Math.sqrt(point.length);
-    	}
-    }
-    
     private double rangeSearchKNN(Node<T> node, double[] center, 
     		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange) {
-		if (node.isLeaf()) {
-    		ArrayList<QEntry<T>> points = node.getEntries();
-    		for (int i = 0; i < points.size(); i++) {
-    			QEntry<T> p = points.get(i);
-   				double dist = QUtil.distance(center, p.point());
-   				if (dist < maxRange) {
-    				candidates.add(new KDEntryDist<>(p, dist));
-  				}
-    		}
+		if (node.getLeft() == null && node.getRight() == null) {
+			double dist = distance(center, node.point());
+			if (dist < maxRange) {
+				candidates.add(new KDEntryDist<>(node, dist));
+			}
     		maxRange = adjustRegionKNN(candidates, k, maxRange);
     	} else {
     		ArrayList<Node<T>> nodes = node.getChildNodes(); 
@@ -513,11 +544,11 @@ public class KDTree<T> implements PointIndex<T> {
         return range;
 	}
 	
-    private class QQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
+    private class KDQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
 
     	private Iterator<PointEntryDist<T>> it;
     	
-		public QQueryIteratorKNN(double[] center, int k) {
+		public KDQueryIteratorKNN(double[] center, int k) {
 			reset(center, k);
 		}
 
@@ -617,8 +648,8 @@ public class KDTree<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public QQueryIteratorKNN queryKNN(double[] center, int k) {
-		return new QQueryIteratorKNN(center, k);
+	public KDQueryIteratorKNN queryKNN(double[] center, int k) {
+		return new KDQueryIteratorKNN(center, k);
 	}
 
 	@Override

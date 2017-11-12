@@ -342,7 +342,7 @@ public class RStarTreeLogic implements RTreeLogic {
 		node.recalcParentMBB();
 		
 		//RI4 reinsert entries
-		//use 'close reinsert', starting with closest values, as suggested in paper
+		//use 'close reinsert', starting with best values, as suggested in paper
 		Entry<T>[] toReinsert = new Entry[p];
 		for (int i = 0; i < p; i++) {
 			toReinsert[i] = children[i+nToKeep].entry;
