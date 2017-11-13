@@ -122,7 +122,7 @@ public class KDTreeTest {
 		}
 
 		for (double[] key : point_list) {
-			System.out.println("kNN query: " + Arrays.toString(key));
+//			System.out.println("kNN query: " + Arrays.toString(key));
 			QueryIteratorKNN<PointEntryDist<double[]>> iter = tree.queryKNN(key, 1);
 			if (!iter.hasNext()) {
 				throw new IllegalStateException("kNN() failed: " + Arrays.toString(key));
@@ -135,7 +135,7 @@ public class KDTreeTest {
 	    
 		for (double[] key : point_list) {
 //			System.out.println(tree.toStringTree());
-			System.out.println("Removing: " + Arrays.toString(key));
+//			System.out.println("Removing: " + Arrays.toString(key));
 			if (!tree.containsExact(key)) {
 				throw new IllegalStateException("containsExact() failed: " + Arrays.toString(key));
 			}
