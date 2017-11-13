@@ -133,9 +133,6 @@ public class KDTree<T> implements PointIndex<T> {
 		for (double[] key : point_list) {
 //			System.out.println(tree.toStringTree());
 			System.out.println("Removing: " + Arrays.toString(key));
-//			if (key[0] == 52) {
-//				System.out.println("Hello"); //TODO
-//			}
 			if (!tree.containsExact(key)) {
 				throw new IllegalStateException("containsExact() failed: " + Arrays.toString(key));
 			}
@@ -565,9 +562,9 @@ public class KDTree<T> implements PointIndex<T> {
         	//refine result
     		if (center[pos] + maxRange >= node.getKey()[pos]) {
     			maxRange = addCandidate(node, center, candidates, k, maxRange);
-    		}
-    		if (node.getHi() != null) {
-    			maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, depth + 1, maxRange);
+        		if (node.getHi() != null) {
+        			maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, depth + 1, maxRange);
+        		}
     		}
     	} else if (node.getHi() != null) {
         	//go down
@@ -575,9 +572,9 @@ public class KDTree<T> implements PointIndex<T> {
         	//refine result
     		if (center[pos] <= node.getKey()[pos] + maxRange) {
     			maxRange = addCandidate(node, center, candidates, k, maxRange);
-    		}
-    		if (node.getLo() != null) {
-    			maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, depth + 1, maxRange);
+        		if (node.getLo() != null) {
+        			maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, depth + 1, maxRange);
+        		}
     		}
     	} else {
     		//leaf -> first (probably best) match!
