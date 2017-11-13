@@ -93,7 +93,7 @@ public class KDTree<T> implements PointIndex<T> {
 	
 	private static void test(int r) {
 //		double[][] point_list = {{2,3}, {5,4}, {9,6}, {4,7}, {8,1}, {7,2}};
-		double[][] point_list = new double[50000][14];
+		double[][] point_list = new double[500000][14];
 		Random R = new Random(r);
 		for (double[] p : point_list) {
 			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
@@ -113,7 +113,6 @@ public class KDTree<T> implements PointIndex<T> {
 		}
 //	    System.out.println(tree.toStringTree());
 	    
-		int n = 0;
 		for (double[] key : point_list) {
 //			System.out.println(tree.toStringTree());
 			System.out.println("kNN query: " + Arrays.toString(key));
@@ -124,9 +123,6 @@ public class KDTree<T> implements PointIndex<T> {
 			double[] answer = iter.next().point();
 			if (answer != key && !Arrays.equals(answer, key)) {
 				throw new IllegalStateException("Expected " + Arrays.toString(key) + " but got " + Arrays.toString(answer));
-			}
-			if (n++ >= 100) {
-				break;
 			}
 		}
 
@@ -276,6 +272,7 @@ public class KDTree<T> implements PointIndex<T> {
 		}
 		
 		//find replacement
+		removeResult.nodeParent = null; 
 		while (eToRemove != null && !eToRemove.isLeaf()) {
 			//recurse
 			removeResult.node = null; 

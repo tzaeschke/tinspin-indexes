@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.Random;
 
 import org.junit.Test;
+import org.tinspin.index.PointEntryDist;
+import org.tinspin.index.QueryIteratorKNN;
 
 public class KDTreeTest {
 
@@ -76,6 +78,36 @@ public class KDTreeTest {
 		smokeTest(point_list);
 	}
 	
+	@Test
+	public void smokeTest1D_Large() {
+		double[][] point_list = new double[100_000][1];
+		Random R = new Random(0);
+		for (double[] p : point_list) {
+			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		}
+		smokeTest(point_list);
+	}
+	
+	@Test
+	public void smokeTest3D_Large() {
+		double[][] point_list = new double[100_000][3];
+		Random R = new Random(0);
+		for (double[] p : point_list) {
+			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		}
+		smokeTest(point_list);
+	}
+	
+	@Test
+	public void smokeTest10D_Large() {
+		double[][] point_list = new double[100_000][10];
+		Random R = new Random(0);
+		for (double[] p : point_list) {
+			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		}
+		smokeTest(point_list);
+	}
+	
 	private void smokeTest(double[][] point_list) {
 		int dim = point_list[0].length;
 		KDTree<double[]> tree = KDTree.create(dim);
@@ -88,14 +120,22 @@ public class KDTreeTest {
 				throw new IllegalStateException("" + Arrays.toString(key));
 			}
 		}
-//		for (double[] key : point_list) {
-//			System.out.println(Arrays.toString(tree.queryExact(key)));
-//		}
-//	    System.out.println(tree.toStringTree());
+
+		for (double[] key : point_list) {
+			System.out.println("kNN query: " + Arrays.toString(key));
+			QueryIteratorKNN<PointEntryDist<double[]>> iter = tree.queryKNN(key, 1);
+			if (!iter.hasNext()) {
+				throw new IllegalStateException("kNN() failed: " + Arrays.toString(key));
+			}
+			double[] answer = iter.next().point();
+			if (answer != key && !Arrays.equals(answer, key)) {
+				throw new IllegalStateException("Expected " + Arrays.toString(key) + " but got " + Arrays.toString(answer));
+			}
+		}
 	    
 		for (double[] key : point_list) {
 //			System.out.println(tree.toStringTree());
-//			System.out.println("Removing: " + Arrays.toString(key));
+			System.out.println("Removing: " + Arrays.toString(key));
 			if (!tree.containsExact(key)) {
 				throw new IllegalStateException("containsExact() failed: " + Arrays.toString(key));
 			}
