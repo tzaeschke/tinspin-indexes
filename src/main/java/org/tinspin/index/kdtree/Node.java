@@ -67,11 +67,11 @@ public class Node<T> implements PointEntry<T> {
 		return value;
 	}
 
-	Node<T> getLeft() {
+	Node<T> getLo() {
 		return left;
 	}
 	
-	Node<T> getRight() {
+	Node<T> getHi() {
 		return right;
 	}
 

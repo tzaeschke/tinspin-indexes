@@ -17,10 +17,11 @@
  */
 package org.tinspin.index.phtree;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Random;
 
 import org.junit.Test;
@@ -32,8 +33,6 @@ import org.tinspin.index.test.util.JmxTools;
 import org.tinspin.index.test.util.TestRectangle;
 import org.tinspin.index.test.util.TestStats;
 import org.tinspin.index.test.util.TestStats.TST;
-
-import static org.junit.Assert.assertEquals;
 
 public class PhTreeTest {
 
