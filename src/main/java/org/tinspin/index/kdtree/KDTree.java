@@ -265,25 +265,7 @@ public class KDTree<T> implements PointIndex<T> {
 		
 		//find
 		RemoveResult<T> removeResult = new RemoveResult<>();
-		Node<T> parent = null;
-		Node<T> eToRemove = null;
-//		do {
-//			double[] nodeKey = n.getKey();
-//			int pos = depth % dims;
-//			double nodeX = nodeKey[pos];
-//			double keyX = key[pos];
-//			if (keyX == nodeX && Arrays.equals(key, nodeKey)) {
-//				eToRemove = n;
-//				break;
-//			}
-//			parent = n;
-//			n = (keyX >= nodeX) ? n.getHi() : n.getLo();
-//			if (n == null) {
-//				return null;
-//			}
-//			depth++;
-//		} while (true);
-		eToRemove = findNodeExcat(key, removeResult);
+		Node<T> eToRemove = findNodeExcat(key, removeResult);
 		if (eToRemove == null) {
 			return null;
 		}
@@ -297,7 +279,6 @@ public class KDTree<T> implements PointIndex<T> {
 		}
 		
 		//find replacement
-		removeResult.nodeParent = parent; //in case we skip the loop??? TODO we can't skip the loop...
 		while (eToRemove != null && !eToRemove.isLeaf()) {
 			//recurse
 			removeResult.node = null; 
@@ -317,7 +298,7 @@ public class KDTree<T> implements PointIndex<T> {
 			eToRemove = removeResult.node;
 		} 
 		//leaf node
-		parent = removeResult.nodeParent; 
+		Node<T> parent = removeResult.nodeParent; 
 		if (parent != null) {
 			if (parent.getLo() == eToRemove) {
 				parent.setLeft(null);
