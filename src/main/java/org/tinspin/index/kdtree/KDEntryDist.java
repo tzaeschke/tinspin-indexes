@@ -26,11 +26,18 @@ public class KDEntryDist<T> implements PointEntryDist<T> {
 	private Node<T> entry;
 	private double distance;
 	
-	public KDEntryDist(Node<T> e, double dist) {
-		this.entry = e;
+	public KDEntryDist(Node<T> node, double dist) {
+		this.entry = node;
 		this.distance = dist;
 	}
 	
+
+	void set(Node<T> node, double dist) {
+		this.entry = node;
+		this.distance = dist;
+		//
+	}
+
 	@Override
 	public double dist() {
 		return distance;

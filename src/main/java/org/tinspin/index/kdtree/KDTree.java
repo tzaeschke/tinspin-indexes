@@ -33,8 +33,6 @@ import org.tinspin.index.PointIndex;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
 
-import ch.ethz.globis.phtree.util.Tools;
-
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
  * (if desired) automatic guessing of root rectangle. 
@@ -115,6 +113,23 @@ public class KDTree<T> implements PointIndex<T> {
 		}
 //	    System.out.println(tree.toStringTree());
 	    
+		int n = 0;
+		for (double[] key : point_list) {
+//			System.out.println(tree.toStringTree());
+			System.out.println("kNN query: " + Arrays.toString(key));
+			QueryIteratorKNN<PointEntryDist<double[]>> iter = tree.queryKNN(key, 1);
+			if (!iter.hasNext()) {
+				throw new IllegalStateException("kNN() failed: " + Arrays.toString(key));
+			}
+			double[] answer = iter.next().point();
+			if (answer != key && !Arrays.equals(answer, key)) {
+				throw new IllegalStateException("Expected " + Arrays.toString(key) + " but got " + Arrays.toString(answer));
+			}
+			if (n++ >= 100) {
+				break;
+			}
+		}
+
 		for (double[] key : point_list) {
 //			System.out.println(tree.toStringTree());
 			System.out.println("Removing: " + Arrays.toString(key));
@@ -148,7 +163,6 @@ public class KDTree<T> implements PointIndex<T> {
 	 * @param value the value
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public void insert(double[] key, T value) {
 		size++;
 		modCount++;
@@ -396,7 +410,6 @@ public class KDTree<T> implements PointIndex<T> {
 	 * @return the value associated with the key or 'null' if the key was not found.
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public T update(double[] oldKey, double[] newKey) {
 		if (root == null) {
 			return null;
@@ -489,7 +502,6 @@ public class KDTree<T> implements PointIndex<T> {
 			reset(min, max);
 		}
 		
-		@SuppressWarnings("unchecked")
 		private void findNext() {
 			while(!stack.isEmpty()) {
 				IteratorPos<T> itPos = stack.peek();
@@ -558,60 +570,73 @@ public class KDTree<T> implements PointIndex<T> {
 		if (root == null) {
     		return Collections.emptyList();
 		}
-        Comparator<Node<T>> comp =  
-        		(Node<T> point1, Node<T> point2) -> {
-        			double deltaDist = 
-        					distance(center, point1.point()) - 
-        					distance(center, point2.point());
-        			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
-        		};
-        double distEstimate = distanceEstimate(root, center, k, comp);
-    	ArrayList<KDEntryDist<T>> candidates = new ArrayList<>();
-    	while (candidates.size() < k) {
-    		candidates.clear();
-    		rangeSearchKNN(root, center, candidates, k, distEstimate);
-    		distEstimate *= 2;
-    	}
+    	ArrayList<KDEntryDist<T>> candidates = new ArrayList<>(k);
+   		rangeSearchKNN(root, center, candidates, k, 0, Double.POSITIVE_INFINITY);
     	return candidates;
     }
 
     private double rangeSearchKNN(Node<T> node, double[] center, 
-    		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange) {
-		if (node.getLo() == null && node.getHi() == null) {
-			double dist = distance(center, node.point());
-			if (dist < maxRange) {
-				candidates.add(new KDEntryDist<>(node, dist));
-			}
-    		maxRange = adjustRegionKNN(candidates, k, maxRange);
-    	} else {
-    		ArrayList<Node<T>> nodes = node.getChildNodes(); 
-    		for (int i = 0; i < nodes.size(); i++) {
-    			Node<T> sub = nodes.get(i);
-    			if (sub != null && 
-    					QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius()) < maxRange) {
-    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange);
-    				//we set maxRange simply to the latest returned value.
-    			}
+    		ArrayList<KDEntryDist<T>> candidates, int k, int depth, double maxRange) {
+    	int pos = depth % dims;
+    	if (node.getLo() != null && (center[pos] < node.getKey()[pos] || node.getHi() == null)) {
+        	//go down
+    		maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, depth + 1, maxRange);
+        	//refine result
+    		if (center[pos] + maxRange >= node.getKey()[pos]) {
+    			maxRange = addCandidate(node, center, candidates, k, maxRange);
     		}
+    		if (node.getHi() != null) {
+    			maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, depth + 1, maxRange);
+    		}
+    	} else if (node.getHi() != null) {
+        	//go down
+    		maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, depth + 1, maxRange);
+        	//refine result
+    		if (center[pos] <= node.getKey()[pos] + maxRange) {
+    			maxRange = addCandidate(node, center, candidates, k, maxRange);
+    		}
+    		if (node.getLo() != null) {
+    			maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, depth + 1, maxRange);
+    		}
+    	} else {
+    		//leaf -> first (probably best) match!
+    		maxRange = addCandidate(node, center, candidates, k, maxRange);
     	}
     	return maxRange;
     }
+    
+    private static final Comparator<KDEntryDist<?>> compKnn =  
+    		(KDEntryDist<?> point1, KDEntryDist<?> point2) -> {
+    			double deltaDist = point1.dist() - point2.dist();
+    			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
+    		};
 
-    private double adjustRegionKNN(ArrayList<KDEntryDist<T>> candidates, int k, double maxRange) {
-        if (candidates.size() < k) {
-        	//wait for more candidates
-        	return maxRange;
-        }
-
-        //use stored distances instead of recalcualting them
-        candidates.sort(KDEntryDist.COMP);
-        while (candidates.size() > k) {
-        	candidates.remove(candidates.size()-1);
-        }
-        
-        double range = candidates.get(candidates.size()-1).dist();
-        return range;
-	}
+    
+    private double addCandidate(Node<T> node, double[] center, 
+    		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange) {
+    	//add ?
+    	double dist = distance(center, node.getKey());
+    	if (dist > maxRange) {
+    		//don't add if too far away
+    		return maxRange;
+    	}
+    	if (dist == maxRange && candidates.size() >= k) {
+    		//don't add if we already have enough equally good results.
+    		return maxRange;
+    	}
+    	KDEntryDist<T> cand;
+    	if (candidates.size() >= k) {
+    		cand = candidates.remove(k - 1);
+    		cand.set(node, dist);
+    	} else {
+    		cand = new KDEntryDist<>(node, dist);
+    	}
+    	int insertionPos = Collections.binarySearch(candidates, cand, compKnn);
+    	insertionPos = insertionPos >= 0 ? insertionPos : -(insertionPos+1);
+    	candidates.add(insertionPos, cand);
+    	return candidates.size() < k ? maxRange : candidates.get(candidates.size() - 1).dist();
+    }
+    
 	
     private class KDQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
 
@@ -653,7 +678,6 @@ public class KDTree<T> implements PointIndex<T> {
 		return sb.toString();
 	}
 	
-	@SuppressWarnings("unchecked")
 	private void toStringTree(StringBuilder sb, Node<T> node, int depth) {
 		String prefix = "";
 		for (int i = 0; i < depth; i++) {
