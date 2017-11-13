@@ -17,14 +17,12 @@
  */
 package org.tinspin.index.kdtree;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Random;
 
 import org.tinspin.index.PointEntry;
@@ -72,7 +70,6 @@ public class KDTree<T> implements PointIndex<T> {
 	//When it is not broken, we use the simple search. If it gets broken, we use the slower search.
 	//This is especially useful in scenarios where 'remove()' is not required or where
 	//points have never the same values (such as for physical measurements or other experimental results).
-	//TODO Currently we simply assume it is broken.
 	private boolean invariantBroken = false;
 	
 	private Node<T> root;
@@ -266,6 +263,7 @@ public class KDTree<T> implements PointIndex<T> {
 		if (eToRemove == root && size == 1) {
 			root = null;
 			size = 0;
+			invariantBroken = false;
 		}
 		
 		//find replacement
@@ -409,6 +407,8 @@ public class KDTree<T> implements PointIndex<T> {
 	public void clear() {
 		size = 0;
 		root = null;
+		invariantBroken = false;
+		modCount++;
 	}
 
 	/**
@@ -418,11 +418,11 @@ public class KDTree<T> implements PointIndex<T> {
 	 * @return all entries in the rectangle
 	 */
 	@Override
-	public QIterator<T> query(double[] min, double[] max) {
-		return new QIterator<>(this, min, max);
+	public KDIterator<T> query(double[] min, double[] max) {
+		return new KDIterator<>(this, min, max);
 	}
 
-	private static boolean isEnclosed(double[] point, double[] min, double[] max) {
+	static boolean isEnclosed(double[] point, double[] min, double[] max) {
 		for (int i = 0; i < point.length; i++) {
 			if (point[i] < min[i] || point[i] > max[i]) {
 				return false;
@@ -438,106 +438,6 @@ public class KDTree<T> implements PointIndex<T> {
 			dist += d * d;
 		}
 		return Math.sqrt(dist);
-	}
-	
-	private static class IteratorPos<T> {
-		private Node<T> node;
-		private int depth;
-		private boolean doLeft, doKey, doRight;
-		IteratorPos(Node<T> node) {
-			this.node = node;
-		}
-		void initTodo(double[] min, double[] max, int depth, int dims) {
-			this.depth = depth;
-			double[] key = node.getKey();
-			int pos = depth % dims;
-			doLeft = min[pos] < key[pos];
-			doRight = max[pos] > key[pos];
-			doKey = doLeft || doRight || key[pos] == min[pos] || key[pos] == max[pos];
-		}
-	}
-	
-	/**
-	 * Resetable query iterator.
-	 *
-	 * @param <T>
-	 */
-	public static class QIterator<T> implements QueryIterator<PointEntry<T>> {
-
-		private final KDTree<T> tree;
-		private ArrayDeque<IteratorPos<T>> stack;
-		private Node<T> next = null;
-		private double[] min;
-		private double[] max;
-		
-		QIterator(KDTree<T> tree, double[] min, double[] max) {
-			this.stack = new ArrayDeque<>();
-			this.tree = tree;
-			reset(min, max);
-		}
-		
-		private void findNext() {
-			while(!stack.isEmpty()) {
-				IteratorPos<T> itPos = stack.peek();
-				Node<T> node = itPos.node;
-				if (itPos.doLeft && node.getLo() != null) {
-					itPos.doLeft = false;
-					stack.push(new IteratorPos<>(node.getLo()));
-					stack.peek().initTodo(min, max, itPos.depth + 1, tree.getDims());
-					continue;
-				}
-				if (itPos.doKey) {
-					itPos.doKey = false;
-					if (isEnclosed(node.getKey(), min, max)) {
-						next = node;
-						return;
-					}
-				}
-				if (itPos.doRight && node.getHi() != null) {
-					itPos.doRight = false;
-					stack.push(new IteratorPos<>(node.getHi()));
-					stack.peek().initTodo(min, max, itPos.depth + 1, tree.getDims());
-					continue;
-				}
-				stack.pop();
-			}
-			next = null;
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return next != null;
-		}
-
-		@Override
-		public Node<T> next() {
-			if (!hasNext()) {
-				throw new NoSuchElementException();
-			}
-			Node<T> ret = next;
-			findNext();
-			return ret;
-		}
-
-		/**
-		 * Reset the iterator. This iterator can be reused in order to reduce load on the
-		 * garbage collector.
-		 * @param min lower left corner of query
-		 * @param max upper right corner of query
-		 */
-		@Override
-		public void reset(double[] min, double[] max) {
-			stack.clear();
-			this.min = min;
-			this.max = max;
-			next = null;
-			if (tree.root != null) {
-				//TODO use better stack and reuse stack-entries!
-				stack.push(new IteratorPos<>(tree.root));
-				stack.peek().initTodo(min, max, 0, tree.getDims());
-				findNext();
-			}
-		}
 	}
 	
 	/**
@@ -796,4 +696,7 @@ public class KDTree<T> implements PointIndex<T> {
 		return getStats().getMaxDepth();
 	}
 	
+	Node<T> getRoot() {
+		return root;
+	}
 }
