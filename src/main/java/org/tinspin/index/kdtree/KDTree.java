@@ -57,6 +57,7 @@ public class KDTree<T> implements PointIndex<T> {
 	private int modCount = 0;
 	//During insertion, the tree maintains an invariant that if two points have the
 	//same value in any dimension, then one key is never in the 'lower' branch of the other.
+	//This allows very efficient look-up because we have to follow only a single path.
 	//Unfortunately, removing keys (and moving up keys in the tree) may break this invariant.
 	//
 	//The cost of breaking the invariant is that there may be two branches that contain the same
@@ -71,22 +72,18 @@ public class KDTree<T> implements PointIndex<T> {
 	//When it is not broken, we use the simple search. If it gets broken, we use the slower search.
 	//This is especially useful in scenarios where 'remove()' is not required or where
 	//points have never the same values (such as for physical measurements or other experimental results).
-	private boolean invariantBroken = !false;
+	//TODO Currently we simply assume it is broken.
+	private boolean invariantBroken = false;
 	
 	private Node<T> root;
 	
 	public static void main(String ... args) {
-		if (true) {
-//			test(13);
-			test(245);
-		} else {
-			for (int i = 0; i < 1000; i++) {
-				try {
-					test(i);
-				} catch(Exception e) {
-					System.out.println("Failed with r=" + i);
-					throw new RuntimeException(e);
-				}
+		for (int i = 0; i < 10; i++) {
+			try {
+				test(i);
+			} catch(Exception e) {
+				System.out.println("Failed with r=" + i);
+				throw new RuntimeException(e);
 			}
 		}
 	}
@@ -316,56 +313,60 @@ public class KDTree<T> implements PointIndex<T> {
 	
 	private void removeMinLeaf(Node<T> node, Node<T> parent, int pos, int depth, RemoveResult<T> result) {
 		//Split in 'interesting' dimension
+		double localX = node.getKey()[pos];
 		if (pos == depth % dims) {
 			//We strictly look for leaf nodes with left==null
 			if (node.getLo() != null) {
 				removeMinLeaf(node.getLo(), node, pos, depth + 1, result);
-			} else if (node.getKey()[pos] <= result.best) {
+			} else if (localX <= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
-				result.best = node.getKey()[pos];
+				result.best = localX;
 				result.depth = depth;
+				invariantBroken |= result.best == localX;
 			}
 		} else {
 			//split in any other dimension.
 			//First, check local key. 
-			if (node.getKey()[pos] <= result.best) {
+			if (localX <= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
-				result.best = node.getKey()[pos];
+				result.best = localX;
 				result.depth = depth;
+				invariantBroken |= result.best == localX;
 			}
 			if (node.getLo() != null) {
 				removeMinLeaf(node.getLo(), node, pos, depth + 1, result);
 			}
 			if (node.getHi() != null) {
-				 removeMinLeaf(node.getHi(), node, pos, depth + 1, result);
+				removeMinLeaf(node.getHi(), node, pos, depth + 1, result);
 			}
-			//TODO we should create a list of 10 (or so) 'best' nodes, this would avoid traversing
-			//the whole subtree again to get the 2nd smallest node ...
 		}
 	}
 	
 	private void removeMaxLeaf(Node<T> node, Node<T> parent, int pos, int depth, RemoveResult<T> result) {
 		//Split in 'interesting' dimension
+		double localX = node.getKey()[pos];
 		if (pos == depth % dims) {
 			//We strictly look for leaf nodes with left==null
 			if (node.getHi() != null) {
 				removeMaxLeaf(node.getHi(), node, pos, depth + 1, result);
-			} else if (node.getKey()[pos] >= result.best) {
+			} else if (localX >= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
-				result.best = node.getKey()[pos];
+				result.best = localX;
 				result.depth = depth;
+				invariantBroken |= result.best == localX;
 			}
 		} else {
 			//split in any other dimension.
 			//First, check local key. 
-			if (node.getKey()[pos] >= result.best) {
+			if (localX >= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
-				result.best = node.getKey()[pos];
+				result.best = localX;
 				result.depth = depth;
+				invariantBroken |= result.best == localX;
 			}
 			if (node.getLo() != null) {
 				removeMaxLeaf(node.getLo(), node, pos, depth + 1, result);
@@ -373,8 +374,6 @@ public class KDTree<T> implements PointIndex<T> {
 			if (node.getHi() != null) {
 				 removeMaxLeaf(node.getHi(), node, pos, depth + 1, result);
 			}
-			//TODO we should create a list of 10 (or so) 'best' nodes, this would avoid traversing
-			//the whole subtree again to get the 2nd smallest node ...
 		}
 	}
 	
@@ -541,6 +540,61 @@ public class KDTree<T> implements PointIndex<T> {
 		}
 	}
 	
+	/**
+	 * 1-nearest neighbor query.
+	 * @param center
+	 * @return Nearest neighbor
+	 */
+	public KDEntryDist<T> nnQuery(double[] center) {
+		if (root == null) {
+    		return null;
+		}
+    	KDEntryDist<T> candidate = new KDEntryDist<>(null, Double.POSITIVE_INFINITY);
+   		rangeSearch1NN(root, center, candidate, 0, Double.POSITIVE_INFINITY);
+    	return candidate;
+    }
+
+    private double rangeSearch1NN(Node<T> node, double[] center, 
+    		KDEntryDist<T> candidate, int depth, double maxRange) {
+    	int pos = depth % dims;
+    	if (node.getLo() != null && (center[pos] < node.getKey()[pos] || node.getHi() == null)) {
+        	//go down
+    		maxRange = rangeSearch1NN(node.getLo(), center, candidate, depth + 1, maxRange);
+        	//refine result
+    		if (center[pos] + maxRange >= node.getKey()[pos]) {
+    			maxRange = addCandidate(node, center, candidate, maxRange);
+        		if (node.getHi() != null) {
+        			maxRange = rangeSearch1NN(node.getHi(), center, candidate, depth + 1, maxRange);
+        		}
+    		}
+    	} else if (node.getHi() != null) {
+        	//go down
+    		maxRange = rangeSearch1NN(node.getHi(), center, candidate, depth + 1, maxRange);
+        	//refine result
+    		if (center[pos] <= node.getKey()[pos] + maxRange) {
+    			maxRange = addCandidate(node, center, candidate, maxRange);
+        		if (node.getLo() != null) {
+        			maxRange = rangeSearch1NN(node.getLo(), center, candidate, depth + 1, maxRange);
+        		}
+    		}
+    	} else {
+    		//leaf -> first (probably best) match!
+    		maxRange = addCandidate(node, center, candidate, maxRange);
+    	}
+    	return maxRange;
+    }
+        
+    private double addCandidate(Node<T> node, double[] center, final KDEntryDist<T> candidate, double maxRange) {
+    	double dist = distance(center, node.getKey());
+    	if (dist >= maxRange) {
+    		//don't add if too far away
+    		//don't add if we already have an equally good result
+    		return maxRange;
+    	}
+    	candidate.set(node, dist);
+    	return dist;
+    }
+	
 	public List<KDEntryDist<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
     		return Collections.emptyList();
@@ -580,6 +634,7 @@ public class KDTree<T> implements PointIndex<T> {
     	return maxRange;
     }
     
+	
     private static final Comparator<KDEntryDist<?>> compKnn =  
     		(KDEntryDist<?> point1, KDEntryDist<?> point2) -> {
     			double deltaDist = point1.dist() - point2.dist();
@@ -613,11 +668,13 @@ public class KDTree<T> implements PointIndex<T> {
     }
     
 	
-    private class KDQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
+    private static class KDQueryIteratorKNN<T> implements QueryIteratorKNN<PointEntryDist<T>> {
 
-    	private Iterator<PointEntryDist<T>> it;
+    	private Iterator<? extends PointEntryDist<T>> it;
+    	private final KDTree<T> tree;
     	
-		public KDQueryIteratorKNN(double[] center, int k) {
+		public KDQueryIteratorKNN(KDTree<T> tree, double[] center, int k) {
+			this.tree = tree;
 			reset(center, k);
 		}
 
@@ -631,10 +688,9 @@ public class KDTree<T> implements PointIndex<T> {
 			return it.next();
 		}
 
-		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
 		public void reset(double[] center, int k) {
-			it = ((List)knnQuery(center, k)).iterator();
+			it = tree.knnQuery(center, k).iterator();
 		}
     }
     
@@ -721,8 +777,13 @@ public class KDTree<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public KDQueryIteratorKNN queryKNN(double[] center, int k) {
-		return new KDQueryIteratorKNN(center, k);
+	public KDEntryDist<T> query1NN(double[] center) {
+		return nnQuery(center);
+	}
+
+	@Override
+	public KDQueryIteratorKNN<T> queryKNN(double[] center, int k) {
+		return new KDQueryIteratorKNN<>(this, center, k);
 	}
 
 	@Override
