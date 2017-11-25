@@ -471,7 +471,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	
 	@Override
 	public QStats getStats() {
-		QStats s = new QStats();
+		QStats s = new QStats(dims);
 		if (root != null) {
 			root.checkNode(s, null, 0);
 		}
@@ -483,12 +483,31 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	 */
 	public static class QStats {
 		int nNodes;
+		int nNodesInner;
+		int nNodesLeaf;
 		int maxDepth;
+		int nEntries;
+		final int[] histoValues = new int[100];
+		final int[] histoSubs;
+		final int dims;
+		public QStats(int dims) {
+			this.dims = dims;
+			this.histoSubs = new int[1 + (1 << dims)];
+		}
 		public int getNodeCount() {
 			return nNodes;
 		}
+		public int getEntryCount() {
+			return nEntries;
+		}
 		public int getMaxDepth() {
 			return maxDepth;
+		}
+		@Override
+		public String toString() {
+			return "nNodes/inner/leaf=" + nNodes + "/" + nNodesInner + "/" + nNodesLeaf + ";\n"
+					+ "histoVal:" + Arrays.toString(histoValues) + "\n"
+					+ "histoSub:" + Arrays.toString(histoSubs);
 		}
 	}
 

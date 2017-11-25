@@ -299,6 +299,9 @@ public class QNode<T> {
 			}
 		}
 		if (values != null) {
+			s.nNodesLeaf++;
+			s.nEntries += values.size();
+			s.histoValues[values.size()]++;
 			for (int i = 0; i < values.size(); i++) {
 				QEntry<T> e = values.get(i);
 				if (!QUtil.isPointEnclosed(e.point(), center, radius*QUtil.EPS_MUL)) {
@@ -322,13 +325,20 @@ public class QNode<T> {
 				throw new IllegalStateException();
 			}
 		} else {
+			s.nNodesInner++;
+			if (subs.length != 1L<<s.dims) {
+				throw new IllegalStateException();
+			}
+			int nSubs = 0;
 			for (int i = 0; i < subs.length; i++) {
 				QNode<T> n = subs[i];
 				//TODO check pos
 				if (n != null) {
+					nSubs++;
 					n.checkNode(s, this, depth+1);
 				}
 			}
+			s.histoSubs[nSubs]++;
 		}
 	}
 

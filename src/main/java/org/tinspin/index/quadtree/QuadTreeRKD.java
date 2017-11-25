@@ -468,7 +468,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	
 	@Override
 	public QStats getStats() {
-		QStats s = new QStats();
+		QStats s = new QStats(dims);
 		if (root != null) {
 			root.checkNode(s, null, 0);
 		}
