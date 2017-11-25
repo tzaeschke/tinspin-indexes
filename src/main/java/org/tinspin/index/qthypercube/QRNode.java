@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.quadtree;
+package org.tinspin.index.qthypercube;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.tinspin.index.quadtree.QuadTreeKD.QStats;
+import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
 
 /**
  * Node class for the quadtree.

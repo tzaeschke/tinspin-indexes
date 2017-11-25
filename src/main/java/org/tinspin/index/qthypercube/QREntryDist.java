@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.quadtree;
+package org.tinspin.index.qthypercube;
 
 import java.util.Comparator;
 

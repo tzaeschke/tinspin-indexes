@@ -17,10 +17,10 @@ import org.tinspin.index.array.RectArray;
 import org.tinspin.index.kdtree.KDTree;
 import org.tinspin.index.phtree.PHTreeP;
 import org.tinspin.index.phtree.PHTreeR;
+import org.tinspin.index.qthypercube.QuadTreeKD;
+import org.tinspin.index.qthypercube.QuadTreeRKD;
 import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
-import org.tinspin.index.quadtree.QuadTreeKD;
-import org.tinspin.index.quadtree.QuadTreeRKD;
 import org.tinspin.index.rtree.RTree;
 
 public class TestStats implements Serializable, Cloneable {

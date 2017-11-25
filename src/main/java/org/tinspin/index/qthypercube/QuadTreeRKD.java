@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.quadtree;
+package org.tinspin.index.qthypercube;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +29,7 @@ import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.RectangleEntry;
 import org.tinspin.index.RectangleEntryDist;
 import org.tinspin.index.RectangleIndex;
-import org.tinspin.index.quadtree.QuadTreeKD.QStats;
+import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
 
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
