@@ -3,6 +3,7 @@
 v 1.4.0
 ======= 
 - Added KD-Tree.
+- Improved QuadtreeStats collection
 
 [2017-09-17]
 v 1.3.6
