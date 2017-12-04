@@ -1,4 +1,12 @@
 
+[2017-12-04]
+v 1.5.0
+======= 
+- Added QuadtreHC2, i.e. version 2 of the HC quadtree. This version is more space
+  efficient by allowing directory nodes to hold data entries, thus avoiding 
+  leaf nodes that hold just one data entry.
+
+
 [2017-11-13]
 v 1.4.0
 ======= 

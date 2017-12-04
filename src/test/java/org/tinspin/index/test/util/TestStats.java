@@ -17,8 +17,8 @@ import org.tinspin.index.array.RectArray;
 import org.tinspin.index.kdtree.KDTree;
 import org.tinspin.index.phtree.PHTreeP;
 import org.tinspin.index.phtree.PHTreeR;
-import org.tinspin.index.qthypercube.QuadTreeKD;
-import org.tinspin.index.qthypercube.QuadTreeRKD;
+import org.tinspin.index.qthypercube2.QuadTreeKD;
+import org.tinspin.index.qthypercube2.QuadTreeRKD;
 import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.RTree;
@@ -34,9 +34,11 @@ public class TestStats implements Serializable, Cloneable {
 		PHTREE,
 		/** CritBit */
 		CRITBIT,
-		/** Quadtree */
+		/** Quadtree with HC navigation*/
 		QUAD,
-		/** Quadtree without HC navigation. */
+		/** Quadtree with HC navigation version 2 */
+		QUAD2,
+		/** Plain Quadtree */
 		QUAD_OLD,
 		/** RStarTree */
 		RSTAR,
