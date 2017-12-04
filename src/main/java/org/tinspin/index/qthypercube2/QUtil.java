@@ -54,9 +54,9 @@ public class QUtil {
 		return isPointEqual(p1L, p2L) && isPointEqual(p1U, p2U);
 	}
 
-	public static <T> boolean isRectEqual(QREntry<T> e, double[] keyL, double[] keyU) {
-		return isRectEqual(e.lower(), e.upper(), keyL, keyU);
-	}
+//	public static <T> boolean isRectEqual(QREntry<T> e, double[] keyL, double[] keyU) {
+//		return isRectEqual(e.lower(), e.upper(), keyL, keyU);
+//	}
 	
 	public static boolean overlap(double[] min, double[] max, double[] min2, double[] max2) {
 		for (int d = 0; d < min.length; d++) {
@@ -136,15 +136,15 @@ public class QUtil {
 		return Math.sqrt(dist);
 	}
 	
-	/**
-	 * Calculates distance to center point of rectangle.
-	 * @param p point
-	 * @param e rectangle
-	 * @return distance to center point
-	 */
-	public static double distToRectCenter(double[] p, QREntry<?> e) {
-		return distToRectCenter(p, e.lower(), e.upper());
-	}
+//	/**
+//	 * Calculates distance to center point of rectangle.
+//	 * @param p point
+//	 * @param e rectangle
+//	 * @return distance to center point
+//	 */
+//	public static double distToRectCenter(double[] p, QREntry<?> e) {
+//		return distToRectCenter(p, e.lower(), e.upper());
+//	}
 	
 	/**
 	 * Calculates distance to the edge of rectangle.
@@ -167,15 +167,15 @@ public class QUtil {
 		return Math.sqrt(dist);
 	}
 	
-	/**
-	 * Calculates distance to edge of rectangle.
-	 * @param p point
-	 * @param e rectangle
-	 * @return distance to edge point
-	 */
-	public static double distToRectEdge(double[] p, QREntry<?> e) {
-		return distToRectEdge(p, e.lower(), e.upper());
-	}
+//	/**
+//	 * Calculates distance to edge of rectangle.
+//	 * @param p point
+//	 * @param e rectangle
+//	 * @return distance to edge point
+//	 */
+//	public static double distToRectEdge(double[] p, QREntry<?> e) {
+//		return distToRectEdge(p, e.lower(), e.upper());
+//	}
 	
 	/**
 	 * Calculates distance to the edge of a node.

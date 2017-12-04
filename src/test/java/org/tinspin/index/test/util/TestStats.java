@@ -17,8 +17,9 @@ import org.tinspin.index.array.RectArray;
 import org.tinspin.index.kdtree.KDTree;
 import org.tinspin.index.phtree.PHTreeP;
 import org.tinspin.index.phtree.PHTreeR;
-import org.tinspin.index.qthypercube2.QuadTreeKD;
-import org.tinspin.index.qthypercube2.QuadTreeRKD;
+import org.tinspin.index.qthypercube.QuadTreeKD;
+import org.tinspin.index.qthypercube.QuadTreeRKD;
+import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.RTree;
@@ -53,6 +54,7 @@ public class TestStats implements Serializable, Cloneable {
 		case KDTREE: return KDTree.create(dims);
 		case PHTREE: return PHTreeP.createPHTree(dims);
 		case QUAD: return QuadTreeKD.create(dims);
+		case QUAD2: return QuadTreeKD2.create(dims);
 		case QUAD_OLD: return QuadTreeKD0.create(dims);
 		case RSTAR: 
 		case STR: return PointIndexWrapper.create(RTree.createRStar(dims));

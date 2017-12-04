@@ -49,6 +49,7 @@ public class TestPointWrappers extends AbstractWrapperTest {
 		l.add(new Object[]{INDEX.KDTREE});
 		l.add(new Object[]{INDEX.PHTREE});
 		l.add(new Object[]{INDEX.QUAD});
+		l.add(new Object[]{INDEX.QUAD2});
 		l.add(new Object[]{INDEX.QUAD_OLD});
 		l.add(new Object[]{INDEX.RSTAR});
 		l.add(new Object[]{INDEX.STR});

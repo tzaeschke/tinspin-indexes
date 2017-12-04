@@ -19,7 +19,7 @@ package org.tinspin.index.qthypercube2;
 
 import java.util.Arrays;
 
-import org.tinspin.index.qthypercube2.QuadTreeKD.QStats;
+import org.tinspin.index.qthypercube2.QuadTreeKD2.QStats;
 
 /**
  * Node class for the quadtree.
@@ -57,7 +57,7 @@ public class QNode<T> {
 
 	@SuppressWarnings("unused")
 	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
-		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
+		if (QuadTreeKD2.DEBUG && !e.enclosedBy(center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}

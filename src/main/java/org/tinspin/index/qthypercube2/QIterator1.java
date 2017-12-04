@@ -65,7 +65,7 @@ public class QIterator1<T> implements QueryIterator<PointEntry<T>> {
 		}
 	}
 
-	private final QuadTreeKD<T> tree;
+	private final QuadTreeKD2<T> tree;
 	private IteratorStack stack;
 	private QEntry<T> next = null;
 	private double[] min;
@@ -115,7 +115,7 @@ public class QIterator1<T> implements QueryIterator<PointEntry<T>> {
 	}
 	
 	
-	QIterator1(QuadTreeKD<T> tree, double[] min, double[] max) {
+	QIterator1(QuadTreeKD2<T> tree, double[] min, double[] max) {
 		this.stack = new IteratorStack();
 		this.tree = tree;
 		reset(min, max);

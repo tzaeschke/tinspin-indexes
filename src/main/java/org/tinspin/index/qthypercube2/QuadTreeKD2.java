@@ -56,7 +56,7 @@ import org.tinspin.index.QueryIteratorKNN;
  *
  * @param <T>
  */
-public class QuadTreeKD<T> implements PointIndex<T> {
+public class QuadTreeKD2<T> implements PointIndex<T> {
 
 	/** Enable basic HCI navigation with Algo #1 isInI(), for example for window queries. */
 	public static boolean ENABLE_HCI_1 = true;
@@ -76,7 +76,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	private int size = 0; 
 	
 
-	private QuadTreeKD(int dims, int maxNodeSize) {
+	private QuadTreeKD2(int dims, int maxNodeSize) {
 		if (DEBUG) {
 			System.err.println("Warning: DEBUG enabled");
 		}
@@ -84,17 +84,17 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 		this.maxNodeSize = maxNodeSize;
 	}
 
-	public static <T> QuadTreeKD<T> create(int dims) {
-		return new QuadTreeKD<>(dims, DEFAULT_MAX_NODE_SIZE);
+	public static <T> QuadTreeKD2<T> create(int dims) {
+		return new QuadTreeKD2<>(dims, DEFAULT_MAX_NODE_SIZE);
 	}
 	
-	public static <T> QuadTreeKD<T> create(int dims, int maxNodeSize) {
-		return new QuadTreeKD<>(dims, maxNodeSize);
+	public static <T> QuadTreeKD2<T> create(int dims, int maxNodeSize) {
+		return new QuadTreeKD2<>(dims, maxNodeSize);
 	}
 	
-	public static <T> QuadTreeKD<T> create(int dims, int maxNodeSize, 
+	public static <T> QuadTreeKD2<T> create(int dims, int maxNodeSize, 
 			double[] center, double radius) {
-		QuadTreeKD<T> t = new QuadTreeKD<>(dims, maxNodeSize);
+		QuadTreeKD2<T> t = new QuadTreeKD2<>(dims, maxNodeSize);
 		if (radius <= 0) {
 			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
 		}
@@ -256,7 +256,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 					center2[d] = center[d]+radius; 
 				}
 			}
-			if (QuadTreeKD.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
+			if (QuadTreeKD2.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
 				throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 						" center/radius=" + Arrays.toString(center2) + 
 						"/"+ radius);
@@ -463,7 +463,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	
 	@Override
 	public String toString() {
-		return "QuadTreeKD;maxNodeSize=" + maxNodeSize + 
+		return "QuadTreeKD2;maxNodeSize=" + maxNodeSize + 
 				";maxDepth=" + MAX_DEPTH + 
 				";DEBUG=" + DEBUG + 
 				";center/radius=" + (root==null ? "null" : 
