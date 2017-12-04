@@ -3,7 +3,7 @@
 	<groupId>org.tinspin</groupId>
 	<artifactId>tinspin-indexes</artifactId>
 	<packaging>jar</packaging>
-	<version>1.5.1</version>
+	<version>1.5.2-SNAPSHOT</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,7 +27,7 @@
 		<url>https://github.com/tzaeschke/tinspin-indexes</url>
 		<connection>scm:git:git@github.com:tzaeschke/tinspin-indexes.git</connection>
 		<developerConnection>scm:git:git@github.com:tzaeschke/tinspin-indexes.git</developerConnection>
-	  <tag>tinspin-indexes-1.5.1</tag>
+	  <tag>HEAD</tag>
   </scm>
 	<developers>
 		<developer>
