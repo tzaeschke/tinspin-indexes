@@ -68,6 +68,8 @@ public class QuadTreeKD2<T> implements PointIndex<T> {
 	private static final String NL = System.lineSeparator();
 
 	public static final boolean DEBUG = false;
+	//This is the MINIMUM MAX_NODE_SIZE. MAX__NODE_SIZE is adjust upwards automatically
+	//with increasing dimensionality
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
 	
 	private final int dims;
@@ -85,7 +87,11 @@ public class QuadTreeKD2<T> implements PointIndex<T> {
 	}
 
 	public static <T> QuadTreeKD2<T> create(int dims) {
-		return new QuadTreeKD2<>(dims, DEFAULT_MAX_NODE_SIZE);
+		int maxNodeSize = DEFAULT_MAX_NODE_SIZE;
+		if (2 * dims > DEFAULT_MAX_NODE_SIZE) {
+			maxNodeSize = 2*dims;
+		}
+		return new QuadTreeKD2<>(dims, maxNodeSize);
 	}
 	
 	public static <T> QuadTreeKD2<T> create(int dims, int maxNodeSize) {
