@@ -498,10 +498,12 @@ public class QuadTreeKD2<T> implements PointIndex<T> {
 		int nEntries;
 		final int[] histoValues = new int[100];
 		final int[] histoSubs;
+		static final int HISTO_MAX = (1 << 10) + 1;
 		final int dims;
 		public QStats(int dims) {
 			this.dims = dims;
-			this.histoSubs = new int[1 + (1 << dims)];
+			int histoSize = 1 + (1 << dims);
+			this.histoSubs = new int[histoSize > HISTO_MAX ? HISTO_MAX : histoSize];
 		}
 		public int getNodeCount() {
 			return nNodes;
@@ -511,6 +513,13 @@ public class QuadTreeKD2<T> implements PointIndex<T> {
 		}
 		public int getMaxDepth() {
 			return maxDepth;
+		}
+		public void histo(int pos) {
+			if (pos < histoSubs.length) {
+				histoSubs[pos]++;
+			} else {
+				histoSubs[histoSubs.length-1]++;
+			}
 		}
 		@Override
 		public String toString() {

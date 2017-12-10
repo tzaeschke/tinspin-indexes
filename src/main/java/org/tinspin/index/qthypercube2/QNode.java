@@ -441,7 +441,7 @@ public class QNode<T> {
 					checkEntry(n);
 				}
 			}
-			s.histoSubs[nSubs]++;
+			s.histo(nSubs);
 		}
 	}
 
