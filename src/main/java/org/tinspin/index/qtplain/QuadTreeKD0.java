@@ -523,7 +523,7 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 	
 	@Override
 	public String toString() {
-		return "KDTree;maxNodeSize=" + maxNodeSize + 
+		return "QuadTreeKD0;maxNodeSize=" + maxNodeSize + 
 				";maxDepth=" + MAX_DEPTH + 
 				";DEBUG=" + DEBUG + 
 				";center/radius=" + (root==null ? "null" : 
