@@ -85,9 +85,6 @@ public class KDTreeTest {
 		List<double[]> list = Arrays.asList(point_list);
 		Collections.shuffle(list);
 		point_list = list.toArray(point_list);
-		for (double[] p : point_list) {
-			System.out.println(Arrays.toString(p));
-		}
 		smokeTest(point_list);
 	}
 	
