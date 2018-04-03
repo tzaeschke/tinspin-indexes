@@ -32,13 +32,7 @@ import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
 
 /**
- * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
- * (if desired) automatic guessing of root rectangle. 
- * 
- * This version of the quadtree stores for each node only the center point and the
- * distance (radius) to the edges.
- * This reduces space requirements but increases problems with numerical precision.
- * Overall it is more space efficient and slightly faster. 
+ * A simple KD-Tree implementation. 
  * 
  * @author ztilmann
  *
@@ -154,15 +148,11 @@ public class KDTree<T> implements PointIndex<T> {
 		size++;
 		modCount++;
 		if (root == null) {
-			root = new Node<>(key, value);
+			root = new Node<>(key, value, 0);
 			return;
 		}
 		Node<T> n = root;
-		int depth = 0;
-		do {
-			n = n.getClosestNodeOrAddPoint(key, value, depth, dims);
-			depth++;
-		} while (n != null);
+		while ((n = n.getClosestNodeOrAddPoint(key, value, dims)) != null);
 	}
 	
 	/**
@@ -189,44 +179,42 @@ public class KDTree<T> implements PointIndex<T> {
 		if (root == null) {
 			return null;
 		}
-		return invariantBroken? findNodeExactSlow(key, root, 0, null, resultDepth) : findNodeExcatFast(key, null, resultDepth);
+		return invariantBroken 
+				? findNodeExactSlow(key, root, null, resultDepth) 
+						: findNodeExcatFast(key, null, resultDepth);
 	} 
 
 	private Node<T> findNodeExcatFast(double[] key, Node<T> parent, RemoveResult<T> resultDepth) {
 		Node<T> n = root;
-		int depth = 0;
 		do {
 			double[] nodeKey = n.getKey();
-			int pos = depth % dims;
-			double nodeX = nodeKey[pos];
-			double keyX = key[pos];
+			double nodeX = nodeKey[n.getDim()];
+			double keyX = key[n.getDim()];
 			if (keyX == nodeX && Arrays.equals(key, nodeKey)) {
-				resultDepth.depth = depth;
+				resultDepth.pos = n.getDim();
 				resultDepth.nodeParent = parent;
 				return n;
 			}
 			parent = n;
 			n = (keyX >= nodeX) ? n.getHi() : n.getLo();
-			depth++;
 		} while (n != null);
 		return n;
 	}
 	
-	private Node<T> findNodeExactSlow(double[] key, Node<T> n, int depth, Node<T> parent, RemoveResult<T> resultDepth) {
+	private Node<T> findNodeExactSlow(double[] key, Node<T> n, Node<T> parent, RemoveResult<T> resultDepth) {
 		do {
 			double[] nodeKey = n.getKey();
-			int pos = depth % dims;
-			double nodeX = nodeKey[pos];
-			double keyX = key[pos];
+			double nodeX = nodeKey[n.getDim()];
+			double keyX = key[n.getDim()];
 			if (keyX == nodeX) {
 				if (Arrays.equals(key, nodeKey)) {
-					resultDepth.depth = depth;
+					resultDepth.pos = n.getDim();
 					resultDepth.nodeParent = parent;
 					return n;
 				}
 				//Broken invariant? We need to check the 'lower' part as well...
 				if (n.getLo() != null) {
-					Node<T> n2 = findNodeExactSlow(key, n.getLo(), depth + 1, parent, resultDepth);
+					Node<T> n2 = findNodeExactSlow(key, n.getLo(), parent, resultDepth);
 					if (n2 != null) {
 						return n2;
 					}
@@ -234,7 +222,6 @@ public class KDTree<T> implements PointIndex<T> {
 			}
 			parent = n;
 			n = (keyX >= nodeX) ? n.getHi() : n.getLo();
-			depth++;
 		} while (n != null);
 		return n;
 	}
@@ -270,18 +257,17 @@ public class KDTree<T> implements PointIndex<T> {
 		removeResult.nodeParent = null; 
 		while (eToRemove != null && !eToRemove.isLeaf()) {
 			//recurse
+			int pos = removeResult.pos;
 			removeResult.node = null; 
-			int depth = removeResult.depth;
-			int pos = depth % dims;
 			//randomize search direction (modCount)
 			if (((modCount & 0x1) == 0 || eToRemove.getHi() == null) && eToRemove.getLo() != null) {
 				//get replacement from left
 				removeResult.best = Double.NEGATIVE_INFINITY;
-				removeMaxLeaf(eToRemove.getLo(), eToRemove, pos, depth+1, removeResult);
+				removeMaxLeaf(eToRemove.getLo(), eToRemove, pos, removeResult);
 			} else if (eToRemove.getHi() != null) {
 				//get replacement from right
 				removeResult.best = Double.POSITIVE_INFINITY;
-				removeMinLeaf(eToRemove.getHi(), eToRemove, pos, depth+1, removeResult);
+				removeMinLeaf(eToRemove.getHi(), eToRemove, pos, removeResult);
 			}
 			eToRemove.setKeyValue(removeResult.node.getKey(), removeResult.node.getValue());
 			eToRemove = removeResult.node;
@@ -305,22 +291,21 @@ public class KDTree<T> implements PointIndex<T> {
 		Node<T> node = null;
 		Node<T> nodeParent = null;
 		double best;
-		int depth;
-		
+		int pos;
 	}
 	
-	private void removeMinLeaf(Node<T> node, Node<T> parent, int pos, int depth, RemoveResult<T> result) {
+	private void removeMinLeaf(Node<T> node, Node<T> parent, int pos, RemoveResult<T> result) {
 		//Split in 'interesting' dimension
 		double localX = node.getKey()[pos];
-		if (pos == depth % dims) {
+		if (pos == node.getDim()) {
 			//We strictly look for leaf nodes with left==null
 			if (node.getLo() != null) {
-				removeMinLeaf(node.getLo(), node, pos, depth + 1, result);
+				removeMinLeaf(node.getLo(), node, pos, result);
 			} else if (localX <= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
 				result.best = localX;
-				result.depth = depth;
+				result.pos = node.getDim();
 				invariantBroken |= result.best == localX;
 			}
 		} else {
@@ -330,30 +315,30 @@ public class KDTree<T> implements PointIndex<T> {
 				result.node = node;
 				result.nodeParent = parent;
 				result.best = localX;
-				result.depth = depth;
+				result.pos = node.getDim();
 				invariantBroken |= result.best == localX;
 			}
 			if (node.getLo() != null) {
-				removeMinLeaf(node.getLo(), node, pos, depth + 1, result);
+				removeMinLeaf(node.getLo(), node, pos, result);
 			}
 			if (node.getHi() != null) {
-				removeMinLeaf(node.getHi(), node, pos, depth + 1, result);
+				removeMinLeaf(node.getHi(), node, pos, result);
 			}
 		}
 	}
 	
-	private void removeMaxLeaf(Node<T> node, Node<T> parent, int pos, int depth, RemoveResult<T> result) {
+	private void removeMaxLeaf(Node<T> node, Node<T> parent, int pos, RemoveResult<T> result) {
 		//Split in 'interesting' dimension
 		double localX = node.getKey()[pos];
-		if (pos == depth % dims) {
+		if (pos == node.getDim()) {
 			//We strictly look for leaf nodes with left==null
 			if (node.getHi() != null) {
-				removeMaxLeaf(node.getHi(), node, pos, depth + 1, result);
+				removeMaxLeaf(node.getHi(), node, pos, result);
 			} else if (localX >= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
 				result.best = localX;
-				result.depth = depth;
+				result.pos = node.getDim();
 				invariantBroken |= result.best == localX;
 			}
 		} else {
@@ -363,14 +348,14 @@ public class KDTree<T> implements PointIndex<T> {
 				result.node = node;
 				result.nodeParent = parent;
 				result.best = localX;
-				result.depth = depth;
+				result.pos = node.getDim();
 				invariantBroken |= result.best == localX;
 			}
 			if (node.getLo() != null) {
-				removeMaxLeaf(node.getLo(), node, pos, depth + 1, result);
+				removeMaxLeaf(node.getLo(), node, pos, result);
 			}
 			if (node.getHi() != null) {
-				 removeMaxLeaf(node.getHi(), node, pos, depth + 1, result);
+				 removeMaxLeaf(node.getHi(), node, pos, result);
 			}
 		}
 	}
@@ -450,31 +435,31 @@ public class KDTree<T> implements PointIndex<T> {
     		return null;
 		}
     	KDEntryDist<T> candidate = new KDEntryDist<>(null, Double.POSITIVE_INFINITY);
-   		rangeSearch1NN(root, center, candidate, 0, Double.POSITIVE_INFINITY);
+   		rangeSearch1NN(root, center, candidate, Double.POSITIVE_INFINITY);
     	return candidate;
     }
 
     private double rangeSearch1NN(Node<T> node, double[] center, 
-    		KDEntryDist<T> candidate, int depth, double maxRange) {
-    	int pos = depth % dims;
+    		KDEntryDist<T> candidate, double maxRange) {
+    	int pos = node.getDim();
     	if (node.getLo() != null && (center[pos] < node.getKey()[pos] || node.getHi() == null)) {
         	//go down
-    		maxRange = rangeSearch1NN(node.getLo(), center, candidate, depth + 1, maxRange);
+    		maxRange = rangeSearch1NN(node.getLo(), center, candidate, maxRange);
         	//refine result
     		if (center[pos] + maxRange >= node.getKey()[pos]) {
     			maxRange = addCandidate(node, center, candidate, maxRange);
         		if (node.getHi() != null) {
-        			maxRange = rangeSearch1NN(node.getHi(), center, candidate, depth + 1, maxRange);
+        			maxRange = rangeSearch1NN(node.getHi(), center, candidate, maxRange);
         		}
     		}
     	} else if (node.getHi() != null) {
         	//go down
-    		maxRange = rangeSearch1NN(node.getHi(), center, candidate, depth + 1, maxRange);
+    		maxRange = rangeSearch1NN(node.getHi(), center, candidate, maxRange);
         	//refine result
     		if (center[pos] <= node.getKey()[pos] + maxRange) {
     			maxRange = addCandidate(node, center, candidate, maxRange);
         		if (node.getLo() != null) {
-        			maxRange = rangeSearch1NN(node.getLo(), center, candidate, depth + 1, maxRange);
+        			maxRange = rangeSearch1NN(node.getLo(), center, candidate, maxRange);
         		}
     		}
     	} else {
@@ -500,31 +485,31 @@ public class KDTree<T> implements PointIndex<T> {
     		return Collections.emptyList();
 		}
     	ArrayList<KDEntryDist<T>> candidates = new ArrayList<>(k);
-   		rangeSearchKNN(root, center, candidates, k, 0, Double.POSITIVE_INFINITY);
+   		rangeSearchKNN(root, center, candidates, k, Double.POSITIVE_INFINITY);
     	return candidates;
     }
 
     private double rangeSearchKNN(Node<T> node, double[] center, 
-    		ArrayList<KDEntryDist<T>> candidates, int k, int depth, double maxRange) {
-    	int pos = depth % dims;
+    		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange) {
+    	int pos = node.getDim();
     	if (node.getLo() != null && (center[pos] < node.getKey()[pos] || node.getHi() == null)) {
         	//go down
-    		maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, depth + 1, maxRange);
+    		maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, maxRange);
         	//refine result
     		if (center[pos] + maxRange >= node.getKey()[pos]) {
     			maxRange = addCandidate(node, center, candidates, k, maxRange);
         		if (node.getHi() != null) {
-        			maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, depth + 1, maxRange);
+        			maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, maxRange);
         		}
     		}
     	} else if (node.getHi() != null) {
         	//go down
-    		maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, depth + 1, maxRange);
+    		maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, maxRange);
         	//refine result
     		if (center[pos] <= node.getKey()[pos] + maxRange) {
     			maxRange = addCandidate(node, center, candidates, k, maxRange);
         		if (node.getLo() != null) {
-        			maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, depth + 1, maxRange);
+        			maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, maxRange);
         		}
     		}
     	} else {

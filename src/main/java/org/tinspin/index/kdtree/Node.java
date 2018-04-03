@@ -35,27 +35,28 @@ public class Node<T> implements PointEntry<T> {
 	private T value;
 	private Node<T> left;
 	private Node<T> right;
+	private int dim;
 	
-	Node(double[] p, T value) {
+	Node(double[] p, T value, int dim) {
 		this.coordinate = p;
 		this.value = value;
+		this.dim = dim;
 	}
 	
-	Node<T> getClosestNodeOrAddPoint(double[] p, T value, int depth, int dims) {
+	Node<T> getClosestNodeOrAddPoint(double[] p, T value, int dims) {
 		//Find best sub-node.
 		//If there is no node, we create one and return null
-		int pos = depth % dims;
-		if (p[pos] >= coordinate[pos]) {
+		if (p[dim] >= coordinate[dim]) {
 			if (right != null) {
 				return right;
 			}
-			right = new Node<>(p, value);
+			right = new Node<>(p, value, (dim + 1) % dims);
 			return null;
 		} 
 		if (left != null) {
 			return left;
 		}
-		left = new Node<>(p, value);
+		left = new Node<>(p, value, (dim + 1) % dims);
 		return null;
 	}
 
@@ -118,5 +119,9 @@ public class Node<T> implements PointEntry<T> {
 
 	boolean isLeaf() {
 		return this.left == null && this.right == null;
+	}
+
+	int getDim() {
+		return dim;
 	}
 }
