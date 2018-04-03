@@ -76,13 +76,14 @@ public interface CritBit1D<V> {
 
 	/** 
 	 * @param key key
+	 * @return the value or 'null' if the key does not exists
 	 * 
 	 * @see CritBit#get(long[]) 
 	 */
 	V get(long[] key);
 
 	/**
-	 * @return the value or 'null' if the key does not exists
+	 * @return Iterator over all entries
 	 * 
 	 * @see CritBit#iterator() 
 	 */

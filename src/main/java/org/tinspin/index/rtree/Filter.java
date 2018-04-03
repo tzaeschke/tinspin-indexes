@@ -100,6 +100,8 @@ public interface Filter {
 
 		/**
 		 * Chaining another filter.
+		 * @param anotherFilter the filter to merge
+		 * @return resulting merged filter
 		 */
 		public UnionFilter union(Filter anotherFilter) {
 			return new UnionFilter(this, anotherFilter);

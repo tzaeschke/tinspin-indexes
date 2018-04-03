@@ -30,6 +30,7 @@ public class PointIndexCandidate extends Candidate {
 
 	
 	/**
+	 * @param pi the index to be tested
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
@@ -152,6 +153,8 @@ public class PointIndexCandidate extends Candidate {
 	
 	/**
 	 * Used to test the native code during development process
+	 * 
+	 * @return The internally used index structure
 	 */
 	public Index<double[]> getNative() {
 		return idx;

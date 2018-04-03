@@ -33,6 +33,10 @@ public interface DistanceFunction {
 	 * bounding-box of the object.
 	 * 
 	 * If your entry is actually a sphere, a car, an human or a cat, you may need this.
+	 * 
+	 * @param center a point
+	 * @param entry a rectangle
+	 * @return distance between point and rectangle
 	 */
 	default double dist(double[] center, RectangleEntry<?> entry) {
 		return dist(center, entry.lower(), entry.upper());
