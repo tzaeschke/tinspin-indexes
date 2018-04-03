@@ -20,7 +20,7 @@ package org.tinspin.index;
 /**
  * This represents a rectangle entry.
  * 
- * @param <T>
+ * @param <T> Value type
  */
 public interface RectangleEntry<T> {
 

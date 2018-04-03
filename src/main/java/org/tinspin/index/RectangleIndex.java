@@ -61,6 +61,8 @@ public interface RectangleIndex<T> extends Index<T> {
 	QueryIterator<RectangleEntry<T>> iterator();
 
 	/**
+	 * @param min Lower left corner of the query window
+	 * @param max Upper right corner of the query window
 	 * @return All rectangles that intersect with the query rectangle.
 	 */
 	QueryIterator<RectangleEntry<T>> queryIntersect(double[] min, double[] max);

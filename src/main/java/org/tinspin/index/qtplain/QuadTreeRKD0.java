@@ -282,7 +282,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 	/**
 	 * Resetable query iterator.
 	 *
-	 * @param <T>
+	 * @param <T> Value type
 	 */
 	public static class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 

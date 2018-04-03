@@ -34,9 +34,9 @@ import org.tinspin.index.QueryIteratorKNN;
 /**
  * A simple KD-Tree implementation. 
  * 
- * @author ztilmann
+ * @author T. Zäschke
  *
- * @param <T>
+ * @param <T> Value type
  */
 public class KDTree<T> implements PointIndex<T> {
 
@@ -436,7 +436,7 @@ public class KDTree<T> implements PointIndex<T> {
 	
 	/**
 	 * 1-nearest neighbor query.
-	 * @param center
+	 * @param center The point for which the nearest neighbors are requested
 	 * @return Nearest neighbor
 	 */
 	public KDEntryDist<T> nnQuery(double[] center) {

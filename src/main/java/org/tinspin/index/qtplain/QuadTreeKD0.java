@@ -283,7 +283,7 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 	/**
 	 * Resettable query iterator.
 	 *
-	 * @param <T>
+	 * @param <T> Value type
 	 */
 	public static class QIterator<T> implements QueryIterator<PointEntry<T>> {
 

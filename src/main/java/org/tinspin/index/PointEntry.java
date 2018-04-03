@@ -20,7 +20,7 @@ package org.tinspin.index;
 /**
  * This represents a point entry. 
  * 
- * @param <T>
+ * @param <T> Value type
  */
 public interface PointEntry<T> {
 

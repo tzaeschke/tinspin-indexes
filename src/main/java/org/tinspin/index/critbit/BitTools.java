@@ -54,7 +54,7 @@ public class BitTools {
 	}
 
 	/**
-	 * @param value
+	 * @param value Value to be transformed
 	 * @param ret The array used to store the return value
 	 * @return long representation.
 	 */
@@ -118,8 +118,8 @@ public class BitTools {
 
 	/**
 	 * Reverses the value, considering that not all 64bits of the long value are used.
-	 * @param l
-	 * @param usedBits
+	 * @param l value to be reversed
+	 * @param usedBits Number of bits to be considered 
 	 * @return Reversed value
 	 */
 	public static long reverse(long l, int usedBits) {

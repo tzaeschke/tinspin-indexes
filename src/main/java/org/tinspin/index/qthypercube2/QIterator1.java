@@ -26,7 +26,7 @@ import org.tinspin.index.QueryIterator;
 /**
  * Resettable query iterator.
  *
- * @param <T>
+ * @param <T> Value type
  */
 public class QIterator1<T> implements QueryIterator<PointEntry<T>> {
 

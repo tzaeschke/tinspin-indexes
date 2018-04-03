@@ -28,27 +28,63 @@ import org.tinspin.index.critbit.CritBit.QueryIterator;
  */
 public interface CritBit1D<V> {
 
-	/** @see CritBit#put(long[], Object) */
+	/**
+	 * @param key key
+	 * @param value value 
+	 * @return previous value or 'null' if none existed
+	 *
+	 * @see CritBit#put(long[], Object) 
+	 */
 	V put(long[] key, V value);
 
-	/** @see CritBit#contains(long[]) */
+	/** 
+	 * @param key key
+	 * @return 'true' if the key exists
+	 *
+	 * @see CritBit#contains(long[]) 
+	 */
 	boolean contains(long[] key);
 
-	/** @see CritBit#query(long[], long[]) */
+	/** 
+	 * @param min Lower left corner of the query window
+	 * @param max Upper right corner of the query window
+	 * @return Iterator over query result
+	 * 
+	 * @see CritBit#query(long[], long[]) 
+	 */
 	QueryIterator<V> query(long[] min, long[] max);
 
-	/** @see CritBit#size() */
+	/** 
+	 * @return Number of entries
+	 *  
+	 * @see CritBit#size() 
+	 */
 	int size();
 
-	/** @see CritBit#remove(long[]) */
+	/** 
+	 * @param key key
+	 * @return previous value or 'null' if none existed
+	 * 
+	 * @see CritBit#remove(long[]) 
+	 */
 	V remove(long[] key);
 
-	/** @see CritBit#printTree() */
+	/** 
+	 * @see CritBit#printTree()
+	 */
 	void printTree();
 
-	/** @see CritBit#get(long[]) */
+	/** 
+	 * @param key key
+	 * 
+	 * @see CritBit#get(long[]) 
+	 */
 	V get(long[] key);
 
-	/** @see CritBit#iterator() */
+	/**
+	 * @return the value or 'null' if the key does not exists
+	 * 
+	 * @see CritBit#iterator() 
+	 */
 	FullIterator<V> iterator();
 }

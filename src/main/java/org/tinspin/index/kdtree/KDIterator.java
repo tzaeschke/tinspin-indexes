@@ -9,7 +9,7 @@ import org.tinspin.index.QueryIterator;
 /**
  * Resetable query iterator.
  *
- * @param <T>
+ * @param <T> Value type
  */
 public class KDIterator<T> implements QueryIterator<PointEntry<T>> {
 

@@ -56,6 +56,8 @@ public interface PointIndex<T> extends Index<T> {
 	QueryIterator<? extends PointEntry<T>> iterator();
 
 	/**
+	 * @param min Lower left corner of the query window
+	 * @param max Upper right corner of the query window
 	 * @return All points that lie inside the query rectangle.
 	 */
 	QueryIterator<PointEntry<T>> query(double[] min, double[] max);

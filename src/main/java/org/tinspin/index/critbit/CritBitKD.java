@@ -27,25 +27,58 @@ import org.tinspin.index.critbit.CritBit.QueryIteratorKD;
  */
 public interface CritBitKD<V> {
 
-	/** @see CritBit#putKD(long[], Object) */
+	/** 
+	 * @param key key
+	 * @param value value 
+	 * @return previous value or 'null' if none existed
+	 * 
+	 * @see CritBit#putKD(long[], Object) 
+	 */
 	V putKD(long[] key, V value);
 
-	/** @see CritBit#containsKD(long[]) */
+	/** 
+	 * @param key key
+	 * @return 'true' if the key exists
+	 * 
+	 * @see CritBit#containsKD(long[]) 
+	 */
 	boolean containsKD(long[] key);
 
-	/** @see CritBit#size() */  
+	/**
+	 * @return Number of entries
+	 *  
+	 * @see CritBit#size() 
+	 */  
 	int size();
 
-	/** @see CritBit#queryKD(long[], long[]) */  
+	/** 
+	 * @param lowerLeft Lower left corner of the query window
+	 * @param upperRight Upper right corner of the query window
+	 * @return Iterator over query result
+	 * 
+	 * @see CritBit#queryKD(long[], long[]) 
+	 */  
 	QueryIteratorKD<V> queryKD(long[] lowerLeft, long[] upperRight);
 
-	/** @see CritBit#removeKD(long[]) */  
+	/** 
+	 * @param key key
+	 * @return previous value or 'null' if none existed
+	 * 
+	 * @see CritBit#removeKD(long[]) 
+	 */  
 	V removeKD(long[] key);
 
-	/** @see CritBit#printTree() */  
+	/** 
+	 * @see CritBit#printTree() 
+	 */  
 	void printTree();
 
-	/** @see CritBit#getKD(long[]) */  
+	/** 
+	 * @param key key
+	 * @return the value or 'null' if the key does not exists
+	 * 
+	 * @see CritBit#getKD(long[]) 
+	 */  
 	V getKD(long[] key);
 
 }

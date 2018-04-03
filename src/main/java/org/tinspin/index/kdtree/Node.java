@@ -27,7 +27,7 @@ import org.tinspin.index.kdtree.KDTree.KDStats;
  * 
  * @author ztilmann
  *
- * @param <T>
+ * @param <T> Value type
  */
 public class Node<T> implements PointEntry<T> {
 
