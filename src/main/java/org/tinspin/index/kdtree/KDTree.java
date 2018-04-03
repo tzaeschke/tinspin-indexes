@@ -260,14 +260,24 @@ public class KDTree<T> implements PointIndex<T> {
 			int pos = removeResult.pos;
 			removeResult.node = null; 
 			//randomize search direction (modCount)
-			if (((modCount & 0x1) == 0 || eToRemove.getHi() == null) && eToRemove.getLo() != null) {
+//			if (((modCount & 0x1) == 0 || eToRemove.getHi() == null) && eToRemove.getLo() != null) {
+//				//get replacement from left
+//				removeResult.best = Double.NEGATIVE_INFINITY;
+//				removeMaxLeaf(eToRemove.getLo(), eToRemove, pos, removeResult);
+//			} else if (eToRemove.getHi() != null) {
+//				//get replacement from right
+//				removeResult.best = Double.POSITIVE_INFINITY;
+//				removeMinLeaf(eToRemove.getHi(), eToRemove, pos, removeResult);
+//			}
+			if (eToRemove.getHi() != null) {
+				//get replacement from right
+				//This is preferable, because it cannot break the invariant
+				removeResult.best = Double.POSITIVE_INFINITY;
+				removeMinLeaf(eToRemove.getHi(), eToRemove, pos, removeResult);
+			} else if (eToRemove.getLo() != null) {
 				//get replacement from left
 				removeResult.best = Double.NEGATIVE_INFINITY;
 				removeMaxLeaf(eToRemove.getLo(), eToRemove, pos, removeResult);
-			} else if (eToRemove.getHi() != null) {
-				//get replacement from right
-				removeResult.best = Double.POSITIVE_INFINITY;
-				removeMinLeaf(eToRemove.getHi(), eToRemove, pos, removeResult);
 			}
 			eToRemove.setKeyValue(removeResult.node.getKey(), removeResult.node.getValue());
 			eToRemove = removeResult.node;
@@ -296,27 +306,26 @@ public class KDTree<T> implements PointIndex<T> {
 	
 	private void removeMinLeaf(Node<T> node, Node<T> parent, int pos, RemoveResult<T> result) {
 		//Split in 'interesting' dimension
-		double localX = node.getKey()[pos];
 		if (pos == node.getDim()) {
 			//We strictly look for leaf nodes with left==null
+			// -> left!=null means the left child is at least as small as the current node
 			if (node.getLo() != null) {
 				removeMinLeaf(node.getLo(), node, pos, result);
-			} else if (localX <= result.best) {
+			} else if (node.getKey()[pos] <= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
-				result.best = localX;
+				result.best = node.getKey()[pos];
 				result.pos = node.getDim();
-				invariantBroken |= result.best == localX;
 			}
 		} else {
 			//split in any other dimension.
 			//First, check local key. 
+			double localX = node.getKey()[pos];
 			if (localX <= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
 				result.best = localX;
 				result.pos = node.getDim();
-				invariantBroken |= result.best == localX;
 			}
 			if (node.getLo() != null) {
 				removeMinLeaf(node.getLo(), node, pos, result);
@@ -329,21 +338,21 @@ public class KDTree<T> implements PointIndex<T> {
 	
 	private void removeMaxLeaf(Node<T> node, Node<T> parent, int pos, RemoveResult<T> result) {
 		//Split in 'interesting' dimension
-		double localX = node.getKey()[pos];
 		if (pos == node.getDim()) {
 			//We strictly look for leaf nodes with left==null
 			if (node.getHi() != null) {
 				removeMaxLeaf(node.getHi(), node, pos, result);
-			} else if (localX >= result.best) {
+			} else if (node.getKey()[pos] >= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
-				result.best = localX;
+				result.best = node.getKey()[pos];
 				result.pos = node.getDim();
-				invariantBroken |= result.best == localX;
+				invariantBroken |= result.best == node.getKey()[pos];
 			}
 		} else {
 			//split in any other dimension.
 			//First, check local key. 
+			double localX = node.getKey()[pos];
 			if (localX >= result.best) {
 				result.node = node;
 				result.nodeParent = parent;

@@ -18,6 +18,8 @@
 package org.tinspin.index.kdtree;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
@@ -64,6 +66,27 @@ public class KDTreeTest {
 		Random R = new Random(245);
 		for (double[] p : point_list) {
 			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		}
+		smokeTest(point_list);
+	}
+	
+	/**
+	 * Tests handling of all points being on a line, i.e. correct handling of <=, etc.
+	 */
+	@Test
+	public void smokeTest2D_Line() {
+		double[][] point_list = new double[10000][3];
+		int n = 0;
+		for (double[] p : point_list) {
+			p[0] = n % 3;
+			p[1] = n++; 
+			p[2] = n % 5;
+		}
+		List<double[]> list = Arrays.asList(point_list);
+		Collections.shuffle(list);
+		point_list = list.toArray(point_list);
+		for (double[] p : point_list) {
+			System.out.println(Arrays.toString(p));
 		}
 		smokeTest(point_list);
 	}
