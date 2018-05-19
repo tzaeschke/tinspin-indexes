@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -31,6 +32,9 @@ import org.junit.Test;
 import org.tinspin.index.RectangleEntryDist;
 
 public class RTreeMixedQueryTest {
+	
+	private static final int DIMS = 8;
+	private static final int REPEAT = 10;
 
 	// seed chosen randomly using a well equilibrated dice :-)
 	// [makes test reproducible]
@@ -43,19 +47,19 @@ public class RTreeMixedQueryTest {
 	@SuppressWarnings("rawtypes")
 	@Test
 	public void test() {
-		RTree<String> tree = RTree.createRStar(3);
+		RTree<String> tree = RTree.createRStar(DIMS);
 
 		int N_ELEMENTS = 100000;
 		for (int i = 0; i < N_ELEMENTS; i++) {
-			double[] position = randDouble(3);
+			double[] position = randDouble(DIMS);
 			assert tree.queryExact(position, position) == null;
 			tree.insert(position, "#" + i);
 		}
 
 		Iterable<RectangleEntryDist<String>> q = tree.queryRangedNearestNeighbor(
-				new double[] { 1, 1, 1 }, 
+				createAndFill( 1 ), 
 				DistanceFunction.CENTER, DistanceFunction.EDGE,
-				new double[] { 0.5, 0.5, 0.5 }, new double[] { 1, 1, 1 });
+				createAndFill( 0.5 ), createAndFill( 1 ));
 
 
 		double lastDistance = 0;
@@ -79,13 +83,16 @@ public class RTreeMixedQueryTest {
 		}
 
 		perfTestNN(tree);
-		System.out.println("maxQueueSize=" + maxQueueSize);
-		assertEquals("Test should be reproducible thanks to fixed seed", 12582, nElements);
+		System.out.println("maxQueueSize=" + maxQueueSize + " / ");
+		System.out.println("nElements=" + nElements);
+		if (DIMS == 3) { 
+			assertEquals("Test should be reproducible thanks to fixed seed", 12582, nElements);
+		}
 	}
 
 	private void perfTestNN(RTree<String> tree) {
 		int k = tree.size() / 8;
-		double[] center = new double[] { 1, 1, 1 };
+		double[] center = createAndFill( 1 );
 
 		{
 			Iterable<RectangleEntryDist<String>> q = tree.queryRangedNearestNeighbor(
@@ -159,7 +166,7 @@ public class RTreeMixedQueryTest {
 	}
 
 	public long timeOf(Runnable run) {
-		final int nRuns = 5;
+		final int nRuns = REPEAT;
 		long time = 0;
 		for (int i = 0; i <= nRuns; i++) {
 			long timeBefore = System.nanoTime();
@@ -173,6 +180,12 @@ public class RTreeMixedQueryTest {
 		return time / nRuns;
 	}
 
+	private static double[] createAndFill(double d) {
+		double[] ret = new double[DIMS];
+		Arrays.fill(ret, d);
+		return ret;
+	}
+	
 	private double[] randDouble(int n) {
 		double[] r = new double[n];
 		for (int i = 0; i < n; i++) {

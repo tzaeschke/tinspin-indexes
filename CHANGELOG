@@ -1,3 +1,7 @@
+[2018-05-19]
+=======
+- Updated R-Tree to use new kNN algorithm, a variant of Hjaltason and Samet
+ 
 
 [2018-04-03]
 v 1.6.0/1.6.1
