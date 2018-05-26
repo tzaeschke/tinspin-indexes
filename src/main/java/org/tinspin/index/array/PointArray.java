@@ -154,8 +154,9 @@ public class PointArray<T> implements PointIndex<T> {
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
-		public void reset(double[] center, int k) {
+		public AQueryIteratorKNN reset(double[] center, int k) {
 			it = ((List)knnQuery(center, k)).iterator();
+			return this;
 		}
     }
     

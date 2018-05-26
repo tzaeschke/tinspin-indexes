@@ -407,8 +407,9 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
-		public void reset(double[] center, int k) {
+		public QRQueryIteratorKNN reset(double[] center, int k) {
 			it = ((List)knnQuery(center, k)).iterator();
+			return this;
 		}
     }
     

@@ -155,8 +155,9 @@ public class RectArray<T> implements RectangleIndex<T> {
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
-		public void reset(double[] center, int k) {
+		public AQueryIteratorKNN reset(double[] center, int k) {
 			it = ((List)knnQuery(center, k)).iterator();
+			return this;
 		}
 	}
 

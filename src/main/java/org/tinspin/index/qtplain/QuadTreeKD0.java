@@ -474,8 +474,9 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
-		public void reset(double[] center, int k) {
+		public QQueryIteratorKNN reset(double[] center, int k) {
 			it = ((List)knnQuery(center, k)).iterator();
+			return this;
 		}
     }
     

@@ -1,6 +1,7 @@
 [2018-05-19]
 =======
 - Updated R-Tree to use new kNN algorithm, a variant of Hjaltason and Samet
+- API Change: Query iterator's reset() now returns 'this'.
  
 
 [2018-04-03]

@@ -21,6 +21,6 @@ import java.util.Iterator;
 
 public interface QueryIteratorKNN<T> extends Iterator<T> {
 
-	void reset(double[] center, int k);
+	QueryIteratorKNN<T> reset(double[] center, int k);
 	
 }

@@ -187,8 +187,9 @@ public class PHTreeP<T> implements PointIndex<T> {
 		}
 
 		@Override
-		public void reset(double[] center, int k) {
+		public QueryIteratorKnnPH<T> reset(double[] center, int k) {
 			iter.reset(k, null, center);
+			return this;
 		}
 		
 	}

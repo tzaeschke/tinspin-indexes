@@ -138,8 +138,9 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 		}
 
 		@Override
-		public void reset(double[] center, int k) {
+		public PointDIter<T> reset(double[] center, int k) {
 			it.reset(center, k);
+			return this;
 		}
 	}
 	

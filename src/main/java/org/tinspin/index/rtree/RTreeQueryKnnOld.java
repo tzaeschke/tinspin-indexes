@@ -105,8 +105,9 @@ public class RTreeQueryKnnOld<T> implements QueryIteratorKNN<RectangleEntryDist<
 	}
 
 	@Override
-	public void reset(double[] center, int k) {
+	public RTreeQueryKnnOld<T> reset(double[] center, int k) {
 		reset(center, k, null);
+		return this;
 	}
 	
 	public void reset(double[] center, int k, DistanceFunction dist) {

@@ -61,8 +61,9 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 
 	
 	@Override
-	public void reset(double[] center, int k) {
+	public RTreeQueryKnn<T> reset(double[] center, int k) {
 		reset(center, k, null);
+		return this;
 	}
 	
 	
@@ -90,7 +91,7 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 		//search
 		search(k);
 		iter = candidates.iterator();
-		System.out.println("Queue size: " + queue.size());
+		//System.out.println("Queue size: " + queue.size());
 	}
 	
 	

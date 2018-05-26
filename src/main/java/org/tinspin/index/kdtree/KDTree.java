@@ -583,8 +583,9 @@ public class KDTree<T> implements PointIndex<T> {
 		}
 
 		@Override
-		public void reset(double[] center, int k) {
+		public KDQueryIteratorKNN<T> reset(double[] center, int k) {
 			it = tree.knnQuery(center, k).iterator();
+			return this;
 		}
     }
     
