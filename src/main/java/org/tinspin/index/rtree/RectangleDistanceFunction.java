@@ -20,10 +20,10 @@ package org.tinspin.index.rtree;
 import org.tinspin.index.RectangleEntry;
 
 @FunctionalInterface
-public interface DistanceFunction {
+public interface RectangleDistanceFunction {
 
-	public static DistanceFunction CENTER = DistanceFunction::centerDistance;
-	public static DistanceFunction EDGE = DistanceFunction::edgeDistance;
+	public static RectangleDistanceFunction CENTER = RectangleDistanceFunction::centerDistance;
+	public static RectangleDistanceFunction EDGE = RectangleDistanceFunction::edgeDistance;
 
 	double dist(double[] center, double[] min, double[] max);
 
@@ -48,9 +48,9 @@ public interface DistanceFunction {
 	 * This class completely ignores the center given as parameter to the interface.
 	 * 
 	 * TODO: maybe we could get rid of the center parameter altogether and always let 
-	 *       the DistanceFunction hold it's reference points?
+	 *       the RectangleDistanceFunction hold it's reference points?
 	 */
-	public static class RectangleDist implements DistanceFunction {
+	public static class RectangleDist implements RectangleDistanceFunction {
 		private final double[] lower;
 		private final double[] upper;
 
@@ -81,11 +81,11 @@ public interface DistanceFunction {
 	 * Special wrapper class which takes the inverse or the given function.
 	 * Can be used to get the farthest neighbors using the nearest neighbor algorithm.
 	 */
-	public static class FarthestNeighbor implements DistanceFunction {
+	public static class FarthestNeighbor implements RectangleDistanceFunction {
 		private static final double EPSILON = 2 * Double.MIN_VALUE;
-		private final DistanceFunction dist;
+		private final RectangleDistanceFunction dist;
 
-		public FarthestNeighbor(DistanceFunction dist) {
+		public FarthestNeighbor(RectangleDistanceFunction dist) {
 			this.dist = dist;
 		}
 

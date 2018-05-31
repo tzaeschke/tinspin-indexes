@@ -58,7 +58,7 @@ public class RTreeMixedQueryTest {
 
 		Iterable<RectangleEntryDist<String>> q = tree.queryRangedNearestNeighbor(
 				createAndFill( 1 ), 
-				DistanceFunction.CENTER, DistanceFunction.EDGE,
+				RectangleDistanceFunction.CENTER, RectangleDistanceFunction.EDGE,
 				createAndFill( 0.5 ), createAndFill( 1 ));
 
 
@@ -96,9 +96,9 @@ public class RTreeMixedQueryTest {
 
 		{
 			Iterable<RectangleEntryDist<String>> q = tree.queryRangedNearestNeighbor(
-					center, DistanceFunction.EDGE,
-					DistanceFunction.EDGE, Filter.ALL);
-			RTreeQueryKnn<String> res = tree.queryKNN(center, k, DistanceFunction.EDGE);
+					center, RectangleDistanceFunction.EDGE,
+					RectangleDistanceFunction.EDGE, Filter.ALL);
+			RTreeQueryKnn<String> res = tree.queryKNN(center, k, RectangleDistanceFunction.EDGE);
 			// test that we get the same results
 			Iterator<RectangleEntryDist<String>> iterator = q.iterator();
 			int i=0;
@@ -115,7 +115,7 @@ public class RTreeMixedQueryTest {
 		fillProcessorCache();
 
 		long timeRef = timeOf(() -> {
-			RTreeQueryKnn<String> res = tree.queryKNN(center, k, DistanceFunction.EDGE);
+			RTreeQueryKnn<String> res = tree.queryKNN(center, k, RectangleDistanceFunction.EDGE);
 			int cnt = 0;
 			for(;res.hasNext();) {
 				cnt++;
@@ -129,8 +129,8 @@ public class RTreeMixedQueryTest {
 
 		long timeMixed = timeOf(() -> {
 			Iterable<RectangleEntryDist<String>> q = tree.queryRangedNearestNeighbor(
-					center, DistanceFunction.EDGE,
-					DistanceFunction.EDGE, Filter.ALL);
+					center, RectangleDistanceFunction.EDGE,
+					RectangleDistanceFunction.EDGE, Filter.ALL);
 			int cnt = 0;
 			if (false) {
 				/* 

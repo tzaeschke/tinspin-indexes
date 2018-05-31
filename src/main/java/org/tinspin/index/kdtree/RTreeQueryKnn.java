@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.rtree;
+package org.tinspin.index.kdtree;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
@@ -48,15 +48,15 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	private final RTree<T> tree;
 	private double[] center;
 	private Iterator<DistEntry<T>> iter;
-	private RectangleDistanceFunction dist;
+	private DistanceFunction dist;
 	private final ArrayList<DistEntry<T>> candidates = new ArrayList<>();
 	private final ArrayList<DistEntry<Object>> pool = new ArrayList<>();
 	private final PriorityQueue<DistEntry<Object>> queue = new PriorityQueue<>(COMP);
 	
 	
-	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, RectangleDistanceFunction dist) {
+	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, DistanceFunction dist) {
 		this.tree = tree;
-		reset(center, k, dist == null ? RectangleDistanceFunction.EDGE : dist);
+		reset(center, k, dist == null ? DistanceFunction.EDGE : dist);
 	}
 
 	
@@ -67,11 +67,11 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	}
 	
 	
-	public void reset(double[] center, int k, RectangleDistanceFunction dist) {
+	public void reset(double[] center, int k, DistanceFunction dist) {
 		if (dist != null) {
 			this.dist = dist;
 		}
-		if (this.dist != RectangleDistanceFunction.EDGE) {
+		if (this.dist != DistanceFunction.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
 		this.center = center;

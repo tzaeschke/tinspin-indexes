@@ -101,8 +101,8 @@ class RTreeMixedQuery2<T> implements Iterator<RectangleEntryDist<T>> {
 
 	private final RTree<T> tree;
 	private final double[] center;
-	private final DistanceFunction dist;
-	private final DistanceFunction closestDist;
+	private final RectangleDistanceFunction dist;
+	private final RectangleDistanceFunction closestDist;
 	private final PriorityQueue<RTreeNodeWrapper<T>> queue = new PriorityQueue<>();
 	private final Filter filter;
 	private RTreeNodeWrapper<T> next;
@@ -118,7 +118,7 @@ class RTreeMixedQuery2<T> implements Iterator<RectangleEntryDist<T>> {
 	private int remove_hit;
 
 	public RTreeMixedQuery2(RTree<T> tree, double[] center, Filter filter, 
-			DistanceFunction dist, DistanceFunction closestDist) {
+			RectangleDistanceFunction dist, RectangleDistanceFunction closestDist) {
 		this.tree = tree;
 		this.center = center;
 		this.closestDist = closestDist;

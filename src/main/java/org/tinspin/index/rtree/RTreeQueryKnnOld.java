@@ -83,7 +83,7 @@ public class RTreeQueryKnnOld<T> implements QueryIteratorKNN<RectangleEntryDist<
 	private IteratorStack stack;
 	private final KnnResult<T> candidates;
 	private Iterator<DistEntry<T>> iter;
-	private DistanceFunction dist;
+	private RectangleDistanceFunction dist;
 	
 	private static class IterPos<T> {
 		DistEntry<RTreeNode<T>>[] subNodes;
@@ -97,11 +97,11 @@ public class RTreeQueryKnnOld<T> implements QueryIteratorKNN<RectangleEntryDist<
 	}
 	
 	public RTreeQueryKnnOld(RTree<T> tree, double[] center, int k, 
-			DistanceFunction dist) {
+			RectangleDistanceFunction dist) {
 		this.stack = new IteratorStack(tree.getDepth());
 		this.tree = tree;
 		this.candidates = new KnnResult<>(k);
-		reset(center, k, dist == null ? DistanceFunction.EDGE : dist);
+		reset(center, k, dist == null ? RectangleDistanceFunction.EDGE : dist);
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class RTreeQueryKnnOld<T> implements QueryIteratorKNN<RectangleEntryDist<
 		return this;
 	}
 	
-	public void reset(double[] center, int k, DistanceFunction dist) {
+	public void reset(double[] center, int k, RectangleDistanceFunction dist) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth());
 		} else {
@@ -119,7 +119,7 @@ public class RTreeQueryKnnOld<T> implements QueryIteratorKNN<RectangleEntryDist<
 		if (dist != null) {
 			this.dist = dist;
 		}
-		if (this.dist != DistanceFunction.EDGE) {
+		if (this.dist != RectangleDistanceFunction.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
 		this.center = center;

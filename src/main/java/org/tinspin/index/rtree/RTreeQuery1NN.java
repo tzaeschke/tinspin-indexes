@@ -75,7 +75,7 @@ public class RTreeQuery1NN<T> {
 	private final RTree<T> tree;
 	private double[] center;
 	private IteratorStack stack;
-	private DistanceFunction dist;
+	private RectangleDistanceFunction dist;
 	
 	private static class IterPos<T> {
 		final DistEntry<RTreeNode<T>>[] subNodes;
@@ -102,7 +102,7 @@ public class RTreeQuery1NN<T> {
 		this.tree = tree;
 	}
 
-	public DistEntry<T> reset(double[] center, DistanceFunction dist) {
+	public DistEntry<T> reset(double[] center, RectangleDistanceFunction dist) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth(), RTree.NODE_MAX_DIR);
 		} else {
@@ -113,9 +113,9 @@ public class RTreeQuery1NN<T> {
 		}
 		//set default if none is given
 		if (this.dist == null) {
-			this.dist = DistanceFunction.EDGE;
+			this.dist = RectangleDistanceFunction.EDGE;
 		}
-		if (this.dist != DistanceFunction.EDGE) {
+		if (this.dist != RectangleDistanceFunction.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
 		this.center = center;

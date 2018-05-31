@@ -328,24 +328,24 @@ public class RTree<T> implements RectangleIndex<T> {
 	 */
 	@Override
 	public RectangleEntryDist<T> query1NN(double[] center) {
-		return new RTreeQuery1NN<>(this).reset(center, DistanceFunction.EDGE);
+		return new RTreeQuery1NN<>(this).reset(center, RectangleDistanceFunction.EDGE);
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.tinspin.index.rtree.Index#queryKNN(double[], int, org.tinspin.index.rtree.DistanceFunction)
+	 * @see org.tinspin.index.rtree.Index#queryKNN(double[], int, org.tinspin.index.rtree.RectangleDistanceFunction)
 	 */
 	@Override
 	public RTreeQueryKnn<T> queryKNN(double[] center, int k) {
-		return new RTreeQueryKnn<>(this, center, k, DistanceFunction.EDGE);
+		return new RTreeQueryKnn<>(this, center, k, RectangleDistanceFunction.EDGE);
 	}
 	
-	public RTreeQueryKnn<T> queryKNN(double[] center, int k, DistanceFunction dist) {
+	public RTreeQueryKnn<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist) {
 		return new RTreeQueryKnn<>(this, center, k, dist);
 	}
 	
 	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(
-			double[] center, DistanceFunction dist,
-			DistanceFunction closestDist, double[] minBound, double[] maxBound) {
+			double[] center, RectangleDistanceFunction dist,
+			RectangleDistanceFunction closestDist, double[] minBound, double[] maxBound) {
 		return queryRangedNearestNeighbor(center, dist, closestDist, 
 				new Filter.RectangleIntersectFilter(minBound, maxBound));
 	}
@@ -357,17 +357,17 @@ public class RTree<T> implements RectangleIndex<T> {
 	 * 
 	 * @param center       Target position passed as parameter to the distance functions. 
 	 *                     Can be {@code null} if your distance function supports 
-	 *                     it (like {@code DistanceFunction.RectangleDist}).
+	 *                     it (like {@code RectangleDistanceFunction.RectangleDist}).
 	 * @param dist         Distance function used to compare entries 
-	 * 				       (example: {@code DistanceFunction.EDGE} or {@code DistanceFunction.CENTER})
+	 * 				       (example: {@code RectangleDistanceFunction.EDGE} or {@code RectangleDistanceFunction.CENTER})
 	 * @param closestDist  Distance of the best point in a given rectangle  
-	 *                     (example: {@code DistanceFunction.EDGE} but *not* {@code DistanceFunction.CENTER})
+	 *                     (example: {@code RectangleDistanceFunction.EDGE} but *not* {@code RectangleDistanceFunction.CENTER})
 	 * @param filter       Filter to limit the results for range queries 
 	 *                     (example: {@code new Filter.RectangleIntersectFilter(min, max)})
 	 * @return             An Iterable which lazily calculates the nearest neighbors. 
 	 */
-	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(double[] center, DistanceFunction dist,
-			DistanceFunction closestDist, Filter filter) {
+	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(double[] center, RectangleDistanceFunction dist,
+			RectangleDistanceFunction closestDist, Filter filter) {
 		RTree<T> self = this;
 		return new Iterable<RectangleEntryDist<T>>() {
 
