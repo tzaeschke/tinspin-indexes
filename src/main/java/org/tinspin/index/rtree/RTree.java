@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import org.tinspin.index.RectangleDistanceFunction;
 import org.tinspin.index.RectangleEntryDist;
 import org.tinspin.index.RectangleIndex;
 

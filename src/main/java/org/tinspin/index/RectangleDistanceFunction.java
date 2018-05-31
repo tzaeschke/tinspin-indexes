@@ -15,9 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.rtree;
-
-import org.tinspin.index.RectangleEntry;
+package org.tinspin.index;
 
 @FunctionalInterface
 public interface RectangleDistanceFunction {

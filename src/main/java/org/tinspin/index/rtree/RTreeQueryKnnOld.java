@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.RectangleDistanceFunction;
 import org.tinspin.index.RectangleEntryDist;
 
 /**

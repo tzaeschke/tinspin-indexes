@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import org.tinspin.index.RectangleDistanceFunction;
+
 /**
  * 1-NN search with EDGE distance and presorting of entries.
  * 

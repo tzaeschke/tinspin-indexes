@@ -29,6 +29,7 @@ import java.util.Random;
 import java.util.Set;
 
 import org.junit.Test;
+import org.tinspin.index.RectangleDistanceFunction;
 import org.tinspin.index.RectangleEntryDist;
 
 public class RTreeMixedQueryTest {
