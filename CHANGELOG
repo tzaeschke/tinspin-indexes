@@ -2,6 +2,7 @@
 =======
 - Updated R-Tree to use new kNN algorithm, a variant of Hjaltason and Samet
 - API Change: Query iterator's reset() now returns 'this'.
+- Update 20 use PH-Tree 2.0.1
  
 
 [2018-04-03]
