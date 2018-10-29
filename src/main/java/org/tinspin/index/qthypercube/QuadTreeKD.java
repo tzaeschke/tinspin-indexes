@@ -528,7 +528,7 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public QQueryIteratorKNN queryKNN(double[] center, int k) {
+	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
 		return new QQueryIteratorKNN(center, k);
 	}
 

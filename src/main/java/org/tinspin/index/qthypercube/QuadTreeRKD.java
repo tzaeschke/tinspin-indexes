@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.RectangleEntry;
@@ -494,7 +495,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 	}
 
 	@Override
-	public QRQueryIteratorKNN queryKNN(double[] center, int k) {
+	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k) {
 		return new QRQueryIteratorKNN(center, k);
 	}
 
