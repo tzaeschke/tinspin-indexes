@@ -677,7 +677,7 @@ public class KDTree<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public KDQueryIteratorKNN<T> queryKNN(double[] center, int k) {
+	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
 		return new KDQueryIteratorKNN<>(this, center, k);
 	}
 
