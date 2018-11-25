@@ -2,6 +2,7 @@ package org.tinspin.index.covertree;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import org.tinspin.index.PointEntry;
 import org.tinspin.index.PointEntryDist;
@@ -16,6 +17,16 @@ import org.tinspin.index.QueryIteratorKNN;
  * Proceedings of the 32nd International Conference on Machine Learning,
  * Lille, France, 2015. JMLR: W&CP volume 37.
  * 
+ * Changes over original algorithms:
+ *  - findNearestNeighbour compares
+ *  	if (d(y, x) > (d(_x_, q.point()) - q.maxdist(this)))
+ *    instead of 
+ *      if (d(y, x) > (d(_y_, q.point()) - q.maxdist(this)))
+ *  - maxDist: 
+ *    - lazily calculated.
+ *    - calculated while excluding subbranches that don't need to be calculated
+ *    - Invalidated on modifications (should speed up remove/insert)
+ *  
  * @author Tilmann Zäschke
  */
 public class CoverTree<T> implements PointIndex<T> {
@@ -301,12 +312,10 @@ public class CoverTree<T> implements PointIndex<T> {
 
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		return new KNNIterator<>(this).reset(center, k);
 	}
 
-	private void findNearestNeighbor(Node<T> p, Point<T> x, 
+	private void findNearestNeighbor(Node<T> p, double[] x, 
 			int k, ArrayList<PointDist<T>> candidates) {
 //		Algorithm 1 Find nearest neighbor
 //		function findNearestNeighbor(cover tree p, query
@@ -319,25 +328,60 @@ public class CoverTree<T> implements PointIndex<T> {
 //		6: return y
 		Point<T> nn = p.point();
 		double distNN = d(nn, x);
-//		if (candidates.size() < k) {
-//			candidates.add(new PointDist<>(nn.point(), nn.value(), distNN));
-//			candidates.sort(c);
-//		} else if (distNN < candidates.get(k-1).dist()) {
-//			candidates.remove(k-1);
-//			candidates.add(new PointDist<>(nn.point(), nn.value(), distNN));
-//			candidates.sort(c);
-//		}
-//
-//		ArrayList<Node<T>> children = p.getChildren();
-//		for (int i = 0; i < children.size(); i++) {
-//			Node<T> q = children.get(i);
-//			//TODO cache d(y, x)
+		if (candidates.size() < k) {
+			candidates.add(new PointDist<>(nn.point(), nn.value(), distNN));
+			candidates.sort(PointDist.COMPARATOR);
+		} else if (distNN < candidates.get(k-1).dist()) {
+			candidates.remove(k-1);
+			candidates.add(new PointDist<>(nn.point(), nn.value(), distNN));
+			candidates.sort(PointDist.COMPARATOR);
+		}
+
+		ArrayList<Node<T>> children = p.getChildren();
+		for (int i = 0; i < children.size(); i++) {
+			Node<T> q = children.get(i);
+			double distCurrentWorst = candidates.get(candidates.size() - 1).dist();
+			//TODO cache d(y, x)
 //			if (d(y, x) > (d(y, q.point()) - q.maxdist(this))) {
 //				y = findNearestNeighbor(q, x, y);
 //			}
-//		}
+			if (distCurrentWorst > (d(q.point(), x) - q.maxdist(this))) {
+				findNearestNeighbor(q, x, k, candidates);
+			}
+		}
 	}
 
+	private static class KNNIterator<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+
+		private final CoverTree<T> tree;
+		private final ArrayList<PointDist<T>> result = new ArrayList<>();
+		private Iterator<PointDist<T>> iter;
+		
+		public KNNIterator(CoverTree<T> tree) {
+			this.tree = tree;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return iter.hasNext();
+		}
+
+		@Override
+		public PointEntryDist<T> next() {
+			return iter.next();
+		}
+
+		@Override
+		public QueryIteratorKNN<PointEntryDist<T>> reset(double[] center, int k) {
+			result.clear();
+			if (tree.root != null) {
+				tree.findNearestNeighbor(tree.root, center, k, result);
+			}
+			iter = result.iterator();
+			return this;
+		}	
+	}
+	
 	double d(Point<?> x, Point<?> y) {
 		return d(x, y.point());
 	}
