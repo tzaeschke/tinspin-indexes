@@ -15,9 +15,9 @@ public class Node<T> {
 	private double distToParent;
 	private double maxDist = -1;
 	
-	Node(Point<T> p, double distToParent) {
+	Node(Point<T> p, int level) {
 		this.p = p;
-		this.distToParent = distToParent;
+		this.level = level;
 	}
 
 	public Point<T> point() {
@@ -32,17 +32,17 @@ public class Node<T> {
 		return this.distToParent;
 	}
 	
-	public void addChild(Node<T> node) {
+	public void addChild(Node<T> node, double distToParent) {
 		if (children == null) {
 			children = new ArrayList<>();
 		}
-		double dist = node.distToParent;
-		if (dist > maxDist) {
-			if (node.hasChildren()) {
-				maxDist = -1; //Needs recalc
-			} else {
-				maxDist = dist;
-			}
+		node.distToParent = distToParent;
+		if (node.hasChildren()) {
+			//TODO if (node.distToParent + node.maxDist() > maxDist) {
+			maxDist = -1; //Needs recalc
+			//}
+		} else if (distToParent > maxDist) {
+			maxDist = distToParent;
 		}
 		children.add(node);
 		children.sort(Node.COMPARATOR);
@@ -73,6 +73,8 @@ public class Node<T> {
 		//TODO closest?
 		Node<T> any = children.get(0);
 		if (any.children != null && !any.children.isEmpty()) {
+			//TODO only invalidate if maxDist == d(any, point);
+			maxDist = -1;
 			return any.removeAnyLeaf();
 		}
 		//Not cheap, but better than resorting or returning the furthest child.
@@ -92,6 +94,10 @@ public class Node<T> {
 		return maxDist;
 	}
 
+	void adjustMaxDist(double newDist) {
+		maxDist = Math.max(newDist, maxDist); 
+	}
+	
 	private static <T> double recalcMaxDist(Point<T> p, Node<T> node, CoverTree<T> tree) {
 		double maxDist = 0;
 		if (node.children != null) {
@@ -104,18 +110,18 @@ public class Node<T> {
 				double maxDistChild = child.maxdist(tree);
 				if (maxDistChild + distChild > maxDist) {
 					//traverse children's children.
-					maxDist = recalcMaxDist(p, child, tree);
+					maxDist = Math.max(maxDist, recalcMaxDist(p, child, tree));
 				}
 			}
 		}
 		return maxDist;
 	}
 	
-	public int getLevel() {
+	int getLevel() {
 		return level;
 	}
 
-	public void setLevel(int level) {
+	void setLevel(int level) {
 		this.level = level;
 	}
 
