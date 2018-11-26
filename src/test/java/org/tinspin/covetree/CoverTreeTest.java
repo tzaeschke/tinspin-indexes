@@ -135,7 +135,7 @@ public class CoverTreeTest {
 		for (double[] data : point_list) {
 			tree.insert(data, data);
 			//TODO remove
-			//System.out.println(tree.toStringTree());
+			System.out.println(tree.toStringTree());
 			tree.check();
 		}
 //	    System.out.println(tree.toStringTree());

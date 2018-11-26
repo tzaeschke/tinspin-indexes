@@ -26,7 +26,11 @@ import org.tinspin.index.QueryIteratorKNN;
  *    - lazily calculated.
  *    - calculated while excluding subbranches that don't need to be calculated
  *    - Invalidated on modifications (should speed up remove/insert)
- *  
+ *  - Algorithm 2 (insert) uses BASE=1.3:
+ *     BASE*covdist(p)  
+ *     instead of
+ *     2*covdist(p)) 
+ *     
  * @author Tilmann Zäschke
  */
 public class CoverTree<T> implements PointIndex<T> {
@@ -73,7 +77,7 @@ public class CoverTree<T> implements PointIndex<T> {
 	public Stats getStats() {
 		Stats stats = new Stats();
 		if (root != null) {
-			getStats(root, root.getLevel()+1, stats);
+			getStats(root, stats);
 		}
 		return stats;
 	}
@@ -160,7 +164,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		double distPX = d(p.point(),x); 
 		if (distPX > covdist(p)) {
 			//TODO reuse distPX in first iteration?!?
-			while (d(p.point(), x) > 2*covdist(p)) {
+			while (d(p.point(), x) > BASE*covdist(p)) {
 				//3: Remove any leaf q from p
 				Node<T> q = p.removeAnyLeaf();
 				//4: p0 = tree with root q and p as only child
@@ -411,14 +415,11 @@ public class CoverTree<T> implements PointIndex<T> {
 	public void check() {
 		if (root != null) {
 			Stats stats = new Stats(); 
-			getStats(root, root.getLevel() + 1, stats);
+			getStats(root, stats);
 		}
 	}
 	
-	private void getStats(Node<T> node, int parentLevel, Stats stats) {
-		if (node.getLevel() != parentLevel - 1) {
-			throw new IllegalStateException("Level: " + parentLevel + " / " + node.getLevel());
-		}
+	private void getStats(Node<T> node, Stats stats) {
 		stats.nEntries++;
 		stats.minLevel = Math.min(stats.minLevel, node.getLevel());
 		
@@ -426,17 +427,51 @@ public class CoverTree<T> implements PointIndex<T> {
 			double maxDist = -1;
 			stats.maxNodeSize = Math.max(stats.maxNodeSize, node.getChildren().size());
 			for (Node<T> c : node.getChildren()) {
-				maxDist = Math.max(maxDist, c.maxdist(this));
-				getStats(c, node.getLevel(), stats);
+				double distToParent = d(node.point(), c.point());
+				if (distToParent != c.getDistanceToParent()) {
+					throw new IllegalStateException("ParentDist: " + distToParent + " / " + c.getDistanceToParent());
+				}
+				if (node.getLevel() != c.getLevel() + 1) {
+					throw new IllegalStateException("Level: " + node.getLevel() + " / " + c.getLevel());
+				}
+				
+//				maxDist = Math.max(maxDist, c.maxdist(this));
+				getStats(c, stats);
 			}
+			
+			maxDist = getGlobalMaxDist(node); 
+			
 			//TODO !=
 			if (maxDist > node.maxdist(this)) {
 				throw new IllegalStateException("Maxdist: " + maxDist + " / " + node.maxdist(this));
 			}
 			if (maxDist > covdist(node))  {
-				throw new IllegalStateException();
+				throw new IllegalStateException("Maxdist/maxdist()/CovDist: " + maxDist + " / " + node.maxdist(this) + " / " + covdist(node));
 			}
 		}
+	}
+	
+	private double getGlobalMaxDist(Node<T> node) {
+		double currentMax = 0;
+		Point<T> p = node.point();
+		if (node.hasChildren()) {
+			for (Node<T> sub : node.getChildren()) {
+				//TODO remove this 'max'?!?!
+				currentMax = Math.max(currentMax, getGlobalMaxDist(p, sub, currentMax));
+			}
+		}
+		return currentMax;
+	}
+	
+	private double getGlobalMaxDist(Point<T> p, Node<T> node, double currentMax) {
+		double distOfThisNode = d(p, node.point());
+		currentMax = Math.max(currentMax, distOfThisNode);
+		if (node.hasChildren() && distOfThisNode + node.maxdist(this) > currentMax) {
+			for (Node<T> sub : node.getChildren()) {
+				currentMax = Math.max(currentMax, getGlobalMaxDist(p, sub, currentMax));
+			}
+		}
+		return currentMax;
 	}
 	
 	 static class Stats {
