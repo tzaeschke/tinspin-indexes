@@ -4,7 +4,7 @@ import org.tinspin.index.PointEntry;
 
 public class Point<T> implements PointEntry<T> {
 
-	private final double[] point;
+	private double[] point;
 	private T value;
 	
 	Point(double[] data, T value) {
@@ -20,6 +20,11 @@ public class Point<T> implements PointEntry<T> {
 	@Override
 	public T value() {
 		return this.value;
+	}
+
+	public void set(Point<T> point) {
+		this.point = point.point();
+		this.value = point.value();
 	}
 	
 }

@@ -49,8 +49,6 @@ public class Node<T> {
 	}
 
 	public void replaceChild(int i, Node<T> qNew) {
-		//TODO update level or distance????
-		//TODO update maxDIst?
 		children.set(i, qNew);
 	}
 
@@ -87,15 +85,19 @@ public class Node<T> {
 		return leaf;
 	}
 
-	public double maxdist(CoverTree<T> tree) {
+	double maxdist(CoverTree<T> tree) {
 		if (maxDist == -1) {
 			maxDist = recalcMaxDist(point(), this, tree);
 		}
 		return maxDist;
 	}
 
+	double maxdistInternal() {
+		return maxDist;
+	}
+
 	void adjustMaxDist(double newDist) {
-		maxDist = Math.max(newDist, maxDist); 
+		maxDist = (maxDist == -1) ? -1 : Math.max(newDist, maxDist); 
 	}
 	
 	private static <T> double recalcMaxDist(Point<T> p, Node<T> node, CoverTree<T> tree) {
