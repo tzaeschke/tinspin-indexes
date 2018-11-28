@@ -305,6 +305,51 @@ public class CoverTree<T> implements PointIndex<T> {
 		return p;
 	}
 
+	private void rebalance(Node<T> p, Point<T> x) {
+//	function rebalance(cover trees p, data point x)
+//	prerequisites: x can be added as a child of p without violating
+//	the covering or separating invariants
+//	1: create tree x0 with root node x at level level(p)-1 x0
+//	contains no other points
+//	2: p0   p
+//	3: for q 2 children(p) do
+//	4: (q0;moveset; stayset) rebalance (p;q;x)
+//	5: p0   p0 with child q replaced with q0
+//	6: for r 2 moveset do
+//	7: x0  insert(x0; r)
+//	8: return p0 with x0 added as a child
+	}
+	
+	private void rebalance(Node<T> p, Node<T> q, Point<T> x) {
+//	function rebalance (cover trees p and q, point x)
+//	prerequisites: p is an ancestor of q
+//	1: if d(p;q) > d(q;x) then
+//	2: moveset; stayset   /0
+//	3: for r 2 descendants(q) do
+//	4: if d(r; p) > d(r;x) then
+//	5: moveset  moveset [frg
+//	6: else
+//	7: stayset  stayset [frg
+//	8: return (null;moveset; stayset)
+//	9: else
+//	10: moveset0; stayset0   /0
+//	11: q0  q
+//	12: for r 2 children(q) do
+//	13: (r0;moveset; stayset) rebalance (p; r;x)
+//	14: moveset0  moveset[moveset0
+//	15: stayset0  stayset[stayset0
+//	16: if r0 = null then
+//	17: q0  q with the subtree r removed
+//	18: else
+//	19: q0  q with the subtree r replaced by r0
+//	20: for r 2 stayset0 do
+//	21: if d(r;q)0  covdist(q)0 then
+//	22: q0  insert(q0; r)
+//	23: stayset0  stayset0􀀀frg
+//	24: return (q0;moveset0; stayset0)
+	}
+	
+	
 	@Override
 	public T remove(double[] point) {
 		// TODO Auto-generated method stub
@@ -394,6 +439,15 @@ public class CoverTree<T> implements PointIndex<T> {
 			ArrayList<Node<T>> children = p.getChildren();
 			for (int i = 0; i < children.size(); i++) {
 				Node<T> q = children.get(i);
+				
+				//Exclude children that are (compared to x) too close to the node or too far away
+				//to contain any useful points.
+				double distPQ = q.getDistanceToParent();
+				if (distPQ+q.maxdist(this) < distPX-y.dist()
+						|| distPQ-q.maxdist(this)> distPX+y.dist()) {
+					continue;
+				}
+
 				//TODO report: use d(y;x) > d(_X_;q)-maxdist(q)
 				double distQX = d(x, q.point());
 				if (y.dist() > (distQX - q.maxdist(this))) {
@@ -435,6 +489,15 @@ public class CoverTree<T> implements PointIndex<T> {
 			for (int i = 0; i < children.size(); i++) {
 				Node<T> q = children.get(i);
 				double distCurrentWorst = candidates.get(candidates.size() - 1).dist();
+				
+				//Exclude children that are (compared to x) too close to the node or too far away
+				//to contain any useful points.
+				double distPQ = q.getDistanceToParent();
+				if (distPQ+q.maxdist(this) < distPX-distCurrentWorst
+						|| distPQ-q.maxdist(this)> distPX+distCurrentWorst) {
+					continue;
+				}
+				
 				//TODO cache d(y, x)
 	//			if (d(y, x) > (d(y, q.point()) - q.maxdist(this))) {
 	//				y = findNearestNeighbor(q, x, y);
@@ -442,9 +505,6 @@ public class CoverTree<T> implements PointIndex<T> {
 				double distQX = d(q.point(), x);
 				if (distCurrentWorst > (distQX - q.maxdist(this))) {
 					findNearestNeighbor(q, x, k, candidates, distQX);
-				} else {
-				//	TODO Children are sorted: ABort search if
-					//break;
 				}
 			}
 		}
