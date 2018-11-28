@@ -58,7 +58,7 @@ public class Node<T> {
 			//TODO if (node.distToParent + node.maxDist() > maxDist) {
 			maxDist = -1; //Needs recalc
 			//}
-		} else if (distToParent > maxDist) {
+		} else if (maxDist != -1 && distToParent > maxDist) {
 			maxDist = distToParent;
 		}
 		children.add(node);
@@ -145,5 +145,8 @@ public class Node<T> {
 		this.level = level;
 	}
 
+	void invalidateMaxDist() {
+		maxDist = -1;
+	}
 
 }

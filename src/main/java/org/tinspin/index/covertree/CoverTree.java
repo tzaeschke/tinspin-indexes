@@ -58,7 +58,7 @@ public class CoverTree<T> implements PointIndex<T> {
 	
 	private Node<T> root = null;
 	
-	private static final double BASE = 1.3;
+	private static final double BASE = 2.0;
 	private static final double LOG_BASE = Math.log(BASE); 
 	
 	private static final double log13(double n) {
@@ -214,9 +214,7 @@ public class CoverTree<T> implements PointIndex<T> {
 			this.root = newRoot;
 			return newRoot;
 		}
-		Node<T> ret = insert2(p,x, distPX);
-		ret.adjustMaxDist(distPX);
-		return ret;
+		return insert2(p,x, distPX);
 	}
 
 	private Node<T> insert2(Node<T> p, Point<T> x, double distPX) { 

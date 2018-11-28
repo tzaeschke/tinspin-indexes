@@ -121,7 +121,7 @@ public class CoverTreeTest {
 	
 	@Test
 	public void smokeTest10D_Large() {
-		double[][] point_list = new double[100_000][10];
+		double[][] point_list = new double[10_000][10];
 		Random R = new Random(0);
 		for (double[] p : point_list) {
 			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
@@ -129,12 +129,44 @@ public class CoverTreeTest {
 		smokeTest(point_list);
 	}
 	
+	@Test
+	public void smokeTest2D_10_1() {
+		double[][] point_list = new double[10][2];
+		Random R = new Random(1);
+		for (double[] p : point_list) {
+			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		}
+		smokeTest(point_list);
+	}
+	
+	@Test
+	public void smokeTest2D_10_5() {
+		double[][] point_list = new double[10][2];
+		Random R = new Random(5);
+		for (double[] p : point_list) {
+			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		}
+		smokeTest(point_list);
+	}
+	
+	@Test
+	public void smokeTest25D_Large() {
+		for (int r = 0; r < 1000; r++) {
+			//System.out.println("r=" + r);
+			double[][] point_list = new double[100][2];
+			Random R = new Random(r);
+			for (double[] p : point_list) {
+				Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+			}
+			smokeTest(point_list);
+		}
+	}
+	
 	private void smokeTest(double[][] point_list) {
 		int dim = point_list[0].length;
 		CoverTree<double[]> tree = CoverTree.create(dim);
 		for (double[] data : point_list) {
 			tree.insert(data, data);
-			//TODO remove
 			//System.out.println(tree.toStringTree());
 			//tree.check();
 		}
