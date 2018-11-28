@@ -58,21 +58,76 @@ public class CoverTree<T> implements PointIndex<T> {
 	
 	private Node<T> root = null;
 	
-	private static final double BASE = 2.0;
-	private static final double LOG_BASE = Math.log(BASE); 
+	private static final double DEFAULT_BASE = 2.0;
 	
-	private static final double log13(double n) {
+	private final double BASE;
+	private final double LOG_BASE;
+
+	
+	private final double log13(double n) {
 		//log_b(n) = log_e(n) / log_e(b)
 		return Math.log(n) / LOG_BASE;
 	}
 	
-	
-	private CoverTree(int nDims) {
+	private CoverTree(int nDims, double base) {
 		this.dims = nDims;
+		this.BASE = base;
+		this.LOG_BASE = Math.log(BASE);
+	}
+		
+	public static <T> Point<T> create(double[] point, T value) {
+		return new Point<>(point, value);
+	}
+
+	public static <T> CoverTree<T> create(int nDims) {
+		return new CoverTree<>(nDims, DEFAULT_BASE);
 	}
 	
-	public static <T> CoverTree<T> create(int nDims) {
-		return new CoverTree<>(nDims);
+	public static <T> CoverTree<T> create(int nDims, double base) {
+		return new CoverTree<>(nDims, base);
+	}
+	
+	public static <T> CoverTree<T> create(Point<T>[] data, double base) {
+		if (data == null || data.length == 0) {
+			throw new IllegalStateException("Bulk load with empty data no possible.");
+		}
+		CoverTree<T> tree = new CoverTree<>(data[0].point().length, base);
+		if (data.length == 1) {
+			tree.root = new Node<>(data[0], 0);
+			tree.nNodes++;
+			tree.nEntries++;
+			return tree;
+		}
+		
+		//The point of bulkload is (currently) only to initialize the tree with a 
+		//suitable 'level' and 'root', which should avoid any problems with having 
+		//to pull up leaves to replace the root. Bulkloading thus allows a BASE < 2.0 .
+		
+		Point<T> newRoot = data[0];
+		Point<T> mostDistantPoint = data[1];
+		double largestDistance = tree.d(newRoot, mostDistantPoint); 
+		for (int i = 2; i < data.length; i++) {
+			Point<T> x = data[i];
+			double dist = tree.d(newRoot, x);
+			if (dist > largestDistance) {
+				largestDistance = dist;
+				mostDistantPoint = x;
+			}
+		}
+		
+		int requiredLevel = (int) (tree.log13(largestDistance) + 1);
+		tree.root = new Node<>(data[0], requiredLevel);
+		//TODO insert farthest point as second point?
+		
+		for (int i = 1; i < data.length; i++) {
+			Point<T> x = data[i];
+			tree.insert(tree.root, x);
+		}
+
+		tree.nNodes = data.length;
+		tree.nEntries = data.length;
+
+		return tree;
 	}
 	
 	@Override
@@ -387,6 +442,9 @@ public class CoverTree<T> implements PointIndex<T> {
 				double distQX = d(q.point(), x);
 				if (distCurrentWorst > (distQX - q.maxdist(this))) {
 					findNearestNeighbor(q, x, k, candidates, distQX);
+				} else {
+				//	TODO Children are sorted: ABort search if
+					//break;
 				}
 			}
 		}

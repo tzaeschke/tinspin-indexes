@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.covertree.CoverTree;
+import org.tinspin.index.covertree.Point;
 
 public class CoverTreeTest {
 
@@ -162,6 +163,19 @@ public class CoverTreeTest {
 		}
 	}
 	
+	@Test
+	public void smokeTest3D_Bulk() {
+		for (int r = 0; r < 1000; r++) {
+			//System.out.println("r=" + r);
+			double[][] point_list = new double[100][2];
+			Random R = new Random(r);
+			for (double[] p : point_list) {
+				Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+			}
+			smokeTestBulk(point_list);
+		}
+	}
+	
 	private void smokeTest(double[][] point_list) {
 		int dim = point_list[0].length;
 		CoverTree<double[]> tree = CoverTree.create(dim);
@@ -170,6 +184,22 @@ public class CoverTreeTest {
 			//System.out.println(tree.toStringTree());
 			//tree.check();
 		}
+		
+		smokeTestAccess(tree, point_list);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void smokeTestBulk(double[][] point_list) {
+		Point<double[]>[] points = new Point[point_list.length];
+		for (int i = 0; i < point_list.length; i++) {
+			Point<double[]> p = CoverTree.create(point_list[i], point_list[i]);
+			points[i] = p;
+		}
+		CoverTree<double[]> tree = CoverTree.create(points, 1.3);
+		smokeTestAccess(tree, point_list);
+	}
+	
+	private void smokeTestAccess(CoverTree<double[]> tree, double[][] point_list) {
 		tree.check();
 //	    System.out.println(tree.toStringTree());
 		for (double[] key : point_list) {
