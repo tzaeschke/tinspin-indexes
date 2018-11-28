@@ -1,3 +1,8 @@
+[2018-11-28]
+=======
+- Added CoverTree.
+
+
 [2018-05-19]
 =======
 - Updated R-Tree to use new kNN algorithm, a variant of Hjaltason and Samet

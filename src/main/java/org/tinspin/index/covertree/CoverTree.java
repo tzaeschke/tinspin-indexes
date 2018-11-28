@@ -47,6 +47,10 @@ import org.tinspin.index.QueryIteratorKNN;
  *     BASE*covdist(p)  
  *     instead of
  *     2*covdist(p)) 
+ *  - Some optimizations for kNN which are not discussed in the paper
+ *  
+ * TODO
+ * Consider using generic kNN algorithm by Hjaltason and Samet
  *     
  * @author Tilmann Zäschke
  */
@@ -320,7 +324,8 @@ public class CoverTree<T> implements PointIndex<T> {
 //	8: return p0 with x0 added as a child
 	}
 	
-	private void rebalance(Node<T> p, Node<T> q, Point<T> x) {
+	private Node<T> rebalance(Node<T> p, Node<T> q, Point<T> x, 
+			ArrayList<Node<T>> outMoveSet, ArrayList<Node<T>> outStaySet) {
 //	function rebalance (cover trees p and q, point x)
 //	prerequisites: p is an ancestor of q
 //	1: if d(p;q) > d(q;x) then
@@ -331,6 +336,7 @@ public class CoverTree<T> implements PointIndex<T> {
 //	6: else
 //	7: stayset  stayset [frg
 //	8: return (null;moveset; stayset)
+		return null;
 //	9: else
 //	10: moveset0; stayset0   /0
 //	11: q0  q
