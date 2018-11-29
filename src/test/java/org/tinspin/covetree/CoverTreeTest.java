@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
+import org.tinspin.index.PointDistanceFunction;
 import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.covertree.CoverTree;
@@ -195,7 +196,7 @@ public class CoverTreeTest {
 			Point<double[]> p = CoverTree.create(point_list[i], point_list[i]);
 			points[i] = p;
 		}
-		CoverTree<double[]> tree = CoverTree.create(points, 1.3);
+		CoverTree<double[]> tree = CoverTree.create(points, 1.3, PointDistanceFunction.L2);
 		smokeTestAccess(tree, point_list);
 	}
 	

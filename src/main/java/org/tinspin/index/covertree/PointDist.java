@@ -42,5 +42,10 @@ public class PointDist<T> extends Point<T> implements PointEntryDist<T> {
 		super.set(point);
 		this.dist = dist;
 	}
+
+	public void set(double[] point, T val, double dist) {
+		super.set(point, val);
+		this.dist = dist;
+	}
 	
 }

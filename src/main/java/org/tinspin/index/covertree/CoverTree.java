@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import org.tinspin.index.PointDistanceFunction;
 import org.tinspin.index.PointEntry;
 import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.PointIndex;
@@ -49,8 +50,10 @@ import org.tinspin.index.QueryIteratorKNN;
  *     2*covdist(p)) 
  *  - Some optimizations for kNN which are not discussed in the paper
  *  
+ * Other:
+ * - We also implemented the kNN algorithm by Hjaltason and Samet,
+ *   but it about 2x as long as our own algorithm in all scenarios we tested.
  * TODO
- * - Consider using generic kNN algorithm by Hjaltason and Samet
  * - Rebalancing (nearest-ancestor)
  *     
  * @author Tilmann Zäschke
@@ -66,6 +69,8 @@ public class CoverTree<T> implements PointIndex<T> {
 	
 	private final double BASE;
 	private final double LOG_BASE;
+	
+	private final PointDistanceFunction dist;
 
 	
 	private final double log13(double n) {
@@ -73,10 +78,11 @@ public class CoverTree<T> implements PointIndex<T> {
 		return Math.log(n) / LOG_BASE;
 	}
 	
-	private CoverTree(int nDims, double base) {
+	private CoverTree(int nDims, double base, PointDistanceFunction dist) {
 		this.dims = nDims;
 		this.BASE = base;
 		this.LOG_BASE = Math.log(BASE);
+		this.dist = dist != null ? dist : PointDistanceFunction.L2;
 	}
 		
 	public static <T> Point<T> create(double[] point, T value) {
@@ -84,18 +90,19 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 
 	public static <T> CoverTree<T> create(int nDims) {
-		return new CoverTree<>(nDims, DEFAULT_BASE);
+		return new CoverTree<>(nDims, DEFAULT_BASE, PointDistanceFunction.L2);
 	}
 	
-	public static <T> CoverTree<T> create(int nDims, double base) {
-		return new CoverTree<>(nDims, base);
+	public static <T> CoverTree<T> create(int nDims, double base, PointDistanceFunction dist) {
+		return new CoverTree<>(nDims, base, dist);
 	}
 	
-	public static <T> CoverTree<T> create(Point<T>[] data, double base) {
+	public static <T> CoverTree<T> create(Point<T>[] data, double base, 
+			PointDistanceFunction distFn) {
 		if (data == null || data.length == 0) {
 			throw new IllegalStateException("Bulk load with empty data no possible.");
 		}
-		CoverTree<T> tree = new CoverTree<>(data[0].point().length, base);
+		CoverTree<T> tree = new CoverTree<>(data[0].point().length, base, distFn);
 		if (data.length == 1) {
 			tree.root = new Node<>(data[0], 0);
 			tree.nEntries++;
@@ -567,6 +574,9 @@ public class CoverTree<T> implements PointIndex<T> {
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
 		return new KNNIterator<>(this).reset(center, k);
+		//The kNN search above is consistently 2x faster so we use it instead of
+		//the Hjaltason/Samet algorithm below.
+		//return new CoverTreeQueryKnn<>(this, center, k, dist);
 	}
 
 	private void findNearestNeighbor(Node<T> p, double[] x, 
@@ -661,13 +671,14 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 
 	private double d(Point<?> x, double[] p2) {
-		double d = 0;
-		double[] p1 = x.point();
-		for (int i = 0; i < dims; i++) {
-			double dx = p1[i] - p2[i]; 
-			d += dx * dx;
-		}
-		return Math.sqrt(d);
+		return dist.dist(x.point(), p2);
+//		double d = 0;
+//		double[] p1 = x.point();
+//		for (int i = 0; i < dims; i++) {
+//			double dx = p1[i] - p2[i]; 
+//			d += dx * dx;
+//		}
+//		return Math.sqrt(d);
 	}
 	
 	private double covdist(Node<?> p) {
@@ -751,5 +762,9 @@ public class CoverTree<T> implements PointIndex<T> {
 		int minLevel = Integer.MAX_VALUE;
 		int maxNodeSize = -1;
 		
+	}
+
+	Node<T> getRoot() {
+		return root;
 	}
 }

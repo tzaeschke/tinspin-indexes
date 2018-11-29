@@ -43,5 +43,10 @@ public class Point<T> implements PointEntry<T> {
 		this.point = point.point();
 		this.value = point.value();
 	}
+
+	public void set(double[] point, T val) {
+		this.point = point;
+		this.value = val;
+	}
 	
 }

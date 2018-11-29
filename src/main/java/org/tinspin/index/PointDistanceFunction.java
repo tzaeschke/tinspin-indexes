@@ -20,7 +20,9 @@ package org.tinspin.index;
 @FunctionalInterface
 public interface PointDistanceFunction {
 
+	/** L1/Manhattan/taxi distance. */
 	public static PointDistanceFunction L1 = PointDistanceFunction::l1;
+	/** L2/Euclidean distance. */
 	public static PointDistanceFunction L2 = PointDistanceFunction::l2;
 
 	double dist(double[] p1, double[] p2);
