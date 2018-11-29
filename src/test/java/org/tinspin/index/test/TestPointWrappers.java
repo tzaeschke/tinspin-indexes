@@ -46,6 +46,7 @@ public class TestPointWrappers extends AbstractWrapperTest {
 	public static Iterable<Object[]> candidates() {
 		ArrayList<Object[]> l = new ArrayList<>();
 		l.add(new Object[]{INDEX.ARRAY});
+		l.add(new Object[]{INDEX.COVER});
 		l.add(new Object[]{INDEX.KDTREE});
 		l.add(new Object[]{INDEX.PHTREE});
 		l.add(new Object[]{INDEX.QUAD});

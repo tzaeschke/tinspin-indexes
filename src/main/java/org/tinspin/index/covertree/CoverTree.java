@@ -307,25 +307,58 @@ public class CoverTree<T> implements PointIndex<T> {
 		//6: return p with x added as a child
 		p.addChild(new Node<>(x, p.getLevel() - 1), distPX);
 		return p;
+		//return rebalance(p, x);
 	}
-
-	private void rebalance(Node<T> p, Point<T> x) {
-//	function rebalance(cover trees p, data point x)
-//	prerequisites: x can be added as a child of p without violating
-//	the covering or separating invariants
-//	1: create tree x0 with root node x at level level(p)-1 x0
-//	contains no other points
-//	2: p0   p
-//	3: for q 2 children(p) do
-//	4: (q0;moveset; stayset) rebalance (p;q;x)
-//	5: p0   p0 with child q replaced with q0
-//	6: for r 2 moveset do
-//	7: x0  insert(x0; r)
-//	8: return p0 with x0 added as a child
+/*
+	private Node<T> rebalance(Node<T> p, Point<T> x) {
+//  	function rebalance(cover trees p, data point x)
+//  	prerequisites: x can be added as a child of p without violating
+//      the covering or separating invariants
+//		1: create tree x0 with root node x at level level(p)􀀀1 x0
+//		contains no other points
+//		2: p0   p
+//		3: for q 2 children(p) do
+//		4: (q0;moveset; stayset) rebalance (p;q;x)
+//		5: p0   p0 with child q replaced with q0
+//		6: for r 2 moveset do
+//		7: x0  insert(x0; r)
+//		8: return p0 with x0 added as a child
+	
+		//	1: create tree x0 with root node x at level level(p)-1 x0
+		//	contains no other points
+		Node<T> x0 = new Node<>(x, p.getLevel() - 1); 
+		//	2: p0   p
+		Node<T> p0 = p;
+		//	3: for q 2 children(p) do
+		if (p.hasChildren()) {
+			ArrayList<Node<T>> children = p.getChildren();
+			ArrayList<Node<T>> moveSet = new ArrayList<>();
+			ArrayList<Node<T>> staySet = new ArrayList<>();
+			for (int i = 0; i < children.size(); i++) {
+				Node<T> q = children.get(i);
+				//	4: (q0;moveset; stayset) rebalance (p;q;x)
+				moveSet.clear();
+				staySet.clear();
+				Node<T> q0 = rebalance(p, q, x, moveSet, staySet);
+				//	5: p0   p0 with child q replaced with q0
+				if (q0 != null) {
+					p0.replaceChild(i, q0);
+				}
+				//TODO adjust max?!?!
+				//	6: for r 2 moveset do
+				for (int j = 0; j < moveSet.size(); j++) {
+					//	7: x0  insert(x0; r)
+					x0 = insert(x0, moveSet.get(j));
+				}
+			}
+		}
+		//	8: return p0 with x0 added as a child
+		p0.addChild(x0, distToParent);
+		return p0;
 	}
 	
 	private Node<T> rebalance(Node<T> p, Node<T> q, Point<T> x, 
-			ArrayList<Node<T>> outMoveSet, ArrayList<Node<T>> outStaySet) {
+			ArrayList<Node<T>> moveSet, ArrayList<Node<T>> staySet) {
 //	function rebalance (cover trees p and q, point x)
 //	prerequisites: p is an ancestor of q
 //	1: if d(p;q) > d(q;x) then
@@ -336,7 +369,6 @@ public class CoverTree<T> implements PointIndex<T> {
 //	6: else
 //	7: stayset  stayset [frg
 //	8: return (null;moveset; stayset)
-		return null;
 //	9: else
 //	10: moveset0; stayset0   /0
 //	11: q0  q
@@ -353,8 +385,79 @@ public class CoverTree<T> implements PointIndex<T> {
 //	22: q0  insert(q0; r)
 //	23: stayset0  stayset0􀀀frg
 //	24: return (q0;moveset0; stayset0)
+		
+		// 1: if d(p;q) > d(q;x) then
+		if (d(p, q) > d(q, x)) {
+			//2: moveset; stayset   /0
+			moveSet.clear();
+			staySet.clear();
+			//3: for r 2 descendants(q) do
+			if (q.hasChildren()) {
+				ArrayList<Node<T>> children = q.getChildren();
+				for (int i = 0; i < children.size(); i++) {
+					Node<T> r = children.get(i);
+					//4: if d(r; p) > d(r;x) then
+					if (d(r, p) > d(r, x)) {
+						//5: moveset  moveset [frg
+						moveSet.add(r);
+					} else {
+						//6: else
+						//7: stayset  stayset [frg
+						staySet.add(r);
+					}
+				}
+			}
+			//	8: return (null;moveset; stayset)
+			return null;
+			//	9: else
+		} else {  	
+			//10: moveset0; stayset0   /0
+			moveSet.clear();
+			staySet.clear();
+			//11: q0  q
+			Node<T> q0 = q;
+			//12: for r 2 children(q) do
+			if (q.hasChildren()) {
+				ArrayList<Node<T>> children = q.getChildren();
+				for (int i = 0; i < children.size(); i++) {
+					Node<T> r = children.get(i);
+					//13: (r0;moveset; stayset) rebalance (p; r;x)
+					//TODO moveSet/stayset?????
+					Node<T> r0 = rebalance(p, r, x, moveSet, staySet); 
+					//14: moveset0  moveset[moveset0
+					xxxxxxxxxxxxxxxxxx
+					//15: stayset0  stayset[stayset0
+					//16: if r0 = null then
+					if (r0 == null) {
+						//17: q0  q with the subtree r removed
+						q0 = q;
+						q0.removeChild(i);
+					} else {
+						//18: else
+						//19: q0  q with the subtree r replaced by r0
+						q0 = q;
+						q0.replaceChild(i, r0);
+					}
+				}
+			}
+			//20: for r 2 stayset0 do
+			for (int i = 0; i < staySet.size(); i++) {
+				Node<T> r = staySet.get(i);
+				//TODO typo, apostrophe _inside_ ()
+				//21: if d(r;q)0 <= covdist(q)0 then
+				if (d(r,q) <= covdist(q0)) {
+					//22: q0  insert(q0; r)
+					q0 = insert(q0, r);
+					//23: stayset0  stayset0􀀀frg
+					//TODO staySet.remove(i--); ???
+				}
+			}
+			staySet.clear();
+			//24: return (q0;moveset0; stayset0)
+			return q0;
+		}
 	}
-	
+*/	
 	
 	@Override
 	public T remove(double[] point) {
@@ -550,6 +653,14 @@ public class CoverTree<T> implements PointIndex<T> {
 	
 	double d(Point<?> x, Point<?> y) {
 		return d(x, y.point());
+	}
+
+	private double d(Node<?> x, Point<?> y) {
+		return d(x.point(), y.point());
+	}
+
+	private double d(Node<?> x, Node<?> y) {
+		return d(x.point(), y.point().point());
 	}
 
 	private double d(Point<?> x, double[] p2) {

@@ -154,7 +154,7 @@ public class CoverTreeTest {
 	public void smokeTest25D_Large() {
 		for (int r = 0; r < 1000; r++) {
 			//System.out.println("r=" + r);
-			double[][] point_list = new double[100][2];
+			double[][] point_list = new double[10][2];
 			Random R = new Random(r);
 			for (double[] p : point_list) {
 				Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );

@@ -14,6 +14,7 @@ import org.tinspin.index.PointIndexWrapper;
 import org.tinspin.index.RectangleIndex;
 import org.tinspin.index.array.PointArray;
 import org.tinspin.index.array.RectArray;
+import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.kdtree.KDTree;
 import org.tinspin.index.phtree.PHTreeP;
 import org.tinspin.index.phtree.PHTreeR;
@@ -44,7 +45,9 @@ public class TestStats implements Serializable, Cloneable {
 		/** RStarTree */
 		RSTAR,
 		/** STR-loaded RStarTree */
-		STR
+		STR,
+		/** CoverTree */
+		COVER
 	}
 
 	static <T> PointIndex<T> createPI(INDEX idx, int dims, int size) {
@@ -58,6 +61,7 @@ public class TestStats implements Serializable, Cloneable {
 		case QUAD_OLD: return QuadTreeKD0.create(dims);
 		case RSTAR: 
 		case STR: return PointIndexWrapper.create(RTree.createRStar(dims));
+		case COVER: return CoverTree.create(dims);
 		default:
 			throw new UnsupportedOperationException();
 		}

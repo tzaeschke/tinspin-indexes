@@ -149,4 +149,8 @@ public class Node<T> {
 		maxDist = -1;
 	}
 
+	void removeChild(int i) {
+		children.remove(i);
+	}
+
 }
