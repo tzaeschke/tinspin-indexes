@@ -150,7 +150,11 @@ public class Node<T> {
 	}
 
 	void removeChild(int i) {
-		children.remove(i);
+		Node<T> n = children.remove(i);
+		if (maxDist != -1 && n.maxDist != -1 
+				&& n.getDistanceToParent() + n.maxDist >= maxDist) {
+			maxDist = -1;
+		}		
 	}
 
 }

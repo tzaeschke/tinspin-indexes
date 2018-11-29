@@ -27,6 +27,7 @@ public class PointIndexCandidate extends Candidate {
 	private QueryIterator<PointEntry<double[]>> it;
 	private QueryIteratorKNN<PointEntryDist<double[]>> itKnn;
 	private final boolean bulkloadSTR;
+	private final INDEX index;
 
 	
 	/**
@@ -38,7 +39,8 @@ public class PointIndexCandidate extends Candidate {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
 		idx = (PointIndex<double[]>) pi;
-		this.bulkloadSTR = ts.INDEX.equals(INDEX.STR);
+		this.index = ts.INDEX;
+		this.bulkloadSTR = INDEX.STR == this.index;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -183,15 +185,20 @@ public class PointIndexCandidate extends Candidate {
 	public boolean supportsPointQuery() {
 		return dims <= 16;
 	}
+
+	@Override
+	public boolean supportsWindowQuery() {
+		return this.index != INDEX.COVER;
+	}
 	
 	@Override
 	public boolean supportsUpdate() {
-		return dims <= 16;
+		return dims <= 16 && this.index != INDEX.COVER;
 	}
 
 	@Override
 	public boolean supportsUnload() {
-		return dims <= 16;
+		return dims <= 16 && this.index != INDEX.COVER;
 	}
 	
 	@Override

@@ -50,7 +50,8 @@ import org.tinspin.index.QueryIteratorKNN;
  *  - Some optimizations for kNN which are not discussed in the paper
  *  
  * TODO
- * Consider using generic kNN algorithm by Hjaltason and Samet
+ * - Consider using generic kNN algorithm by Hjaltason and Samet
+ * - Rebalancing (nearest-ancestor)
  *     
  * @author Tilmann Zäschke
  */
@@ -58,7 +59,6 @@ public class CoverTree<T> implements PointIndex<T> {
 
 	private final int dims;
 	private int nEntries;
-	private int nNodes;
 	
 	private Node<T> root = null;
 	
@@ -98,7 +98,6 @@ public class CoverTree<T> implements PointIndex<T> {
 		CoverTree<T> tree = new CoverTree<>(data[0].point().length, base);
 		if (data.length == 1) {
 			tree.root = new Node<>(data[0], 0);
-			tree.nNodes++;
 			tree.nEntries++;
 			return tree;
 		}
@@ -128,7 +127,6 @@ public class CoverTree<T> implements PointIndex<T> {
 			tree.insert(tree.root, x);
 		}
 
-		tree.nNodes = data.length;
 		tree.nEntries = data.length;
 
 		return tree;
@@ -146,7 +144,8 @@ public class CoverTree<T> implements PointIndex<T> {
 
 	@Override
 	public void clear() {
-		throw new UnsupportedOperationException();
+		nEntries = 0;
+		root = null;
 	}
 
 	@Override
@@ -160,7 +159,8 @@ public class CoverTree<T> implements PointIndex<T> {
 
 	@Override
 	public int getNodeCount() {
-		return nNodes;
+		//nEntries == nNodes
+		return nEntries;
 	}
 
 	@Override
@@ -215,7 +215,6 @@ public class CoverTree<T> implements PointIndex<T> {
 		Point<T> x = new Point<>(key, value);
 		if (root == null) {
 			root = new Node<>(x, 0);
-			nNodes++;
 			nEntries++;
 			return;
 		}
@@ -226,12 +225,10 @@ public class CoverTree<T> implements PointIndex<T> {
 			root.setLevel(level + 1);
 			Node<T> q = new Node<>(x, level);
 			root.addChild(q, dist);
-			nNodes++;
 			nEntries++;
 			return;
 		}
 		insert(root, x);
-		nNodes++;
 		nEntries++;
 	}
 	
