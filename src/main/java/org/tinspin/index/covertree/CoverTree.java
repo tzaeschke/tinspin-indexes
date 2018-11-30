@@ -68,6 +68,8 @@ public class CoverTree<T> implements PointIndex<T> {
 	
 	private static final double DEFAULT_BASE = 2.0;
 	
+	private static final boolean NEAREST_ANCESTOR = false;
+	
 	private final double BASE;
 	private final double LOG_BASE;
 	
@@ -279,7 +281,7 @@ public class CoverTree<T> implements PointIndex<T> {
 			this.root = newRoot;
 			return newRoot;
 		}
-		return insert2(p,x, distPX);
+		return NEAREST_ANCESTOR ? insert2NA(p,x, distPX) : insert2(p, x, distPX);
 	}
 
 	private Node<T> insert2(Node<T> p, Node<T> x, double distPX) { 
@@ -294,11 +296,12 @@ public class CoverTree<T> implements PointIndex<T> {
 
 		//1: for q : children(p) do
 		ArrayList<Node<T>> children = p.getOrCreateChildren();
+		double covDistQ = children.isEmpty()? 0 : covdist(children.get(0));
 		for (int i = 0; i < children.size(); i++) {
 			Node<T> q = children.get(i);
 			//2: if d(q;x) <= covdist(q) then
 			double distQX = d(q.point(), x); 
-			if (distQX <= covdist(q)) {
+			if (distQX <= covDistQ) {
 				//3: q0  insert (q;x)
 				Node<T> qNew = insert2(q, x, distQX);
 				//4: p0   p with child q replaced with q0
@@ -309,6 +312,59 @@ public class CoverTree<T> implements PointIndex<T> {
 				p.adjustMaxDist(distPX);
 				return p;
 			}
+		}
+		//6: return p with x added as a child
+		p.addChild(x.initLevel(p.getLevel() - 1), distPX);
+		return p;
+//		return rebalance(p, x);
+	}
+
+	/**
+	 * Nearest ancestor insert
+	 * @param p
+	 * @param x
+	 * @param distPX
+	 * @return
+	 */
+	private Node<T> insert2NA(Node<T> p, Node<T> x, double distPX) { 
+//		function insert (cover tree p, data point x)
+//		prerequisites: d(p;x) <= covdist(p)
+//		1: for q 2 children(p) do
+//		2: if d(q;x) <= covdist(q) then
+//		3: q0  insert (q;x)
+//		4: p0   p with child q replaced with q0
+//		5: return p0
+//		6: return p with x added as a child
+
+		//1: for q : children(p) do
+		ArrayList<Node<T>> children = p.getOrCreateChildren();
+		double covDistQ = children.isEmpty()? 0 : covdist(children.get(0));
+		Node<T> best = null;
+		double distBest = Double.MAX_VALUE;
+		int posBest = -1;
+		for (int i = 0; i < children.size(); i++) {
+			Node<T> q = children.get(i);
+			//2: if d(q;x) <= covdist(q) then
+			double distQX = d(q.point(), x); 
+			if (distQX <= covDistQ && distQX < distBest) {
+				distBest = distQX;
+				best = q;
+				posBest = i;
+			}
+		}
+		if (best != null) {
+			Node<T> q = best;
+			double distQX = distBest;
+			int i = posBest;
+			//3: q0  insert (q;x)
+			Node<T> qNew = insert2NA(q, x, distQX);
+			//4: p0   p with child q replaced with q0
+			if (qNew != q) {
+				p.replaceChild(i, qNew);
+			}
+			//5: return p0
+			p.adjustMaxDist(distPX);
+			return p;
 		}
 		//6: return p with x added as a child
 		p.addChild(x.initLevel(p.getLevel() - 1), distPX);
@@ -667,23 +723,12 @@ public class CoverTree<T> implements PointIndex<T> {
 		return d(x, y.point());
 	}
 
-	private double d(Node<?> x, Point<?> y) {
-		return d(x.point(), y.point());
-	}
-
 	private double d(Node<?> x, Node<?> y) {
 		return d(x.point(), y.point().point());
 	}
 
 	private double d(Point<?> x, double[] p2) {
 		return dist.dist(x.point(), p2);
-//		double d = 0;
-//		double[] p1 = x.point();
-//		for (int i = 0; i < dims; i++) {
-//			double dx = p1[i] - p2[i]; 
-//			d += dx * dx;
-//		}
-//		return Math.sqrt(d);
 	}
 	
 	private double covdist(Node<?> p) {
@@ -708,6 +753,8 @@ public class CoverTree<T> implements PointIndex<T> {
 	private void getStats(Node<T> node, Stats stats) {
 		stats.nEntries++;
 		stats.minLevel = Math.min(stats.minLevel, node.getLevel());
+		stats.maxLevel = Math.max(stats.maxLevel, node.getLevel());
+		stats.sumLevel += node.getLevel();
 		
 		if (node.hasChildren()) {
 			double maxDist = -1;
@@ -727,7 +774,8 @@ public class CoverTree<T> implements PointIndex<T> {
 			}
 			
 			maxDist = getGlobalMaxDist(node); 
-			
+			stats.sumMaxDist+=maxDist;
+
 			if (maxDist != node.maxdist(this)) {
 				throw new IllegalStateException(
 						"Maxdist: " + maxDist + " / " + node.maxdist(this) +
@@ -737,6 +785,8 @@ public class CoverTree<T> implements PointIndex<T> {
 				throw new IllegalStateException("Maxdist/maxdist()/CovDist: " + 
 						maxDist + " / " + node.maxdist(this) + " / " + covdist(node));
 			}
+		} else {
+			stats.nLeaf++;
 		}
 	}
 	
@@ -762,11 +812,26 @@ public class CoverTree<T> implements PointIndex<T> {
 		return currentMax;
 	}
 	
-	 static class Stats {
+	 public static class Stats {
 		int nEntries = 0;
 		int minLevel = Integer.MAX_VALUE;
+		int maxLevel = -1;
+		double sumLevel;
 		int maxNodeSize = -1;
+		double sumMaxDist = 0;
+		int nLeaf;
 		
+		@Override
+		public String toString() {
+			return 
+					"nEntries=" + nEntries +
+					";minLevel=" + minLevel + 
+					";maxLevel=" + maxLevel + 
+					";avgLevel=" + (sumLevel/nEntries) +
+					";maxNodeSize=" + maxNodeSize +
+					";nLeaf=" + nLeaf +
+					";sumMaxDist=" + sumMaxDist;
+		}
 	}
 
 	Node<T> getRoot() {
