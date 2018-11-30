@@ -55,6 +55,7 @@ import org.tinspin.index.QueryIteratorKNN;
  *   but it about 2x as long as our own algorithm in all scenarios we tested.
  * TODO
  * - Rebalancing (nearest-ancestor)
+ * - Merge Node/Point classes
  *     
  * @author Tilmann Zäschke
  */
@@ -126,11 +127,11 @@ public class CoverTree<T> implements PointIndex<T> {
 		}
 		
 		int requiredLevel = (int) (tree.log13(largestDistance) + 1);
-		tree.root = new Node<>(data[0], requiredLevel);
+		tree.root = new Node<T>(data[0], requiredLevel);
 		//TODO insert farthest point as second point?
 		
 		for (int i = 1; i < data.length; i++) {
-			Point<T> x = data[i];
+			Node<T> x = new Node<>(data[i], -1);
 			tree.insert(tree.root, x);
 		}
 
@@ -219,9 +220,10 @@ public class CoverTree<T> implements PointIndex<T> {
 	@Override
 	public void insert(double[] key, T value) {
 		//System.out.println("Inserting(" + nEntries + "): " + Arrays.toString(key));
-		Point<T> x = new Point<>(key, value);
+		//Point<T> x = new Point<>(key, value);
+		Node<T> x = new Node<>(new Point<>(key, value), -1);
 		if (root == null) {
-			root = new Node<>(x, 0);
+			root = x.initLevel(0);
 			nEntries++;
 			return;
 		}
@@ -230,7 +232,7 @@ public class CoverTree<T> implements PointIndex<T> {
 			//initialize levels from current distance
 			int level = (int) log13(dist);
 			root.setLevel(level + 1);
-			Node<T> q = new Node<>(x, level);
+			Node<T> q = x.initLevel(level);
 			root.addChild(q, dist);
 			nEntries++;
 			return;
@@ -239,7 +241,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		nEntries++;
 	}
 	
-	private Node<T> insert(Node<T> p, Point<T> x) {
+	private Node<T> insert(Node<T> p, Node<T> x) {
 //		Algorithm 2 Simplified cover tree insertion
 //		function insert(cover tree p, data point x)
 //		1: if d(p;x) > covdist(p) then
@@ -271,7 +273,7 @@ public class CoverTree<T> implements PointIndex<T> {
 				distPX = d(p.point(),x);
 			}
 			//return tree with x as root and p as only child;
-			Node<T> newRoot = new Node<>(x, p.getLevel() + 1);
+			Node<T> newRoot = x.initLevel(p.getLevel() + 1);
 			newRoot.addChild(p, distPX);
 			//TODO set in caller?
 			this.root = newRoot;
@@ -280,7 +282,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		return insert2(p,x, distPX);
 	}
 
-	private Node<T> insert2(Node<T> p, Point<T> x, double distPX) { 
+	private Node<T> insert2(Node<T> p, Node<T> x, double distPX) { 
 //		function insert (cover tree p, data point x)
 //		prerequisites: d(p;x) <= covdist(p)
 //		1: for q 2 children(p) do
@@ -303,18 +305,18 @@ public class CoverTree<T> implements PointIndex<T> {
 				if (qNew != q) {
 					p.replaceChild(i, qNew);
 				}
-				qNew.adjustMaxDist(distQX);
 				//5: return p0
+				p.adjustMaxDist(distPX);
 				return p;
 			}
 		}
 		//6: return p with x added as a child
-		p.addChild(new Node<>(x, p.getLevel() - 1), distPX);
+		p.addChild(x.initLevel(p.getLevel() - 1), distPX);
 		return p;
-		//return rebalance(p, x);
+//		return rebalance(p, x);
 	}
-/*
-	private Node<T> rebalance(Node<T> p, Point<T> x) {
+
+	private Node<T> rebalance(Node<T> p, Node<T> x) {
 //  	function rebalance(cover trees p, data point x)
 //  	prerequisites: x can be added as a child of p without violating
 //      the covering or separating invariants
@@ -330,7 +332,7 @@ public class CoverTree<T> implements PointIndex<T> {
 	
 		//	1: create tree x0 with root node x at level level(p)-1 x0
 		//	contains no other points
-		Node<T> x0 = new Node<>(x, p.getLevel() - 1); 
+		Node<T> x0 = x.initLevel(p.getLevel() - 1); 
 		//	2: p0   p
 		Node<T> p0 = p;
 		//	3: for q 2 children(p) do
@@ -348,20 +350,22 @@ public class CoverTree<T> implements PointIndex<T> {
 				if (q0 != null) {
 					p0.replaceChild(i, q0);
 				}
+				q0.adjustMaxDist(d(p0, q0));
 				//TODO adjust max?!?!
 				//	6: for r 2 moveset do
 				for (int j = 0; j < moveSet.size(); j++) {
 					//	7: x0  insert(x0; r)
-					x0 = insert(x0, moveSet.get(j));
+					//x0 = insert(x0, moveSet.get(j)); //TODO report!
+					x0 = insert2(x0, moveSet.get(j), d(x0, moveSet.get(j)));
 				}
 			}
 		}
 		//	8: return p0 with x0 added as a child
-		p0.addChild(x0, distToParent);
+		p0.addChild(x0, d(p0, x0));
 		return p0;
 	}
 	
-	private Node<T> rebalance(Node<T> p, Node<T> q, Point<T> x, 
+	private Node<T> rebalance(Node<T> p, Node<T> q, Node<T> x, 
 			ArrayList<Node<T>> moveSet, ArrayList<Node<T>> staySet) {
 //	function rebalance (cover trees p and q, point x)
 //	prerequisites: p is an ancestor of q
@@ -393,8 +397,6 @@ public class CoverTree<T> implements PointIndex<T> {
 		// 1: if d(p;q) > d(q;x) then
 		if (d(p, q) > d(q, x)) {
 			//2: moveset; stayset   /0
-			moveSet.clear();
-			staySet.clear();
 			//3: for r 2 descendants(q) do
 			if (q.hasChildren()) {
 				ArrayList<Node<T>> children = q.getChildren();
@@ -416,8 +418,6 @@ public class CoverTree<T> implements PointIndex<T> {
 			//	9: else
 		} else {  	
 			//10: moveset0; stayset0   /0
-			moveSet.clear();
-			staySet.clear();
 			//11: q0  q
 			Node<T> q0 = q;
 			//12: for r 2 children(q) do
@@ -428,9 +428,8 @@ public class CoverTree<T> implements PointIndex<T> {
 					//13: (r0;moveset; stayset) rebalance (p; r;x)
 					//TODO moveSet/stayset?????
 					Node<T> r0 = rebalance(p, r, x, moveSet, staySet); 
-					//14: moveset0  moveset[moveset0
-					xxxxxxxxxxxxxxxxxx
-					//15: stayset0  stayset[stayset0
+					//14: moveset0 = moveset + moveset0
+					//15: stayset0 = stayset + stayset0
 					//16: if r0 = null then
 					if (r0 == null) {
 						//17: q0  q with the subtree r removed
@@ -441,6 +440,7 @@ public class CoverTree<T> implements PointIndex<T> {
 						//19: q0  q with the subtree r replaced by r0
 						q0 = q;
 						q0.replaceChild(i, r0);
+						q0.adjustMaxDist(d(q0, r0));
 					}
 				}
 			}
@@ -449,19 +449,20 @@ public class CoverTree<T> implements PointIndex<T> {
 				Node<T> r = staySet.get(i);
 				//TODO typo, apostrophe _inside_ ()
 				//21: if d(r;q)0 <= covdist(q)0 then
-				if (d(r,q) <= covdist(q0)) {
+				if (d(r,q0) <= covdist(q0)) {
 					//22: q0  insert(q0; r)
-					q0 = insert(q0, r);
-					//23: stayset0  stayset0􀀀frg
-					//TODO staySet.remove(i--); ???
+					//q0 = insert(q0, r); TODO report?????
+					q0 = insert2(q0, r, d(r,q0));
+					//23: stayset0 = stayset0 - {r}
+					//TODO optimize?
+					staySet.remove(i--);
 				}
 			}
-			staySet.clear();
 			//24: return (q0;moveset0; stayset0)
 			return q0;
 		}
 	}
-*/	
+	
 	
 	@Override
 	public T remove(double[] point) {
@@ -659,6 +660,10 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 	
 	double d(Point<?> x, Point<?> y) {
+		return d(x, y.point());
+	}
+
+	double d(Point<?> x, Node<?> y) {
 		return d(x, y.point());
 	}
 

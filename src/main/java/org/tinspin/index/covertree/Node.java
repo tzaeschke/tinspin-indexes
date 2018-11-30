@@ -37,6 +37,12 @@ public class Node<T> {
 		this.level = level;
 	}
 
+	Node<T> initLevel(int level) {
+		this.level = level;
+		this.maxDist = -1;
+		return this;
+	}
+
 	public Point<T> point() {
 		return p;
 	}
