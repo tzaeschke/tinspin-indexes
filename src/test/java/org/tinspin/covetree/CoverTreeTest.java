@@ -153,7 +153,7 @@ public class CoverTreeTest {
 	
 	@Test
 	public void smokeTest25D_Large() {
-		for (int r = 0; r < 1000; r++) {
+		for (int r = 0; r < 2000; r++) {
 			//System.out.println("r=" + r);
 			double[][] point_list = new double[10][2];
 			Random R = new Random(r);
@@ -162,6 +162,36 @@ public class CoverTreeTest {
 			}
 			smokeTest(point_list);
 		}
+	}
+	
+	@Test
+	public void smokeTest2D_Reinsert0() {
+		double[][] point_list = new double[4][2];
+		Random R = new Random(0);
+		for (double[] p : point_list) {
+			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		}
+		smokeTest(point_list);
+	}
+	
+	@Test
+	public void smokeTest2D_Reinsert5() {
+		double[][] point_list = new double[5][2];
+		Random R = new Random(275);
+		for (double[] p : point_list) {
+			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		}
+		smokeTest(point_list);
+	}
+	
+	@Test
+	public void smokeTest2D_Reinsert398() {
+		double[][] point_list = new double[5][2];
+		Random R = new Random(398);
+		for (double[] p : point_list) {
+			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		}
+		smokeTest(point_list);
 	}
 	
 	@Test

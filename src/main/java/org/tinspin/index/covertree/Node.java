@@ -18,14 +18,10 @@
 package org.tinspin.index.covertree;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+
 
 public class Node<T> {
 
-	private static final Comparator<Node<?>> COMPARATOR = (o1, o2) -> 
-			Double.compare(o1.distToParent,  o2.distToParent);
-
-	
 	private Point<T> p;
 	private ArrayList<Node<T>> children;
 	private int level;
@@ -39,7 +35,7 @@ public class Node<T> {
 
 	Node<T> initLevel(int level) {
 		this.level = level;
-		this.maxDist = -1;
+		this.maxDist = 0;
 		return this;
 	}
 
@@ -68,8 +64,6 @@ public class Node<T> {
 			maxDist = distToParent;
 		}
 		children.add(node);
-		//TODO why sorting? 
-		children.sort(Node.COMPARATOR);
 	}
 
 	public void replaceChild(int i, Node<T> qNew) {
@@ -94,17 +88,19 @@ public class Node<T> {
 	public Node<T> removeAnyLeaf() {
 		//TODO closest?
 		Node<T> any = children.get(0);
-		if (any.children != null && !any.children.isEmpty()) {
+		if (any.hasChildren()) {
 			//TODO only invalidate if maxDist == d(any, point);
 			maxDist = -1;
 			return any.removeAnyLeaf();
 		}
-		//Not cheap, but better than resorting or returning the furthest child.
+		//Not cheap, but better than resorting or returning the farthest child.
 		//TODO return farthest child?
 		Node<T> leaf = children.remove(0);
 		if (children.isEmpty()) {
 			maxDist = 0;
 			//TODO return list to pool
+		} else if (leaf.getDistanceToParent() >= maxDist) {
+			maxDist = -1;
 		}
 		return leaf;
 	}
@@ -161,6 +157,19 @@ public class Node<T> {
 				&& n.getDistanceToParent() + n.maxDist >= maxDist) {
 			maxDist = -1;
 		}		
+	}
+
+	void clearAndRemoveAllChildren(ArrayList<Node<T>> clearedChildren) {
+		if (hasChildren()) {
+			for (int i = 0; i < children.size(); i++) {
+				Node<T> c = children.get(i);
+				c.clearAndRemoveAllChildren(clearedChildren);
+			}
+			clearedChildren.addAll(children);
+			children.clear(); //TODO set null?
+		}
+		maxDist = 0;
+		distToParent = 0;
 	}
 
 }

@@ -48,6 +48,11 @@ import org.tinspin.index.QueryIteratorKNN;
  *     BASE*covdist(p)  
  *     instead of
  *     2*covdist(p)) 
+ *  - Rebalancing:
+ *    - The paper proposes to sort the children on their distance to 'x' and then
+ *      insert into the first one that has enough covdist.
+ *      The sorting appears unnecessary because we anyway have to check all children,
+ *      and finding the closest one is triuviallyy possible without sorting.
  *  - Some optimizations for kNN which are not discussed in the paper
  *  
  * Other:
@@ -222,7 +227,6 @@ public class CoverTree<T> implements PointIndex<T> {
 	@Override
 	public void insert(double[] key, T value) {
 		//System.out.println("Inserting(" + nEntries + "): " + Arrays.toString(key));
-		//Point<T> x = new Point<>(key, value);
 		Node<T> x = new Node<>(new Point<>(key, value), -1);
 		if (root == null) {
 			root = x.initLevel(0);
@@ -243,7 +247,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		nEntries++;
 	}
 	
-	private Node<T> insert(Node<T> p, Node<T> x) {
+	private void insert(Node<T> p, Node<T> x) {
 //		Algorithm 2 Simplified cover tree insertion
 //		function insert(cover tree p, data point x)
 //		1: if d(p;x) > covdist(p) then
@@ -279,9 +283,13 @@ public class CoverTree<T> implements PointIndex<T> {
 			newRoot.addChild(p, distPX);
 			//TODO set in caller?
 			this.root = newRoot;
-			return newRoot;
+			return;
 		}
-		return NEAREST_ANCESTOR ? insert2NA(p,x, distPX) : insert2(p, x, distPX);
+		if (NEAREST_ANCESTOR) {
+			insert2NA(p,x, distPX);
+		} else {
+			insert2(p, x, distPX);
+		}
 	}
 
 	private Node<T> insert2(Node<T> p, Node<T> x, double distPX) { 
@@ -329,16 +337,12 @@ public class CoverTree<T> implements PointIndex<T> {
 	private Node<T> insert2NA(Node<T> p, Node<T> x, double distPX) { 
 //		function insert (cover tree p, data point x)
 //		prerequisites: d(p;x) <= covdist(p)
-//		1: for q 2 children(p) do
-//		2: if d(q;x) <= covdist(q) then
-//		3: q0  insert (q;x)
-//		4: p0   p with child q replaced with q0
-//		5: return p0
-//		6: return p with x added as a child
 
+		//insert into closest child!
+		
 		//1: for q : children(p) do
 		ArrayList<Node<T>> children = p.getOrCreateChildren();
-		double covDistQ = children.isEmpty()? 0 : covdist(children.get(0));
+		double covDistQ = covDist(p.getLevel() - 1);
 		Node<T> best = null;
 		double distBest = Double.MAX_VALUE;
 		int posBest = -1;
@@ -367,11 +371,149 @@ public class CoverTree<T> implements PointIndex<T> {
 			return p;
 		}
 		//6: return p with x added as a child
-		p.addChild(x.initLevel(p.getLevel() - 1), distPX);
-		return p;
-//		return rebalance(p, x);
+//		p.addChild(x.initLevel(p.getLevel() - 1), distPX);
+//		return p;
+		return rebalanceTZ(p, x, distPX);
 	}
 
+	private Node<T> rebalanceTZ(Node<T> p, Node<T> x, double distPX) {
+		//Rebalance to ensure the nearest-ancestor invariant:
+		//1) Find all nodes 'q' whose covdist && mindist overlaps with the new node x
+		//2) For all 'q' traverse all subnode 'r' and check if:
+		//   a) Parent-dist(r) > dist(x,q)-covdist(x)
+		//   b1) (1st level): dist(x,r) < parentDist(r)
+		//   b2)  
+		
+		//Remember the nearest-ancestor invariants only refers to the IMMEDIATE
+		//ancestor!
+		//Convention: 'x' is a new node that is inserted into a node 'p'. The other
+		//children or 'p' are named 'q'. Any children of 'q' or 'x' are named 'r'.
+		//Any children (descendants?) of any 'r' a named 's'.
+		//Implications of invariant: 
+		//- If we childnode r of q to x, we try to keep it on the same level,
+		//  which means we can move it together with all it's children.
+		//  -> Problem if we move r1 from q1 and r2 from q2 into x,
+		//     there is no guarantee that r1 and r2 have a minimum distance of
+		//     cov-dist, in other words they may need 'merging'!
+		//     TODO is that geometrically possible?
+		//  -> Merging entails a bigger problem: 
+		//     If we reinsert all the children (r1, r2, ..) into x, on of the
+		//     subchildren s of r, may be inserted directly into 'x', even though
+		//     x may not be it's nearest ancestor (that can only happen for children
+		//     or r's, because ...)
+		//Solution: 
+		//  - r's can be directly re-inserted into x, but any children of r's
+		//     need to be queued and reinserted a root level....
+		//  - Reinsertion of children r of q into x is fine as long as none 
+		//    of the reinserted r's overlap (more precisely if they do not have children
+		//    that could be in any other r of x.
+		//  - Optimization: Even if an r cannot be reinserted into x, it's 's' may be 
+		//    reinsertable if there is only one matching r in x.
+		//  - In other words, any new r of x that overlaps with any 
+		//  In orher words: Direct reinsertion is fine, as long as the new level is equal 
+		//  or lower that the previous level.
+		//
+		//Algorithm for reinsertion:
+		//- if there is no overlapping r1 in x: Insert r2 including all children
+		//- If there is an overlapping r1, add r2 to List of reinsertables.
+		//  for every child s or r2, check whether there is only one matching r in x.
+		//  - if yes: insert s into that r. Then: recurse for children of s or add to reinsertables 
+		//  - if no: add 's' and all it's children to reinsertables.
+		//All reinsertion can be done directly into 'p' (parent of q and x) because
+		//we know that there are at least two nodes in p (x and q) that can contain the
+		//moved node. Insert directly into 'x' would be good for all direct children of
+		//'q' because we know that 'x' is the closest ancestor. For sub-children of 'q'
+		//we cannot guarantee that. If one of these subchildren can be reinsertedinto
+		//any r of x, it would be fine. But if it is inserted directly in 'x', we would need
+		//to verify that there is no other q in p that would be a better ancestor.
+		//However, if we reinsert these subchildren in to 'p', we know that there
+		//is at least one 'q' (namely it's original parent) that contain it, so there
+		//is no need that 'p' is the closest ancestor because 'p' would never be a direct ancestor.
+		//In short: Insert into 'x' if possible, otherwise reinsert into 'p'.
+		ArrayList<Node<T>> reinsert = null;
+		//init, because we may use (insert, covdist, ..) this node before we add it to p.
+		x.initLevel(p.getLevel() - 1);
+		if (p.hasChildren()) {
+			ArrayList<Node<T>> children = p.getChildren();
+			double covDist = covDist(p.getLevel() - 1);
+			//Check all siblings q of x whether they may contain point that need
+			//to be reassigned. 'q' itself cannot require reassignment. 
+			for (int i = 0; i < children.size(); i++) {
+				Node<T> q = children.get(i);
+				if (q.hasChildren()) {
+					double distQX = d(q.point(), x); 
+					if (distQX <= 2*covDist
+							&& distQX <= covDist + q.maxdist(this)) {
+						reinsert = (reinsert != null) ? reinsert : new ArrayList<>();
+						rebalanceSub(x, q, reinsert, distQX);
+					}
+				}
+			}
+		}
+		p.addChild(x, distPX);
+		if (reinsert != null) {
+			for (int i = 0; i < reinsert.size(); i++) {
+				Node<T> q = reinsert.get(i);
+				insert2NA(p, q, distPX);
+			}
+		}
+		return p;
+	}
+	
+	/**
+	 * 
+	 * @param x New ancestor
+	 * @param q Current ancestor
+	 * @param reinsert resinsertion queue 
+	 */
+	private void rebalanceSub(Node<T> x, Node<T> q, ArrayList<Node<T>> reinsert,
+			double distQX) {
+		if (q.hasChildren()) {
+			ArrayList<Node<T>> children = q.getChildren();
+			for (int i = 0; i < children.size(); i++) {
+				Node<T> r = children.get(i);
+				double distRQ = r.getDistanceToParent();
+				if (distRQ*2 > distQX) {
+					double distRX = d(r.point(), x);
+					if (distRX < distRQ) {
+						//okay, needs reinsertion
+						q.removeChild(i--);
+						reinsert(x, r, reinsert, distRX);
+					}
+				}
+			}
+		}
+	}
+	
+	private void reinsert(Node<T> x, Node<T> rNew, ArrayList<Node<T>> reinsertLater,
+			double distRX) {
+		ArrayList<Node<T>> children = x.getOrCreateChildren();
+		double covDistR = covdist(rNew);
+		for (int i = 0; i < children.size(); i++) {
+			Node<T> rx = children.get(i);
+			double distRxRNew = d(rx, rNew);
+			//Overlap of covers?
+			if (distRxRNew < 2*covDistR) {
+				if (distRxRNew < covDistR) {
+					//reinsert rNew into rX: not possible, reinsert in parent
+					rNew.clearAndRemoveAllChildren(reinsertLater);
+					reinsertLater.add(rNew);
+					return;
+				} else if (rNew.maxdist(this) > distRxRNew-covDistR) {
+					//rNew's children overlap with rX: 
+					//reinsert rNew and reinsert children into parent.
+					//But we need to keep checking other rX.
+					rNew.clearAndRemoveAllChildren(reinsertLater);
+				}
+			} 
+		}
+		if (distRX + rNew.maxdist(this) > covdist(x)) {
+			//TODO only clear those that violate the limit
+			rNew.clearAndRemoveAllChildren(reinsertLater);
+		}
+		x.addChild(rNew, distRX);
+	}
+	
 	private Node<T> rebalance(Node<T> p, Node<T> x) {
 //  	function rebalance(cover trees p, data point x)
 //  	prerequisites: x can be added as a child of p without violating
@@ -732,8 +874,12 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 	
 	private double covdist(Node<?> p) {
+		return covDist(p.getLevel());
+	}
+
+	private double covDist(int level) {
 		//covdist(p) = 1:3level(p)
-		return Math.pow(BASE, p.getLevel());
+		return Math.pow(BASE, level);
 	}
 
 	public boolean containsExact(double[] key) {
