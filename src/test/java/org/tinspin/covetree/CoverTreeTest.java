@@ -92,6 +92,39 @@ public class CoverTreeTest {
 	}
 	
 	@Test
+	public void smokeTest2D_LineR() {
+		for (int r = 0; r < 1000; r++) {
+			//System.out.println("r=" + r);
+			double[][] point_list = new double[20][3];
+			int n = 0;
+			for (double[] p : point_list) {
+				p[0] = n % 3;
+				p[1] = n++; 
+				p[2] = n % 5;
+			}
+			List<double[]> list = Arrays.asList(point_list);
+			Collections.shuffle(list, new Random(r));
+			point_list = list.toArray(point_list);
+			smokeTest(point_list);
+		}
+	}
+	
+	@Test
+	public void smokeTest2D_LineR141() {
+		double[][] point_list = new double[20][3];
+		int n = 0;
+		for (double[] p : point_list) {
+			p[0] = n % 3;
+			p[1] = n++; 
+			p[2] = n % 5;
+		}
+		List<double[]> list = Arrays.asList(point_list);
+		Collections.shuffle(list, new Random(141));
+		point_list = list.toArray(point_list);
+		smokeTest(point_list);
+	}
+	
+	@Test
 	public void smokeTest5D() {
 		double[][] point_list = new double[20][5];
 		Random R = new Random(0);

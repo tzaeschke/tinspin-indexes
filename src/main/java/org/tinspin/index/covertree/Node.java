@@ -52,6 +52,9 @@ public class Node<T> {
 	}
 	
 	public void addChild(Node<T> node, double distToParent) {
+		if (node.level + 1 != level) {
+			throw new IllegalStateException("level" + level + '/' + node.level);
+		}
 		if (children == null) {
 			children = new ArrayList<>();
 		}
@@ -153,9 +156,12 @@ public class Node<T> {
 
 	void removeChild(int i) {
 		Node<T> n = children.remove(i);
-		if (maxDist != -1 && n.maxDist != -1 
-				&& n.getDistanceToParent() + n.maxDist >= maxDist) {
-			maxDist = -1;
+		if (maxDist != -1) {
+			if (n.maxDist != -1 && n.getDistanceToParent() + n.maxDist >= maxDist) {
+				maxDist = -1;
+			} else if (n.maxDist == -1) {
+				maxDist = -1;
+			}
 		}		
 	}
 

@@ -52,7 +52,7 @@ import org.tinspin.index.QueryIteratorKNN;
  *    - The paper proposes to sort the children on their distance to 'x' and then
  *      insert into the first one that has enough covdist.
  *      The sorting appears unnecessary because we anyway have to check all children,
- *      and finding the closest one is triuviallyy possible without sorting.
+ *      and finding the closest one is trivially possible without sorting.
  *  - Some optimizations for kNN which are not discussed in the paper
  *  
  * Other:
@@ -73,7 +73,7 @@ public class CoverTree<T> implements PointIndex<T> {
 	
 	private static final double DEFAULT_BASE = 2.0;
 	
-	private static final boolean NEAREST_ANCESTOR = false;
+	private static final boolean NEAREST_ANCESTOR = true;
 	
 	private final double BASE;
 	private final double LOG_BASE;
