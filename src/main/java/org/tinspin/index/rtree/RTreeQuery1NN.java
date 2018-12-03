@@ -27,7 +27,7 @@ import org.tinspin.index.RectangleDistanceFunction;
  * 
  * @author Tilmann Zäschke
  *
- * @param <T>
+ * @param <T> Value type.
  */
 public class RTreeQuery1NN<T> {
 	
@@ -180,8 +180,8 @@ public class RTreeQuery1NN<T> {
 	
 	/**
 	 * 
-	 * @param iPos
-	 * @param minDist
+	 * @param iPos iterator pos
+	 * @param minDist mindist
 	 */
 	protected void sortEntries(IterPos<T> iPos, double minDist) {
 		ArrayList<RTreeNode<T>> subNodes = ((RTreeNodeDir<T>)iPos.node).getChildren();

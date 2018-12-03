@@ -39,7 +39,7 @@ import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
  * 
  * @author ztilmann
  *
- * @param <T>
+ * @param <T> Value type.
  */
 public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 

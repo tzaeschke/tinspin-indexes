@@ -29,9 +29,9 @@ public interface PointDistanceFunction {
 
 	/**
 	 * 
-	 * @param center a point
-	 * @param entry a rectangle
-	 * @return distance between point and rectangle
+	 * @param p1 a point
+	 * @param entry another point
+	 * @return distance between the points
 	 */
 	default double dist(double[] p1, PointEntry<?> entry) {
 		return dist(p1, entry.point());

@@ -43,7 +43,7 @@ import org.tinspin.index.QueryIteratorKNN;
  * 
  * @author ztilmann
  *
- * @param <T>
+ * @param <T> Value type.
  */
 public class QuadTreeKD0<T> implements PointIndex<T> {
 

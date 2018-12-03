@@ -26,7 +26,7 @@ import org.tinspin.index.qthypercube2.QuadTreeKD2.QStats;
  * 
  * @author ztilmann
  *
- * @param <T>
+ * @param <T> Value type.
  */
 public class QNode<T> {
 

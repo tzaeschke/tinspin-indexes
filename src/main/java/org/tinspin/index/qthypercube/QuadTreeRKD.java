@@ -24,7 +24,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.RectangleEntry;
@@ -38,7 +37,7 @@ import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
  * 
  * @author ztilmann
  *
- * @param <T>
+ * @param <T> Value type.
  */
 public class QuadTreeRKD<T> implements RectangleIndex<T> {
 

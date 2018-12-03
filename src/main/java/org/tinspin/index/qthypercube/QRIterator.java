@@ -26,7 +26,7 @@ import org.tinspin.index.RectangleEntry;
 /**
  * Resetable query iterator.
  *
- * @param <T>
+ * @param <T> Value type.
  */
 public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 

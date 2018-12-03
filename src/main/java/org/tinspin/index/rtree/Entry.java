@@ -66,9 +66,9 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 	/**
 	 * Check whether the current entry geometrically includes the
 	 * rectangle defined by min2 and max2.
-	 * @param min2
-	 * @param max2
-	 * @return WHether min2/max is included in the current entry.
+	 * @param min2 Rectangle min
+	 * @param max2 Rectangle max
+	 * @return Whether min2/max2 is included in the current entry.
 	 */
 	public boolean checkInclusion(double[] min2, double[] max2) {
 		for (int i = 0; i < min.length; i++) {
@@ -169,11 +169,11 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 
 	/**
 	 * Calculates the bounding boxes and the estimated dead space.
-	 * @param entries
-	 * @param start
-	 * @param end
-	 * @param minOut
-	 * @param maxOut
+	 * @param entries Entries
+	 * @param start start
+	 * @param end end
+	 * @param minOut min return
+	 * @param maxOut max return
 	 * @return estimated dead space
 	 */
 	public static double calcDeadspace(Entry<?>[] entries, int start, int end, 

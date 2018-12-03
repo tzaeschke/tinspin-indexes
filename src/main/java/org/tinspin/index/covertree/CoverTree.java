@@ -34,13 +34,13 @@ import org.tinspin.index.QueryIteratorKNN;
  * 
  * "Faster Cover Trees", Mike Izbicki, Christian R. Shelton,
  * Proceedings of the 32nd International Conference on Machine Learning,
- * Lille, France, 2015. JMLR: W&CP volume 37.
+ * Lille, France, 2015. 
  * 
  * Changes over original algorithms:
  *  - findNearestNeighbour compares
- *  	if (d(y, x) > (d(_x_, q.point()) - q.maxdist(this)))
+ *  	if (d(y, x) greater (d(_x_, q.point()) - q.maxdist(this)))
  *    instead of 
- *      if (d(y, x) > (d(_y_, q.point()) - q.maxdist(this)))
+ *      if (d(y, x) greater (d(_y_, q.point()) - q.maxdist(this)))
  *  - maxDist: 
  *    - lazily calculated.
  *    - calculated while excluding subbranches that don't need to be calculated

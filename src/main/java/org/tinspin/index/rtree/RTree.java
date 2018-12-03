@@ -39,7 +39,7 @@ import org.tinspin.index.RectangleIndex;
  * http://www.boost.org/doc/libs/1_58_0/libs/geometry/doc/html/geometry/spatial_indexes/introduction.html
  * @author ztilmann
  *
- * @param <T>
+ * @param <T> Value type.
  */
 public class RTree<T> implements RectangleIndex<T> {
 

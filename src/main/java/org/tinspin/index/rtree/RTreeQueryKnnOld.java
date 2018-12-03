@@ -30,7 +30,7 @@ import org.tinspin.index.RectangleEntryDist;
  * 
  * @author Tilmann Zäschke
  *
- * @param <T>
+ * @param <T> Value type.
  */
 public class RTreeQueryKnnOld<T> implements QueryIteratorKNN<RectangleEntryDist<T>> {
 	
