@@ -110,7 +110,7 @@ public class Node<T> {
 
 	double maxdist(CoverTree<T> tree) {
 		if (maxDist == -1) {
-			maxDist = recalcMaxDist(point(), this, tree);
+			maxDist = recalcMaxDist(this, this, tree);
 		}
 		return maxDist;
 	}
@@ -123,13 +123,13 @@ public class Node<T> {
 		maxDist = (maxDist == -1) ? -1 : Math.max(newDist, maxDist); 
 	}
 	
-	private static <T> double recalcMaxDist(Point<T> p, Node<T> node, CoverTree<T> tree) {
+	private static <T> double recalcMaxDist(Node<T> p, Node<T> node, CoverTree<T> tree) {
 		double maxDist = 0;
 		if (node.children != null) {
 			for (int i = 0; i < node.children.size(); i++) {
 				Node<T> child = node.children.get(i);
 				//TODO on level 'x-1' this is == distToParent....
-				double distChild = tree.d(p, child.point());
+				double distChild = tree.d(p, child);
 				//first check dist, then check children, otherwise the 'if' below may not work 
 				maxDist = Math.max(maxDist, distChild);
 				double maxDistChild = child.maxdist(tree);
