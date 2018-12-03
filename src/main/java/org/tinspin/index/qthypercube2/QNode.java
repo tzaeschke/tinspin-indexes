@@ -414,7 +414,7 @@ public class QNode<T> {
 			}
 		}
 		if (values != null) {
-			s.nNodesLeaf++;
+			s.nLeaf++;
 			s.nEntries += nValues;
 			s.histoValues[nValues]++;
 			for (int i = 0; i < nValues; i++) {
@@ -425,7 +425,7 @@ public class QNode<T> {
 				throw new IllegalStateException();
 			}
 		} else {
-			s.nNodesInner++;
+			s.nInner++;
 			if (subs.length != 1L<<s.dims) {
 				throw new IllegalStateException();
 			}

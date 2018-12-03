@@ -57,8 +57,8 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 	}
 
 	@Override
-	public Object getStats() {
-		return tree.getInternalTree().getStats();
+	public PHStats getStats() {
+		return new PHStats(tree.getInternalTree().getStats(), tree.getDims());
 	}
 
 	@Override

@@ -180,7 +180,7 @@ public class PointIndexWrapper<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public Object getStats() {
+	public Stats getStats() {
 		return ind.getStats();
 	}
 

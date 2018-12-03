@@ -21,6 +21,7 @@ import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.PointIndex;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.Stats;
 
 import ch.ethz.globis.phtree.PhTreeF;
 import ch.ethz.globis.phtree.PhTreeF.PhEntryDistF;
@@ -57,8 +58,8 @@ public class PHTreeP<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public Object getStats() {
-		return tree.getInternalTree().getStats();
+	public Stats getStats() {
+		return new PHStats(tree.getInternalTree().getStats(), tree.getDim());
 	}
 
 	@Override

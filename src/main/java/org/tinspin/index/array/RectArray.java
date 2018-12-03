@@ -17,6 +17,7 @@ import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.RectangleEntry;
 import org.tinspin.index.RectangleEntryDist;
 import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.Stats;
 
 public class RectArray<T> implements RectangleIndex<T> {
 
@@ -298,7 +299,7 @@ public class RectArray<T> implements RectangleIndex<T> {
 	}
 
 	@Override
-	public Object getStats() {
+	public Stats getStats() {
 		throw new UnsupportedOperationException();
 		//return null;
 	}

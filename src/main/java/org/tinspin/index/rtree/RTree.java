@@ -24,6 +24,8 @@ import java.util.Iterator;
 import org.tinspin.index.RectangleDistanceFunction;
 import org.tinspin.index.RectangleEntryDist;
 import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.Stats;
+
 
 /**
  * R*Tree implementation based on the paper from
@@ -56,6 +58,9 @@ public class RTree<T> implements RectangleIndex<T> {
 	private int depth;
 	private RTreeNode<T> root;
 	private int nNodes = 0;
+
+	private long nDist1NN = 0;
+	private long nDistKNN = 0;
 	
 	static RTreeLogic logic = new RStarTreeLogic();
 	
@@ -406,11 +411,14 @@ public class RTree<T> implements RectangleIndex<T> {
 		}
 	}
 
-	public static class RTreeStats {
+	public static class RTreeStats extends Stats {
 		int dims;
-		int nNodes;
-		int nEntries;
-		int depth;
+		
+		RTreeStats(RTree<?> tree) {
+			super(tree.nDist1NN + tree.nDistKNN, tree.nDist1NN, tree.nDistKNN);
+			minLevel = 0;
+			maxLevel = tree.depth;
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -418,9 +426,9 @@ public class RTree<T> implements RectangleIndex<T> {
 	 */
 	@Override
 	public RTreeStats getStats() {
-		RTreeStats stats = new RTreeStats();
+		RTreeStats stats = new RTreeStats(this);
 		stats.dims = dims;
-		stats.depth = depth;
+		stats.maxDepth = depth;
 		getStats(stats, root, depth-1);
 		if (stats.nEntries != size) {
 			throw new IllegalStateException();
@@ -509,5 +517,13 @@ public class RTree<T> implements RectangleIndex<T> {
 				";size=" + size + ";nNodes=" + nNodes +
 				";dir_m/M=" + NODE_MIN_DIR + "/" + NODE_MAX_DIR +
 				";data_m/M=" + NODE_MIN_DATA + "/" + NODE_MAX_DATA;
+	}
+
+	void incNDist1NN() {
+		nDist1NN++;		
+	}
+
+	void incNDistKNN() {
+		nDist1NN++;
 	}
 }

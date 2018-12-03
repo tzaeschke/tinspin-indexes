@@ -148,7 +148,7 @@ public class RTreeQuery1NN<T> {
 					Entry<T> e = entries.get(ip.pos);
 					ip.pos++;
 					//this works only for EDGE distance !!!
-					double d = dist.dist(center, e.min, e.max);
+					double d = dist(center, e.min, e.max);
 					if (candidate.dist() > d) {
 						candidate.set(e, d);
 						currentDist = d; 
@@ -189,7 +189,7 @@ public class RTreeQuery1NN<T> {
 		int pos = 0;
 		for (int i = 0; i < subNodes.size(); i++) {
 			RTreeNode<T> e = subNodes.get(i);
-			double d = dist.dist(center, e.min, e.max);
+			double d = dist(center, e.min, e.max);
 			//Strategy #1/#3
 			if (d < minDist) {
 				ret[pos++].set(e.lower(), e.upper(), e, d);
@@ -210,6 +210,11 @@ public class RTreeQuery1NN<T> {
 		}
 		
 		iPos.maxPos = pos;
+	}
+	
+	private double dist(double[] center, double[] min, double[] max) {
+		tree.incNDist1NN();
+		return dist.dist(center, min, max);
 	}
 
 }

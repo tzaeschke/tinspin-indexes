@@ -31,6 +31,7 @@ import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.PointIndex;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.Stats;
 
 /**
  * A simple KD-Tree implementation. 
@@ -644,7 +645,7 @@ public class KDTree<T> implements PointIndex<T> {
 	
 	@Override
 	public KDStats getStats() {
-		KDStats s = new KDStats();
+		KDStats s = new KDStats(this);
 		if (root != null) {
 			root.checkNode(s, 0);
 		}
@@ -654,25 +655,9 @@ public class KDTree<T> implements PointIndex<T> {
 	/**
 	 * Statistics container class.
 	 */
-	public static class KDStats {
-		int nNodes;
-		int maxDepth;
-		long nDist1NN;
-		long nDistKNN;
-		public int getNodeCount() {
-			return nNodes;
-		}
-		public int getMaxDepth() {
-			return maxDepth;
-		}
-		public long getNDist() {
-			return nDist1NN + nDistKNN;
-		}
-		public long getNDist1NN() {
-			return nDist1NN;
-		}
-		public long getNDistKNN() {
-			return nDistKNN;
+	public static class KDStats extends Stats {
+		public KDStats(KDTree<?> tree) {
+			super(tree.nDist1NN + tree.nDistKNN, tree.nDist1NN, tree.nDistKNN);
 		}
 	}
 

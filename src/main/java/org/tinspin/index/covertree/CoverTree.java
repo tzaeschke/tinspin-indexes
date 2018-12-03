@@ -27,6 +27,7 @@ import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.PointIndex;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.Stats;
 
 
 /**
@@ -168,8 +169,8 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public Stats getStats() {
-		Stats stats = new Stats(this);
+	public CTStats getStats() {
+		CTStats stats = new CTStats(this);
 		if (root != null) {
 			getStats(root, stats);
 		}
@@ -892,7 +893,7 @@ public class CoverTree<T> implements PointIndex<T> {
 
 	public void check() {
 		if (root != null) {
-			Stats stats = new Stats(this); 
+			CTStats stats = new CTStats(this); 
 			getStats(root, stats);
 			if (stats.nEntries != nEntries) {
 				throw new IllegalStateException("nEntries: " + stats.nEntries + " / " + nEntries);
@@ -900,10 +901,12 @@ public class CoverTree<T> implements PointIndex<T> {
 		}
 	}
 	
-	private void getStats(Node<T> node, Stats stats) {
+	private void getStats(Node<T> node, CTStats stats) {
 		stats.nEntries++;
+		stats.nNodes++;
 		stats.minLevel = Math.min(stats.minLevel, node.getLevel());
 		stats.maxLevel = Math.max(stats.maxLevel, node.getLevel());
+		stats.maxDepth = stats.maxLevel - stats.minLevel;
 		stats.sumLevel += node.getLevel();
 		
 		if (node.hasChildren()) {
@@ -961,62 +964,17 @@ public class CoverTree<T> implements PointIndex<T> {
 		return currentMax;
 	}
 	
-	 public static class Stats {
-		int nEntries = 0;
-		int minLevel = Integer.MAX_VALUE;
-		int maxLevel = -1;
-		double sumLevel;
-		int maxNodeSize = -1;
+	 public static class CTStats extends Stats {
 		double sumMaxDist = 0;
-		int nLeaf;
-		long nDistCalc;
-		long nDistCalc1NN;
-		long nDistCalcKNN;
 		
-		Stats(CoverTree<?> tree) {
-			this.nDistCalc = tree.nDistCalc;
-			this.nDistCalc1NN = tree.nDist1NN;
-			this.nDistCalcKNN = tree.nDistKNN;
+		CTStats(CoverTree<?> tree) {
+			super(tree.nDistCalc, tree.nDist1NN, tree.nDistKNN);
 		}
 		
 		@Override
 		public String toString() {
-			return 
-					"nEntries=" + nEntries +
-					";minLevel=" + minLevel + 
-					";maxLevel=" + maxLevel + 
-					";avgLevel=" + (sumLevel/nEntries) +
-					";maxNodeSize=" + maxNodeSize +
-					";nLeaf=" + nLeaf +
+			return super.toString() +
 					";sumMaxDist=" + sumMaxDist;
-		}
-
-		public long getDepth() {
-			return maxLevel - minLevel;
-		}
-
-		public int getNodeCount() {
-			return nEntries;
-		}
-		
-		public int getMaxNodeSize() {
-			return maxNodeSize;
-		}
-		
-		public int getLeafCount() {
-			return nLeaf;
-		}
-
-		public long getNDistCalc() {
-			return nDistCalc;
-		}
-
-		public long getNDistCalc1NN() {
-			return nDistCalc1NN;
-		}
-
-		public long getNDistCalcKNN() {
-			return nDistCalcKNN;
 		}
 	}
 

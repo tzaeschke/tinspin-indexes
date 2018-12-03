@@ -29,6 +29,7 @@ import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.PointIndex;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.Stats;
 
 /**
  * This is a MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
@@ -482,31 +483,19 @@ public class QuadTreeKD<T> implements PointIndex<T> {
 	/**
 	 * Statistics container class.
 	 */
-	public static class QStats {
-		int nNodes;
-		int nNodesInner;
-		int nNodesLeaf;
-		int maxDepth;
-		int nEntries;
+	public static class QStats extends Stats {
 		final int[] histoValues = new int[100];
 		final int[] histoSubs;
-		final int dims;
+
 		public QStats(int dims) {
+			super(0, 0, 0);
 			this.dims = dims;
 			this.histoSubs = new int[1 + (1 << dims)];
 		}
-		public int getNodeCount() {
-			return nNodes;
-		}
-		public int getEntryCount() {
-			return nEntries;
-		}
-		public int getMaxDepth() {
-			return maxDepth;
-		}
+
 		@Override
 		public String toString() {
-			return "nNodes/inner/leaf=" + nNodes + "/" + nNodesInner + "/" + nNodesLeaf + ";\n"
+			return super.toString() + ";\n"
 					+ "histoVal:" + Arrays.toString(histoValues) + "\n"
 					+ "histoSub:" + Arrays.toString(histoSubs);
 		}

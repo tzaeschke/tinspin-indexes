@@ -100,7 +100,7 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	private void search(int k) {
 		//Initialize queue
 		RTreeNode<T> eRoot = tree.getRoot();
-		double dRoot = dist.dist(center, eRoot.min, eRoot.max);
+		double dRoot = dist(center, eRoot.min, eRoot.max);
 		queue.add(createEntry(eRoot.lower(), eRoot.upper(), eRoot, dRoot));
 
 		while (!queue.isEmpty()) {
@@ -117,7 +117,7 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 				ArrayList<Entry<T>> entries = ((RTreeNodeLeaf<T>)o).getEntries();
 				for (int i = 0; i < entries.size(); i++) {
 					Entry<T> e2 = entries.get(i);
-					double d = dist.dist(center, e2.min, e2.max);
+					double d = dist(center, e2.min, e2.max);
 					queue.add(createEntry(e2.lower(), e2.upper(), e2.value(), d));
 				}
 				pool.add(candidate);
@@ -126,7 +126,7 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 				ArrayList<RTreeNode<T>> entries = ((RTreeNodeDir<T>)o).getChildren();
 				for (int i = 0; i < entries.size(); i++) {
 					RTreeNode<T> e2 = entries.get(i);
-					double d = dist.dist(center, e2.min, e2.max);
+					double d = dist(center, e2.min, e2.max);
 					queue.add(createEntry(e2.lower(), e2.upper(), e2, d));
 				}
 				pool.add(candidate);
@@ -152,5 +152,10 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	@Override
 	public DistEntry<T> next() {
 		return iter.next();
+	}
+	
+	private double dist(double[] center, double[] min, double[] max) {
+		tree.incNDistKNN();
+		return dist.dist(center, min, max);
 	}
 }

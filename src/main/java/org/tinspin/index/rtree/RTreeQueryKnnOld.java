@@ -153,7 +153,7 @@ public class RTreeQueryKnnOld<T> implements QueryIteratorKNN<RectangleEntryDist<
 					Entry<T> e = entries.get(ip.pos);
 					ip.pos++;
 					//this works only for EDGE distance!!!
-					double eDist = dist.dist(center, e.min, e.max);
+					double eDist = dist(center, e.min, e.max);
 					if (eDist < currentDist) {
 						currentDist = checkCandidate(e, eDist);
 					}
@@ -171,7 +171,7 @@ public class RTreeQueryKnnOld<T> implements QueryIteratorKNN<RectangleEntryDist<
 		//TODO see query1NN: Add only those with d<minDist 
 		for (int i = 0; i < entries.size(); i++) {
 			RTreeNode<T> e = entries.get(i);
-			double d = dist.dist(center, e.min, e.max);
+			double d = dist(center, e.min, e.max);
 			ret[i] = new DistEntry<RTreeNode<T>>(e.lower(), e.upper(), e, d);
 		}
 		Arrays.sort(ret, COMP);
@@ -190,6 +190,11 @@ public class RTreeQueryKnnOld<T> implements QueryIteratorKNN<RectangleEntryDist<
 	@Override
 	public DistEntry<T> next() {
 		return iter.next();
+	}
+	
+	private double dist(double[] center, double[] min, double[] max) {
+		tree.incNDistKNN();
+		return dist.dist(center, min, max);
 	}
 	
 }

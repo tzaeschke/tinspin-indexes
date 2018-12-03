@@ -17,6 +17,7 @@ import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.PointIndex;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.Stats;
 
 public class PointArray<T> implements PointIndex<T> {
 	
@@ -276,7 +277,7 @@ public class PointArray<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public Object getStats() {
+	public Stats getStats() {
 		throw new UnsupportedOperationException();
 		//return null;
 	}
