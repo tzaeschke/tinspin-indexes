@@ -127,7 +127,7 @@
 				<configuration>
 					<argLine>${argLine} -Xmx512m</argLine>
 					<printSummary>true</printSummary>
-					<skipTests>false</skipTests>
+					<!--  <skipTests>false</skipTests>  -->
   				</configuration>
 			</plugin>
 			<plugin>
