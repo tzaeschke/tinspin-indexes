@@ -22,13 +22,14 @@ TinSpin indexes are also available via maven:
 <dependency>
 	<groupId>org.tinspin</groupId>
 	<artifactId>tinspin-indexes</artifactId>
-	<version>1.6.1</version>
+	<version>1.7.0</version>
 </dependency>
 ```
   
 Changelog
 ==============
 See [CHANGELOG](CHANGELOG) for details.
+ - 1.7.0 CoverTree and improved index statistics
  - 1.6.1 Improved kD-Tree performance
  - 1.5.1 Fixed for integration of quadtree HC v2
  - 1.5.0 Added quadtree HC v2
