@@ -39,7 +39,7 @@ public class Node<T> {
 		return this;
 	}
 
-	public Point<T> point() {
+	Point<T> point() {
 		return p;
 	}
 	
@@ -51,7 +51,7 @@ public class Node<T> {
 		return this.distToParent;
 	}
 	
-	public void addChild(Node<T> node, double distToParent) {
+	void addChild(Node<T> node, double distToParent) {
 		if (node.level + 1 != level) {
 			throw new IllegalStateException("level" + level + '/' + node.level);
 		}
@@ -60,35 +60,35 @@ public class Node<T> {
 		}
 		node.distToParent = distToParent;
 		if (node.hasChildren()) {
-			//TODO if (node.distToParent + node.maxDist() > maxDist) {
-			maxDist = -1; //Needs recalc
-			//}
+			if (node.maxDist == -1 || node.distToParent + node.maxDist > maxDist) {
+				maxDist = -1; //Needs recalc
+			}
 		} else if (maxDist != -1 && distToParent > maxDist) {
 			maxDist = distToParent;
 		}
 		children.add(node);
 	}
 
-	public void replaceChild(int i, Node<T> qNew) {
+	void replaceChild(int i, Node<T> qNew) {
 		children.set(i, qNew);
 	}
 
-	public ArrayList<Node<T>> getChildren() {
+	ArrayList<Node<T>> getChildren() {
 		return children;
 	}
 
-	public ArrayList<Node<T>> getOrCreateChildren() {
+	ArrayList<Node<T>> getOrCreateChildren() {
 		if (children == null) {
 			children = new ArrayList<>();
 		}
 		return children;
 	}
 
-	public boolean hasChildren() {
+	boolean hasChildren() {
 		return children != null && !children.isEmpty(); 
 	}
 	
-	public Node<T> removeAnyLeaf() {
+	Node<T> removeAnyLeaf() {
 		//TODO closest?
 		Node<T> any = children.get(0);
 		if (any.hasChildren()) {
@@ -101,7 +101,6 @@ public class Node<T> {
 		Node<T> leaf = children.remove(0);
 		if (children.isEmpty()) {
 			maxDist = 0;
-			//TODO return list to pool
 		} else if (leaf.getDistanceToParent() >= maxDist) {
 			maxDist = -1;
 		}
@@ -128,8 +127,8 @@ public class Node<T> {
 		if (node.children != null) {
 			for (int i = 0; i < node.children.size(); i++) {
 				Node<T> child = node.children.get(i);
-				//TODO on level 'x-1' this is == distToParent....
-				double distChild = tree.d(p, child);
+				// level 'x-1' this is == distToParent....
+				double distChild = p == node ? child.getDistanceToParent() : tree.d(p, child);
 				//first check dist, then check children, otherwise the 'if' below may not work 
 				maxDist = Math.max(maxDist, distChild);
 				double maxDistChild = child.maxdist(tree);
@@ -172,7 +171,7 @@ public class Node<T> {
 				c.clearAndRemoveAllChildren(clearedChildren);
 			}
 			clearedChildren.addAll(children);
-			children.clear(); //TODO set null?
+			children.clear();
 		}
 		maxDist = 0;
 		distToParent = 0;
