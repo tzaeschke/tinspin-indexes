@@ -68,4 +68,14 @@ public interface PointDistanceFunction {
 		return Math.sqrt(dist);
 	}
 
+	public static String getName(PointDistanceFunction fn) {
+		//'nice' hack, eh?
+		if (fn == L1) {
+			return "L1";
+		} else if (fn == L2) {
+			return "L2";
+		}
+		return "unknown";
+	}
+	
 }

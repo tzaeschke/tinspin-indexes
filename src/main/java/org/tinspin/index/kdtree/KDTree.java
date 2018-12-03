@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import org.tinspin.index.PointDistanceFunction;
 import org.tinspin.index.PointEntry;
 import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.PointIndex;
@@ -47,6 +48,8 @@ public class KDTree<T> implements PointIndex<T> {
 	private final int dims;
 	private int size = 0; 
 	private int modCount = 0;
+	private long nDist1NN = 0;
+	private long nDistKNN = 0;
 	//During insertion, the tree maintains an invariant that if two points have the
 	//same value in any dimension, then one key is never in the 'lower' branch of the other.
 	//This allows very efficient look-up because we have to follow only a single path.
@@ -67,6 +70,8 @@ public class KDTree<T> implements PointIndex<T> {
 	private boolean invariantBroken = false;
 	
 	private Node<T> root;
+	
+	private final PointDistanceFunction dist;
 	
 	public static void main(String ... args) {
 		for (int i = 0; i < 10; i++) {
@@ -127,15 +132,20 @@ public class KDTree<T> implements PointIndex<T> {
 		}
 	}
 	
-	private KDTree(int dims) {
+	private KDTree(int dims, PointDistanceFunction dist) {
 		if (DEBUG) {
 			System.err.println("Warning: DEBUG enabled");
 		}
 		this.dims = dims;
+		this.dist = dist != null ? dist : PointDistanceFunction.L2;
 	}
 
 	public static <T> KDTree<T> create(int dims) {
-		return new KDTree<>(dims);
+		return new KDTree<>(dims, PointDistanceFunction.L2);
+	}
+	
+	public static <T> KDTree<T> create(int dims, PointDistanceFunction dist) {
+		return new KDTree<>(dims, dist);
 	}
 	
 	/**
@@ -425,13 +435,8 @@ public class KDTree<T> implements PointIndex<T> {
 		return true;
 	}
 
-	private static double distance(double[] p1, double[] p2) {
-		double dist = 0;
-		for (int i = 0; i < p1.length; i++) {
-			double d = p1[i]-p2[i];
-			dist += d * d;
-		}
-		return Math.sqrt(dist);
+	private double distance(double[] p1, double[] p2) {
+		return dist.dist(p1, p2);
 	}
 	
 	/**
@@ -478,7 +483,9 @@ public class KDTree<T> implements PointIndex<T> {
     	return maxRange;
     }
         
-    private double addCandidate(Node<T> node, double[] center, final KDEntryDist<T> candidate, double maxRange) {
+    private double addCandidate(Node<T> node, double[] center, 
+    		final KDEntryDist<T> candidate, double maxRange) {
+    	nDist1NN++;
     	double dist = distance(center, node.getKey());
     	if (dist >= maxRange) {
     		//don't add if too far away
@@ -538,6 +545,7 @@ public class KDTree<T> implements PointIndex<T> {
     
     private double addCandidate(Node<T> node, double[] center, 
     		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange) {
+    	nDistKNN++;
     	//add ?
     	double dist = distance(center, node.getKey());
     	if (dist > maxRange) {
@@ -630,6 +638,7 @@ public class KDTree<T> implements PointIndex<T> {
 	public String toString() {
 		return "KDTree;size=" + size + 
 				";DEBUG=" + DEBUG + 
+				";DistFn=" + PointDistanceFunction.getName(dist) +
 				";center=" + (root==null ? "null" : Arrays.toString(root.getKey()));
 	}
 	
@@ -648,11 +657,22 @@ public class KDTree<T> implements PointIndex<T> {
 	public static class KDStats {
 		int nNodes;
 		int maxDepth;
+		long nDist1NN;
+		long nDistKNN;
 		public int getNodeCount() {
 			return nNodes;
 		}
 		public int getMaxDepth() {
 			return maxDepth;
+		}
+		public long getNDist() {
+			return nDist1NN + nDistKNN;
+		}
+		public long getNDist1NN() {
+			return nDist1NN;
+		}
+		public long getNDistKNN() {
+			return nDistKNN;
 		}
 	}
 

@@ -1028,7 +1028,8 @@ public class CoverTree<T> implements PointIndex<T> {
 	public String toString() {
 		return this.getClass().getSimpleName() + 
 				";BASE=" + BASE +  
-				";NEAREST_ANCESTOR=" + NEAREST_ANCESTOR;
+				";NEAREST_ANCESTOR=" + NEAREST_ANCESTOR + 
+				";DistFn=" + PointDistanceFunction.getName(dist);
 	}
 
 }
