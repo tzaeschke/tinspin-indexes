@@ -28,6 +28,7 @@ import org.tinspin.index.PointIndex;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
 
+
 /**
  * A 'faster' CoverTree implementation based on the paper:
  * 
@@ -1022,4 +1023,12 @@ public class CoverTree<T> implements PointIndex<T> {
 	Node<T> getRoot() {
 		return root;
 	}
+	
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + 
+				";BASE=" + BASE +  
+				";NEAREST_ANCESTOR=" + NEAREST_ANCESTOR;
+	}
+
 }
