@@ -25,7 +25,8 @@
 	</licenses>
 	<scm>
 		<url>https://github.com/tzaeschke/tinspin-indexes</url>
-		<connection>scm:ssh:git@github.com:tzaeschke/tinspin-indexes.git</connection>
+<!--		<connection>scm:ssh:git@github.com:tzaeschke/tinspin-indexes.git</connection> -->
+		<connection>scm:git:ssh://git@github.com:tzaeschke/tinspin-indexes.git</connection>
 		<developerConnection>scm:git:git@github.com:tzaeschke/tinspin-indexes.git</developerConnection>
     </scm>
 	<developers>
