@@ -128,6 +128,7 @@
 				<configuration>
 					<argLine>${argLine} -Xmx512m</argLine>
 					<printSummary>true</printSummary>
+					<forkCount>1.5C</forkCount>
 					<!--  <skipTests>false</skipTests>  -->
   				</configuration>
 			</plugin>
