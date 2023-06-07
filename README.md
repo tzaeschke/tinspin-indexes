@@ -28,7 +28,7 @@ TinSpin indexes are also available via maven:
   
 Changelog
 ==============
-See [CHANGELOG](CHANGELOG) for details.
+See [CHANGELOG](CHANGELOG.md) for details.
  - 1.7.1 Dependency on latest PH-Tree
  - 1.7.0 CoverTree and improved index statistics
  - 1.6.1 Improved kD-Tree performance
