@@ -1,5 +1,5 @@
 
-[![Build Status](https://github.com/tzaeschke/tinspin-indexes/actions/workflows/build.yml/badge.svg)](https://github.com/tzaeschke/phtree-cpp/actions/)
+[![Build Status](https://github.com/tzaeschke/tinspin-indexes/actions/workflows/build.yml/badge.svg)](https://github.com/tzaeschke/tinspin-indexes/actions/)
 [![codecov](https://codecov.io/gh/tzaeschke/tinspin-indexes/branch/master/graph/badge.svg)](https://codecov.io/gh/tzaeschke/tinspin-indexes)
 
 TinSpin Indexes
