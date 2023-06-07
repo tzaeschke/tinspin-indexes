@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Java JDK 11 default + updated maven dependencies + updated CHANGELOG.md (#23)
+- Java JDK 11 default + updated maven dependencies + updated CHANGELOG.md 
+  [#12](https://github.com/tzaeschke/tinspin-indexes/pull/12)
 
 ## [1.7.1] - 2018-12-10
 
