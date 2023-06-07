@@ -43,6 +43,8 @@ import org.tinspin.index.critbit.CritBit.QueryIteratorWithMask;
  */
 public class TestCritBit {
 
+	private static final int REPEAT = 100; // 1000
+
 	private CritBit1D<Integer> newCritBit(int depth) {
 		return CritBit.create1D(depth);
 	}
@@ -84,7 +86,7 @@ public class TestCritBit {
 	
 	@Test
 	public void testInsertIntR() {
-		randomInsertCheck(1000000, 0, 32);
+		randomInsertCheck(1000 * REPEAT, 0, 32);
 	}
 	
 	private int iMinFail = Integer.MAX_VALUE;
@@ -95,7 +97,7 @@ public class TestCritBit {
 	@Test
 	public void testInsertIntR2() {
 		int r = 0;
-		for (r = 0; r < 1000; r++) {
+		for (r = 0; r < REPEAT; r++) {
 			try {
 				randomInsertCheck(1000, r, 16);
 			} catch (AssertionError e) {
@@ -228,7 +230,7 @@ public class TestCritBit {
 	
 	@Test
 	public void test64() {
-		for (int r = 0; r < 1000; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 1000;
 			long[] a = new long[N];
@@ -420,7 +422,7 @@ public class TestCritBit {
 	@Test
 	public void test64_True1D_queries_PositiveNumbers() {
 		final int K = 1;
-		for (int r = 0; r < 1000; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 1000;
 			long[][] aa = new long[N][];

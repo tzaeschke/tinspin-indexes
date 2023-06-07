@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [unreleased]
 
 ### Changed
-
+- Moved to GitHub Actions CI. [#13](https://github.com/tzaeschke/tinspin-indexes/pull/13)
 - Java JDK 11 default + updated maven dependencies + updated CHANGELOG.md. 
   [#12](https://github.com/tzaeschke/tinspin-indexes/pull/12)
 
