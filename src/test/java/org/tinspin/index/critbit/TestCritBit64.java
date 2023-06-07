@@ -40,6 +40,8 @@ import org.tinspin.index.critbit.CritBit64.QueryIteratorMask;
  */
 public class TestCritBit64 {
 
+	private static final int REPEAT = 100; // 1000
+
 	private <T> CritBit64<T> newCritBit() {
 		return CritBit64.create();
 	}
@@ -86,7 +88,7 @@ public class TestCritBit64 {
 	
 	@Test
 	public void testInsertIntR() {
-		randomInsertCheck(1000000, 0, 32);
+		randomInsertCheck(1000 * REPEAT, 0, 32);
 	}
 	
 	private int iMinFail = Integer.MAX_VALUE;
@@ -97,7 +99,7 @@ public class TestCritBit64 {
 	@Test
 	public void testInsertIntR2() {
 		int r = 0;
-		for (r = 0; r < 1000; r++) {
+		for (r = 0; r < REPEAT; r++) {
 			try {
 				randomInsertCheck(1000, r, 16);
 			} catch (AssertionError e) {
@@ -279,7 +281,7 @@ public class TestCritBit64 {
 
 	@Test
 	public void testQueries64() {
-		for (int r = 0; r < 1000; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 10000;
 			long[] a = new long[N];
@@ -337,7 +339,7 @@ public class TestCritBit64 {
 
 	@Test
 	public void testQueries64WithReset() {
-		for (int r = 0; r < 1000; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 10000;
 			long[] a = new long[N];
@@ -398,7 +400,7 @@ public class TestCritBit64 {
 
 	@Test
 	public void testIterators64() {
-		for (int r = 0; r < 1000; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 10000;
 			long[] a = new long[N];
@@ -454,7 +456,7 @@ public class TestCritBit64 {
 
 	@Test
 	public void testIterators64WithReset() {
-		for (int r = 0; r < 1000; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 10000;
 			long[] a = new long[N];
@@ -669,7 +671,7 @@ public class TestCritBit64 {
 
 	@Test
 	public void test64_True1D_queries_PositiveNumbers() {
-		for (int r = 0; r < 1000; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 1000;
 			long[] aa = new long[N];

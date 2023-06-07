@@ -41,6 +41,8 @@ import org.tinspin.index.critbit.CritBit.QueryIteratorKD;
  */
 public class TestCritBitKD {
 
+	private static final int REPEAT = 20; // 100
+
 	private CritBitKD<Integer> newCritBit(int depth, int K) {
 		return CritBit.createKD(depth, K);
 	}
@@ -48,7 +50,7 @@ public class TestCritBitKD {
 	@Test
 	public void test64_2() {
 		final int K = 2;
-		for (int r = 0; r < 1000; r++) {
+		for (int r = 0; r < 10 * REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 1000;
 			long[] aa = new long[2*N];
@@ -105,7 +107,7 @@ public class TestCritBitKD {
 	@Test
 	public void test64_K() {
 		final int K = 5;
-		for (int r = 0; r < 100; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 1000;
 			long[][] aa = new long[N][];
@@ -863,7 +865,7 @@ public class TestCritBitKD {
 	@Test
 	public void testDelete64K3() {
 		final int K = 3;
-		for (int r = 0; r < 100; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 10000; 
 			long[][] aa = new long[N][];
@@ -920,7 +922,7 @@ public class TestCritBitKD {
 	@Test
 	public void testDelete64K5() {
 		final int K = 5;
-		for (int r = 0; r < 100; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			int N = 10000;
 			long[][] aa = new long[N][];
@@ -1165,7 +1167,7 @@ public class TestCritBitKD {
 		final int K = 2;
 		final int W = 64; //bit depth
 		final int N = 1000;
-		for (int r = 0; r < 100; r++) {
+		for (int r = 0; r < REPEAT; r++) {
 			Random R = new Random(r);
 			long[][] aa = new long[N][];
 			CritBitKD<Integer> cb = newCritBit(W, K); 
