@@ -54,7 +54,8 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 
 	public static final boolean DEBUG = false;
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
-	
+	private static final double INITIAL_RADIUS = Double.MAX_VALUE;
+
 	private final int dims;
 	private final int maxNodeSize;
 	private QNode<T> root = null;
@@ -92,7 +93,6 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 	 * @param value the value
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public void insert(double[] key, T value) {
 		size++;
 		QEntry<T> e = new QEntry<>(key, value);
@@ -100,13 +100,14 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 			initializeRoot(key);
 		}
 		ensureCoverage(e);
-		Object r = root;
+		QNode<T> r = root;
 		int depth = 0;
-		while (r instanceof QNode) {
-			r = ((QNode<T>)r).tryPut(e, maxNodeSize, depth++>MAX_DEPTH);
+		while (r != null) {
+			r = r.tryPut(e, maxNodeSize, depth++ > MAX_DEPTH);
 		}
 	}
-	
+
+	// TODO doing the same as in QTZ/QTZ2 breaks the tests...
 	private void initializeRoot(double[] key) {
 		double lo = Double.MAX_VALUE;
 		double hi = -Double.MAX_VALUE;
@@ -115,12 +116,12 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 			hi = hi < key[d] ? key[d] : hi;
 		}
 		if (lo == 0 && hi == 0) {
-			hi = 1.0; 
+			hi = 1.0;
 		}
 		double maxDistOrigin = Math.abs(hi) > Math.abs(lo) ? hi : lo;
 		maxDistOrigin = Math.abs(maxDistOrigin);
 		//no we use (0,0)/(+-maxDistOrigin*2,+-maxDistOrigin*2) as root.
-		
+
 		//HACK: To avoid precision problems, we ensure that at least the initial
 		//point is not exactly on the border of the quadrants:
 		maxDistOrigin *= QUtil.EPS_MUL*QUtil.EPS_MUL;
@@ -128,10 +129,10 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 		for (int d = 0; d < dims; d++) {
 			center[d] = key[d] > 0 ? maxDistOrigin : -maxDistOrigin;
 //			max[d] = key[d] < 0 ? 0 : (maxDistOrigin*2);
-		}			
+		}
 		root = new QNode<>(center, maxDistOrigin);
 	}
-	
+
 	/**
 	 * Check whether a given key exists.
 	 * @param key the key to check

@@ -331,4 +331,12 @@ public class QNode<T> {
 	ArrayList<QNode<T>> getChildNodes() {
 		return subs;
 	}
+
+
+	void adjustRadius(double radius) {
+		if (!isLeaf()) {
+			throw new IllegalStateException();
+		}
+		this.radius = radius;
+	}
 }

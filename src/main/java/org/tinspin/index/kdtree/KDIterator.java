@@ -23,9 +23,9 @@ public class KDIterator<T> implements QueryIterator<PointEntry<T>> {
 			this.depth = depth;
 			double[] key = node.getKey();
 			int pos = depth % dims;
-			doLeft = min[pos] < key[pos];
-			doRight = max[pos] > key[pos];
-			doKey = doLeft || doRight || key[pos] == min[pos] || key[pos] == max[pos];
+			doLeft = min[pos] <= key[pos];
+			doRight = max[pos] >= key[pos];
+			doKey = true;
 		}
 	}
 	

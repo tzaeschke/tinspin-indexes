@@ -33,7 +33,7 @@ public class QNode<T> {
 
 	private double[] center;
 	private double radius;
-	//null indicates that we have sub-nopde i.o. values
+	// null indicates that we have sub-node i.o. values
 	private ArrayList<QEntry<T>> values;
 	private QNode<T>[] subs;
 	
@@ -348,5 +348,12 @@ public class QNode<T> {
 
 	QNode<T>[] getChildNodes() {
 		return subs;
+	}
+
+	void adjustRadius(double radius) {
+		if (!isLeaf()) {
+			throw new IllegalStateException();
+		}
+		this.radius = radius;
 	}
 }
