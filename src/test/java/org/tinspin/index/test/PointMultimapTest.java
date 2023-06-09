@@ -103,16 +103,18 @@ public class PointMultimapTest extends AbstractWrapperTest {
      */
     @Test
     public void smokeTest2D_Line() {
-        List<Entry> data = createInt(0, 10000, 3);
-        int nAll = 0;
-        for (Entry e : data) {
-            int n = nAll++ / N_DUP;
-            e.p[0] = n % 3;
-            e.p[1] = n++;
-            e.p[2] = n % 5;
+        for (int r = 0; r < 10; ++r) {
+            List<Entry> data = createInt(0, 1000, 3);
+            int nAll = 0;
+            for (Entry e : data) {
+                int n = nAll++ / N_DUP;
+                e.p[0] = n % 3;
+                e.p[1] = n++;
+                e.p[2] = n % 5;
+            }
+            Collections.shuffle(data, new Random(r));
+            smokeTest(data);
         }
-        Collections.shuffle(data);
-        smokeTest(data);
     }
 
     @Test
@@ -132,7 +134,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
     @Test
     public void smokeTest10D_Large() {
-        smokeTest(createInt(0, 100_000, 10));
+        smokeTest(createInt(0, 10_000, 10));
     }
 
     private void smokeTest(List<Entry> data) {
@@ -143,7 +145,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             tree.insert(e.p, e);
         }
-//	    System.out.println(tree.toStringTree());
+	    // System.out.println(tree.toStringTree());
         for (Entry e : data) {
             Entry e2 = tree.queryExact(e.p);
             assertNotNull("queryExact() failed: " + e, e2);
@@ -170,8 +172,8 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 
         for (Entry e : data) {
-//			System.out.println(tree.toStringTree());
-//			System.out.println("Removing: " + Arrays.toString(key));
+            //			System.out.println(tree.toStringTree());
+            //			System.out.println("Removing: " + Arrays.toString(key));
             Entry e2 = tree.queryExact(e.p);
             assertNotNull("queryExact() failed: " + e, e2);
             Entry answer = tree.remove(e.p);

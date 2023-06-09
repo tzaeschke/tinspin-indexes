@@ -474,4 +474,12 @@ public class QNode<T> {
 	public int getValueCount() {
 		return nValues;
 	}
+
+
+	void adjustRadius(double radius) {
+		if (!isLeaf()) {
+			throw new IllegalStateException();
+		}
+		this.radius = radius;
+	}
 }
