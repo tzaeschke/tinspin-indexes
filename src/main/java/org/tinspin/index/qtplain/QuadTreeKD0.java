@@ -97,11 +97,7 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 		size++;
 		QEntry<T> e = new QEntry<>(key, value);
 		if (root == null) {
-			// We calculate a better radius when adding a second point.
-			root = new QNode<>(key.clone(), INITIAL_RADIUS);
-		}
-		if (root.getRadius() == INITIAL_RADIUS) {
-			adjustRootSize(key);
+			initializeRoot(key);
 		}
 		ensureCoverage(e);
 		QNode<T> r = root;
@@ -111,20 +107,30 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 		}
 	}
 
-	private void adjustRootSize(double[] key) {
-		// Idea: we calculate the root size only when adding a point that is distinct from the root's center
-		if (!root.isLeaf() || root.getEntries().isEmpty()) {
-			return;
+	// TODO doing the same as in QTZ/QTZ2 breaks the tests...
+	private void initializeRoot(double[] key) {
+		double lo = Double.MAX_VALUE;
+		double hi = -Double.MAX_VALUE;
+		for (int d = 0; d < dims; d++) {
+			lo = lo > key[d] ? key[d] : lo;
+			hi = hi < key[d] ? key[d] : hi;
 		}
-		if (root.getRadius() == INITIAL_RADIUS) {
-			double dist = QUtil.distance(key, root.getCenter());
-			if (dist > 0) {
-				root.adjustRadius(2 * dist);
-			} else if (root.getEntries().size() >= maxNodeSize - 1) {
-				// we just set an arbitrary radius here
-				root.adjustRadius(1000);
-			}
+		if (lo == 0 && hi == 0) {
+			hi = 1.0;
 		}
+		double maxDistOrigin = Math.abs(hi) > Math.abs(lo) ? hi : lo;
+		maxDistOrigin = Math.abs(maxDistOrigin);
+		//no we use (0,0)/(+-maxDistOrigin*2,+-maxDistOrigin*2) as root.
+
+		//HACK: To avoid precision problems, we ensure that at least the initial
+		//point is not exactly on the border of the quadrants:
+		maxDistOrigin *= QUtil.EPS_MUL*QUtil.EPS_MUL;
+		double[] center = new double[dims];
+		for (int d = 0; d < dims; d++) {
+			center[d] = key[d] > 0 ? maxDistOrigin : -maxDistOrigin;
+//			max[d] = key[d] < 0 ? 0 : (maxDistOrigin*2);
+		}
+		root = new QNode<>(center, maxDistOrigin);
 	}
 
 	/**
