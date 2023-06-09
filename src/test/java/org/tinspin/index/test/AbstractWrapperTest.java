@@ -29,7 +29,14 @@ public abstract class AbstractWrapperTest {
 		ts.cfgUpdateSize = 1000;
 		return ts;
 	}
-	
+
+	public static TestStats createUnitTestStatsDupl(
+			INDEX idx, TST tst, int N, int dims, boolean isRangeData, double param1, int duplicates) {
+		TestStats ts = createUnitTestStats(idx, tst, N, dims, isRangeData, param1);
+		ts.cfgDuplicates = duplicates;
+		return ts;
+	}
+
 	public static void check(TestStats expected, TestStats ts, Candidate c) {
 		
 		double EPS = 0.000000001;

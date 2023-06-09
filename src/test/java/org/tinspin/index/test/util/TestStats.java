@@ -88,6 +88,8 @@ public class TestStats implements Serializable, Cloneable {
 	public static final double DEFAULT_DATA_LEN = 1.0;
 	/** Average edge length of the data rectangles. */
 	public static final double DEFAULT_RECT_LEN = 0.00001;
+
+	public static final int DEFAULT_DUPLICATES = 1;
 	
 
 	public enum TST {
@@ -134,6 +136,16 @@ public class TestStats implements Serializable, Cloneable {
 		this.param2 = param2;
 	}
 
+	public TestStats setParam2(double param2) {
+		this.param2 = param2;
+		return this;
+	}
+
+	public TestStats setDuplicates(int duplicates) {
+		cfgDuplicates = duplicates;
+		return this;
+	}
+
 	//configuration
 	/** how often to repeat the test. */
 	public int cfgNRepeat = DEFAULT_CFG_REPEAT;
@@ -155,13 +167,16 @@ public class TestStats implements Serializable, Cloneable {
 	public double cfgDataLen = DEFAULT_DATA_LEN;
 	/** length of the data rectangles */
 	public double cfgRectLen = DEFAULT_RECT_LEN;
-	
+
+	/** Number of point duplicates. n=1 means no duplicates, n=2 means every point exists 2 times. */
+	public int cfgDuplicates = DEFAULT_DUPLICATES;
+
 	public final TestStats.INDEX INDEX;
 	public final TestStats.TST TEST;
 	public String SEEDmsg;
 	public long seed;
 	public final double param1;
-	public double param2;
+	public double param2 = 0;
 	public String paramStr;
 	public boolean paramEnforceGC = true;
 	public final boolean isRangeData;
