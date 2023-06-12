@@ -25,13 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import org.tinspin.index.PointDistanceFunction;
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.PointIndex;
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.Stats;
+import org.tinspin.index.*;
 
 /**
  * A simple KD-Tree implementation. 
@@ -40,14 +34,14 @@ import org.tinspin.index.Stats;
  *
  * @param <T> Value type
  */
-public class KDTree<T> implements PointIndex<T> {
+public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	private static final String NL = System.lineSeparator();
 
 	public static final boolean DEBUG = false;
-	
+
 	private final int dims;
-	private int size = 0; 
+	private int size = 0;
 	private int modCount = 0;
 	private long nDist1NN = 0;
 	private long nDistKNN = 0;
@@ -69,28 +63,30 @@ public class KDTree<T> implements PointIndex<T> {
 	//This is especially useful in scenarios where 'remove()' is not required or where
 	//points have never the same values (such as for physical measurements or other experimental results).
 	private boolean invariantBroken = false;
-	
+
 	private Node<T> root;
-	
+
 	private final PointDistanceFunction dist;
-	
-	public static void main(String ... args) {
+
+	public static void main(String... args) {
 		for (int i = 0; i < 10; i++) {
 			try {
 				test(i);
-			} catch(Exception e) {
+			} catch (Exception e) {
 				System.out.println("Failed with r=" + i);
 				throw new RuntimeException(e);
 			}
 		}
 	}
-	
+
 	private static void test(int r) {
 //		double[][] point_list = {{2,3}, {5,4}, {9,6}, {4,7}, {8,1}, {7,2}};
 		double[][] point_list = new double[500000][14];
 		Random R = new Random(r);
 		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+			Arrays.setAll(p, (i) -> {
+				return (double) R.nextInt(100);
+			});
 		}
 		KDTree<double[]> tree = create(point_list[0].length);
 		for (double[] data : point_list) {
@@ -106,7 +102,7 @@ public class KDTree<T> implements PointIndex<T> {
 			System.out.println(Arrays.toString(tree.queryExact(key)));
 		}
 //	    System.out.println(tree.toStringTree());
-	    
+
 		for (double[] key : point_list) {
 //			System.out.println(tree.toStringTree());
 			System.out.println("kNN query: " + Arrays.toString(key));
@@ -126,13 +122,13 @@ public class KDTree<T> implements PointIndex<T> {
 			if (!tree.containsExact(key)) {
 				throw new IllegalStateException("containsExact() failed: " + Arrays.toString(key));
 			}
-			double[] answer = tree.remove(key); 
+			double[] answer = tree.remove(key);
 			if (answer != key && !Arrays.equals(answer, key)) {
 				throw new IllegalStateException("Expected " + Arrays.toString(key) + " but got " + Arrays.toString(answer));
 			}
 		}
 	}
-	
+
 	private KDTree(int dims, PointDistanceFunction dist) {
 		if (DEBUG) {
 			System.err.println("Warning: DEBUG enabled");
@@ -144,14 +140,15 @@ public class KDTree<T> implements PointIndex<T> {
 	public static <T> KDTree<T> create(int dims) {
 		return new KDTree<>(dims, PointDistanceFunction.L2);
 	}
-	
+
 	public static <T> KDTree<T> create(int dims, PointDistanceFunction dist) {
 		return new KDTree<>(dims, dist);
 	}
-	
+
 	/**
 	 * Insert a key-value pair.
-	 * @param key the key
+	 *
+	 * @param key   the key
 	 * @param value the value
 	 */
 	@Override
@@ -163,37 +160,50 @@ public class KDTree<T> implements PointIndex<T> {
 			return;
 		}
 		Node<T> n = root;
-		while ((n = n.getClosestNodeOrAddPoint(key, value, dims)) != null);
+		while ((n = n.getClosestNodeOrAddPoint(key, value, dims)) != null) ;
 	}
-	
+
 	/**
 	 * Check whether a given key exists.
+	 *
 	 * @param key the key to check
 	 * @return true iff the key exists
 	 */
 	public boolean containsExact(double[] key) {
-		return findNodeExcat(key, new RemoveResult<>()) != null;
+		return findNodeExact(key, new RemoveResult<>()) != null;
 	}
-	
+
+	/**
+	 * Lookup an entry, using exact match.
+	 *
+	 * @param point the point
+	 * @return an iterator over all entries at the given point
+	 */
+	@Override
+	public KDIterator<T> query(double[] point) {
+		return query(point, point);
+	}
+
 	/**
 	 * Get the value associates with the key.
+	 *
 	 * @param key the key to look up
 	 * @return the value for the key or 'null' if the key was not found
 	 */
 	@Override
 	public T queryExact(double[] key) {
-		Node<T> e = findNodeExcat(key, new RemoveResult<>());
+		Node<T> e = findNodeExact(key, new RemoveResult<>());
 		return e == null ? null : e.getValue();
 	}
-	
-	private Node<T> findNodeExcat(double[] key, RemoveResult<T> resultDepth) {
+
+	private Node<T> findNodeExact(double[] key, RemoveResult<T> resultDepth) {
 		if (root == null) {
 			return null;
 		}
-		return invariantBroken 
-				? findNodeExactSlow(key, root, null, resultDepth) 
-						: findNodeExcatFast(key, null, resultDepth);
-	} 
+		return invariantBroken
+				? findNodeExactSlow(key, root, null, resultDepth)
+				: findNodeExcatFast(key, null, resultDepth);
+	}
 
 	private Node<T> findNodeExcatFast(double[] key, Node<T> parent, RemoveResult<T> resultDepth) {
 		Node<T> n = root;
@@ -211,7 +221,7 @@ public class KDTree<T> implements PointIndex<T> {
 		} while (n != null);
 		return n;
 	}
-	
+
 	private Node<T> findNodeExactSlow(double[] key, Node<T> n, Node<T> parent, RemoveResult<T> resultDepth) {
 		do {
 			double[] nodeKey = n.getKey();
@@ -236,7 +246,34 @@ public class KDTree<T> implements PointIndex<T> {
 		} while (n != null);
 		return n;
 	}
-	
+
+	/**
+	 * Remove all entries at the given point.
+	 *
+	 * @param point the point
+	 * @return the number of entries that were removed
+	 */
+	@Override
+	public int removeAll(double[] point) {
+		int n = 0;
+		// TODO improve this
+		while (remove(point) != null) {
+			++n;
+		}
+		return n;
+	}
+
+	/**
+	 * Remove all entries at the given point.
+	 *
+	 * @param point the point
+	 * @return the number of entries that were removed
+	 */
+	@Override
+	public T remove(double[] point, T value) {
+		throw new UnsupportedOperationException(); // TODO
+	}
+
 	/**
 	 * Remove a key.
 	 * @param key key to remove
@@ -250,7 +287,7 @@ public class KDTree<T> implements PointIndex<T> {
 		
 		//find
 		RemoveResult<T> removeResult = new RemoveResult<>();
-		Node<T> eToRemove = findNodeExcat(key, removeResult);
+		Node<T> eToRemove = findNodeExact(key, removeResult);
 		if (eToRemove == null) {
 			return null;
 		}
@@ -395,7 +432,26 @@ public class KDTree<T> implements PointIndex<T> {
 		insert(newKey, value);
 		return value;
 	}
-	
+
+	/**
+	 * Reinsert the key.
+	 * @param oldKey old key
+	 * @param newKey new key
+	 * @param value the value of the entry that should be updated
+	 * @return the value associated with the key or 'null' if the key was not found.
+	 */
+	@Override
+	public T update(double[] oldKey, double[] newKey, T value) {
+		if (root == null) {
+			return null;
+		}
+		T result = remove(oldKey, value);
+		if (result != null) {
+			insert(newKey, value);
+		}
+		return value;
+	}
+
 	/**
 	 * Get the number of key-value pairs in the tree.
 	 * @return the size

@@ -17,14 +17,12 @@
  */
 package org.tinspin.index.rtree;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
-import org.tinspin.index.RectangleDistanceFunction;
-import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.RectangleIndex;
-import org.tinspin.index.Stats;
+import org.tinspin.index.*;
+import org.tinspin.index.covertree.Node;
 
 
 /**
@@ -43,7 +41,7 @@ import org.tinspin.index.Stats;
  *
  * @param <T> Value type.
  */
-public class RTree<T> implements RectangleIndex<T> {
+public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	static final int NODE_MAX_DIR = 10;//56; //PAPER: M=56 for 1KB pages
 	static final int NODE_MAX_DATA = 10;//50; //PAPER: M=50 for 1KB pages
@@ -112,7 +110,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	}
 	
 	public void insert(double[] point, T value) {
-		insert(new Entry<T>(point, point, value));
+		insert(new Entry<>(point, point, value));
 	}
 
 	/**
@@ -123,7 +121,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	 */
 	@Override
 	public void insert(double[] keyMin, double[] keyMax, T value) {
-		insert(new Entry<T>(keyMin, keyMax, value));
+		insert(new Entry<>(keyMin, keyMax, value));
 	}
 	
 	/**
@@ -214,7 +212,38 @@ public class RTree<T> implements RectangleIndex<T> {
 	 */
 	@Override
 	public T remove(double[] min, double[] max) {
-		return findNodeEntry(min, max, true);
+		return findNodeEntry(min, max, (entry, node, posInNode) -> {
+			deleteFromNode(node, posInNode);
+			return true; // abort
+		});
+	}
+
+	@Override
+	public int removeAll(double[] min, double[] max) {
+		int[] ret = new int[1];
+		findNodeEntry(min, max, (entry, node, posInNode) -> {
+			ret[0]++;
+			deleteFromNode(node, posInNode);
+			return false; // continue
+		});
+		return ret[0];
+	}
+
+	/**
+	 * Remove an entry.
+	 * @param min min
+	 * @param max max
+	 * @return the value of the entry or null if the entry was not found
+	 */
+	@Override
+	public T remove(double[] min, double[] max, T value) {
+		return findNodeEntry(min, max, (entry, node, posInNode) -> {
+			if (Objects.equals(value, entry.value())) {
+				deleteFromNode(node, posInNode);
+				return true; // abort
+			}
+			return false; // continue
+		});
 	}
 
 	/**
@@ -234,11 +263,34 @@ public class RTree<T> implements RectangleIndex<T> {
 		return val;
 	}
 
-	private T findNodeEntry(double[] min, double[] max, boolean delete) {
+	/**
+	 * Update the position of an entry.
+	 * @param lo1 old min
+	 * @param up1 old max
+	 * @param lo2 new min
+	 * @param up2 new max
+	 * @param value only entry with the given value is updated
+	 * @return the value, or null if the entries was not found
+	 */
+	@Override
+	public T update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value) {
+		// TODO improve, try to move within node
+		T val = remove(lo1, up1, value);
+		if (val != null) {
+			insert(lo2, up2, val);
+		}
+		return val;
+	}
+
+	private interface CheckAbort<T> {
+		boolean checkAbort(Entry<T> entry, RTreeNode<T> node, int posInNode);
+	}
+
+	private T findNodeEntry(double[] min, double[] max, CheckAbort<T> checkAbort) {
 		int[] positions = new int[depth];
 		int level = depth-1;
 		RTreeNode<T> node = root;
-		outer: 
+		outer:
 		while (level < depth) {
 			int pos = positions[level];
 			if (node instanceof RTreeNodeDir) {
@@ -257,10 +309,7 @@ public class RTree<T> implements RectangleIndex<T> {
 				ArrayList<Entry<T>> children = node.getEntries();
 				for (int i = 0; i < children.size(); i++) {
 					Entry<T> e = children.get(i);
-					if (e.checkExactMatch(min, max)) {
-						if (delete) {
-							deleteFromNode(node, i);
-						}
+					if (e.checkExactMatch(min, max) && checkAbort.checkAbort(e, node, i)) {
 						return e.value();
 					}
 				}
@@ -271,7 +320,6 @@ public class RTree<T> implements RectangleIndex<T> {
 		return null;
 	}
 
-	
 	void deleteFromNode(RTreeNode<T> node, int pos) {
 		size--;
 		//this also adjusts parent MBBs
@@ -306,7 +354,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	 */
 	@Override
 	public T queryExact(double[] min, double[] max) {
-		return findNodeEntry(min, max, false);
+		return findNodeEntry(min, max, (entry, node, posInNode) -> true);
 	}
 	
 	/* (non-Javadoc)
@@ -320,7 +368,15 @@ public class RTree<T> implements RectangleIndex<T> {
 		Arrays.fill(max, Double.POSITIVE_INFINITY);
 		return new RTreeIterator<>(this, min, max);
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.tinspin.index.rtree.Index#queryOverlap(double[], double[])
+	 */
+	@Override
+	public RTreeIterator<T> queryRectangle(double[] min, double[] max) {
+		return RTreeIterator.createExactMatch(this, min, max);
+	}
+
 	/* (non-Javadoc)
 	 * @see org.tinspin.index.rtree.Index#queryOverlap(double[], double[])
 	 */

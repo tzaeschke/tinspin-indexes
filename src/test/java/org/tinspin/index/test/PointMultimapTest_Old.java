@@ -35,16 +35,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
-import static org.tinspin.index.test.PointMultimapTest.INDEX.*;
+import static org.tinspin.index.test.PointMultimapTest.INDEX.KDTREE;
 
 @RunWith(Parameterized.class)
-public class PointMultimapTest extends AbstractWrapperTest {
+public class PointMultimapTest_Old extends AbstractWrapperTest {
 
     private static final int N_DUP = 4;
     private static final int BOUND = 100;
 
     private final INDEX candidate;
-    public PointMultimapTest(INDEX candCls) {
+    public PointMultimapTest_Old(INDEX candCls) {
         this.candidate = candCls;
     }
 
@@ -139,16 +139,16 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
     private void smokeTest(List<Entry> data) {
         int dim = data.get(0).p.length;
-        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+        PointIndex<Entry> tree = createTree(data.size(), dim);
 
+        //PointIndex<Entry> tree = KDTree.create(dim);
         for (Entry e : data) {
             tree.insert(e.p, e);
         }
 	    // System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            QueryIterator<PointEntry<Entry>> it = tree.query(e.p);
-            assertTrue("query(point) failed: " + e, it.hasNext());
-            assertArrayEquals(e.p, it.next().value().p, 0.0000);
+            Entry e2 = tree.queryExact(e.p);
+            assertNotNull("queryExact() failed: " + e, e2);
         }
 
         for (Entry e : data) {
@@ -174,11 +174,9 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             //			System.out.println(tree.toStringTree());
             //			System.out.println("Removing: " + Arrays.toString(key));
-            QueryIterator<PointEntry<Entry>> it = tree.query(e.p);
-            assertTrue("queryExact() failed: " + e, it.hasNext());
-            PointEntry<Entry> e2 = it.next();
-            assertArrayEquals(e.p, e2.value().p, 0);
-            Entry answer = tree.remove(e.p, e);
+            Entry e2 = tree.queryExact(e.p);
+            assertNotNull("queryExact() failed: " + e, e2);
+            Entry answer = tree.remove(e.p);
             assertArrayEquals("Expected " + e + " but got " + answer, answer.p, e.p, 0.0001);
         }
     }
@@ -206,18 +204,18 @@ public class PointMultimapTest extends AbstractWrapperTest {
         COVER
     }
 
-    private <T> PointIndexMM<T> createTree(int size, int dims) {
+    private <T> PointIndex<T> createTree(int size, int dims) {
         switch (candidate) {
-//            case ARRAY: return new PointArray<>(dims, size);
-//            //case CRITBIT: return new PointArray<>(dims, size);
+            case ARRAY: return new PointArray<>(dims, size);
+            //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE: return KDTree.create(dims);
-//            case PHTREE: return PHTreeP.createPHTree(dims);
-//            case QUAD: return QuadTreeKD.create(dims);
-//            case QUAD2: return QuadTreeKD2.create(dims);
-//            case QUAD_OLD: return QuadTreeKD0.create(dims);
+            case PHTREE: return PHTreeP.createPHTree(dims);
+            case QUAD: return QuadTreeKD.create(dims);
+            case QUAD2: return QuadTreeKD2.create(dims);
+            case QUAD_OLD: return QuadTreeKD0.create(dims);
             case RSTAR:
-            case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
- //           case COVER: return CoverTree.create(dims);
+            case STR: return PointIndexWrapper.create(RTree.createRStar(dims));
+            case COVER: return CoverTree.create(dims);
             default:
                 throw new UnsupportedOperationException();
         }
