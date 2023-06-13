@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.PriorityQueue;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.RectangleDistanceFunction;
@@ -50,14 +51,15 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	private double[] center;
 	private Iterator<DistEntry<T>> iter;
 	private RectangleDistanceFunction dist;
+	private Predicate<T> filterFn;
 	private final ArrayList<DistEntry<T>> candidates = new ArrayList<>();
 	private final ArrayList<DistEntry<Object>> pool = new ArrayList<>();
 	private final PriorityQueue<DistEntry<Object>> queue = new PriorityQueue<>(COMP);
 	
 	
-	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, RectangleDistanceFunction dist) {
+	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, RectangleDistanceFunction dist, Predicate<T> filterFn) {
 		this.tree = tree;
-		reset(center, k, dist == null ? RectangleDistanceFunction.EDGE : dist);
+		reset(center, k, dist == null ? RectangleDistanceFunction.EDGE : dist, filterFn);
 	}
 
 	
@@ -66,14 +68,20 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 		reset(center, k, null);
 		return this;
 	}
-	
-	
+
 	public void reset(double[] center, int k, RectangleDistanceFunction dist) {
+		reset(center, k, dist, e -> true);
+	}
+
+	public void reset(double[] center, int k, RectangleDistanceFunction dist, Predicate<T> filterFn) {
 		if (dist != null) {
 			this.dist = dist;
 		}
 		if (this.dist != RectangleDistanceFunction.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
+		}
+		if (filterFn != null) {
+			this.filterFn = filterFn;
 		}
 		this.center = center;
 		
@@ -108,7 +116,9 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 			Object o = candidate.value();
 			if (!(o instanceof RTreeNode)) {
 				//data entry
-				candidates.add((DistEntry<T>) candidate);
+				if (filterFn.test(((DistEntry<T>) candidate).value())) {
+					candidates.add((DistEntry<T>) candidate);
+				}
 				if (candidates.size() >= k) {
 					return;
 				}

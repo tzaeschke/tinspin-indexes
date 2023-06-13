@@ -18,11 +18,10 @@
 package org.tinspin.index.rtree;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
-import org.tinspin.index.covertree.Node;
+import org.tinspin.index.util.StringBuilderLn;
 
 
 /**
@@ -139,7 +138,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 	
 	/**
-	 * @param e
+	 * @param e entry
 	 * @param desiredInsertionLevel Entries have to be inserted at the desired level.
 	 * The level is usually '0' (for data points) but can be higher for
 	 * reinsertion of subtrees.
@@ -184,8 +183,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 			}
 			return null;
 		} else {
-			RTreeNode<T> newNode = logic.split(node, e);
-			return newNode;
+			return logic.split(node, e);
 		}
 	}
 
@@ -398,13 +396,17 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 */
 	@Override
 	public RTreeQueryKnn<T> queryKNN(double[] center, int k) {
-		return new RTreeQueryKnn<>(this, center, k, RectangleDistanceFunction.EDGE);
+		return new RTreeQueryKnn<>(this, center, k, RectangleDistanceFunction.EDGE, e -> true);
 	}
-	
+
 	public RTreeQueryKnn<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist) {
-		return new RTreeQueryKnn<>(this, center, k, dist);
+		return new RTreeQueryKnn<>(this, center, k, dist, e -> true);
 	}
-	
+
+	public RTreeQueryKnn<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist, Predicate<T> filterFn) {
+		return new RTreeQueryKnn<>(this, center, k, dist, filterFn);
+	}
+
 	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(
 			double[] center, RectangleDistanceFunction dist,
 			RectangleDistanceFunction closestDist, double[] minBound, double[] maxBound) {
@@ -435,26 +437,25 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 			@Override
 			public Iterator<RectangleEntryDist<T>> iterator() {
-				return new RTreeMixedQuery<T>(self, center, filter, dist, closestDist);
+				return new RTreeMixedQuery<>(self, center, filter, dist, closestDist);
 			}
 		};
 	}
 	
 	@Override
 	public String toStringTree() {
-		StringBuilder sb = new StringBuilder();
+		StringBuilderLn sb = new StringBuilderLn();
 		toStringTree(sb, root, depth-1);
 		return sb.toString();
 	}
 	
-	private void toStringTree(StringBuilder sb, RTreeNode<T> node, int level) {
-		String NL = "\n";
+	private void toStringTree(StringBuilderLn sb, RTreeNode<T> node, int level) {
 		String pre = "";
 		for (int i = 0; i < depth-level; i++) {
 			pre += " ";
 		}
-		sb.append(pre + "L=" + level + " " + node.toString() + 
-				";P=" + System.identityHashCode(node.getParent()) + NL);
+		sb.appendLn(pre + "L=" + level + " " + node.toString() +
+				";P=" + System.identityHashCode(node.getParent()));
 		
 		ArrayList<Entry<T>> entries = node.getEntries();
 		for (int i = 0; i < entries.size(); i++) {
@@ -462,14 +463,12 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 			if (e instanceof RTreeNode) {
 				toStringTree(sb, (RTreeNode<T>) e, level-1);
 			} else {
-				sb.append(pre + "e:" + e.toString() + NL);
+				sb.append(pre).append("e:").append(e.toString()).appendLn();
 			}
 		}
 	}
 
 	public static class RTreeStats extends Stats {
-		int dims;
-		
 		RTreeStats(RTree<?> tree) {
 			super(tree.nDist1NN + tree.nDistKNN, tree.nDist1NN, tree.nDistKNN);
 			minLevel = 0;
@@ -580,6 +579,6 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 
 	void incNDistKNN() {
-		nDist1NN++;
+		nDistKNN++;
 	}
 }

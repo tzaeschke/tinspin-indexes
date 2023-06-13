@@ -107,7 +107,7 @@ public interface RectangleDistanceFunction {
 		}
 	}
 
-	public static double centerDistance(double[] center, double[] min, double[] max) {
+	static double centerDistance(double[] center, double[] min, double[] max) {
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {
 			double d = (min[i] + max[i]) * 0.5 - center[i];
@@ -116,7 +116,7 @@ public interface RectangleDistanceFunction {
 		return Math.sqrt(dist);
 	}
 
-	public static double edgeDistance(double[] center, double[] min, double[] max) {
+	static double edgeDistance(double[] center, double[] min, double[] max) {
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {
 			double d = 0;
@@ -128,5 +128,27 @@ public interface RectangleDistanceFunction {
 			dist += d*d;
 		}
 		return Math.sqrt(dist);
+	}
+
+	class EdgeDistance {
+		final PointDistanceFunction distFn;
+		public EdgeDistance(PointDistanceFunction distFn) {
+			this.distFn = distFn;
+		}
+
+		public double edgeDistance(double[] center, double[] min, double[] max) {
+			double[] dist = new double[center.length];
+			for (int i = 0; i < center.length; i++) {
+				double d = 0;
+				if (min[i] > center[i]) {
+					d = min[i] - center[i];
+				} else if (max[i] < center[i]) {
+					d = center[i] - max[i];
+				}
+				dist[i] = d;
+			}
+			return distFn.dist(dist, center);
+		}
+
 	}
 }

@@ -18,6 +18,7 @@
 package org.tinspin.index;
 
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 /**
  * A common interface for spatial indexes (multimaps) that use rectangles as keys.
@@ -100,7 +101,7 @@ public interface RectangleIndexMM<T> extends Index<T> {
 
 	/**
 	 * Finds the nearest neighbor. 
-	 * This uses euclidean 'edge distance', i.e. the distance to the edge of rectangle.
+	 * This uses Euclidean 'edge distance', i.e. the distance to the edge of rectangle.
 	 * Distance is 0 is the rectangle overlaps with the search point.
 	 * Other distance types can only be specified directly on the index implementations. 
 	 * @param center center point
@@ -109,4 +110,15 @@ public interface RectangleIndexMM<T> extends Index<T> {
 	 */
 	QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k);
 
+	/**
+	 * Finds the nearest neighbor.
+	 * This uses a custom distance function for distances to rectangles.
+	 * @param center center point
+	 * @param k number of neighbors
+	 * @param distFn distance function
+	 * @param filterFn a filter function to filter out entries before they are returned
+	 * @return list of nearest neighbors
+	 */
+	QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(
+			double[] center, int k, RectangleDistanceFunction distFn, Predicate<T> filterFn);
 }

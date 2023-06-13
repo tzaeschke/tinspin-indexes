@@ -20,6 +20,8 @@ package org.tinspin.index;
 import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
 
+import java.util.function.Predicate;
+
 public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 
 	private final RectangleIndexMM<T> ind;
@@ -101,6 +103,13 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
 		return new PointDIter(ind.queryKNN(center, k));
+	}
+
+	@Override
+	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(
+			double[] center, int k, PointDistanceFunction distFn, Predicate<T> filterFn) {
+		RectangleDistanceFunction.EdgeDistance fn = new RectangleDistanceFunction.EdgeDistance(distFn);
+		return new PointDIter<>(ind.queryKNN(center, k, fn::edgeDistance, filterFn));
 	}
 
 	private static class PointDistW<T> extends PointW<T> implements PointEntryDist<T> {
