@@ -88,8 +88,11 @@ abstract class RTreeNode<T> extends Entry<T> {
 	/**
 	 * Recalculates the MBB for all elements. This is for example 
 	 * required after removing elements.
+	 * @return 'true' iff the MBB has changed
 	 */
-	public void recalcMBB() {
+	public boolean recalcMBB() {
+		double[] minOld = min.clone();
+		double[] maxOld = max.clone();
 		resetMBB();
 		ArrayList<Entry<T>> entries = getEntries();
 		for (int i = 0; i < entries.size(); i++) {
@@ -103,6 +106,7 @@ abstract class RTreeNode<T> extends Entry<T> {
 				}
 			}
 		}
+		return !Arrays.equals(min, minOld) || !Arrays.equals(max, maxOld);
 	}
 
 	protected void resetMBB() {
@@ -121,22 +125,27 @@ abstract class RTreeNode<T> extends Entry<T> {
 	}
 	
 	public void extendParentMBB() {
-		RTreeNodeDir<T> parent = this.parent;
-		//TODO?
+		RTreeNodeDir<T> current = this.parent;
+		// TODO ?
 		//stop adjusting parent if we get a root or if there was no change
-		while (parent != null) {
-			parent.extendMBB(this);
-			parent = parent.getParent();
+		// TODO remove this method? Difference to recalcParentMBB() ?
+		while (current != null) {
+			current.extendMBB(this);
+			current = current.getParent();
 		}
 	}
 
 	public void recalcParentMBB() {
-		RTreeNodeDir<T> parent = this.parent;
-		//TODO?
+		RTreeNodeDir<T> current = this.parent;
 		//stop adjusting parent if we get a root or if there was no change
-		while (parent != null) {
-			parent.recalcMBB();
-			parent = parent.getParent();
+		while (current != null && current.recalcMBB()) {
+			current = current.getParent();
+		}
+	}
+
+	public void recalcRecursiveMBB() {
+		if (recalcMBB()) {
+			recalcParentMBB();
 		}
 	}
 
@@ -146,7 +155,6 @@ abstract class RTreeNode<T> extends Entry<T> {
 
 	public void removeEntry(int i) {
 		getEntries().remove(i);
-		recalcMBB();
-		recalcParentMBB();
+		recalcRecursiveMBB();
 	}
 }

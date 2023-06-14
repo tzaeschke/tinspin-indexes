@@ -323,6 +323,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 			root = null;
 			size = 0;
 			invariantBroken = false;
+			return value;
 		}
 		
 		//find replacement
@@ -775,13 +776,13 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-		return new KDQueryIteratorKNN<>(this, center, k, dist, e -> true);
+		return new KDQueryIteratorKNN<>(this, center, k, dist != null ? dist : PointDistanceFunction.L2, e -> true);
 	}
 
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(
 			double[] center, int k, PointDistanceFunction distFn, Predicate<T> filterFn) {
-		return new KDQueryIteratorKNN<>(this, center, k, dist, filterFn);
+		return new KDQueryIteratorKNN<>(this, center, k, distFn, filterFn);
 	}
 
 	@Override

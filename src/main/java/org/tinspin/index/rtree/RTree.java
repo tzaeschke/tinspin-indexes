@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.util.MutableInt;
+import org.tinspin.index.util.MutableRef;
 import org.tinspin.index.util.StringBuilderLn;
 
 
@@ -210,21 +212,28 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 */
 	@Override
 	public T remove(double[] min, double[] max) {
-		return findNodeEntry(min, max, (entry, node, posInNode) -> {
-			deleteFromNode(node, posInNode);
+		MutableRef<T> ref = new MutableRef<>();
+		findNodes(min, max, node -> {
+			deleteFromNode(node, false, (Entry<T> e) -> {
+				if (e.checkExactMatch(min, max)) {
+					ref.set(e.value());
+				}
+				return ref.get() != null;
+			});
 			return true; // abort
 		});
+		return ref.get();
 	}
 
 	@Override
 	public int removeAll(double[] min, double[] max) {
-		int[] ret = new int[1];
-		findNodeEntry(min, max, (entry, node, posInNode) -> {
-			ret[0]++;
-			deleteFromNode(node, posInNode);
-			return false; // continue
+		MutableInt ref = new MutableInt();
+		findNodes(min, max, node -> {
+			deleteFromNode(node, true, (Entry<T> e) -> e.checkExactMatch(min, max));
+			ref.inc();
+			return false; // continue search
 		});
-		return ret[0];
+		return ref.get();
 	}
 
 	/**
@@ -235,13 +244,24 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 */
 	@Override
 	public T remove(double[] min, double[] max, T value) {
-		return findNodeEntry(min, max, (entry, node, posInNode) -> {
-			if (Objects.equals(value, entry.value())) {
-				deleteFromNode(node, posInNode);
-				return true; // abort
-			}
-			return false; // continue
+		MutableRef<T> ref = new MutableRef<>();
+		findNodes(min, max, node -> {
+			deleteFromNode(node, false, (Entry<T> e) -> {
+				if (e.checkExactMatch(min, max) && Objects.equals(value, e.value())) {
+					ref.set(e.value());
+				}
+				return ref.get() != null;
+			});
+			return true; // abort search
 		});
+		return ref.get();
+//		return findNodeEntry(min, max, (entry, node, posInNode) -> {
+//			if (Objects.equals(value, entry.value())) {
+//				deleteFromNode(node, posInNode);
+//				return true; // abort
+//			}
+//			return false; // continue
+//		});
 	}
 
 	/**
@@ -282,6 +302,10 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	private interface CheckAbort<T> {
 		boolean checkAbort(Entry<T> entry, RTreeNode<T> node, int posInNode);
+	}
+
+	private interface CheckNodeAbort<T> {
+		boolean checkAbort(RTreeNodeLeaf<T> node);
 	}
 
 	private T findNodeEntry(double[] min, double[] max, CheckAbort<T> checkAbort) {
@@ -345,6 +369,79 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 			root = (RTreeNode<T>) root.getEntries().get(0);
 			root.setParent(null);
 		}
+	}
+
+	private void findNodes(double[] min, double[] max, CheckNodeAbort<T> checkAbort) {
+		int[] positions = new int[depth];
+		int level = depth-1;
+		RTreeNode<T> node = root;
+		outer:
+		while (level < depth) {
+			int pos = positions[level];
+			if (node instanceof RTreeNodeDir) {
+				ArrayList<RTreeNode<T>> children = ((RTreeNodeDir<T>)node).getChildren();
+				for (int i = pos; i < children.size(); i++) {
+					RTreeNode<T> sub = children.get(i);
+					if (sub.checkInclusion(min, max)) {
+						positions[level] = i+1;
+						level--;
+						node = sub;
+						positions[level] = 0;
+						continue outer;
+					}
+				}
+			} else {
+				if (checkAbort.checkAbort((RTreeNodeLeaf<T>) node)) {
+					return;
+				}
+			}
+			node = node.getParent();
+			level++;
+		}
+	}
+
+	int deleteFromNode(RTreeNode<T> node, boolean checkAll, Predicate<Entry<T>> pred) {
+		//this also adjusts parent MBBs
+		//Question: Should we adjust parent MBBs later if we have to remove the sub-node?
+		//-> But later adjustment would skew with reinsertion, because the
+		//node may look bigger than it actually is.
+		//TODO no need to remove the entry (update the MBBs if we gonna remove the node...
+		//TODO check inside 'removeEntry????'
+		int nFound = 0;
+		for (int i = 0; i < node.getEntries().size(); ++i) {
+			if (pred.test(node.getEntries().get(i))) {
+				node.getEntries().remove(i);
+				i--;
+				nFound++;
+				if (!checkAll) {
+					break;
+				}
+			}
+		}
+		if (nFound > 0) {
+			node.recalcRecursiveMBB();
+		}
+		size -= nFound;
+
+		int level = 0;
+		while (node != root && node.isUnderfull()) {
+			ArrayList<Entry<T>> entries = node.getEntries();
+			RTreeNodeDir<T> parent = node.getParent();
+			parent.removeChildByIdentity(node);
+			node = parent;
+			nNodes--;
+			for (int i = 0; i < entries.size(); i++) {
+				insertAtDepth(entries.get(i), level);
+			}
+			level++;
+		}
+		if (root.getEntries().size() == 1 && root instanceof RTreeNodeDir) {
+			depth--;
+			nNodes--;
+			root = (RTreeNode<T>) root.getEntries().get(0);
+			root.setParent(null);
+		}
+		return nFound;
 	}
 
 	/* (non-Javadoc)
