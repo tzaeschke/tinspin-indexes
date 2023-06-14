@@ -187,7 +187,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
     public void testUpdate() {
         Random r = new Random(0);
         int dim = 3;
-        ArrayList<Entry> data = createInt(0, 1, 3);
+        ArrayList<Entry> data = createInt(0, 1000, 3);
         PointIndexMM<Entry> tree = createTree(data.size(), dim);
 
         for (Entry e : data) {
@@ -197,8 +197,12 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (int i = 0; i < data.size(); ++i) {
             Entry e = data.get(i);
             double[] pOld = e.p.clone();
-            Arrays.setAll(e.p, value -> (value + r.nextInt(BOUND / 10)));
-            tree.update(pOld, e.p, e);
+            double[] pNew = e.p.clone();
+            Arrays.setAll(pNew, value -> (value + r.nextInt(BOUND / 10)));
+            Entry e2 = tree.update(pOld, pNew, e);
+            assertNotNull(e2);
+            // Update entry
+            System.arraycopy(pNew, 0, e.p, 0, dim);
             assertFalse(containsExact(tree, pOld, e.id));
             assertTrue(containsExact(tree, e.p, e.id));
         }
