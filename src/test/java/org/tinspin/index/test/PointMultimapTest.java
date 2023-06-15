@@ -178,8 +178,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             assertTrue("queryExact() failed: " + e, it.hasNext());
             PointEntry<Entry> e2 = it.next();
             assertArrayEquals(e.p, e2.value().p, 0);
-            Entry answer = tree.remove(e.p, e);
-            assertArrayEquals("Expected " + e + " but got " + answer, answer.p, e.p, 0.0001);
+            assertTrue(tree.remove(e.p, e));
         }
     }
 
@@ -199,8 +198,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             double[] pOld = e.p.clone();
             double[] pNew = e.p.clone();
             Arrays.setAll(pNew, value -> (value + r.nextInt(BOUND / 10)));
-            Entry e2 = tree.update(pOld, pNew, e);
-            assertNotNull(e2);
+            assertTrue(tree.update(pOld, pNew, e));
             // Update entry
             System.arraycopy(pNew, 0, e.p, 0, dim);
             assertFalse(containsExact(tree, pOld, e.id));
@@ -236,12 +234,10 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
         Collections.shuffle(data, r);
 
-        int n = 0;
         // remove 1st half
         for (int i = 0; i < data.size()/2; ++i) {
             Entry e = data.get(i);
-            Entry e2 = tree.remove(e.p, e);
-            assertNotNull(e2);
+            assertTrue(tree.remove(e.p, e));
             assertFalse(containsExact(tree, e.p, e.id));
         }
 
@@ -258,8 +254,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         // remove 2nd half
         for (int i = data.size()/2; i < data.size(); ++i) {
             Entry e = data.get(i);
-            Entry e2 = tree.remove(e.p, e);
-            assertNotNull(e2);
+            assertTrue(tree.remove(e.p, e));
             assertFalse(containsExact(tree, e.p, e.id));
         }
 
@@ -268,7 +263,6 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
     @Test
     public void testRemoveAll() {
-        Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
         PointIndexMM<Entry> tree = createTree(data.size(), dim);
@@ -277,7 +271,6 @@ public class PointMultimapTest extends AbstractWrapperTest {
             tree.insert(e.p, e);
         }
 
-        int n = 0;
         // remove 1st half
         for (int i = 0; i < data.size()/2; ++i) {
             Entry e = data.get(i);

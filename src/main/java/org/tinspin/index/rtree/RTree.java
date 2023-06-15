@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.util.MutableBool;
 import org.tinspin.index.util.MutableInt;
 import org.tinspin.index.util.MutableRef;
 import org.tinspin.index.util.StringBuilderLn;
@@ -197,7 +198,6 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		root = bulkLoader.getRoot();
 		depth = bulkLoader.getDepth();
 	}
-	
 
 	public Object remove(double[] point) {
 		//TODO speed up
@@ -227,41 +227,53 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	@Override
 	public int removeAll(double[] min, double[] max) {
-		MutableInt ref = new MutableInt();
-		findNodes(min, max, node -> {
-			deleteFromNode(node, true, (Entry<T> e) -> e.checkExactMatch(min, max));
-			ref.inc();
-			return false; // continue search
-		});
-		return ref.get();
+		return removeIf(min, max, e-> true);
 	}
 
 	/**
 	 * Remove an entry.
+	 *
 	 * @param min min
 	 * @param max max
 	 * @return the value of the entry or null if the entry was not found
 	 */
 	@Override
-	public T remove(double[] min, double[] max, T value) {
-		MutableRef<T> ref = new MutableRef<>();
+	public boolean remove(double[] min, double[] max, T value) {
+		return removeOneIf(min, max, e -> Objects.equals(value, e.value()));
+	}
+
+	/**
+	 * Remove all entries matching the geometry and condition.
+	 * @param min min
+	 * @param max max
+	 * @param condition Condition for deletion.
+	 * @return the number of deleted entries
+	 */
+	public int removeIf(double[] min, double[] max, Predicate<Entry<T>> condition) {
+		MutableInt n = new MutableInt();
+		Predicate<Entry<T>> pred = e -> e.checkExactMatch(min, max) && condition.test(e);
 		findNodes(min, max, node -> {
-			deleteFromNode(node, false, (Entry<T> e) -> {
-				if (e.checkExactMatch(min, max) && Objects.equals(value, e.value())) {
-					ref.set(e.value());
-				}
-				return ref.get() != null;
-			});
-			return true; // abort search
+			n.add(deleteFromNode(node, true, pred));
+			return false; // continue search
+		});
+		return n.get();
+	}
+
+	/**
+	 * Remove one entry matching the geometry and condition.
+	 * @param min min
+	 * @param max max
+	 * @param condition Condition for deletion.
+	 * @return `true` iff an entry was deleted
+	 */
+	public boolean removeOneIf(double[] min, double[] max, Predicate<Entry<T>> condition) {
+		MutableBool ref = new MutableBool();
+		Predicate<Entry<T>> pred = e -> e.checkExactMatch(min, max) && condition.test(e);
+		findNodes(min, max, node -> {
+			ref.set(deleteFromNode(node, false, pred) > 0);
+			return ref.get(); // abort search if an entry was found
 		});
 		return ref.get();
-//		return findNodeEntry(min, max, (entry, node, posInNode) -> {
-//			if (Objects.equals(value, entry.value())) {
-//				deleteFromNode(node, posInNode);
-//				return true; // abort
-//			}
-//			return false; // continue
-//		});
 	}
 
 	/**
@@ -283,21 +295,22 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	/**
 	 * Update the position of an entry.
-	 * @param lo1 old min
-	 * @param up1 old max
-	 * @param lo2 new min
-	 * @param up2 new max
+	 *
+	 * @param lo1   old min
+	 * @param up1   old max
+	 * @param lo2   new min
+	 * @param up2   new max
 	 * @param value only entry with the given value is updated
-	 * @return the value, or null if the entries was not found
+	 * @return `true` iff the entry was found and relocated
 	 */
 	@Override
-	public T update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value) {
+	public boolean update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value) {
 		// TODO improve, try to move within node
-		T val = remove(lo1, up1, value);
-		if (val != null) {
-			insert(lo2, up2, val);
+		if (remove(lo1, up1, value)) {
+			insert(lo2, up2, value);
+			return true;
 		}
-		return val;
+		return false;
 	}
 
 	private interface CheckAbort<T> {

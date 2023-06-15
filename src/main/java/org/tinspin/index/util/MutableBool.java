@@ -16,34 +16,26 @@
  */
 package org.tinspin.index.util;
 
-public class MutableInt {
-    private int i;
+public class MutableBool {
+    private boolean i;
 
-    public MutableInt() {
-        i = 0;
+    public MutableBool() {
+        i = false;
     }
 
-    public MutableInt(int i) {
+    public MutableBool(boolean i) {
         this.i = i;
     }
 
-    public int get() {
+    public boolean get() {
         return i;
     }
 
-    public void set(int i) {
+    public void set(boolean i) {
         this.i = i;
     }
 
-    public void inc() {
-        ++i;
-    }
-
     public String toString() {
-        return Integer.toString(i);
-    }
-
-    public void add(int i) {
-        this.i += i;
+        return Boolean.toString(i);
     }
 }

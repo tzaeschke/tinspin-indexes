@@ -45,7 +45,7 @@ public interface PointIndexMM<T> extends Index<T> {
      * @param value only entries with this value are removed
      * @return the value of the entry or null if the entry was not found
      */
-    T remove(double[] point, T value);
+    boolean remove(double[] point, T value);
 
     /**
      * Remove all entries at the given point.
@@ -63,7 +63,7 @@ public interface PointIndexMM<T> extends Index<T> {
      * @param value    only entries with this value are updated
      * @return the value of the entry or null if the entry was not found
      */
-    T update(double[] oldPoint, double[] newPoint, T value);
+    boolean update(double[] oldPoint, double[] newPoint, T value);
 
     /**
      * Lookup an entry, using exact match.

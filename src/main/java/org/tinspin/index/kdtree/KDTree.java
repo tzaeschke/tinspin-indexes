@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.util.MutableRef;
 
 /**
  * A simple KD-Tree implementation. 
@@ -184,7 +185,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * @return true iff the key exists
 	 */
 	public boolean containsExact(double[] key) {
-		return findNodeExact(key, new RemoveResult<>(), (k, t) -> true) != null;
+		return findNodeExact(key, new RemoveResult<>(), e -> true) != null;
 	}
 
 	/**
@@ -206,26 +207,26 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	 */
 	@Override
 	public T queryExact(double[] key) {
-		Node<T> e = findNodeExact(key, new RemoveResult<>(), (k, t) -> true);
+		Node<T> e = findNodeExact(key, new RemoveResult<>(), entry -> true);
 		return e == null ? null : e.getValue();
 	}
 
-	private Node<T> findNodeExact(double[] key, RemoveResult<T> resultDepth, Filter filter) {
+	private Node<T> findNodeExact(double[] key, RemoveResult<T> resultDepth, Predicate<PointEntry<T>> filter) {
 		if (root == null) {
 			return null;
 		}
 		return invariantBroken
 				? findNodeExactSlow(key, root, null, resultDepth, filter)
-				: findNodeExcatFast(key, null, resultDepth, filter);
+				: findNodeExactFast(key, null, resultDepth, filter);
 	}
 
-	private Node<T> findNodeExcatFast(double[] key, Node<T> parent, RemoveResult<T> resultDepth, Filter filter) {
+	private Node<T> findNodeExactFast(double[] key, Node<T> parent, RemoveResult<T> resultDepth, Predicate<PointEntry<T>> filter) {
 		Node<T> n = root;
 		do {
 			double[] nodeKey = n.getKey();
 			double nodeX = nodeKey[n.getDim()];
 			double keyX = key[n.getDim()];
-			if (keyX == nodeX && Arrays.equals(key, nodeKey) && filter.check(key, n.value())) {
+			if (keyX == nodeX && Arrays.equals(key, nodeKey) && filter.test(n)) {
 				resultDepth.pos = n.getDim();
 				resultDepth.nodeParent = parent;
 				return n;
@@ -236,13 +237,13 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 		return n;
 	}
 
-	private Node<T> findNodeExactSlow(double[] key, Node<T> n, Node<T> parent, RemoveResult<T> resultDepth, Filter filter) {
+	private Node<T> findNodeExactSlow(double[] key, Node<T> n, Node<T> parent, RemoveResult<T> resultDepth, Predicate<PointEntry<T>> filter) {
 		do {
 			double[] nodeKey = n.getKey();
 			double nodeX = nodeKey[n.getDim()];
 			double keyX = key[n.getDim()];
 			if (keyX == nodeX) {
-				if (Arrays.equals(key, nodeKey) && filter.check(key, n.value())) {
+				if (Arrays.equals(key, nodeKey) && filter.test(n)) {
 					resultDepth.pos = n.getDim();
 					resultDepth.nodeParent = parent;
 					return n;
@@ -281,11 +282,11 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * Remove all entries at the given point.
 	 *
 	 * @param key the point
-	 * @return the number of entries that were removed
+	 * @return `true` iff an entry was found and removed
 	 */
 	@Override
-	public T remove(double[] key, T value) {
-		return removeIf(key, (k, t) -> Objects.equals(t, value));
+	public boolean remove(double[] key, T value) {
+		return removeOneIf(key, e -> Objects.equals(e.value(), value));
 	}
 
 	/**
@@ -295,25 +296,39 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	 */
 	@Override
 	public T remove(double[] key) {
-		return removeIf(key, (k, t) -> true);
+		MutableRef<T> ref = new MutableRef<>();
+		removeOneIf(key, e -> {
+			ref.set(e.value());
+			return true;
+		});
+		return ref.get();
 	}
 
 	private interface Filter<T> {
 		boolean check(double[] key, T value);
 	}
 
-	public T removeIf(double[] key, Filter filter) {
+	public int removeIf(double[] key, Filter<T> filter) {
+		// TODO improve
+		int n = 0;
+		while (removeOneIf(key, e -> filter.check(e.point(), e.value()))) {
+			n++;
+		}
+		return n;
+	}
+
+	public boolean removeOneIf(double[] key, Predicate<PointEntry<T>> pred) {
 		if (root == null) {
-			return null;
+			return false;
 		}
 
 		invariantBroken = true;
 
 		//find
 		RemoveResult<T> removeResult = new RemoveResult<>();
-		Node<T> eToRemove = findNodeExact(key, removeResult, filter);
+		Node<T> eToRemove = findNodeExact(key, removeResult, pred);
 		if (eToRemove == null) {
-			return null;
+			return false;
 		}
 
 		//remove
@@ -323,7 +338,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 			root = null;
 			size = 0;
 			invariantBroken = false;
-			return value;
+			return true;
 		}
 		
 		//find replacement
@@ -367,7 +382,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 			}
 		}
 		size--;
-		return value;
+		return true;
 	}
 
 	private static class RemoveResult<T> {
@@ -462,21 +477,21 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	/**
 	 * Reinsert the key.
+	 *
 	 * @param oldKey old key
 	 * @param newKey new key
-	 * @param value the value of the entry that should be updated
-	 * @return the value associated with the key or 'null' if the key was not found.
+	 * @param value  the value of the entry that should be updated
+	 * @return `true` iff the entry was found and updated
 	 */
 	@Override
-	public T update(double[] oldKey, double[] newKey, T value) {
+	public boolean update(double[] oldKey, double[] newKey, T value) {
 		if (root == null) {
-			return null;
+			return false;
 		}
-		T result = remove(oldKey, value);
-		if (result != null) {
+		if (remove(oldKey, value)) {
 			insert(newKey, value);
 		}
-		return value;
+		return true;
 	}
 
 	/**

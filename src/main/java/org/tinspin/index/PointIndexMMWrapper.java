@@ -31,7 +31,7 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 	}
 	
 	public static <T> PointIndexMM<T> create(RectangleIndexMM<T> ind) {
-		return new PointIndexMMWrapper<T>(ind);
+		return new PointIndexMMWrapper<>(ind);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -159,7 +159,7 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 	}
 
 	@Override
-	public T remove(double[] point, T value) {
+	public boolean remove(double[] point, T value) {
 		return ind.remove(point, point, value);
 	}
 
@@ -174,7 +174,7 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 	}
 
 	@Override
-	public T update(double[] oldPoint, double[] newPoint, T value) {
+	public boolean update(double[] oldPoint, double[] newPoint, T value) {
 		return ind.update(oldPoint, oldPoint, newPoint, newPoint, value);
 	}
 

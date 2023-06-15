@@ -40,11 +40,12 @@ public interface RectangleIndexMM<T> extends Index<T> {
 
 	/**
 	 * Remove *one*n entry with the given value.
+	 *
 	 * @param lower minimum corner
 	 * @param upper maximum corner
 	 * @return the value of the entry or null if the entry was not found
 	 */
-	T remove(double[] lower, double[] upper, T value);
+	boolean remove(double[] lower, double[] upper, T value);
 
 	/**
 	 * Remove all entries with the given rectangle key.
@@ -56,14 +57,15 @@ public interface RectangleIndexMM<T> extends Index<T> {
 
 	/**
 	 * Update the position of an entry.
-	 * @param lo1 old min
-	 * @param up1 old max
-	 * @param lo2 new min
-	 * @param up2 new max
+	 *
+	 * @param lo1   old min
+	 * @param up1   old max
+	 * @param lo2   new min
+	 * @param up2   new max
 	 * @param value only entries with this value are updated
 	 * @return the value, or null if the entries was not found
 	 */
-	T update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value);
+	boolean update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value);
 
 	/**
 	 * Lookup an entry, using exact match.
