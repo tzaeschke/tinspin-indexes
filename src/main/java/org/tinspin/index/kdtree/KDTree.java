@@ -66,7 +66,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	private Node<T> root;
 
-	private final PointDistanceFunction dist;
+	private final PointDistanceFunction distOld;
 
 	public static void main(String... args) {
 		for (int i = 0; i < 10; i++) {
@@ -134,7 +134,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 			System.err.println("Warning: DEBUG enabled");
 		}
 		this.dims = dims;
-		this.dist = dist != null ? dist : PointDistanceFunction.L2;
+		this.distOld = dist != null ? dist : PointDistanceFunction.L2;
 		this.defensiveKeyCopy = true;
 	}
 
@@ -143,8 +143,12 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 			System.err.println("Warning: DEBUG enabled");
 		}
 		this.dims = dims;
-		this.dist = null;
+		this.distOld = null;
 		this.defensiveKeyCopy = defensiveKeyCopy;
+	}
+
+	private PointDistanceFunction dist() {
+		return distOld != null ? distOld : PointDistanceFunction.L2;
 	}
 
 	public static <T> KDTree<T> create(int dims) {
@@ -515,7 +519,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     		return null;
 		}
     	KDEntryDist<T> candidate = new KDEntryDist<>(null, Double.POSITIVE_INFINITY);
-   		rangeSearch1NN(root, center, candidate, Double.POSITIVE_INFINITY, dist);
+   		rangeSearch1NN(root, center, candidate, Double.POSITIVE_INFINITY, dist());
     	return candidate;
     }
 
@@ -563,7 +567,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     }
 
 	public List<KDEntryDist<T>> knnQuery(double[] center, int k) {
-		return knnQuery(center, k, dist, e -> true);
+		return knnQuery(center, k, dist(), e -> true);
 	}
 
 	public List<KDEntryDist<T>> knnQuery(double[] center, int k, PointDistanceFunction distFn, Predicate<T> filterFn) {
@@ -718,7 +722,6 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	public String toString() {
 		return "KDTree;size=" + size + 
 				";DEBUG=" + DEBUG + 
-				";DistFn=" + PointDistanceFunction.getName(dist) +
 				";center=" + (root==null ? "null" : Arrays.toString(root.getKey()));
 	}
 	
@@ -762,7 +765,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-		return new KDQueryIteratorKNN<>(this, center, k, dist != null ? dist : PointDistanceFunction.L2, e -> true);
+		return new KDQueryIteratorKNN<>(this, center, k, dist(), e -> true);
 	}
 
 	@Override

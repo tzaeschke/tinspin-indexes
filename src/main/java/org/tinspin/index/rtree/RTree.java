@@ -213,13 +213,11 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	@Override
 	public T remove(double[] min, double[] max) {
 		MutableRef<T> ref = new MutableRef<>();
-		findNodes(min, max, root, node -> {
-			deleteFromNode(node, e -> {
-				ref.set(e.checkExactMatch(min, max) ? e.value() : null);
-				return ref.get() != null;
-			});
-			return true; // abort
-		});
+		Predicate<Entry<T>> pred = e -> {
+			ref.set(e.checkExactMatch(min, max) ? e.value() : null);
+			return ref.get() != null;
+		};
+		findNodes(min, max, root, node -> deleteFromNode(node, pred));
 		return ref.get();
 	}
 
@@ -383,9 +381,8 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		boolean found = false;
 		for (int i = 0; i < node.getEntries().size(); ++i) {
 			if (pred.test(node.getEntries().get(i))) {
-				node.getEntries().remove(i);
-				node.recalcRecursiveMBB();
-				size --;
+				node.removeEntry(i);
+				size--;
 				found = true;
 				break;
 			}
