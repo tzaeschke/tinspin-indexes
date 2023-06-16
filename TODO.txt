@@ -1,3 +1,7 @@
+- quadtrees: implement/benchmark KnnHS
+- RTree implement improved KnnHS with minMaxHeap
+- qt2: what is going on with subs vs values in QNode? Why can subs contain values?
+- RTree: compare finNodeEntry vs findNodeEntries -> benchmark and decide
 
 CritBit
 =======

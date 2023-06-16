@@ -459,15 +459,12 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 */
 	@Override
 	public RTreeQueryKnn<T> queryKNN(double[] center, int k) {
-		return new RTreeQueryKnn<>(this, center, k, RectangleDistanceFunction.EDGE, e -> true);
+		return queryKNN(center, k, RectangleDistanceFunction.EDGE);
 	}
 
+	@Override
 	public RTreeQueryKnn<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist) {
-		return new RTreeQueryKnn<>(this, center, k, dist, e -> true);
-	}
-
-	public RTreeQueryKnn<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist, Predicate<T> filterFn) {
-		return new RTreeQueryKnn<>(this, center, k, dist, filterFn);
+		return new RTreeQueryKnn<>(this, center, k, dist);
 	}
 
 	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(
@@ -478,7 +475,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 	
 	/**
-	 * This methods returns an Iterable which returns the nodes by a combined range and 
+	 * This method returns an Iterable which returns the nodes by a combined range and
 	 * nearest number search.
 	 * The Iterator supports the {@code Iterator.remove()} method. 
 	 * 
@@ -496,13 +493,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(double[] center, RectangleDistanceFunction dist,
 			RectangleDistanceFunction closestDist, Filter filter) {
 		RTree<T> self = this;
-		return new Iterable<RectangleEntryDist<T>>() {
-
-			@Override
-			public Iterator<RectangleEntryDist<T>> iterator() {
-				return new RTreeMixedQuery<>(self, center, filter, dist, closestDist);
-			}
-		};
+		return () -> new RTreeMixedQuery<>(self, center, filter, dist, closestDist);
 	}
 	
 	@Override

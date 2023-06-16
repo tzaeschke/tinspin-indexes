@@ -27,6 +27,11 @@ public class StringBuilderLn {
         return this;
     }
 
+    public StringBuilderLn append(Object obj) {
+        this.sb.append(obj);
+        return this;
+    }
+
     public StringBuilderLn appendLn() {
         this.sb.append(System.lineSeparator());
         return this;

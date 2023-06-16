@@ -1,8 +1,8 @@
 /*
  * Copyright 2016-2017 Tilmann Zaeschke
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,99 +30,102 @@ import java.util.function.Predicate;
  */
 public interface RectangleIndexMM<T> extends Index<T> {
 
-	/**
-	 * Insert a rectangle.
-	 * @param lower minimum corner
-	 * @param upper maximum corner
-	 * @param value value
-	 */
-	void insert(double[] lower, double[] upper, T value);
+    /**
+     * Insert a rectangle.
+     *
+     * @param lower minimum corner
+     * @param upper maximum corner
+     * @param value value
+     */
+    void insert(double[] lower, double[] upper, T value);
 
-	/**
-	 * Remove *one*n entry with the given value.
-	 *
-	 * @param lower minimum corner
-	 * @param upper maximum corner
-	 * @return the value of the entry or null if the entry was not found
-	 */
-	boolean remove(double[] lower, double[] upper, T value);
+    /**
+     * Remove *one*n entry with the given value.
+     *
+     * @param lower minimum corner
+     * @param upper maximum corner
+     * @return the value of the entry or null if the entry was not found
+     */
+    boolean remove(double[] lower, double[] upper, T value);
 
-	/**
-	 * Remove *one* entry with the given condition.
-	 *
-	 * @param lower minimum corner
-	 * @param upper maximum corner
-	 * @param condition the condition required for removing an entry
-	 * @return the value of the entry or null if the entry was not found
-	 */
-	boolean removeIf(double[] lower, double[] upper, Predicate<RectangleEntry<T>> condition);
+    /**
+     * Remove *one* entry with the given condition.
+     *
+     * @param lower     minimum corner
+     * @param upper     maximum corner
+     * @param condition the condition required for removing an entry
+     * @return the value of the entry or null if the entry was not found
+     */
+    boolean removeIf(double[] lower, double[] upper, Predicate<RectangleEntry<T>> condition);
 
-	/**
-	 * Update the position of an entry.
-	 *
-	 * @param lo1   old min
-	 * @param up1   old max
-	 * @param lo2   new min
-	 * @param up2   new max
-	 * @param value only entries with this value are updated
-	 * @return the value, or null if the entries was not found
-	 */
-	boolean update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value);
+    /**
+     * Update the position of an entry.
+     *
+     * @param lo1   old min
+     * @param up1   old max
+     * @param lo2   new min
+     * @param up2   new max
+     * @param value only entries with this value are updated
+     * @return the value, or null if the entries was not found
+     */
+    boolean update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value);
 
-	/**
-	 * Lookup an entry, using exact match.
-	 * @param lower minimum corner
-	 * @param upper maximum corner
-	 * @return an iterator over all entries at with the exact given rectangle
-	 */
-	QueryIterator<RectangleEntry<T>> queryRectangle(double[] lower, double[] upper);
-	
-	/**
-	 * @return An iterator over all entries.
-	 */
-	QueryIterator<RectangleEntry<T>> iterator();
+    /**
+     * Lookup an entry, using exact match.
+     *
+     * @param lower minimum corner
+     * @param upper maximum corner
+     * @return an iterator over all entries at with the exact given rectangle
+     */
+    QueryIterator<RectangleEntry<T>> queryRectangle(double[] lower, double[] upper);
 
-	/**
-	 * @param min Lower left corner of the query window
-	 * @param max Upper right corner of the query window
-	 * @return All rectangles that intersect with the query rectangle.
-	 */
-	QueryIterator<RectangleEntry<T>> queryIntersect(double[] min, double[] max);
+    /**
+     * @return An iterator over all entries.
+     */
+    QueryIterator<RectangleEntry<T>> iterator();
 
-	/**
-	 * Finds the nearest neighbor. This uses Euclidean 'edge distance'.
-	 * Other distance types can only be specified directly on the index implementations. 
-	 * @param center center point
-	 * @return the nearest neighbor
-	 */
-	default RectangleEntryDist<T> query1NN(double[] center) {
-		Iterator<? extends RectangleEntryDist<T>> it = queryKNN(center, 1);
-		if (it.hasNext()) {
-			return it.next();
-		}
-		return null;
-	}
+    /**
+     * @param min Lower left corner of the query window
+     * @param max Upper right corner of the query window
+     * @return All rectangles that intersect with the query rectangle.
+     */
+    QueryIterator<RectangleEntry<T>> queryIntersect(double[] min, double[] max);
 
-	/**
-	 * Finds the nearest neighbor. 
-	 * This uses Euclidean 'edge distance', i.e. the distance to the edge of rectangle.
-	 * Distance is 0 is the rectangle overlaps with the search point.
-	 * Other distance types can only be specified directly on the index implementations. 
-	 * @param center center point
-	 * @param k number of neighbors
-	 * @return list of nearest neighbors
-	 */
-	QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k);
+    /**
+     * Finds the nearest neighbor. This uses Euclidean 'edge distance'.
+     * Other distance types can only be specified directly on the index implementations.
+     *
+     * @param center center point
+     * @return the nearest neighbor
+     */
+    default RectangleEntryDist<T> query1NN(double[] center) {
+        Iterator<? extends RectangleEntryDist<T>> it = queryKNN(center, 1);
+        if (it.hasNext()) {
+            return it.next();
+        }
+        return null;
+    }
 
-	/**
-	 * Finds the nearest neighbor.
-	 * This uses a custom distance function for distances to rectangles.
-	 * @param center center point
-	 * @param k number of neighbors
-	 * @param distFn distance function
-	 * @param filterFn a filter function to filter out entries before they are returned
-	 * @return list of nearest neighbors
-	 */
-	QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(
-			double[] center, int k, RectangleDistanceFunction distFn, Predicate<T> filterFn);
+    /**
+     * Finds the nearest neighbor.
+     * This uses Euclidean 'edge distance', i.e. the distance to the edge of rectangle.
+     * Distance is 0 is the rectangle overlaps with the search point.
+     * Other distance types can only be specified directly on the index implementations.
+     *
+     * @param center center point
+     * @param k      number of neighbors
+     * @return list of nearest neighbors
+     */
+    QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k);
+
+    /**
+     * Finds the nearest neighbor.
+     * This uses a custom distance function for distances to rectangles.
+     *
+     * @param center center point
+     * @param k      number of neighbors
+     * @param distFn distance function
+     * @return list of nearest neighbors
+     */
+    QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k, RectangleDistanceFunction distFn);
 }

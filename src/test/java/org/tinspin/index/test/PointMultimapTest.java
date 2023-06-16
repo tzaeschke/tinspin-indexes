@@ -228,11 +228,11 @@ public class PointMultimapTest extends AbstractWrapperTest {
         ArrayList<Entry> data = createInt(0, 1000, 3);
         PointIndexMM<Entry> tree = createTree(data.size(), dim);
 
+        Collections.shuffle(data, r);
+
         for (Entry e : data) {
             tree.insert(e.p, e);
         }
-
-        Collections.shuffle(data, r);
 
         // remove 1st half
         for (int i = 0; i < data.size()/2; ++i) {
@@ -261,44 +261,47 @@ public class PointMultimapTest extends AbstractWrapperTest {
         assertEquals(0, tree.size());
     }
 
-//    @Test
-//    public void testRemoveIf() {
-//        int dim = 3;
-//        ArrayList<Entry> data = createInt(0, 1000, 3);
-//        PointIndexMM<Entry> tree = createTree(data.size(), dim);
-//
-//        for (Entry e : data) {
-//            tree.insert(e.p, e);
-//        }
-//
-//        // remove 1st half
-//        for (int i = 0; i < data.size()/2; ++i) {
-//            Entry e = data.get(i);
-//            int nRem = tree.removeIf(e.p, );
-//            assertTrue(nRem == 0 || nRem == 4);
-//            assertFalse(containsExact(tree, e.p, e.id));
-//        }
-//
-//        // check
-//        for (int i = 0; i < data.size()/2; ++i) {
-//            Entry e = data.get(i);
-//            assertFalse(containsExact(tree, e.p, e.id));
-//        }
-//        for (int i = data.size()/2; i < data.size(); ++i) {
-//            Entry e = data.get(i);
-//            assertTrue(containsExact(tree, e.p, e.id));
-//        }
-//
-//        // remove 2nd half
-//        for (int i = data.size()/2; i < data.size(); ++i) {
-//            Entry e = data.get(i);
-//            int nRem = tree.removeIf(e.p);
-//            assertTrue(nRem == 0 || nRem == 4);
-//            assertFalse(containsExact(tree, e.p, e.id));
-//        }
-//
-//        assertEquals(0, tree.size());
-//    }
+    @Test
+    public void testRemoveIf() {
+        Random r = new Random(0);
+        int dim = 3;
+        ArrayList<Entry> data = createInt(0, 1000, 3);
+        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+
+        Collections.shuffle(data, r);
+
+        for (Entry e : data) {
+            tree.insert(e.p, e);
+        }
+
+        // remove 1st half
+        for (int i = 0; i < data.size()/2; ++i) {
+            Entry e = data.get(i);
+            assertTrue(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
+            assertFalse(containsExact(tree, e.p, e.id));
+            assertFalse(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
+        }
+
+        // check
+        for (int i = 0; i < data.size()/2; ++i) {
+            Entry e = data.get(i);
+            assertFalse(containsExact(tree, e.p, e.id));
+        }
+        for (int i = data.size()/2; i < data.size(); ++i) {
+            Entry e = data.get(i);
+            assertTrue(containsExact(tree, e.p, e.id));
+        }
+
+        // remove 2nd half
+        for (int i = data.size()/2; i < data.size(); ++i) {
+            Entry e = data.get(i);
+            assertTrue(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
+            assertFalse(containsExact(tree, e.p, e.id));
+            assertFalse(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
+        }
+
+        assertEquals(0, tree.size());
+    }
 
     enum INDEX {
         /** Naive array implementation, for verification only */
@@ -329,9 +332,9 @@ public class PointMultimapTest extends AbstractWrapperTest {
 //            //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE: return KDTree.create(dims);
 //            case PHTREE: return PHTreeP.createPHTree(dims);
-//            case QUAD: return QuadTreeKD.create(dims);
-//            case QUAD2: return QuadTreeKD2.create(dims);
-//            case QUAD_OLD: return QuadTreeKD0.create(dims);
+            case QUAD: return QuadTreeKD.create(dims);
+            case QUAD2: return QuadTreeKD2.create(dims);
+            case QUAD_OLD: return QuadTreeKD0.create(dims);
             case RSTAR:
             case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
  //           case COVER: return CoverTree.create(dims);

@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.PriorityQueue;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.function.Predicate;
 
 import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.RectangleDistanceFunction;
@@ -51,15 +50,14 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	private double[] center;
 	private Iterator<DistEntry<T>> iter;
 	private RectangleDistanceFunction dist;
-	private Predicate<T> filterFn;
 	private final ArrayList<DistEntry<T>> candidates = new ArrayList<>();
 	private final ArrayList<DistEntry<Object>> pool = new ArrayList<>();
 	private final PriorityQueue<DistEntry<Object>> queue = new PriorityQueue<>(COMP);
 	
 	
-	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, RectangleDistanceFunction dist, Predicate<T> filterFn) {
+	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, RectangleDistanceFunction dist) {
 		this.tree = tree;
-		reset(center, k, dist == null ? RectangleDistanceFunction.EDGE : dist, filterFn);
+		reset(center, k, dist == null ? RectangleDistanceFunction.EDGE : dist);
 	}
 
 	
@@ -70,18 +68,11 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	}
 
 	public void reset(double[] center, int k, RectangleDistanceFunction dist) {
-		reset(center, k, dist, e -> true);
-	}
-
-	public void reset(double[] center, int k, RectangleDistanceFunction dist, Predicate<T> filterFn) {
 		if (dist != null) {
 			this.dist = dist;
 		}
 		if (this.dist != RectangleDistanceFunction.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
-		}
-		if (filterFn != null) {
-			this.filterFn = filterFn;
 		}
 		this.center = center;
 		
@@ -100,7 +91,6 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 		//search
 		search(k);
 		iter = candidates.iterator();
-		//System.out.println("Queue size: " + queue.size());
 	}
 	
 	
@@ -116,9 +106,7 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 			Object o = candidate.value();
 			if (!(o instanceof RTreeNode)) {
 				//data entry
-				if (filterFn.test(((DistEntry<T>) candidate).value())) {
-					candidates.add((DistEntry<T>) candidate);
-				}
+				candidates.add((DistEntry<T>) candidate);
 				if (candidates.size() >= k) {
 					return;
 				}
@@ -146,7 +134,7 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	
 	private DistEntry<Object> createEntry(double[] min, double[] max, Object val, double dist) {
 		if (pool.isEmpty()) {
-			return new DistEntry<Object>(min, max, val, dist);
+			return new DistEntry<>(min, max, val, dist);
 		}
 		DistEntry<Object> e = pool.remove(pool.size() - 1);
 		e.set(min, max, val, dist);

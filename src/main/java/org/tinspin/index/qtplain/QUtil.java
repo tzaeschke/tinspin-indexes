@@ -17,6 +17,8 @@
  */
 package org.tinspin.index.qtplain;
 
+import org.tinspin.index.PointDistanceFunction;
+
 public class QUtil {
 	
 	static final double EPS_MUL = 1.000000001;
@@ -194,18 +196,18 @@ public class QUtil {
 	 * @param nodeRadius radius of the node
 	 * @return distance to edge of the node or 0 if the point is inside the node
 	 */
-	static double distToRectNode(double[] point, double[] nodeCenter, double nodeRadius) {
-		double dist = 0;
+	static double distToRectNode(double[] point, double[] nodeCenter, double nodeRadius, PointDistanceFunction distFn) {
+		double[] dist = new double[point.length];
 		for (int i = 0; i < point.length; i++) {
-			double d = 0;
-			if (point[i] > nodeCenter[i]+nodeRadius) {
-				d = point[i] - (nodeCenter[i]+nodeRadius);
-			} else if (point[i] < nodeCenter[i]-nodeRadius) {
-				d = nodeCenter[i]-nodeRadius - point[i];
+			double d = point[i];
+			if (point[i] > nodeCenter[i] + nodeRadius) {
+				d = nodeCenter[i] + nodeRadius;
+			} else if (point[i] < nodeCenter[i] - nodeRadius) {
+				d = nodeCenter[i] - nodeRadius;
 			}
-			dist += d*d;
+			dist[i] = d;
 		}
-		return Math.sqrt(dist);
+		return distFn.dist(dist, point);
 	}
-	
+
 }

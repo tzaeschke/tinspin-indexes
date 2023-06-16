@@ -20,8 +20,8 @@ package org.tinspin.index;
 @FunctionalInterface
 public interface RectangleDistanceFunction {
 
-	public static RectangleDistanceFunction CENTER = RectangleDistanceFunction::centerDistance;
-	public static RectangleDistanceFunction EDGE = RectangleDistanceFunction::edgeDistance;
+	RectangleDistanceFunction CENTER = RectangleDistanceFunction::centerDistance;
+	RectangleDistanceFunction EDGE = RectangleDistanceFunction::edgeDistance;
 
 	double dist(double[] center, double[] min, double[] max);
 

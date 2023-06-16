@@ -18,7 +18,9 @@
 package org.tinspin.index.qthypercube2;
 
 import java.util.Arrays;
+import java.util.function.Predicate;
 
+import org.tinspin.index.PointEntry;
 import org.tinspin.index.qthypercube2.QuadTreeKD2.QStats;
 
 /**
@@ -32,7 +34,7 @@ public class QNode<T> {
 
 	private double[] center;
 	private double radius;
-	//null indicates that we have sub-node i.o. values
+	// null indicates that we have sub-node i.o. values
 	private QEntry<T>[] values;
 	private Object[] subs;
 	private int nValues = 0;
@@ -90,7 +92,7 @@ public class QNode<T> {
 			while (sub != null) {
 				//This may recurse if all entries fall 
 				//into the same subnode
-				sub = (QNode<T>) sub.tryPut(e2, maxNodeSize, false);
+				sub = sub.tryPut(e2, maxNodeSize, false);
 			}
 		}
 		return getOrCreateSub(e, maxNodeSize, enforceLeaf);
@@ -106,7 +108,7 @@ public class QNode<T> {
 		return true;
 	}
 	
-	private QEntry<T>[] getValues() {
+	QEntry<T>[] getValues() {
 		return values;
 	}
 	
@@ -194,15 +196,15 @@ public class QNode<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize) {
+	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize, Predicate<PointEntry<T>> pred) {
 		if (!isLeaf()) {
 			int pos = calcSubPosition(key);
 			Object o = subs[pos];
 			if (o instanceof QNode) {
-				return ((QNode<T>)o).remove(this, key, maxNodeSize);
+				return ((QNode<T>)o).remove(this, key, maxNodeSize, pred);
 			} else if (o instanceof QEntry) {
 				QEntry<T> e = (QEntry<T>) o;
-				if (removeSub(parent, key, pos, e, maxNodeSize)) {
+				if (removeSub(parent, key, pos, e, maxNodeSize, pred)) {
 					return e;
 				}
 			}
@@ -211,15 +213,16 @@ public class QNode<T> {
 		
 		for (int i = 0; i < nValues; i++) {
 			QEntry<T> e = values[i];
-			if (removeSub(parent, key, i, e, maxNodeSize)) {
+			if (removeSub(parent, key, i, e, maxNodeSize, pred)) {
 				return e;
 			}
 		}
 		return null;
 	}
 
-	private boolean removeSub(QNode<T> parent, double[] key, int pos, QEntry<T> e, int maxNodeSize) {
-		if (QUtil.isPointEqual(e.point(), key)) {
+	private boolean removeSub(
+			QNode<T> parent, double[] key, int pos, QEntry<T> e, int maxNodeSize, Predicate<PointEntry<T>> pred) {
+		if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 			removeValue(pos);
 			//TODO provide threshold for re-insert
 			//i.e. do not always merge.
@@ -233,7 +236,7 @@ public class QNode<T> {
 	
 	@SuppressWarnings("unchecked")
 	QEntry<T> update(QNode<T> parent, double[] keyOld, double[] keyNew, int maxNodeSize,
-			boolean[] requiresReinsert, int currentDepth, int maxDepth) {
+			boolean[] requiresReinsert, int currentDepth, int maxDepth, Predicate<PointEntry<T>> pred) {
 		if (!isLeaf()) {
 			int pos = calcSubPosition(keyOld);
 			Object e = subs[pos];
@@ -243,27 +246,27 @@ public class QNode<T> {
 			if (e instanceof QNode) {
 				QNode<T> sub = (QNode<T>) e;
 				QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
-						currentDepth+1, maxDepth);
+						currentDepth+1, maxDepth, pred);
 				if (ret != null && requiresReinsert[0] && 
 						QUtil.isPointEnclosed(ret.point(), center, radius/QUtil.EPS_MUL)) {
 					requiresReinsert[0] = false;
-					Object r = this;
-					while (r instanceof QNode) {
-						r = ((QNode<T>)r).tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
+					QNode<T> r = this;
+					while (r != null) {
+						r = r.tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
 					}
 				}
 				return ret;
 			}
-			//Entry
+			// Entry
 			QEntry<T> qe = (QEntry<T>) e;
-			if (QUtil.isPointEqual(qe.point(), keyOld)) {
+			if (QUtil.isPointEqual(qe.point(), keyOld) && pred.test(qe)) {
 				removeValue(pos);
 				qe.setKey(keyNew);
 				if (QUtil.isPointEnclosed(keyNew, center, radius/QUtil.EPS_MUL)) {
-					//reinsert locally;
-					Object r = this;
-					while (r instanceof QNode) {
-						r = ((QNode<T>)r).tryPut(qe, maxNodeSize, currentDepth++ > maxDepth);
+					// reinsert locally;
+					QNode<T> r = this;
+					while (r != null) {
+						r = r.tryPut(qe, maxNodeSize, currentDepth++ > maxDepth);
 					}
 					requiresReinsert[0] = false;
 				} else {
@@ -380,7 +383,7 @@ public class QNode<T> {
 		return isLeaf ? values : subs;
 	}
 
-	
+
 	@Override
 	public String toString() {
 		return "center/radius=" + Arrays.toString(center) + "/" + radius + 

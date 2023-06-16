@@ -106,10 +106,9 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(
-			double[] center, int k, PointDistanceFunction distFn, Predicate<T> filterFn) {
+	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
 		RectangleDistanceFunction.EdgeDistance fn = new RectangleDistanceFunction.EdgeDistance(distFn);
-		return new PointDIter<>(ind.queryKNN(center, k, fn::edgeDistance, filterFn));
+		return new PointDIter<>(ind.queryKNN(center, k, fn::edgeDistance));
 	}
 
 	private static class PointDistW<T> extends PointW<T> implements PointEntryDist<T> {

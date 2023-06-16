@@ -50,7 +50,7 @@ public interface PointIndexMM<T> extends Index<T> {
     /**
      * Remove *one* entry with the given condition.
      *
-     * @param point the point
+     * @param point     the point
      * @param condition the condition required for removing an entry
      * @return the value of the entry or null if the entry was not found
      */
@@ -110,8 +110,8 @@ public interface PointIndexMM<T> extends Index<T> {
      * @return list of nearest neighbors
      */
     default QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-		return queryKNN(center, k, PointDistanceFunction.L2, e -> true);
-	}
+        return queryKNN(center, k, PointDistanceFunction.L2);
+    }
 
     /**
      * Finds the nearest neighbor. This uses Euclidean distance.
@@ -119,10 +119,8 @@ public interface PointIndexMM<T> extends Index<T> {
      *
      * @param center center point
      * @param k      number of neighbors
-	 * @param dist   the point distance function to be used
-	 * @param filter the filter function to be used. It should return `true` if the entry passes
-	 *               or `false` if it should be ignored.
+     * @param distFn the point distance function to be used
      * @return list of nearest neighbors
      */
-    QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction dist, Predicate<T> filter);
+    QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn);
 }
