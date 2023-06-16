@@ -213,21 +213,14 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	@Override
 	public T remove(double[] min, double[] max) {
 		MutableRef<T> ref = new MutableRef<>();
-		findNodes(min, max, node -> {
-			deleteFromNode(node, false, (Entry<T> e) -> {
-				if (e.checkExactMatch(min, max)) {
-					ref.set(e.value());
-				}
+		findNodes(min, max, root, node -> {
+			deleteFromNode(node, e -> {
+				ref.set(e.checkExactMatch(min, max) ? e.value() : null);
 				return ref.get() != null;
 			});
 			return true; // abort
 		});
 		return ref.get();
-	}
-
-	@Override
-	public int removeAll(double[] min, double[] max) {
-		return removeIf(min, max, e-> true);
 	}
 
 	/**
@@ -239,41 +232,20 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 */
 	@Override
 	public boolean remove(double[] min, double[] max, T value) {
-		return removeOneIf(min, max, e -> Objects.equals(value, e.value()));
+		return removeIf(min, max, e -> Objects.equals(value, e.value()));
 	}
 
 	/**
-	 * Remove all entries matching the geometry and condition.
+	 * Remove the first entry matching the geometry and condition.
 	 * @param min min
 	 * @param max max
 	 * @param condition Condition for deletion.
-	 * @return the number of deleted entries
+	 * @return `true` iff an entry was found and removed
 	 */
-	public int removeIf(double[] min, double[] max, Predicate<Entry<T>> condition) {
-		MutableInt n = new MutableInt();
+	@Override
+	public boolean removeIf(double[] min, double[] max, Predicate<RectangleEntry<T>> condition) {
 		Predicate<Entry<T>> pred = e -> e.checkExactMatch(min, max) && condition.test(e);
-		findNodes(min, max, node -> {
-			n.add(deleteFromNode(node, true, pred));
-			return false; // continue search
-		});
-		return n.get();
-	}
-
-	/**
-	 * Remove one entry matching the geometry and condition.
-	 * @param min min
-	 * @param max max
-	 * @param condition Condition for deletion.
-	 * @return `true` iff an entry was deleted
-	 */
-	public boolean removeOneIf(double[] min, double[] max, Predicate<Entry<T>> condition) {
-		MutableBool ref = new MutableBool();
-		Predicate<Entry<T>> pred = e -> e.checkExactMatch(min, max) && condition.test(e);
-		findNodes(min, max, node -> {
-			ref.set(deleteFromNode(node, false, pred) > 0);
-			return ref.get(); // abort search if an entry was found
-		});
-		return ref.get();
+		return findNodes(min, max, root, node -> deleteFromNode(node, pred));
 	}
 
 	/**
@@ -313,15 +285,17 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		return false;
 	}
 
-	private interface CheckAbort<T> {
-		boolean checkAbort(Entry<T> entry, RTreeNode<T> node, int posInNode);
+	private interface Matcher<T> {
+		boolean test(Entry<T> entry, RTreeNode<T> node, int posInNode);
 	}
 
 	private interface CheckNodeAbort<T> {
 		boolean checkAbort(RTreeNodeLeaf<T> node);
 	}
 
-	private T findNodeEntry(double[] min, double[] max, CheckAbort<T> checkAbort) {
+	// TODO either remove findNodeEntry() or remove findNodes()
+	//     --> test performance!
+	private T findNodeEntry(double[] min, double[] max, Matcher<T> matcher) {
 		int[] positions = new int[depth];
 		int level = depth-1;
 		RTreeNode<T> node = root;
@@ -344,7 +318,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 				ArrayList<Entry<T>> children = node.getEntries();
 				for (int i = 0; i < children.size(); i++) {
 					Entry<T> e = children.get(i);
-					if (e.checkExactMatch(min, max) && checkAbort.checkAbort(e, node, i)) {
+					if (e.checkExactMatch(min, max) && matcher.test(e, node, i)) {
 						return e.value();
 					}
 				}
@@ -384,57 +358,38 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		}
 	}
 
-	private void findNodes(double[] min, double[] max, CheckNodeAbort<T> checkAbort) {
-		int[] positions = new int[depth];
-		int level = depth-1;
-		RTreeNode<T> node = root;
-		outer:
-		while (level < depth) {
-			int pos = positions[level];
-			if (node instanceof RTreeNodeDir) {
-				ArrayList<RTreeNode<T>> children = ((RTreeNodeDir<T>)node).getChildren();
-				for (int i = pos; i < children.size(); i++) {
-					RTreeNode<T> sub = children.get(i);
-					if (sub.checkInclusion(min, max)) {
-						positions[level] = i+1;
-						level--;
-						node = sub;
-						positions[level] = 0;
-						continue outer;
-					}
-				}
-			} else {
-				if (checkAbort.checkAbort((RTreeNodeLeaf<T>) node)) {
-					return;
+	private boolean findNodes(double[] min, double[] max, RTreeNode<T> node, CheckNodeAbort<T> checkAbort) {
+		if (node instanceof RTreeNodeDir) {
+			ArrayList<RTreeNode<T>> children = ((RTreeNodeDir<T>)node).getChildren();
+			for (int i = 0; i < children.size(); i++) {
+				RTreeNode<T> sub = children.get(i);
+				if (sub.checkInclusion(min, max) && findNodes(min, max, sub, checkAbort)) {
+					return true;
 				}
 			}
-			node = node.getParent();
-			level++;
+		} else {
+			return checkAbort.checkAbort((RTreeNodeLeaf<T>) node);
 		}
+		return false;
 	}
 
-	int deleteFromNode(RTreeNode<T> node, boolean checkAll, Predicate<Entry<T>> pred) {
+	boolean deleteFromNode(RTreeNode<T> node, Predicate<Entry<T>> pred) {
 		//this also adjusts parent MBBs
 		//Question: Should we adjust parent MBBs later if we have to remove the sub-node?
 		//-> But later adjustment would skew with reinsertion, because the
 		//node may look bigger than it actually is.
 		//TODO no need to remove the entry (update the MBBs if we gonna remove the node...
 		//TODO check inside 'removeEntry????'
-		int nFound = 0;
+		boolean found = false;
 		for (int i = 0; i < node.getEntries().size(); ++i) {
 			if (pred.test(node.getEntries().get(i))) {
 				node.getEntries().remove(i);
-				i--;
-				nFound++;
-				if (!checkAll) {
-					break;
-				}
+				node.recalcRecursiveMBB();
+				size --;
+				found = true;
+				break;
 			}
 		}
-		if (nFound > 0) {
-			node.recalcRecursiveMBB();
-		}
-		size -= nFound;
 
 		int level = 0;
 		while (node != root && node.isUnderfull()) {
@@ -454,7 +409,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 			root = (RTreeNode<T>) root.getEntries().get(0);
 			root.setParent(null);
 		}
-		return nFound;
+		return found;
 	}
 
 	/* (non-Javadoc)
@@ -462,6 +417,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 */
 	@Override
 	public T queryExact(double[] min, double[] max) {
+		//return findNodeEntry(min, max, (entry, node, posInNode) -> true);
 		return findNodeEntry(min, max, (entry, node, posInNode) -> true);
 	}
 	

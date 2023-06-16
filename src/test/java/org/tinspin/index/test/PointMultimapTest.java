@@ -261,44 +261,44 @@ public class PointMultimapTest extends AbstractWrapperTest {
         assertEquals(0, tree.size());
     }
 
-    @Test
-    public void testRemoveAll() {
-        int dim = 3;
-        ArrayList<Entry> data = createInt(0, 1000, 3);
-        PointIndexMM<Entry> tree = createTree(data.size(), dim);
-
-        for (Entry e : data) {
-            tree.insert(e.p, e);
-        }
-
-        // remove 1st half
-        for (int i = 0; i < data.size()/2; ++i) {
-            Entry e = data.get(i);
-            int nRem = tree.removeAll(e.p);
-            assertTrue(nRem == 0 || nRem == 4);
-            assertFalse(containsExact(tree, e.p, e.id));
-        }
-
-        // check
-        for (int i = 0; i < data.size()/2; ++i) {
-            Entry e = data.get(i);
-            assertFalse(containsExact(tree, e.p, e.id));
-        }
-        for (int i = data.size()/2; i < data.size(); ++i) {
-            Entry e = data.get(i);
-            assertTrue(containsExact(tree, e.p, e.id));
-        }
-
-        // remove 2nd half
-        for (int i = data.size()/2; i < data.size(); ++i) {
-            Entry e = data.get(i);
-            int nRem = tree.removeAll(e.p);
-            assertTrue(nRem == 0 || nRem == 4);
-            assertFalse(containsExact(tree, e.p, e.id));
-        }
-
-        assertEquals(0, tree.size());
-    }
+//    @Test
+//    public void testRemoveIf() {
+//        int dim = 3;
+//        ArrayList<Entry> data = createInt(0, 1000, 3);
+//        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+//
+//        for (Entry e : data) {
+//            tree.insert(e.p, e);
+//        }
+//
+//        // remove 1st half
+//        for (int i = 0; i < data.size()/2; ++i) {
+//            Entry e = data.get(i);
+//            int nRem = tree.removeIf(e.p, );
+//            assertTrue(nRem == 0 || nRem == 4);
+//            assertFalse(containsExact(tree, e.p, e.id));
+//        }
+//
+//        // check
+//        for (int i = 0; i < data.size()/2; ++i) {
+//            Entry e = data.get(i);
+//            assertFalse(containsExact(tree, e.p, e.id));
+//        }
+//        for (int i = data.size()/2; i < data.size(); ++i) {
+//            Entry e = data.get(i);
+//            assertTrue(containsExact(tree, e.p, e.id));
+//        }
+//
+//        // remove 2nd half
+//        for (int i = data.size()/2; i < data.size(); ++i) {
+//            Entry e = data.get(i);
+//            int nRem = tree.removeIf(e.p);
+//            assertTrue(nRem == 0 || nRem == 4);
+//            assertFalse(containsExact(tree, e.p, e.id));
+//        }
+//
+//        assertEquals(0, tree.size());
+//    }
 
     enum INDEX {
         /** Naive array implementation, for verification only */

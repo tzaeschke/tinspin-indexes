@@ -48,12 +48,13 @@ public interface PointIndexMM<T> extends Index<T> {
     boolean remove(double[] point, T value);
 
     /**
-     * Remove all entries at the given point.
+     * Remove *one* entry with the given condition.
      *
      * @param point the point
-     * @return the number of entries that were removed
+     * @param condition the condition required for removing an entry
+     * @return the value of the entry or null if the entry was not found
      */
-    int removeAll(double[] point);
+    boolean removeIf(double[] point, Predicate<PointEntry<T>> condition);
 
     /**
      * Update the position of an entry.

@@ -48,12 +48,14 @@ public interface RectangleIndexMM<T> extends Index<T> {
 	boolean remove(double[] lower, double[] upper, T value);
 
 	/**
-	 * Remove all entries with the given rectangle key.
+	 * Remove *one* entry with the given condition.
+	 *
 	 * @param lower minimum corner
 	 * @param upper maximum corner
+	 * @param condition the condition required for removing an entry
 	 * @return the value of the entry or null if the entry was not found
 	 */
-	int removeAll(double[] lower, double[] upper);
+	boolean removeIf(double[] lower, double[] upper, Predicate<RectangleEntry<T>> condition);
 
 	/**
 	 * Update the position of an entry.

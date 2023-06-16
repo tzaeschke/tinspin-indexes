@@ -164,8 +164,8 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 	}
 
 	@Override
-	public int removeAll(double[] point) {
-		return ind.removeAll(point, point);
+	public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
+		return ind.removeIf(point, point, e -> condition.test(new PointW<>(e.lower(), e.value())));
 	}
 
 	@Override

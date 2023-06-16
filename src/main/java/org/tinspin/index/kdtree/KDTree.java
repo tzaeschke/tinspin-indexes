@@ -265,28 +265,12 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	/**
 	 * Remove all entries at the given point.
 	 *
-	 * @param point the point
-	 * @return the number of entries that were removed
-	 */
-	@Override
-	public int removeAll(double[] point) {
-		int n = 0;
-		// TODO improve this
-		while (remove(point) != null) {
-			++n;
-		}
-		return n;
-	}
-
-	/**
-	 * Remove all entries at the given point.
-	 *
 	 * @param key the point
 	 * @return `true` iff an entry was found and removed
 	 */
 	@Override
 	public boolean remove(double[] key, T value) {
-		return removeOneIf(key, e -> Objects.equals(e.value(), value));
+		return removeIf(key, e -> Objects.equals(e.value(), value));
 	}
 
 	/**
@@ -297,27 +281,15 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	@Override
 	public T remove(double[] key) {
 		MutableRef<T> ref = new MutableRef<>();
-		removeOneIf(key, e -> {
+		removeIf(key, e -> {
 			ref.set(e.value());
 			return true;
 		});
 		return ref.get();
 	}
 
-	private interface Filter<T> {
-		boolean check(double[] key, T value);
-	}
-
-	public int removeIf(double[] key, Filter<T> filter) {
-		// TODO improve
-		int n = 0;
-		while (removeOneIf(key, e -> filter.check(e.point(), e.value()))) {
-			n++;
-		}
-		return n;
-	}
-
-	public boolean removeOneIf(double[] key, Predicate<PointEntry<T>> pred) {
+	@Override
+	public boolean removeIf(double[] key, Predicate<PointEntry<T>> pred) {
 		if (root == null) {
 			return false;
 		}
@@ -341,8 +313,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 			return true;
 		}
 		
-		//find replacement
-		// removeResult.nodeParent = null; // TODO remove
+		// find replacement
 		while (eToRemove != null && !eToRemove.isLeaf()) {
 			//recurse
 			int pos = removeResult.pos;
