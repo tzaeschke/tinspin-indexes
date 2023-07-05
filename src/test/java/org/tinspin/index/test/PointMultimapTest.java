@@ -24,7 +24,7 @@ import org.tinspin.index.*;
 import org.tinspin.index.array.PointArray;
 import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.kdtree.KDTree;
-import org.tinspin.index.phtree.PHTreeP;
+import org.tinspin.index.phtree.PHTreeMMP;
 import org.tinspin.index.qthypercube.QuadTreeKD;
 import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
@@ -70,7 +70,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
 //        l.add(new Object[]{INDEX.ARRAY});
 // TODO		l.add(new Object[]{INDEX.COVER});
         l.add(new Object[]{KDTREE});
-//        l.add(new Object[]{INDEX.PHTREE});
+        l.add(new Object[]{INDEX.PHTREE});
         l.add(new Object[]{INDEX.QUAD});
         l.add(new Object[]{INDEX.QUAD2});
         l.add(new Object[]{INDEX.QUAD_OLD});
@@ -331,7 +331,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
 //            case ARRAY: return new PointArray<>(dims, size);
 //            //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE: return KDTree.create(dims);
-//            case PHTREE: return PHTreeP.createPHTree(dims);
+            case PHTREE: return PHTreeMMP.createPHTree(dims);
             case QUAD: return QuadTreeKD.create(dims);
             case QUAD2: return QuadTreeKD2.create(dims);
             case QUAD_OLD: return QuadTreeKD0.create(dims);
