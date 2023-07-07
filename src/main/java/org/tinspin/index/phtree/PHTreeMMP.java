@@ -34,7 +34,7 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
 		this.tree = PhTreeMultiMapF2.create(dims);
 	}
 
-	public static <T> PHTreeMMP<T> createPHTree(int dims) {
+	public static <T> PHTreeMMP<T> create(int dims) {
 		return new PHTreeMMP<>(dims);
 	}
 

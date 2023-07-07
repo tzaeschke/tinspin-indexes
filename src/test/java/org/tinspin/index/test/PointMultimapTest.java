@@ -35,7 +35,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
-import static org.tinspin.index.test.PointMultimapTest.INDEX.*;
+//import static org.tinspin.index.test.PointMultimapTest.INDEX.*;
+import static org.tinspin.index.test.util.TestStats.*;
 
 @RunWith(Parameterized.class)
 public class PointMultimapTest extends AbstractWrapperTest {
@@ -69,7 +70,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         ArrayList<Object[]> l = new ArrayList<>();
 //        l.add(new Object[]{INDEX.ARRAY});
 // TODO		l.add(new Object[]{INDEX.COVER});
-        l.add(new Object[]{KDTREE});
+        l.add(new Object[]{INDEX.KDTREE});
         l.add(new Object[]{INDEX.PHTREE});
         l.add(new Object[]{INDEX.QUAD});
         l.add(new Object[]{INDEX.QUAD2});
@@ -303,35 +304,12 @@ public class PointMultimapTest extends AbstractWrapperTest {
         assertEquals(0, tree.size());
     }
 
-    enum INDEX {
-        /** Naive array implementation, for verification only */
-        ARRAY,
-        /** kD-Tree */
-        KDTREE,
-        /** PH-Tree */
-        PHTREE,
-        /** CritBit */
-        CRITBIT,
-        /** Quadtree with HC navigation*/
-        QUAD,
-        /** Quadtree with HC navigation version 2 */
-        QUAD2,
-        /** Plain Quadtree */
-        QUAD_OLD,
-        /** RStarTree */
-        RSTAR,
-        /** STR-loaded RStarTree */
-        STR,
-        /** CoverTree */
-        COVER
-    }
-
     private <T> PointIndexMM<T> createTree(int size, int dims) {
         switch (candidate) {
 //            case ARRAY: return new PointArray<>(dims, size);
 //            //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE: return KDTree.create(dims);
-            case PHTREE: return PHTreeMMP.createPHTree(dims);
+            case PHTREE_MM: return PHTreeMMP.create(dims);
             case QUAD: return QuadTreeKD.create(dims);
             case QUAD2: return QuadTreeKD2.create(dims);
             case QUAD_OLD: return QuadTreeKD0.create(dims);
