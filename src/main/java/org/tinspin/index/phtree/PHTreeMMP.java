@@ -16,6 +16,8 @@
  */
 package org.tinspin.index.phtree;
 
+import ch.ethz.globis.phtree.PhEntryDistF;
+import ch.ethz.globis.phtree.PhEntryF;
 import ch.ethz.globis.phtree.PhTreeMultiMapF2;
 import org.tinspin.index.*;
 
@@ -125,9 +127,9 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
 
 	private static class IteratorPH<T> implements QueryIterator<PointEntry<T>> {
 
-		private final PhTreeMultiMapF2.PhIteratorMMF<T> iter;
+		private final PhTreeMultiMapF2.PhIteratorF<T> iter;
 
-		private IteratorPH(PhTreeMultiMapF2.PhIteratorMMF<T> iter) {
+		private IteratorPH(PhTreeMultiMapF2.PhIteratorF<T> iter) {
 			this.iter = iter;
 		}
 
@@ -139,7 +141,7 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
 		@Override
 		public PointEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
-			PhTreeMultiMapF2.PhEntryMMF<T> e = iter.nextEntryReuse();
+			PhEntryF<T> e = iter.nextEntryReuse();
 			return new EntryP<>(e.getKey().clone(), e.getValue());
 		}
 
@@ -179,9 +181,9 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
 
 	private static class QueryIteratorKnnPH<T> implements QueryIteratorKNN<PointEntryDist<T>> {
 
-		private final PhTreeMultiMapF2.PhKnnQueryMMF<T> iter;
+		private final PhTreeMultiMapF2.PhKnnQueryF<T> iter;
 
-		private QueryIteratorKnnPH(PhTreeMultiMapF2.PhKnnQueryMMF<T> iter) {
+		private QueryIteratorKnnPH(PhTreeMultiMapF2.PhKnnQueryF<T> iter) {
 			this.iter = iter;
 		}
 
@@ -193,7 +195,7 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
 		@Override
 		public PointEntryDist<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
-			PhTreeMultiMapF2.PhEntryDistMMF<T> e = iter.nextEntryReuse();
+			PhEntryDistF<T> e = iter.nextEntryReuse();
 			return new DistEntryP<>(e.getKey().clone(), e.getValue(), e.dist());
 		}
 

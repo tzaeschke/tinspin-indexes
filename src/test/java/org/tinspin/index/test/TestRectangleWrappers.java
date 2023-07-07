@@ -8,25 +8,25 @@ package org.tinspin.index.test;
 
 import java.util.ArrayList;
 
+import ch.ethz.globis.tinspin.TestStats;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.tinspin.index.test.util.TestRunner;
-import org.tinspin.index.test.util.TestStats;
-import org.tinspin.index.test.util.TestStats.INDEX;
-import org.tinspin.index.test.util.TestStats.TST;
+import org.tinspin.index.test.util.TestInstances.IDX;
+import org.tinspin.index.test.util.TestInstances.TST;
 
 @RunWith(Parameterized.class)
 public class TestRectangleWrappers extends AbstractWrapperTest {
 
-	private final INDEX candidate;
+	private final IDX candidate;
 	
 	private static TestStats expectedCube = null;
 	private static TestStats expectedCluster = null;
 
-	public TestRectangleWrappers(INDEX candCls) {
+	public TestRectangleWrappers(IDX candCls) {
 		this.candidate = candCls;
 	}
 	
@@ -35,22 +35,22 @@ public class TestRectangleWrappers extends AbstractWrapperTest {
 		//init results
 		//use this as reference for all others
 		//if the naive implementation should be wrong, the others should fail as well
-		expectedCube = createUnitTestStats(INDEX.ARRAY, TST.CUBE, N, dims, true, 1.0);
+		expectedCube = createUnitTestStats(IDX.ARRAY, TST.CUBE_R, N, dims, 1.0);
 		new TestRunner(expectedCube).run();
 
-		expectedCluster = createUnitTestStats(INDEX.ARRAY, TST.CLUSTER, N, dims, true, 5.0);
+		expectedCluster = createUnitTestStats(IDX.ARRAY, TST.CLUSTER_R, N, dims, 5.0);
 		new TestRunner(expectedCluster).run();
 	}
 	
 	@Parameters
 	public static Iterable<Object[]> data1() {
 		ArrayList<Object[]> l = new ArrayList<>();
-		l.add(new Object[]{INDEX.ARRAY});
-		l.add(new Object[]{INDEX.PHTREE});
-		l.add(new Object[]{INDEX.QUAD_OLD});
-		l.add(new Object[]{INDEX.QUAD});
-		l.add(new Object[]{INDEX.RSTAR});
-		l.add(new Object[]{INDEX.STR});
+		l.add(new Object[]{IDX.ARRAY});
+		l.add(new Object[]{IDX.PHTREE});
+		l.add(new Object[]{IDX.QUAD_OLD});
+		l.add(new Object[]{IDX.QUAD});
+		l.add(new Object[]{IDX.RSTAR});
+		l.add(new Object[]{IDX.STR});
 		return l;
 	}
 
@@ -58,7 +58,7 @@ public class TestRectangleWrappers extends AbstractWrapperTest {
 	@Parameters
     public void testCube() {
 		//0.00001 is the default size of the rectangles
-		TestStats ts = createUnitTestStats(candidate, TST.CUBE, N, dims, true, 1.0);
+		TestStats ts = createUnitTestStats(candidate, TST.CUBE_R, N, dims, 1.0);
 		TestRunner tr = new TestRunner(ts);
 		tr.run();
 		
@@ -68,7 +68,7 @@ public class TestRectangleWrappers extends AbstractWrapperTest {
 	@Test
 	@Parameters
     public void testCluster() {
-		TestStats ts = createUnitTestStats(candidate, TST.CLUSTER, N, dims, true, 5.0);
+		TestStats ts = createUnitTestStats(candidate, TST.CLUSTER_R, N, dims,5.0);
 		TestRunner tr = new TestRunner(ts);
 		tr.run();
 

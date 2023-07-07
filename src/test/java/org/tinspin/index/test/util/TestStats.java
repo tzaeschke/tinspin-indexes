@@ -524,23 +524,13 @@ public class TestStats implements Serializable, Cloneable {
 		return avg;
 	}
 
-	public Candidate createTree(int size, TestStats ts) {
-		if (isRangeData) {
-			RectangleIndex<?> ri = createRI(INDEX, cfgNDims, size);
-			return new RectangleIndexCandidate(ri, ts);
-		} else {
-			PointIndex<?> pi = createPI(INDEX, cfgNDims, size);
-			return new PointIndexCandidate(pi, ts);
-		}
-	}
-
-	public Candidate createTreeMM(int size, TestStats ts) {
-		if (isRangeData) {
-			RectangleIndex<?> ri = createRI(INDEX, cfgNDims, size);
-			return new RectangleIndexCandidate(ri, ts);
-		} else {
-			PointIndexMM<?> pi = createPIMM(INDEX, cfgNDims, size);
-			return new PointIndexCandidate(pi, ts);
-		}
-	}
+//	public Candidate createTree(int size, TestStats ts) {
+//		if (isRangeData) {
+//			RectangleIndex<?> ri = createRI(INDEX, cfgNDims, size);
+//			return new RectangleIndexCandidate(ri, ts);
+//		} else {
+//			PointIndex<?> pi = createPI(INDEX, cfgNDims, size);
+//			return new PointIndexCandidate(pi, ts);
+//		}
+//	}
 }

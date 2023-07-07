@@ -89,6 +89,12 @@
 			<artifactId>phtree</artifactId>
 			<version>[2.6.2,)</version>
 		</dependency>
+		<dependency>
+			<groupId>org.tinspin</groupId>
+			<artifactId>tinspin-common</artifactId>
+<!--			<version>[1.1,)</version>-->
+			<version>1.1.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>

@@ -29,14 +29,14 @@ import org.tinspin.index.qthypercube.QuadTreeKD;
 import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.test.util.TestInstances;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
-//import static org.tinspin.index.test.PointMultimapTest.INDEX.*;
-import static org.tinspin.index.test.util.TestStats.*;
+import static org.tinspin.index.test.util.TestInstances.*;
 
 @RunWith(Parameterized.class)
 public class PointMultimapTest extends AbstractWrapperTest {
@@ -44,8 +44,8 @@ public class PointMultimapTest extends AbstractWrapperTest {
     private static final int N_DUP = 4;
     private static final int BOUND = 100;
 
-    private final INDEX candidate;
-    public PointMultimapTest(INDEX candCls) {
+    private final TestInstances.IDX candidate;
+    public PointMultimapTest(TestInstances.IDX candCls) {
         this.candidate = candCls;
     }
 
@@ -68,16 +68,16 @@ public class PointMultimapTest extends AbstractWrapperTest {
     @Parameterized.Parameters
     public static Iterable<Object[]> candidates() {
         ArrayList<Object[]> l = new ArrayList<>();
-//        l.add(new Object[]{INDEX.ARRAY});
-// TODO		l.add(new Object[]{INDEX.COVER});
-        l.add(new Object[]{INDEX.KDTREE});
-        l.add(new Object[]{INDEX.PHTREE});
-        l.add(new Object[]{INDEX.QUAD});
-        l.add(new Object[]{INDEX.QUAD2});
-        l.add(new Object[]{INDEX.QUAD_OLD});
-        l.add(new Object[]{INDEX.RSTAR});
-        l.add(new Object[]{INDEX.STR});
-//		l.add(new Object[]{INDEX.CRITBIT});
+// TODO        l.add(new Object[]{IDX.ARRAY});
+// TODO		l.add(new Object[]{IDX.COVER});
+        l.add(new Object[]{IDX.KDTREE});
+        l.add(new Object[]{IDX.PHTREE_MM});
+        l.add(new Object[]{IDX.QUAD});
+        l.add(new Object[]{IDX.QUAD2});
+        l.add(new Object[]{IDX.QUAD_OLD});
+        l.add(new Object[]{IDX.RSTAR});
+        l.add(new Object[]{IDX.STR});
+//		l.add(new Object[]{IDX.CRITBIT});
         return l;
     }
 
@@ -317,7 +317,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
  //           case COVER: return CoverTree.create(dims);
             default:
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException(candidate.name());
         }
     }
 

@@ -6,6 +6,9 @@
  */
 package org.tinspin.index.test.util;
 
+import ch.ethz.globis.tinspin.TestStats;
+import ch.ethz.globis.tinspin.data.AbstractTest;
+
 import java.util.HashSet;
 import java.util.Random;
 
@@ -13,15 +16,6 @@ public abstract class TestRectangle extends AbstractTest {
 	
 	protected TestRectangle(Random R, TestStats S) {
 		super(R, S);
-	}
-	
-	public static TestRectangle create(Random R, TestStats S) {
-		switch (S.TEST) {
-		case CUBE: return new TestRectangleCube(R, S);
-		case CLUSTER: return new TestRectangleCluster(R, S);
-		default:
-			throw new IllegalArgumentException();
-		}
 	}
 	
 	@Override

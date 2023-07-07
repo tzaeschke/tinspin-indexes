@@ -9,11 +9,19 @@ package org.tinspin.index.test.util;
 import static org.junit.Assert.assertNotNull;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 
-import org.tinspin.index.test.util.TestStats.INDEX;
-import org.tinspin.index.test.util.TestStats.TST;
+
+import ch.ethz.globis.tinspin.IndexHandle;
+import ch.ethz.globis.tinspin.data.AbstractTest;
+import ch.ethz.globis.tinspin.wrappers.Candidate;
+import ch.ethz.globis.tinspin.TestStats;
+import org.tinspin.index.array.PointArray;
+import org.tinspin.index.array.RectArray;
+import org.tinspin.index.test.util.TestInstances.IDX;
+import org.tinspin.index.test.util.TestInstances.TST;
 
 
 /**
@@ -26,7 +34,7 @@ import org.tinspin.index.test.util.TestStats.TST;
 public class TestRunner {
 	
 	private static final SimpleDateFormat FT = new SimpleDateFormat ("yyyy-MM-dd' 'HH:mm:ss");
-	
+
 	public static boolean USE_NEW_QUERIES = true;
 
 	private final TestStats S;
@@ -45,7 +53,7 @@ public class TestRunner {
 		final int N = 1*1000*1000;
 						
 		//TestStats s0 = new TestStats(TST.CLUSTER, IDX.QKDZ, N, DIM, true, 5);
-		TestStats s0 = new TestStats(TST.CUBE, INDEX.QUAD, N, DIM, true, 1.0);
+		TestStats s0 = new TestStats(TST.CUBE_P, IDX.QUAD, N, DIM, 1.0);
 		//TestStats s0 = new TestStats(TST.OSM, IDX.PHC, N, 2, true, 1.0);
 		//TestStats s0 = new TestStats(TST.CUBE, IDX.PHC, N, DIM, true, 1.0E-5);
 		//TestStats s0 = new TestStats(TST.CLUSTER, IDX.RSZ, N, DIM, false, 3.4);
@@ -60,7 +68,8 @@ public class TestRunner {
 		s0.setSeed(0);
 		TestRunner test = new TestRunner(s0);
 		TestStats s = test.run();
-		System.out.println(s);
+		System.out.println(test.tree.getNativeStats());
+		System.out.println(s.toStringNew());
 		//System.out.println(BitsLong.POOL.print());
 //		System.out.println("AMM: " + PhIteratorNoGC.AMM1 + " / " + PhIteratorNoGC.AMM2 + " / " + PhIteratorNoGC.AMM3 + " / " + PhIteratorNoGC.AMM4 + " / " + PhIteratorNoGC.AMM5 + " / ");
 //		System.out.println("VMM: " + PhIteratorNoGC.VMM1 + " / " + PhIteratorNoGC.VMM2 + " / " + PhIteratorNoGC.VMM3);
@@ -88,11 +97,13 @@ public class TestRunner {
 		assertNotNull(tree.toStringTree());
 		
 		//window queries
-		if (tree.supportsWindowQuery()) {
+		if (S.cfgNDims <= 60 && tree.supportsWindowQuery()) {
 			resetR();
 			repeatQuery(S.cfgWindowQueryRepeat, 0);
 			repeatQuery(S.cfgWindowQueryRepeat, 1);
 			S.assortedInfo += " WINDOW_RESULTS=" + S.cfgWindowQuerySize;
+		} else if (S.cfgNDims > 60 ) {
+			System.err.println("WARNING: skipping window queries for dims=" + S.cfgNDims);
 		} else {
 			System.err.println("WARNING: window queries disabled");
 		}
@@ -136,14 +147,21 @@ public class TestRunner {
 			System.err.println("WARNING: unload() disabled");
 		}
 
-		if (tree != null) {
-			tree.clear();
-			tree.release();
-		}
+		tree.getStats(S);
+
+		tree.clear();
+		tree.release();
+
+		// TODO remove
+//		if (tree != null) {
+//			tree.clear();
+//			tree.release();
+//		}
 		
 		return S;
 	} 
-	
+
+
 	/**
 	 * This method sets the random seed to the default seed plus a given delta.
 	 * This solves the problem that, for example, the kNN generator
@@ -160,7 +178,9 @@ public class TestRunner {
 	}
 	
 	private int getKnnRepeat(int dims) {
-		if (S.TEST == TestStats.TST.CLUSTER && S.cfgNDims > 5 ) {
+		if ((S.TEST == TestInstances.TST.CLUSTER_P
+				|| S.TEST == TestInstances.TST.CLUSTER_R)
+				&& S.cfgNDims > 5 ) {
 			S.cfgKnnQueryBaseRepeat /= 10;//100;
 		}
 		if (dims <= 3) {
@@ -176,69 +196,81 @@ public class TestRunner {
 	}
 	
 	private void load(TestStats ts) {
-		log(time() + "generating data ...");
+		log(date() + "generating data ...");
 		long t1g = System.currentTimeMillis();
 
-		if (ts.isRangeData) {
-			test = TestRectangle.create(R, ts);
-		} else {
-			test = TestPoint.create(R, ts);
-		}
-		
-		switch (ts.TEST) {
-		case CUBE:
-		case CLUSTER:
-		case CSV:
-		case OSM:
-		case TIGER:
-		case TOUCH:
-		case VORTEX: {
+		test = ts.TEST.createInstance(R, ts);
+
+//		if (ts.isRangeData) {
+//			test = TestRectangle.create(R, ts);
+//		} else {
+//			test = TestPoint.create(R, ts);
+//		}
+//
+//		switch (ts.TEST) {
+//		case CUBE:
+//		case CLUSTER:
+//		case CSV:
+//		case OSM:
+//		case TIGER:
+//		case TOUCH:
+//		case VORTEX: {
 			data = test.generate();
-			break;
-		}
-		//case ASPECT:
-		case MBR_SIZE: {
-			//IS_POINT_DATA = PR_TestSize.generate(R, cfgDataLen, N, DIM, 0.001f);
-			//IS_POINT_DATA = PR_TestSize.generate(R, cfgDataLen, N, DIM, 0.02f);
-			//data = PR_TestAspect.generate(R, cfgDataLen, N, DIM, 1e3f);//10.0f);
-			data = test.generate();
-			if (!ts.isRangeData) throw new IllegalStateException();
-			break;
-		}
-		default:
-			throw new UnsupportedOperationException("No data for: " + ts.TEST.name());
-		}
+//			break;
+//		}
+//		//case ASPECT:
+//		case MBR_SIZE: {
+//			//IS_POINT_DATA = PR_TestSize.generate(R, cfgDataLen, N, DIM, 0.001f);
+//			//IS_POINT_DATA = PR_TestSize.generate(R, cfgDataLen, N, DIM, 0.02f);
+//			//data = PR_TestAspect.generate(R, cfgDataLen, N, DIM, 1e3f);//10.0f);
+//			data = test.generate();
+//			if (!ts.isRangeData) throw new IllegalStateException();
+//			break;
+//		}
+//		default:
+//			throw new UnsupportedOperationException("No data for: " + ts.TEST.name());
+//		}
 		long t2g = System.currentTimeMillis();
 		log("data generation finished in: " + (t2g-t1g));
 		S.statTGen = t2g-t1g;
 		
 		int dims = S.cfgNDims;
 		int N = S.cfgNEntries;
-		
-        long memTree = MemTools.getMemUsed();
+
+		long memTree = MemTools.getMemUsed();
 		if (ts.paramEnforceGC) {
 			MemTools.cleanMem(N, memTree);
 		}
 
 		
 		//load index
-		log(time() + "loading index ...");
-        memTree = MemTools.getMemUsed();
-        JmxTools.reset();
-		long t1 = System.currentTimeMillis();
-		
-		tree = ts.createTree(N, S);
+		log(date() + "loading index ...");
+		memTree = MemTools.getMemUsed();
+		JmxTools.reset();
+		long t1 = timer();
+
+		if (ts.isRangeData) {
+			tree = RectangleIndexCandidate.create(ts);
+		} else {
+			if (ts.isMultimap) {
+				tree = PointIndexMMCandidate.create(ts);
+			} else {
+				tree = PointIndexCandidate.create(ts);
+			}
+		}
+
 		tree.load(data, dims);
 
-		long t2 = System.currentTimeMillis();
+		long t2 = timer();
 		S.statGcDiffL = JmxTools.getDiff();
 		S.statGcTimeL = JmxTools.getTime();
-		log("loading finished in: " + (t2-t1));
+		log("loading finished in: " + (long)toMS(t1, t2) + "ms");
 		if (ts.paramEnforceGC) {
 			S.statSjvmF = MemTools.cleanMem(N, memTree);
 		}
 		S.statSjvmE = S.statSjvmF / N;
-		S.statTLoad = t2-t1;
+		S.statTLoad = (long) toMS(t1, t2);
+		S.statPSLoad = opsPerSec(N, t1, t2);
 		
 		tree.getStats(S);
 		S.assortedInfo += tree.toString();
@@ -250,69 +282,112 @@ public class TestRunner {
 	private void repeatQuery(int repeat, int round) {
 		int dims = S.cfgNDims;
 		log("N=" + S.cfgNEntries);
-		log(time() + "querying index ... repeat = " + repeat);
+		log(date() + "querying index ... repeat = " + repeat);
 		double[][] lower = new double[repeat][dims]; 
 		double[][] upper = new double[repeat][dims];
 		test.generateWindowQueries(lower, upper);
-		JmxTools.reset();
-		long t1 = System.currentTimeMillis();
-		int n = 0;
-		if (tree.supportsWindowQuery()) {
-			n = repeatQueries(lower, upper);
-		} else {
-			n = -1;
+
+		long t00 = timer();
+		int n;
+		long t1, t2;
+		//Use result count from first run as control value
+		int control = -1;
+		int nTotalRepeat = 0;
+		do {
+			JmxTools.reset();
+			t1 = timer();
+			n = 0;
+			if (tree.supportsWindowQuery()) {
+				n = repeatQueries(lower, upper);
+			} else {
+				n = -1;
+			}
+			t2 = timer();
+			if (control == -1) {
+				control = n;
+			}
+			logNLF("*");
+			nTotalRepeat += repeat;
+		} while (toMS(t00, timer()) < S.minimumMsPerTest);
+		if (t2 == t1) {
+			t2++;
 		}
-		long t2 = System.currentTimeMillis();
-		log("Query time: " + (t2-t1) + " ms -> " + (t2-t1)/(double)repeat + " ms/q -> " +
-				(t2-t1)*1000*1000/(double)n + " ns/q/r  (n=" + n + ")");
+
+		log("n/q=" + n/(double)lower.length);
+		log("Query time: " + toMS(t1, t2) + " ms -> " +
+				toMS(t1, t2)/(double)repeat + " ms/q -> " +
+				toNSPerOp(t1, t2, repeat) + " ns/q/r  (n=" + n + ")" +
+				"; total queries: " + nTotalRepeat);
 		if (round == 0) {
-			S.statTq1 = (t2-t1);
-			S.statTq1E = (long) ((t2-t1)*1000*1000/(double)n);
-			S.statNq1 = n;
+			S.statTq1 = (long) toMS(t1, t2);
+			S.statTq1E = toNSPerOp(t1, t2, repeat);
+			S.statPSq1 = opsPerSec(repeat, t1, t2);
+			S.statNq1 = control;
 		} else {
-			S.statTq2 = (t2-t1);
-			S.statTq2E = (long) ((t2-t1)*1000*1000/(double)n);
-			S.statNq2 = n;
+			S.statTq2 = (long) toMS(t1, t2);
+			S.statTq2E = toNSPerOp(t1, t2, repeat);
+			S.statPSq2 = opsPerSec(repeat, t1, t2);
+			S.statNq2 = control;
 		}
 		S.statGcDiffWq = JmxTools.getDiff();
 		S.statGcTimeWq = JmxTools.getTime();
 	}
 	
 	private void repeatPointQuery(int repeat, int round) {
-		log(time() + "point queries ...");
+		log(date() + "point queries ...");
 		//prepare query
 		//TODO return only double[], convert inside query function!
-		double[][] qDA = preparePointQuery(repeat);
+		int[] ids = new int[repeat];
+		double[][] qDA = preparePointQuery(repeat, ids);
 		Object q = tree.preparePointQuery(qDA);
-		JmxTools.reset();
-		
-		//query
-		long t1 = System.currentTimeMillis();
-		int n = tree.pointQuery(q);
-		long t2 = System.currentTimeMillis();
+
+		long t00 = timer();
+		int n;
+		long t1, t2;
+		//Use result count from first run as control value
+		int control = -1;
+		do {
+			JmxTools.reset();
+
+			//query
+			t1 = timer();
+			n = tree.pointQuery(q, ids);
+			t2 = timer();
+			if (control == -1) {
+				control = n;
+			}
+			logNLF("*");
+		} while (toMS(t00, timer()) < S.minimumMsPerTest);
+		if (t2 == t1) {
+			t2++;
+		}
+
 		log("Elements found: " + n + " -> " + n/(double)repeat);
-		log("Query time: " + (t2-t1) + " ms -> " + (t2-t1)/(double)repeat + " ms/q -> " +
-				(t2-t1)*1000*1000/(double)repeat + " ns/q");
+		log("Query time: " + toMS(t1, t2) + " ms -> " +
+				toMS(t1, t2)/(double)repeat + " ms/q -> " +
+				toNSPerOp(t1, t2, repeat) + " ns/q");
 		if (round == 0) {
-			S.statTqp1 = (t2-t1);
-			S.statTqp1E = (long) ((t2-t1)*1000*1000/(double)repeat);
-			S.statNqp1 = n;
+			S.statTqp1 = (long) toMS(t1, t2);
+			S.statTqp1E = toNSPerOp(t1, t2, repeat);
+			S.statPSqp1 = opsPerSec(repeat, t1, t2);
+			S.statNqp1 = control;
 		} else {
-			S.statTqp2 = (t2-t1);
-			S.statTqp2E = (long) ((t2-t1)*1000*1000/(double)repeat);
-			S.statNqp2 = n;
+			S.statTqp2 = (long) toMS(t1, t2);
+			S.statTqp2E = toNSPerOp(t1, t2, repeat);
+			S.statPSqp2 = opsPerSec(repeat, t1, t2);
+			S.statNqp2 = control;
 		}
 		S.statGcDiffPq = JmxTools.getDiff();
 		S.statGcTimePq = JmxTools.getTime();
 	}
-	
-	private double[][] preparePointQuery(int repeat) {
+
+	private double[][] preparePointQuery(int repeat, int[] ids) {
 		int dims = S.cfgNDims;
 		double[][] qA;
 		if (!S.isRangeData) {
 			qA = new double[repeat][];
 			for (int i = 0; i < repeat; i++) {
-				qA[i] = generateQueryPointD(S.cfgNEntries, dims);
+				qA[i] = generateQueryPointD(S.cfgNEntries, dims, ids, i);
 			}
 		} else {
 			qA = new double[repeat*2][];
@@ -328,43 +403,63 @@ public class TestRunner {
 	}
 
 	private void repeatKnnQuery(int repeat, int round, int k) {
-		log(time() + "kNN queries ...");
+		log(date() + "kNN queries ...");
 		//prepare query
 		double[][] q = prepareKnnQuery(repeat);
-		JmxTools.reset();
-		
-		//query
-		double dist = 0;
-		long t1 = System.currentTimeMillis();
-		for (int i = 0; i < repeat; i++) {
-			dist += tree.knnQuery(k, q[i]);
+
+		long t00 = timer();
+		long t1, t2;
+		double dist;
+		//Use average distance of first run as control value
+		double control = -1;
+		do {
+			JmxTools.reset();
+
+			//query
+			dist = 0;
+			t1 = timer();
+			for (int i = 0; i < repeat; i++) {
+				dist += tree.knnQuery(k, q[i]);
+			}
+			t2 = timer();
+			if (control == -1) {
+				control = dist/repeat/k;
+			}
+			logNLF("*");
+		} while (toMS(t00, timer()) < S.minimumMsPerTest);
+		if (t2 == t1) {
+			t2++;
 		}
-		long t2 = System.currentTimeMillis();
-		double avgDist = dist/repeat/k;
-		log("Element distance: " + dist + " -> " + avgDist);
-		log("kNN query time: " + (t2-t1) + " ms -> " + (t2-t1)/(double)repeat + " ms/q -> " +
-				(t2-t1)*1000*1000/(double)k + " ns/q/r");
+
+		log("Element distance: " + dist + " -> " + control);
+		log("kNN query time (repeat=" + repeat + "): " + toMS(t1, t2) + " ms -> " +
+				toMS(t1, t2)/(double)repeat + " ms/q -> " +
+				toNSPerOp(t1, t2, k*repeat) + " ns/q/r");
 		if (k == 1) {
 			if (round == 0) {
-				S.statTqk1_1 = t2-t1;
-				S.statTqk1_1E = (long) ((t2-t1)*1000*1000/(double)repeat);
-				S.statDqk1_1 = avgDist;
+				S.statTqk1_1 = (long) toMS(t1, t2);
+				S.statTqk1_1E = toNSPerOp(t1, t2, repeat);
+				S.statPSqk1_1 = opsPerSec(repeat, t1, t2);
+				S.statDqk1_1 = control;
 			} else {
-				S.statTqk1_2 = t2-t1;
-				S.statTqk1_2E = (long) ((t2-t1)*1000*1000/(double)repeat);
-				S.statDqk1_2 = avgDist;
+				S.statTqk1_2 = (long) toMS(t1, t2);
+				S.statTqk1_2E = toNSPerOp(t1, t2, repeat);
+				S.statPSqk1_2 = opsPerSec(repeat, t1, t2);
+				S.statDqk1_2 = control;
 			}
 			S.statGcDiffK1 = JmxTools.getDiff();
 			S.statGcTimeK1 = JmxTools.getTime();
 		} else {
 			if (round == 0) {
-				S.statTqk10_1 = t2-t1;
-				S.statTqk10_1E = (long) ((t2-t1)*1000*1000/(double)repeat);
-				S.statDqk10_1 = avgDist;
+				S.statTqk10_1 = (long) toMS(t1, t2);
+				S.statTqk10_1E = toNSPerOp(t1, t2, repeat);
+				S.statPSqk10_1 = opsPerSec(repeat, t1, t2);
+				S.statDqk10_1 = control;
 			} else {
-				S.statTqk10_2 = t2-t1;
-				S.statTqk10_2E = (long) ((t2-t1)*1000*1000/(double)repeat);
-				S.statDqk10_2 = avgDist;
+				S.statTqk10_2 = (long) toMS(t1, t2);
+				S.statTqk10_2E = toNSPerOp(t1, t2, repeat);
+				S.statPSqk10_2 = opsPerSec(repeat, t1, t2);
+				S.statDqk10_2 = control;
 			}
 			S.statGcDiffK10 = JmxTools.getDiff();
 			S.statGcTimeK10 = JmxTools.getTime();
@@ -393,13 +488,13 @@ public class TestRunner {
 	}
 
 	private int repeatQueries(double[][] lower, double[][] upper) {
+		long t0 = System.currentTimeMillis();
 		int n=0;
+		int mod = lower.length / 100;
 		for (int i = 0; i < lower.length; i++) {
 			n += tree.query(lower[i], upper[i]);
-			if (i%10 == 0) System.out.print('.');
+			if (i%mod == 0 && System.currentTimeMillis()-t0 > 1000) System.out.print('.');
 		}
-		System.out.println();
-		TestRunner.log("n=" + n/(double)lower.length);
 		return n;
 	}
 	
@@ -407,18 +502,24 @@ public class TestRunner {
 		System.out.println(string);
 	}
 
-	
-	private double[] generateQueryPointD(final int N, final int dims) {
+	static void logNLF(String string) {
+		System.out.print(string);
+	}
+
+
+	private double[] generateQueryPointD(final int N, final int dims, int[] ids, int idPos) {
 		double[] xyz = new double[dims];
-		int pos = R.nextInt(N*2); 
+		int pos = R.nextInt(N*2);
 		if (pos >= N) {
 			//randomise
 			for (int d = 0; d < dims; d++) {
 				xyz[d] = test.min(d) + R.nextDouble()*test.len(d);
 			}
+			ids[idPos] = -1;
 		} else {
 			//get existing element
 			System.arraycopy(data, pos*dims, xyz, 0, dims);
+			ids[idPos] = pos;
 		}
 		return xyz;
 	}
@@ -456,49 +557,68 @@ public class TestRunner {
 	}
 	
 	private void update(int round) {
-		log(time() + "updates ...");
-		
-		int n = 0;
-		long t = 0;
-		double[][] u = null; //2 points, 2 versions
-		int nUpdates = S.cfgUpdateSize > S.cfgNEntries/4 ? S.cfgNEntries/4 : S.cfgUpdateSize;
-		for (int i = 0; i < S.cfgUpdateRepeat; i++) {
-			//prepare query
-			u = test.generateUpdates(nUpdates, data, u);
-			JmxTools.reset();
-			//updates
-			long t1 = System.currentTimeMillis();
-			n += tree.update(u);
-			long t2 = System.currentTimeMillis();
-			t += t2-t1;
-			S.statGcDiffUp += JmxTools.getDiff();
-			S.statGcTimeUp += JmxTools.getTime();
-		}
-		
+		log(date() + "updates ...");
+
+		long t00 = timer();
+		int n;
+		long t;
+		//Use result count from first run as control value
+		int control = -1;
+		do {
+			n = 0;
+			t = 0;
+			double[][] u = null; //2 points, 2 versions
+			//TODO we actually use a different dataset for each run here,
+			//     this makes it a bit less comparable if different indexes
+			//     perform different number of runs. But this seems to be the
+			//     (relatively) most accurate solution.
+			int nUpdates = S.cfgUpdateSize > S.cfgNEntries/4 ? S.cfgNEntries/4 : S.cfgUpdateSize;
+			int[] ids = new int[nUpdates];
+			for (int i = 0; i < S.cfgUpdateRepeat; i++) {
+				//prepare query
+				u = test.generateUpdates(nUpdates, data, u, ids);
+				JmxTools.reset();
+				//updates
+				long t1 = timer();
+				n += tree.update(u, ids);
+				long t2 = timer();
+				t += t2-t1;
+				S.statGcDiffUp += JmxTools.getDiff();
+				S.statGcTimeUp += JmxTools.getTime();
+			}
+			if (control == -1) {
+				control = n;
+			}
+			logNLF("*");
+		} while (toMS(t00, timer()) < S.minimumMsPerTest);
+
 		log("Elements updated: " + n + " -> " + n);
-		log("Update time: " + t + " ms -> " + t*1000*1000/(double)n + " ns/update");
+		log("Update time: " + toMS(t) + " ms -> " + toNSPerOp(t, n) + " ns/update");
 		if (round == 0) {
-			S.statTu1 = t;
-			S.statTu1E = (long) (t*1000*1000/(double)n);
-			S.statNu1 = n;
+			S.statTu1 = (long) toMS(t);
+			S.statTu1E = toNSPerOp(t, n);
+			S.statPSu1E = opsPerSec(n, t);
+			S.statNu1 = control;
 		} else {
-			S.statTu2 = t;
-			S.statTu2E = (long) (t*1000*1000/(double)n);
-			S.statNu2 = n;
+			S.statTu2 = (long) toMS(t);
+			S.statTu2E = toNSPerOp(t, n);
+			S.statPSu2E = opsPerSec(n, t);
+			S.statNu2 = control;
 		}
 	}
-	
+
 	private void unload() {
 		log("Unloading...");
 		JmxTools.reset();
 
-		long t1 = System.currentTimeMillis();
+		long t1 = timer();
 		int n = tree.unload();
-		long t2 = System.currentTimeMillis();
-		
-		log("Deletion time: " + (t2-t1) + " ms -> " + 
-		(t2-t1)*1000*1000/(double)S.cfgNEntries + " ns/q/r");
-		S.statTUnload = t2-t1;
+		long t2 = timer();
+
+		log("Deletion time: " + toMS(t1, t2) + " ms -> " +
+				toNSPerOp(t1, t2, S.cfgNEntries) + " ns/delete");
+		S.statTUnload = (long) toMS(t1, t2);
+		S.statPSUnload = opsPerSec(n, t1, t2);
 		S.statGcDiffUl = JmxTools.getDiff();
 		S.statGcTimeUl = JmxTools.getTime();
 		if (S.cfgNEntries != n) {
@@ -510,12 +630,44 @@ public class TestRunner {
 	public TestStats getTestStats() {
 		return S;
 	}
-	
-	private String time() {
+
+	private String date() {
 		return FT.format(new Date()) + " ";
 	}
 
 	public Candidate getCandidate() {
 		return tree;
+	}
+
+	private static long timer() {
+		return System.nanoTime();
+	}
+
+	private static long opsPerSec(int nOps, double t1, double t2) {
+		return opsPerSec(nOps, t2-t1);
+	}
+
+	private static long opsPerSec(int nOps, double t) {
+		return (long) (nOps / t * 1_000_000_000L);
+	}
+
+	private static double toMS(double t1, double t2) {
+		return (t2-t1)/1_000_000;
+	}
+
+	private static double toMS(double t) {
+		return t/1_000_000;
+	}
+
+	//	private static double toSec(double t1, double t2) {
+	//		return toMS(t1, t2) * 1_000;
+	//	}
+
+	private static long toNSPerOp(double t1, double t2, long nOps) {
+		return toNSPerOp(t2 - t1, nOps);
+	}
+
+	private static long toNSPerOp(double t, long nOps) {
+		return (long) t / nOps;
 	}
 }

@@ -6,6 +6,8 @@
  */
 package org.tinspin.index.test.util;
 
+import ch.ethz.globis.tinspin.TestStats;
+
 import java.util.Random;
 
 /**
