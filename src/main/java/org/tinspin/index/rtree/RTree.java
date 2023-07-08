@@ -283,6 +283,11 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		return false;
 	}
 
+	@Override
+	public boolean contains(double[] min, double[] max, T value) {
+		return findNodeEntry(min, max, (entry, node, posInNode) -> Objects.equals(value, entry.value())) != null;
+	}
+
 	private interface Matcher<T> {
 		boolean test(Entry<T> entry, RTreeNode<T> node, int posInNode);
 	}

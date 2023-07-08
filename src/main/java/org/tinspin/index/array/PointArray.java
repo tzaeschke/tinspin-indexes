@@ -67,6 +67,16 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 		return null;
 	}
 
+	@Override
+	public boolean contains(double[] point, T value) {
+		for (int j = 0; j < N; j++) {
+			if (eq(phc[j], point) && Objects.equals(value, values[j].value())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private boolean eq(double[] a, double[] b) {
 		for (int i = 0; i < a.length; i++) {
 			if (a[i] != b[i]) {

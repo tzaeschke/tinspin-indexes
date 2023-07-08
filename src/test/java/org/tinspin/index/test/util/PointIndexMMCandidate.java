@@ -104,9 +104,9 @@ public class PointIndexMMCandidate extends Candidate {
 	@Override
 	public int pointQuery(Object qA, int[] ids) {
 		int n = 0;
-		for (double[] q: (double[][])qA) {
-			if (true) throw new UnsupportedOperationException("exact match query ?????");
-			if (idx.query(q) != null) {
+		double[][] queries = (double[][]) qA;
+		for (int i = 0; i < queries.length; i++) {
+			if (idx.contains(queries[i], ids[i])) {
 				n++;
 			}
 			//log("q=" + Arrays.toString(q));
@@ -164,8 +164,13 @@ public class PointIndexMMCandidate extends Candidate {
 			itKnn.reset(center, k);
 		}
 		double ret = 0;
-		while (itKnn.hasNext()) {
+		int i = 0;
+		while (i < k && itKnn.hasNext()) {
 			ret += itKnn.next().dist();
+			i++;
+		}
+		if (i != k) {
+			throw new IllegalStateException("kNN: " + k + " != " + i);
 		}
 		return ret;
 	}

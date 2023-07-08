@@ -235,18 +235,18 @@ public class QNode<T> {
 		return radius;
 	}
 
-	QEntry<T> getExact(double[] key) {
+	QEntry<T> getExact(double[] key, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			QNode<T> sub = findSubNode(key);
 			if (sub != null) {
-				return sub.getExact(key);
+				return sub.getExact(key, pred);
 			}
 			return null;
 		}
-		
+
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.point(), key)) {
+			if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 				return e;
 			}
 		}

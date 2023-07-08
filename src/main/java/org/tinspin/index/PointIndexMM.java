@@ -70,6 +70,15 @@ public interface PointIndexMM<T> extends Index<T> {
      * Lookup an entry, using exact match.
      *
      * @param point the point
+     * @param value the value
+     * @return `true` if an entry was found, otherwise `false`.
+     */
+    boolean contains(double[] point, T value);
+
+    /**
+     * Lookup an entries at a given coordinate.
+     *
+     * @param point the point
      * @return an iterator over all entries at the given point
      */
     QueryIterator<PointEntry<T>> query(double[] point);

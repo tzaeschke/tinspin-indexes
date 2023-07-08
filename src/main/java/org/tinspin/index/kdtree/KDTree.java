@@ -469,6 +469,11 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 		return true;
 	}
 
+	@Override
+	public boolean contains(double[] key, T value) {
+		return findNodeExact(key, new RemoveResult<>(), e -> Objects.equals(value, e.value())) != null;
+	}
+
 	/**
 	 * Get the number of key-value pairs in the tree.
 	 * @return the size

@@ -75,6 +75,16 @@ public interface RectangleIndexMM<T> extends Index<T> {
      *
      * @param lower minimum corner
      * @param upper maximum corner
+     * @param value the value
+     * @return `true` if an entry was found, otherwise `false`.
+     */
+    boolean contains(double[] lower, double[] upper, T value);
+
+    /**
+     * Lookup an entry, using exact match.
+     *
+     * @param lower minimum corner
+     * @param upper maximum corner
      * @return an iterator over all entries at with the exact given rectangle
      */
     QueryIterator<RectangleEntry<T>> queryRectangle(double[] lower, double[] upper);

@@ -355,12 +355,12 @@ public class QNode<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	QEntry<T> getExact(double[] key) {
+	QEntry<T> getExact(double[] key, Predicate<PointEntry<T>> pred) {
 		if (!isLeaf()) {
 			int pos = calcSubPosition(key);
 			Object sub = subs[pos];
 			if (sub instanceof QNode) {
-				return ((QNode<T>)sub).getExact(key);
+				return ((QNode<T>)sub).getExact(key, pred);
 			} else  if (sub != null) {
 				QEntry<T> e = (QEntry<T>) sub;
 				if (QUtil.isPointEqual(e.point(), key)) {
@@ -372,7 +372,7 @@ public class QNode<T> {
 		
 		for (int i = 0; i < nValues; i++) {
 			QEntry<T> e = values[i];
-			if (QUtil.isPointEqual(e.point(), key)) {
+			if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 				return e;
 			}
 		}

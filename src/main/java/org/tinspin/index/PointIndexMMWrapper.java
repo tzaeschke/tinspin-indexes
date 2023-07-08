@@ -178,6 +178,11 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 	}
 
 	@Override
+	public boolean contains(double[] point, T value) {
+		return ind.contains(point, point, value);
+	}
+
+	@Override
 	public int getDims() {
 		return ind.getDims();
 	}

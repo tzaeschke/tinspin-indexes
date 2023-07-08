@@ -128,11 +128,12 @@ public class QuadTreeKD0<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * @param key the key to check
 	 * @return true iff the key exists
 	 */
+	@Deprecated
 	public boolean containsExact(double[] key) {
 		if (root == null) {
 			return false;
 		}
-		return root.getExact(key) != null;
+		return root.getExact(key, entry -> true) != null;
 	}
 	
 	/**
@@ -145,10 +146,18 @@ public class QuadTreeKD0<T> implements PointIndex<T>, PointIndexMM<T> {
 		if (root == null) {
 			return null;
 		}
-		QEntry<T> e = root.getExact(key);
+		QEntry<T> e = root.getExact(key, entry -> true);
 		return e == null ? null : e.value();
 	}
-	
+
+	@Override
+	public boolean contains(double[] key, T value) {
+		if (root == null) {
+			return false;
+		}
+		return root.getExact(key, e -> Objects.equals(value, e.value())) != null;
+	}
+
 	/**
 	 * Remove a key.
 	 * @param key key to remove
