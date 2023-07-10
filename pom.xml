@@ -83,6 +83,7 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.13.2</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.ethz.globis.phtree</groupId>
@@ -93,6 +94,7 @@
 			<groupId>org.tinspin</groupId>
 			<artifactId>tinspin-common</artifactId>
 			<version>[1.2,)</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 

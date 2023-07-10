@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [Unreleased]
 
 ### Changed
 - Moved to GitHub Actions CI. [#13](https://github.com/tzaeschke/tinspin-indexes/pull/13)
@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   [#12](https://github.com/tzaeschke/tinspin-indexes/pull/12)
 
 ### Added
-- Proper API (and more fixes) for multimaps.[#16](https://github.com/tzaeschke/tinspin-indexes/pull/16)
-- Proper test (and fixes) for multimaps.[#15](https://github.com/tzaeschke/tinspin-indexes/pull/15)
+- Proper API, more tests and numerous fixes for multimaps. [#16](https://github.com/tzaeschke/tinspin-indexes/pull/16)
+- Proper test (and fixes) for multimaps. [#15](https://github.com/tzaeschke/tinspin-indexes/pull/15)
 
 ## [1.7.1] - 2018-12-10
 
@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - API Change: Query iterator's reset() now returns 'this'. [2018-05-19]
 - Update 20 use PH-Tree 2.0.1 [2018-05-19]
 
-## Added
+### Added
 
 - Added CoverTree. [2018-11-28]
 - Generic Stats and (optional) kNN distance calculation count [2018-11-28]
