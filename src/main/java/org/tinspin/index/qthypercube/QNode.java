@@ -33,7 +33,7 @@ import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
  */
 public class QNode<T> {
 
-	private double[] center;
+	private final double[] center;
 	private double radius;
 	// null indicates that we have sub-node i.o. values
 	private ArrayList<QEntry<T>> values;
@@ -88,7 +88,7 @@ public class QNode<T> {
 			while (sub != null) {
 				//This may recurse if all entries fall 
 				//into the same subnode
-				sub = (QNode<T>) sub.tryPut(e2, maxNodeSize, false);
+				sub = sub.tryPut(e2, maxNodeSize, false);
 			}
 		}
 		return getOrCreateSub(e);

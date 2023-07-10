@@ -159,7 +159,6 @@ public class QNode<T> {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	QEntry<T> update(QNode<T> parent, double[] keyOld, double[] keyNew, int maxNodeSize,
 			boolean[] requiresReinsert, int currentDepth, int maxDepth, Predicate<PointEntry<T>> pred) {
 		if (values == null) {

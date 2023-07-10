@@ -277,11 +277,12 @@ public class QNode<T> {
 				}
 				return qe;
 			}
+			throw new IllegalStateException();
 		}
 		
 		for (int i = 0; i < nValues; i++) {
 			QEntry<T> e = getValues()[i];
-			if (QUtil.isPointEqual(e.point(), keyOld)) {
+			if (QUtil.isPointEqual(e.point(), keyOld) && pred.test(e)) {
 				removeValue(i);
 				e.setKey(keyNew);
 				updateSub(keyNew, e, parent, maxNodeSize, requiresReinsert);
@@ -294,7 +295,7 @@ public class QNode<T> {
 
 	private void updateSub(double[] keyNew, QEntry<T> e, QNode<T> parent, int maxNodeSize, boolean[] requiresReinsert) {
 		if (QUtil.isPointEnclosed(keyNew, center, radius/QUtil.EPS_MUL)) {
-			//reinsert locally;
+			// reinsert locally
 			addValue(e, maxNodeSize);
 			requiresReinsert[0] = false;
 		} else {
