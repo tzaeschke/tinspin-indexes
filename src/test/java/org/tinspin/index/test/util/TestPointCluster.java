@@ -67,7 +67,7 @@ public class TestPointCluster extends TestPoint {
 	//diagonal version
 	@Override
 	public double[] generate() {
-		log("Running: TestCluster");
+		log("Running: TestCluster(" + S.cfgDataLen + "," + S.cfgDuplicates + ")");
 		double len = 1.0;
 		switch (TYPE.toType(param1)) {
 		case ORIGINAL: return generateOriginal(len);
@@ -78,6 +78,19 @@ public class TestPointCluster extends TestPoint {
 		case GAUSS: return generateGauss(len);
 		}
 		throw new IllegalArgumentException("param1=" + param1);
+	}
+
+	private void generateDuplicates(double[] data) {
+		// Ensure that we have enough duplicates.
+		// HACK -> We simply overwrite other entries in order to create duplicates
+		if (S.cfgDuplicates > 1) {
+			for (int i = 0; i < getN(); i += S.cfgDuplicates) {
+				int pos = DIM * i;
+				for (int i2 = 1; i2 < S.cfgDuplicates && (i + i2) < getN(); i2++) {
+					System.arraycopy(data, pos, data, pos + i2 * DIM, DIM);
+				}
+			}
+		}
 	}
 	
 	private double[] generateDiagonal(final double LEN) {
@@ -94,6 +107,7 @@ public class TestPointCluster extends TestPoint {
 				}
 			}
 		}
+		generateDuplicates(data);
 		return data;
 	}
 	
@@ -124,6 +138,7 @@ public class TestPointCluster extends TestPoint {
 				}
 			}
 		}
+		generateDuplicates(data);
 		return data;
 	}
 	
@@ -149,6 +164,7 @@ public class TestPointCluster extends TestPoint {
 				}
 			}
 		}
+		generateDuplicates(data);
 		return data;
 	}
 	
@@ -173,6 +189,7 @@ public class TestPointCluster extends TestPoint {
 				}
 			}
 		}
+		generateDuplicates(data);
 		return data;
 	}
 	

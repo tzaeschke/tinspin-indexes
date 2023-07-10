@@ -53,11 +53,11 @@ public class TestRunner {
 		final int N = 1*1000*1000;
 						
 		//TestStats s0 = new TestStats(TST.CLUSTER, IDX.QKDZ, N, DIM, true, 5);
-		TestStats s0 = new TestStats(TST.CUBE_P, IDX.QUAD, N, DIM, 1.0);
+		TestStats s0 = new TestStats(TST.CUBE_P, IDX.QUAD_HC, N, DIM, 1.0);
 		//TestStats s0 = new TestStats(TST.OSM, IDX.PHC, N, 2, true, 1.0);
 		//TestStats s0 = new TestStats(TST.CUBE, IDX.PHC, N, DIM, true, 1.0E-5);
 		//TestStats s0 = new TestStats(TST.CLUSTER, IDX.RSZ, N, DIM, false, 3.4);
-		//TestStats s0 = new TestStats(TST.CUBE, INDEX.QUAD_OLD, N, DIM, false, 1.0);
+		//TestStats s0 = new TestStats(TST.CUBE, INDEX.QUAD_PLAIN, N, DIM, false, 1.0);
 		//TestStats s0 = new TestStats(TST.OSM, INDEX.RSTAR, N, 2, false, 1.0);
 		//s0.cfgWindowQueryRepeat = 1000;
 		s0.cfgPointQueryRepeat = 1000*1000;
@@ -201,35 +201,8 @@ public class TestRunner {
 
 		test = ts.TEST.createInstance(R, ts);
 
-//		if (ts.isRangeData) {
-//			test = TestRectangle.create(R, ts);
-//		} else {
-//			test = TestPoint.create(R, ts);
-//		}
-//
-//		switch (ts.TEST) {
-//		case CUBE:
-//		case CLUSTER:
-//		case CSV:
-//		case OSM:
-//		case TIGER:
-//		case TOUCH:
-//		case VORTEX: {
-			data = test.generate();
-//			break;
-//		}
-//		//case ASPECT:
-//		case MBR_SIZE: {
-//			//IS_POINT_DATA = PR_TestSize.generate(R, cfgDataLen, N, DIM, 0.001f);
-//			//IS_POINT_DATA = PR_TestSize.generate(R, cfgDataLen, N, DIM, 0.02f);
-//			//data = PR_TestAspect.generate(R, cfgDataLen, N, DIM, 1e3f);//10.0f);
-//			data = test.generate();
-//			if (!ts.isRangeData) throw new IllegalStateException();
-//			break;
-//		}
-//		default:
-//			throw new UnsupportedOperationException("No data for: " + ts.TEST.name());
-//		}
+		data = test.generate();
+
 		long t2g = System.currentTimeMillis();
 		log("data generation finished in: " + (t2g-t1g));
 		S.statTGen = t2g-t1g;

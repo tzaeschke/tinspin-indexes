@@ -45,10 +45,9 @@ public class RectangleIndexCandidate extends Candidate {
 		int size = s.cfgNEntries;
 		switch ((TestInstances.IDX)s.INDEX) {
 			case ARRAY: return new RectArray<>(dims, size);
-			//case CRITBIT: return new PointArray<>(dims, size);
 			case PHTREE: return PHTreeR.createPHTree(dims);
-			case QUAD: return QuadTreeRKD.create(dims);
-			case QUAD_OLD: return QuadTreeRKD0.create(dims);
+			case QUAD_HC: return QuadTreeRKD.create(dims);
+			case QUAD_PLAIN: return QuadTreeRKD0.create(dims);
 			case RSTAR:
 			case STR: return RTree.createRStar(dims);
 			default:

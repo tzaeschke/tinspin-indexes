@@ -46,9 +46,9 @@ public class PointIndexMMCandidate extends Candidate {
 			//case CRITBIT: return new PointArray<>(dims, size);
 			case KDTREE: return KDTree.create(dims);
 			case PHTREE_MM: return PHTreeMMP.create(dims);
-			case QUAD: return QuadTreeKD.create(dims);
-			case QUAD2: return QuadTreeKD2.create(dims);
-			case QUAD_OLD: return QuadTreeKD0.create(dims);
+			case QUAD_HC: return QuadTreeKD.create(dims);
+			case QUAD_HC2: return QuadTreeKD2.create(dims);
+			case QUAD_PLAIN: return QuadTreeKD0.create(dims);
 			case RSTAR:
 			case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
 			//case COVER: return CoverTree.create(dims);

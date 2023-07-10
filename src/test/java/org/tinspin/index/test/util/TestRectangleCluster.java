@@ -66,7 +66,7 @@ public class TestRectangleCluster extends TestRectangle {
 	//diagonal version
 	@Override
 	public double[] generate() {
-		log("Running: TestCluster");
+		log("Running: TestCluster(" + S.cfgDataLen + "," + S.cfgDuplicates + ")");
 		double len = 1.0;
 		
 		switch (TYPE.toType(param1)) {
@@ -77,7 +77,20 @@ public class TestRectangleCluster extends TestRectangle {
 			throw new IllegalArgumentException("param1=" + param1);
 		}
 	}
-	
+
+	private void generateDuplicates(double[] data) {
+		// Ensure that we have enough duplicates.
+		// HACK -> We simply overwrite other entries in order to create duplicates
+		if (S.cfgDuplicates > 1) {
+			for (int i = 0; i < getN(); i += S.cfgDuplicates) {
+				int pos = DIM * i * 2;
+				for (int i2 = 1; i2 < S.cfgDuplicates && (i + i2) < getN(); i2++) {
+					System.arraycopy(data, pos, data, pos + 2 * i2 * DIM, 2 * DIM);
+				}
+			}
+		}
+	}
+
 	//Proper version
 	private double[] generateHorizontal(final double LEN, double offsYZ) {
 		double MICROBOX_LEN = BOX_LEN * 0.001;
@@ -109,6 +122,7 @@ public class TestRectangleCluster extends TestRectangle {
 				}
 			}
 		}
+		generateDuplicates(data);
 		return data;
 	}
 	
@@ -137,6 +151,7 @@ public class TestRectangleCluster extends TestRectangle {
 				}
 			}
 		}
+		generateDuplicates(data);
 		return data;
 	}
 	

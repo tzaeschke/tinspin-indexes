@@ -72,9 +72,9 @@ public class PointMultimapTest extends AbstractWrapperTest {
 // TODO		l.add(new Object[]{IDX.COVER});
         l.add(new Object[]{IDX.KDTREE});
         l.add(new Object[]{IDX.PHTREE_MM});
-        l.add(new Object[]{IDX.QUAD});
-        l.add(new Object[]{IDX.QUAD2});
-        l.add(new Object[]{IDX.QUAD_OLD});
+        l.add(new Object[]{IDX.QUAD_HC});
+        l.add(new Object[]{IDX.QUAD_HC2});
+        l.add(new Object[]{IDX.QUAD_PLAIN});
         l.add(new Object[]{IDX.RSTAR});
         l.add(new Object[]{IDX.STR});
 //		l.add(new Object[]{IDX.CRITBIT});
@@ -310,9 +310,9 @@ public class PointMultimapTest extends AbstractWrapperTest {
 //            //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE: return KDTree.create(dims);
             case PHTREE_MM: return PHTreeMMP.create(dims);
-            case QUAD: return QuadTreeKD.create(dims);
-            case QUAD2: return QuadTreeKD2.create(dims);
-            case QUAD_OLD: return QuadTreeKD0.create(dims);
+            case QUAD_HC: return QuadTreeKD.create(dims);
+            case QUAD_HC2: return QuadTreeKD2.create(dims);
+            case QUAD_PLAIN: return QuadTreeKD0.create(dims);
             case RSTAR:
             case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
  //           case COVER: return CoverTree.create(dims);

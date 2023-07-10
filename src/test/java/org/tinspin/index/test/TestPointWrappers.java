@@ -49,9 +49,9 @@ public class TestPointWrappers extends AbstractWrapperTest {
 		l.add(new Object[]{IDX.COVER});
 		l.add(new Object[]{IDX.KDTREE});
 		l.add(new Object[]{IDX.PHTREE});
-		l.add(new Object[]{IDX.QUAD});
-		l.add(new Object[]{IDX.QUAD2});
-		l.add(new Object[]{IDX.QUAD_OLD});
+		l.add(new Object[]{IDX.QUAD_HC});
+		l.add(new Object[]{IDX.QUAD_HC2});
+		l.add(new Object[]{IDX.QUAD_PLAIN});
 		l.add(new Object[]{IDX.RSTAR});
 		l.add(new Object[]{IDX.STR});
 //		l.add(new Object[]{INDEX.CRITBIT});

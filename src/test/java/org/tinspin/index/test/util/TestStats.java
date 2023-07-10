@@ -38,11 +38,11 @@ public class TestStats implements Serializable, Cloneable {
 		/** CritBit */
 		CRITBIT,
 		/** Quadtree with HC navigation*/
-		QUAD,
+		QUAD_HC,
 		/** Quadtree with HC navigation version 2 */
-		QUAD2,
+		QUAD_HC2,
 		/** Plain Quadtree */
-		QUAD_OLD,
+		QUAD_PLAIN,
 		/** RStarTree */
 		RSTAR,
 		/** STR-loaded RStarTree */
@@ -57,9 +57,9 @@ public class TestStats implements Serializable, Cloneable {
 			//case CRITBIT: return new PointArray<>(dims, size);
 			case KDTREE: return KDTree.create(dims);
 			case PHTREE: return PHTreeP.createPHTree(dims);
-			case QUAD: return QuadTreeKD.create(dims);
-			case QUAD2: return QuadTreeKD2.create(dims);
-			case QUAD_OLD: return QuadTreeKD0.create(dims);
+			case QUAD_HC: return QuadTreeKD.create(dims);
+			case QUAD_HC2: return QuadTreeKD2.create(dims);
+			case QUAD_PLAIN: return QuadTreeKD0.create(dims);
 			case RSTAR:
 			case STR: return PointIndexWrapper.create(RTree.createRStar(dims));
 			case COVER: return CoverTree.create(dims);
@@ -74,9 +74,9 @@ public class TestStats implements Serializable, Cloneable {
 			//case CRITBIT: return new PointArray<>(dims, size);
 			case KDTREE: return KDTree.create(dims);
 			case PHTREE_MM: return PHTreeMMP.create(dims);
-			case QUAD: return QuadTreeKD.create(dims);
-			case QUAD2: return QuadTreeKD2.create(dims);
-			case QUAD_OLD: return QuadTreeKD0.create(dims);
+			case QUAD_HC: return QuadTreeKD.create(dims);
+			case QUAD_HC2: return QuadTreeKD2.create(dims);
+			case QUAD_PLAIN: return QuadTreeKD0.create(dims);
 			case RSTAR:
 			case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
 			//case COVER: return CoverTree.create(dims);
@@ -90,8 +90,8 @@ public class TestStats implements Serializable, Cloneable {
 		case ARRAY: return new RectArray<>(dims, size);
 		//case CRITBIT: return new PointArray<>(dims, size);
 		case PHTREE: return PHTreeR.createPHTree(dims);
-		case QUAD: return QuadTreeRKD.create(dims);
-		case QUAD_OLD: return QuadTreeRKD0.create(dims);
+		case QUAD_HC: return QuadTreeRKD.create(dims);
+		case QUAD_PLAIN: return QuadTreeRKD0.create(dims);
 		case RSTAR: 
 		case STR: return RTree.createRStar(dims);
 		default:

@@ -43,11 +43,11 @@ public class TestInstances {
 		/** KD-Tree */
 		KDTREE(KDTree.class.getName(), ""),
 		/** Quadtree with HC navigation */
-		QUAD(QuadTreeKD.class.getName(), QuadTreeRKD.class.getName()),
+		QUAD_HC(QuadTreeKD.class.getName(), QuadTreeRKD.class.getName()),
 		/** Quadtree with HC navigation v2 */
-		QUAD2(QuadTreeKD2.class.getName(), ""),
+		QUAD_HC2(QuadTreeKD2.class.getName(), ""),
 		/** Plain Quadtree */
-		QUAD_OLD(QuadTreeKD0.class.getName(), QuadTreeRKD.class.getName()),
+		QUAD_PLAIN(QuadTreeKD0.class.getName(), QuadTreeRKD.class.getName()),
 		/** RStarTree */
 		RSTAR(RTree.class.getName(), RTree.class.getName()),
 		/** STR-loaded RStarTree */

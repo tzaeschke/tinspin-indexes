@@ -25,7 +25,7 @@ public class TestRectangleCube extends TestRectangle {
 	@Override
 	public double[] generate() {
 		double rectLen = S.cfgRectLen;
-		log("Running: TestCube (" + rectLen + ")");
+		log("Running: TestCube (" + rectLen + "," + S.cfgDuplicates + ")");
 		
 		int dims = S.cfgNDims;
 		int nEntries = S.cfgNEntries;
@@ -33,16 +33,17 @@ public class TestRectangleCube extends TestRectangle {
 		
 		//query create cube
 		double minRange = S.cfgDataLen-MIN_X-rectLen;
-		int posMin = 0;
-		int posMax = dims;
-		for (int i = 0; i < nEntries; i++) {
+		for (int i = 0; i < nEntries; i += S.cfgDuplicates) {
+			int posMin = dims * i * 2;
+			int posMax = posMin + dims;
 			for (int d = 0; d < dims; d++) {
-				data[posMin++] = MIN_X+R.nextDouble()*minRange;
-				data[posMax++] = data[posMin-1]+R.nextDouble()*rectLen;
+				data[posMin + d] = MIN_X + R.nextDouble() * minRange;
+				data[posMax + d] = data[posMin + d] + R.nextDouble() * rectLen;
 			}
-			posMin += dims;
-			posMax += dims;
-		} 
+			for (int i2 = 1; i2 < S.cfgDuplicates && (i + i2) < getN(); i2++) {
+				System.arraycopy(data, posMin, data, posMin + 2 * i2 * DIM, 2 * DIM);
+			}
+		}
 		return data;
 	}
 }
