@@ -68,8 +68,8 @@ public class PointMultimapTest extends AbstractWrapperTest {
     @Parameterized.Parameters
     public static Iterable<Object[]> candidates() {
         ArrayList<Object[]> l = new ArrayList<>();
-// TODO        l.add(new Object[]{IDX.ARRAY});
-// TODO		l.add(new Object[]{IDX.COVER});
+        // l.add(new Object[]{IDX.ARRAY});
+	    // l.add(new Object[]{IDX.COVER});
         l.add(new Object[]{IDX.KDTREE});
         l.add(new Object[]{IDX.PHTREE_MM});
         l.add(new Object[]{IDX.QUAD_HC});
@@ -77,10 +77,9 @@ public class PointMultimapTest extends AbstractWrapperTest {
         l.add(new Object[]{IDX.QUAD_PLAIN});
         l.add(new Object[]{IDX.RSTAR});
         l.add(new Object[]{IDX.STR});
-//		l.add(new Object[]{IDX.CRITBIT});
+		// l.add(new Object[]{IDX.CRITBIT});
         return l;
     }
-
 
     @Test
     public void smokeTestDupl() {
@@ -200,6 +199,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             double[] pNew = e.p.clone();
             Arrays.setAll(pNew, value -> (value + r.nextInt(BOUND / 10)));
             assertTrue(tree.update(pOld, pNew, e));
+            assertFalse(tree.update(pOld, pNew, e));
             // Update entry
             System.arraycopy(pNew, 0, e.p, 0, dim);
             assertFalse(containsExact(tree, pOld, e.id));
@@ -306,7 +306,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
     private <T> PointIndexMM<T> createTree(int size, int dims) {
         switch (candidate) {
-//            case ARRAY: return new PointArray<>(dims, size);
+            case ARRAY: return new PointArray<>(dims, size);
 //            //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE: return KDTree.create(dims);
             case PHTREE_MM: return PHTreeMMP.create(dims);

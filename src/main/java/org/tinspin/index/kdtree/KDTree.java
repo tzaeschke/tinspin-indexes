@@ -465,8 +465,9 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 		}
 		if (remove(oldKey, value)) {
 			insert(newKey, value);
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	@Override
