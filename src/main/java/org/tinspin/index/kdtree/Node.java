@@ -35,28 +35,28 @@ public class Node<T> implements PointEntry<T> {
 	private T value;
 	private Node<T> left;
 	private Node<T> right;
-	private int dim;
+	private final int dim;
 	
-	Node(double[] p, T value, int dim) {
-		this.coordinate = p;
+	Node(double[] p, T value, int dim, boolean defensiveKeyCopy) {
+		this.coordinate = defensiveKeyCopy ? p.clone() : p;
 		this.value = value;
 		this.dim = dim;
 	}
 	
-	Node<T> getClosestNodeOrAddPoint(double[] p, T value, int dims) {
+	Node<T> getClosestNodeOrAddPoint(double[] p, T value, int dims, boolean defensiveKeyCopy) {
 		//Find best sub-node.
 		//If there is no node, we create one and return null
 		if (p[dim] >= coordinate[dim]) {
 			if (right != null) {
 				return right;
 			}
-			right = new Node<>(p, value, (dim + 1) % dims);
+			right = new Node<>(p, value, (dim + 1) % dims, defensiveKeyCopy);
 			return null;
 		} 
 		if (left != null) {
 			return left;
 		}
-		left = new Node<>(p, value, (dim + 1) % dims);
+		left = new Node<>(p, value, (dim + 1) % dims, defensiveKeyCopy);
 		return null;
 	}
 

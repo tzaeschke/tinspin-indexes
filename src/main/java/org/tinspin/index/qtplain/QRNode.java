@@ -32,8 +32,8 @@ import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
  */
 public class QRNode<T> {
 
-	private double[] center;
-	private double radius;
+	private final double[] center;
+	private final double radius;
 	//null indicates that we have sub-nopde i.o. values
 	private ArrayList<QREntry<T>> values;
 	private ArrayList<QRNode<T>> subs;
@@ -106,7 +106,7 @@ public class QRNode<T> {
 			while (sub != null) {
 				//This may recurse if all entries fall 
 				//into the same subnode
-				sub = (QRNode<T>) sub.tryPut(e2, maxNodeSize, false);
+				sub = sub.tryPut(e2, maxNodeSize, false);
 			}
 		}
 		return null;
@@ -190,8 +190,7 @@ public class QRNode<T> {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
-	QREntry<T> update(QRNode<T> parent, double[] keyOldL, double[] keyOldU, 
+	QREntry<T> update(QRNode<T> parent, double[] keyOldL, double[] keyOldU,
 			double[] keyNewL, double[] keyNewU, int maxNodeSize,
 			boolean[] requiresReinsert, int currentDepth, int maxDepth) {
 		if (subs != null) {
@@ -207,9 +206,9 @@ public class QRNode<T> {
 						QUtil.isRectEnclosed(ret.lower(), ret.upper(), 
 								center, radius)) {
 					requiresReinsert[0] = false;
-					Object r = this;
-					while (r instanceof QRNode) {
-						r = ((QRNode<T>)r).tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
+					QRNode<T> r = this;
+					while (r != null) {
+						r = r.tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
 					}
 				}
 				return ret;
@@ -230,11 +229,11 @@ public class QRNode<T> {
 					requiresReinsert[0] = false;
 					QRNode<T> sub = findSubNode(keyNewL, keyNewU);
 					if (sub == this) {
-						//reinsert locally;
+						// reinsert locally
 						values.add(e);
 					} else {
 						//we try to use subnode directly, if there is one.
-						Object r;
+						QRNode<T> r;
 						if (sub == null) {
 							//create node locally for insert
 							r = this;
@@ -242,8 +241,8 @@ public class QRNode<T> {
 							r = sub;
 							currentDepth++;
 						}
-						while (r instanceof QRNode) {
-							r = ((QRNode<T>)r).tryPut(e, maxNodeSize, currentDepth++ > maxDepth);
+						while (r != null) {
+							r = r.tryPut(e, maxNodeSize, currentDepth++ > maxDepth);
 						}
 					}
 				} else {

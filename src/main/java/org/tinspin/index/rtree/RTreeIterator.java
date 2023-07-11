@@ -17,7 +17,9 @@
 package org.tinspin.index.rtree;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.RectangleEntry;
@@ -63,6 +65,7 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 	private IteratorStack stack;
 	private boolean hasNext = true;
 	private Entry<T> next;
+	private Predicate<Entry<T>> filter;
 	
 	private static class IterPos<T> {
 		private RTreeNode<T> node;
@@ -73,10 +76,24 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			this.pos = 0;
 		}
 	}
-	
+
 	public RTreeIterator(RTree<T> tree, double[] min, double[] max) {
 		this.stack = new IteratorStack(tree.getDepth());
 		this.tree = tree;
+		// Default: intersection query
+		this.filter = (Entry<T> entry)-> Entry.checkOverlap(this.min, this.max, entry);
+		reset(min, max);
+	}
+
+	public static <T> RTreeIterator<T> createExactMatch(RTree<T> tree, double[] min, double[] max) {
+		return new RTreeIterator<>(tree, min, max, e -> e instanceof RTreeNode ? Entry.checkOverlap(min, max, e) :
+				Arrays.equals(min, e.min) && Arrays.equals(max, e.max));
+	}
+
+	private RTreeIterator(RTree<T> tree, double[] min, double[] max, Predicate<Entry<T>> filter) {
+		this.stack = new IteratorStack(tree.getDepth());
+		this.tree = tree;
+		this.filter = filter;
 		reset(min, max);
 	}
 
@@ -107,7 +124,7 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			while (ip.pos < entries.size()) {
 				Entry<T> e = entries.get(ip.pos);
 				ip.pos++;
-				if (Entry.checkOverlap(min, max, e)) {
+				if (filter.test(e)) {
 					if (e instanceof RTreeNode) {
 						stack.prepareAndPush((RTreeNode<T>) e);
 						continue nextSub;

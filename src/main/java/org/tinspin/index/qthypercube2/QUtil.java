@@ -17,6 +17,8 @@
  */
 package org.tinspin.index.qthypercube2;
 
+import org.tinspin.index.PointDistanceFunction;
+
 public class QUtil {
 	
 	static final double EPS_MUL = 1.000000001;
@@ -111,30 +113,30 @@ public class QUtil {
 		return true;
 	}
 
-	public static double distance(double[] p1, double[] p2) {
-		double dist = 0;
-		for (int i = 0; i < p1.length; i++) {
-			double d = p1[i]-p2[i];
-			dist += d * d;
-		}
-		return Math.sqrt(dist);
-	}
+//	public static double distance(double[] p1, double[] p2) {
+//		double dist = 0;
+//		for (int i = 0; i < p1.length; i++) {
+//			double d = p1[i]-p2[i];
+//			dist += d * d;
+//		}
+//		return Math.sqrt(dist);
+//	}
 	
-	/**
-	 * Calculates distance to center point of rectangle.
-	 * @param p point
-	 * @param rMin rectangle min
-	 * @param rMax rectangle max
-	 * @return distance to center point
-	 */
-	public static double distToRectCenter(double[] p, double[] rMin, double[] rMax) {
-		double dist = 0;
-		for (int i = 0; i < p.length; i++) {
-			double d = (rMin[i]+rMax[i])/2. - p[i];
-			dist += d * d;
-		}
-		return Math.sqrt(dist);
-	}
+//	/**
+//	 * Calculates distance to center point of rectangle.
+//	 * @param p point
+//	 * @param rMin rectangle min
+//	 * @param rMax rectangle max
+//	 * @return distance to center point
+//	 */
+//	public static double distToRectCenter(double[] p, double[] rMin, double[] rMax) {
+//		double dist = 0;
+//		for (int i = 0; i < p.length; i++) {
+//			double d = (rMin[i]+rMax[i])/2. - p[i];
+//			dist += d * d;
+//		}
+//		return Math.sqrt(dist);
+//	}
 	
 //	/**
 //	 * Calculates distance to center point of rectangle.
@@ -146,26 +148,26 @@ public class QUtil {
 //		return distToRectCenter(p, e.lower(), e.upper());
 //	}
 	
-	/**
-	 * Calculates distance to the edge of rectangle.
-	 * @param p point
-	 * @param rMin rectangle min
-	 * @param rMax rectangle max
-	 * @return distance to edge
-	 */
-	static double distToRectEdge(double[] center, double[] rLower, double[] rUpper) {
-		double dist = 0;
-		for (int i = 0; i < center.length; i++) {
-			double d = 0;
-			if (center[i] > rUpper[i]) {
-				d = center[i] - rUpper[i];
-			} else if (center[i] < rLower[i]) {
-				d = rLower[i] - center[i];
-			}
-			dist += d*d;
-		}
-		return Math.sqrt(dist);
-	}
+//	/**
+//	 * Calculates distance to the edge of rectangle.
+//	 * @param p point
+//	 * @param rMin rectangle min
+//	 * @param rMax rectangle max
+//	 * @return distance to edge
+//	 */
+//	static double distToRectEdge(double[] center, double[] rLower, double[] rUpper) {
+//		double dist = 0;
+//		for (int i = 0; i < center.length; i++) {
+//			double d = 0;
+//			if (center[i] > rUpper[i]) {
+//				d = center[i] - rUpper[i];
+//			} else if (center[i] < rLower[i]) {
+//				d = rLower[i] - center[i];
+//			}
+//			dist += d*d;
+//		}
+//		return Math.sqrt(dist);
+//	}
 	
 //	/**
 //	 * Calculates distance to edge of rectangle.
@@ -184,18 +186,18 @@ public class QUtil {
 	 * @param nodeRadius radius of the node
 	 * @return distance to edge of the node or 0 if the point is inside the node
 	 */
-	static double distToRectNode(double[] point, double[] nodeCenter, double nodeRadius) {
-		double dist = 0;
+	static double distToRectNode(double[] point, double[] nodeCenter, double nodeRadius, PointDistanceFunction distFn) {
+		double[] dist = new double[point.length];
 		for (int i = 0; i < point.length; i++) {
-			double d = 0;
-			if (point[i] > nodeCenter[i]+nodeRadius) {
-				d = point[i] - (nodeCenter[i]+nodeRadius);
-			} else if (point[i] < nodeCenter[i]-nodeRadius) {
-				d = nodeCenter[i]-nodeRadius - point[i];
+			double d = point[i];
+			if (point[i] > nodeCenter[i] + nodeRadius) {
+				d = nodeCenter[i] + nodeRadius;
+			} else if (point[i] < nodeCenter[i] - nodeRadius) {
+				d = nodeCenter[i] - nodeRadius;
 			}
-			dist += d*d;
+			dist[i] = d;
 		}
-		return Math.sqrt(dist);
+		return distFn.dist(point, dist);
 	}
-	
+
 }

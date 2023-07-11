@@ -26,11 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.RectangleEntry;
-import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.*;
 import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
 
 /**
@@ -372,7 +368,8 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
         ArrayList<QREntryDist<T>> candidates = new ArrayList<>();
     	while (candidates.size() < k) {
     		candidates.clear();
-    		rangeSearchKNN(root, center, candidates, k, distEstimate);
+			// TODO use other distance function !
+    		rangeSearchKNN(root, center, candidates, k, distEstimate, PointDistanceFunction.L2);
     		distEstimate *= 2;
     	}
     	return candidates;
@@ -413,8 +410,9 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 		return dist;
     }
     
-    private double rangeSearchKNN(QRNode<T> node, double[] center, 
-    		ArrayList<QREntryDist<T>> candidates, int k, double maxRange) {
+    private double rangeSearchKNN(QRNode<T> node, double[] center,
+								  ArrayList<QREntryDist<T>> candidates, int k, double maxRange,
+								  PointDistanceFunction distFn) {
 		ArrayList<QREntry<T>> points = node.getEntries();
     	if (points != null) {
     		for (int i = 0; i < points.size(); i++) {
@@ -431,8 +429,8 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
    		if (nodes != null) {
     		for (int i = 0; i < nodes.size(); i++) {
     			QRNode<T> sub = nodes.get(i);
-    			if (QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius()) < maxRange) {
-    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange);
+    			if (QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius(), distFn) < maxRange) {
+    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange, distFn);
     			}
     		}
     	}

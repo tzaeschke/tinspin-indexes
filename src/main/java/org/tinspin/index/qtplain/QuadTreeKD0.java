@@ -17,21 +17,11 @@
  */
 package org.tinspin.index.qtplain;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.function.Predicate;
 
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.PointIndex;
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.Stats;
+import org.tinspin.index.*;
+import org.tinspin.index.qthypercube.QuadTreeKD;
 
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
@@ -46,7 +36,7 @@ import org.tinspin.index.Stats;
  *
  * @param <T> Value type.
  */
-public class QuadTreeKD0<T> implements PointIndex<T> {
+public class QuadTreeKD0<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	private static final int MAX_DEPTH = 50;
 	
@@ -138,11 +128,12 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 	 * @param key the key to check
 	 * @return true iff the key exists
 	 */
+	@Deprecated
 	public boolean containsExact(double[] key) {
 		if (root == null) {
 			return false;
 		}
-		return root.getExact(key) != null;
+		return root.getExact(key, entry -> true) != null;
 	}
 	
 	/**
@@ -155,10 +146,18 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 		if (root == null) {
 			return null;
 		}
-		QEntry<T> e = root.getExact(key);
+		QEntry<T> e = root.getExact(key, entry -> true);
 		return e == null ? null : e.value();
 	}
-	
+
+	@Override
+	public boolean contains(double[] key, T value) {
+		if (root == null) {
+			return false;
+		}
+		return root.getExact(key, e -> Objects.equals(value, e.value())) != null;
+	}
+
 	/**
 	 * Remove a key.
 	 * @param key key to remove
@@ -172,7 +171,7 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 			}
 			return null;
 		}
-		QEntry<T> e = root.remove(null, key, maxNodeSize);
+		QEntry<T> e = root.remove(null, key, maxNodeSize, x -> true);
 		if (e == null) {
 			if (DEBUG) {
 				System.err.println("Failed remove 2: " + Arrays.toString(key));
@@ -183,6 +182,24 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 		return e.value();
 	}
 
+	@Override
+	public boolean remove(double[] key, T value) {
+		return removeIf(key, e -> Objects.equals(e.value(), value));
+	}
+
+	@Override
+	public boolean removeIf(double[] key, Predicate<PointEntry<T>> condition) {
+		if (root == null) {
+			return false;
+		}
+		QEntry<T> e = root.remove(null, key, maxNodeSize, condition);
+		if (e == null) {
+			return false;
+		}
+		size--;
+		return true;
+	}
+
 	/**
 	 * Reinsert the key.
 	 * @param oldKey old key
@@ -190,18 +207,39 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 	 * @return the value associated with the key or 'null' if the key was not found.
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public T update(double[] oldKey, double[] newKey) {
+		return updateIf(oldKey, newKey, e -> true);
+	}
+
+	/**
+	 * Reinsert the key.
+	 * @param oldKey old key
+	 * @param newKey new key
+	 * @param value the value of the entry that should be updated.
+	 * @return the value associated with the key or 'null' if the key was not found.
+	 */
+	@Override
+	public boolean update(double[] oldKey, double[] newKey, T value) {
+		return updateIf(oldKey, newKey, e -> Objects.equals(e.value(), value)) != null;
+	}
+
+	/**
+	 * Reinsert the key.
+	 * @param oldKey old key
+	 * @param newKey new key
+	 * @return the value associated with the key or 'null' if the key was not found.
+	 */
+	public T updateIf(double[] oldKey, double[] newKey, Predicate<PointEntry<T>> condition) {
 		if (root == null) {
 			return null;
 		}
 		boolean[] requiresReinsert = new boolean[]{false};
-		QEntry<T> e = root.update(null, oldKey, newKey, maxNodeSize, requiresReinsert, 
-				0, MAX_DEPTH);
+		QEntry<T> e = root.update(null, oldKey, newKey, maxNodeSize, requiresReinsert,
+				0, MAX_DEPTH, condition);
 		if (e == null) {
 			//not found
 			if (DEBUG) {
-				System.err.println("Failed reinsert 1: " + Arrays.toString(oldKey) + "/" + 
+				System.err.println("Failed reinsert 1: " + Arrays.toString(oldKey) + "/" +
 						Arrays.toString(newKey));
 			}
 			return null;
@@ -221,7 +259,7 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 		}
 		return e.value();
 	}
-	
+
 	/**
 	 * Ensure that the tree covers the entry.
 	 * @param e Entry to cover.
@@ -269,6 +307,15 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 	public void clear() {
 		size = 0;
 		root = null;
+	}
+
+	/**
+	 * @param point the point
+	 * @return an iterator over all entries at the given coordinate.
+	 * @see PointIndexMM#query(double[])
+	 */
+	public QueryIterator<PointEntry<T>> query(double[] point) {
+		return query(point, point);
 	}
 
 	/**
@@ -359,8 +406,30 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 			}
 		}
 	}
-	
+
+	@Override
+	public PointEntryDist<T> query1NN(double[] center) {
+		return PointIndex.super.query1NN(center);
+	}
+
+	/**
+	 *
+	 * @param center center point
+	 * @param k      number of neighbors
+	 * @param dist   the point distance function to be used
+	 * @return Iterator over query result
+	 * @see PointIndexMM#queryKNN(double[], int, PointDistanceFunction)
+	 */
+	@Override
+	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction dist) {
+		return new QQueryIteratorKNN(center, k, dist);
+	}
+
 	public List<QEntryDist<T>> knnQuery(double[] center, int k) {
+		return knnQuery(center, k, PointDistanceFunction.L2);
+	}
+
+	public List<QEntryDist<T>> knnQuery(double[] center, int k, PointDistanceFunction distFn) {
 		if (root == null) {
     		return Collections.emptyList();
 		}
@@ -371,11 +440,11 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
         					QUtil.distance(center, point2.point());
         			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
         		};
-        double distEstimate = distanceEstimate(root, center, k, comp);
+        double distEstimate = distanceEstimate(root, center, k, comp, distFn);
     	ArrayList<QEntryDist<T>> candidates = new ArrayList<>();
     	while (candidates.size() < k) {
     		candidates.clear();
-    		rangeSearchKNN(root, center, candidates, k, distEstimate);
+    		rangeSearchKNN(root, center, candidates, k, distEstimate, distFn);
     		distEstimate *= 2;
     	}
     	return candidates;
@@ -383,14 +452,14 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 
     @SuppressWarnings("unchecked")
 	private double distanceEstimate(QNode<T> node, double[] point, int k,
-    		Comparator<QEntry<T>> comp) {
+    		Comparator<QEntry<T>> comp, PointDistanceFunction distFn) {
     	if (node.isLeaf()) {
     		//This is a leaf that would contain the point.
     		int n = node.getEntries().size();
     		QEntry<T>[] data = node.getEntries().toArray(new QEntry[n]);
     		Arrays.sort(data, comp);
     		int pos = n < k ? n : k;
-    		double dist = QUtil.distance(point, data[pos-1].point());
+    		double dist = distFn.dist(point, data[pos-1].point());
     		if (n < k) {
     			//scale search dist with dimensions.
     			dist = dist * Math.pow(k/(double)n, 1/(double)dims);
@@ -404,7 +473,7 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
     		for (int i = 0; i < nodes.size(); i++) {
     			QNode<T> sub = nodes.get(i);
     			if (QUtil.isPointEnclosed(point, sub.getCenter(), sub.getRadius())) {
-    				return distanceEstimate(sub, point, k, comp);
+    				return distanceEstimate(sub, point, k, comp, distFn);
     			}
     		}
     		//okay, this directory node contains the point, but none of the leaves does.
@@ -415,12 +484,12 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
     }
     
     private double rangeSearchKNN(QNode<T> node, double[] center, 
-    		ArrayList<QEntryDist<T>> candidates, int k, double maxRange) {
+    		ArrayList<QEntryDist<T>> candidates, int k, double maxRange, PointDistanceFunction distFn) {
 		if (node.isLeaf()) {
     		ArrayList<QEntry<T>> points = node.getEntries();
     		for (int i = 0; i < points.size(); i++) {
     			QEntry<T> p = points.get(i);
-   				double dist = QUtil.distance(center, p.point());
+   				double dist = distFn.dist(center, p.point());
    				if (dist < maxRange) {
     				candidates.add(new QEntryDist<>(p, dist));
   				}
@@ -431,8 +500,8 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
     		for (int i = 0; i < nodes.size(); i++) {
     			QNode<T> sub = nodes.get(i);
     			if (sub != null && 
-    					QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius()) < maxRange) {
-    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange);
+    					QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius(), distFn) < maxRange) {
+    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange, distFn);
     				//we set maxRange simply to the latest returned value.
     			}
     		}
@@ -458,9 +527,11 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 	
     private class QQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
 
+		private final PointDistanceFunction distFn;
     	private Iterator<PointEntryDist<T>> it;
     	
-		public QQueryIteratorKNN(double[] center, int k) {
+		public QQueryIteratorKNN(double[] center, int k, PointDistanceFunction distFn) {
+			this.distFn = distFn;
 			reset(center, k);
 		}
 
@@ -477,7 +548,7 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
 		public QQueryIteratorKNN reset(double[] center, int k) {
-			it = ((List)knnQuery(center, k)).iterator();
+			it = ((List)knnQuery(center, k, distFn)).iterator();
 			return this;
 		}
     }
@@ -569,7 +640,7 @@ public class QuadTreeKD0<T> implements PointIndex<T> {
 
 	@Override
 	public QQueryIteratorKNN queryKNN(double[] center, int k) {
-		return new QQueryIteratorKNN(center, k);
+		return new QQueryIteratorKNN(center, k, PointDistanceFunction.L2);
 	}
 
 	@Override

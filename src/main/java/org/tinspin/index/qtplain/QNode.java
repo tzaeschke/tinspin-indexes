@@ -20,7 +20,9 @@ package org.tinspin.index.qtplain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.function.Predicate;
 
+import org.tinspin.index.PointEntry;
 import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
 
 /**
@@ -133,18 +135,18 @@ public class QNode<T> {
 		return null;
 	}
 
-	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize) {
+	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			QNode<T> sub = findSubNode(key);
 			if (sub != null) {
-				return sub.remove(this, key, maxNodeSize);
+				return sub.remove(this, key, maxNodeSize, pred);
 			}
 			return null;
 		}
 		
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.point(), key)) {
+			if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 				values.remove(i);
 				//TODO provide threshold for re-insert
 				//i.e. do not always merge.
@@ -157,22 +159,21 @@ public class QNode<T> {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	QEntry<T> update(QNode<T> parent, double[] keyOld, double[] keyNew, int maxNodeSize,
-			boolean[] requiresReinsert, int currentDepth, int maxDepth) {
+			boolean[] requiresReinsert, int currentDepth, int maxDepth, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			QNode<T> sub = findSubNode(keyOld);
 			if (sub == null) {
 				return null;
 			}
 			QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
-					currentDepth+1, maxDepth);
+					currentDepth+1, maxDepth, pred);
 			if (ret != null && requiresReinsert[0] && 
 					QUtil.isPointEnclosed(ret.point(), center, radius)) {
 				requiresReinsert[0] = false;
-				Object r = this;
-				while (r instanceof QNode) {
-					r = ((QNode<T>)r).tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
+				QNode<T> r = this;
+				while (r != null) {
+					r = r.tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
 				}
 			}
 			return ret;
@@ -180,17 +181,17 @@ public class QNode<T> {
 		
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.point(), keyOld)) {
+			if (QUtil.isPointEqual(e.point(), keyOld) && pred.test(e)) {
 				values.remove(i);
 				e.setKey(keyNew);
 				if (QUtil.isPointEnclosed(keyNew, center, radius)) {
-					//reinsert locally;
+					// reinsert locally;
 					values.add(e);
 					requiresReinsert[0] = false;
 				} else {
 					requiresReinsert[0] = true;
-					//TODO provide threshold for re-insert
-					//i.e. do not always merge.
+					// TODO provide threshold for re-insert
+					// i.e. do not always merge.
 					if (parent != null) {
 						parent.checkAndMergeLeafNodes(maxNodeSize);
 					}
@@ -233,18 +234,18 @@ public class QNode<T> {
 		return radius;
 	}
 
-	QEntry<T> getExact(double[] key) {
+	QEntry<T> getExact(double[] key, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			QNode<T> sub = findSubNode(key);
 			if (sub != null) {
-				return sub.getExact(key);
+				return sub.getExact(key, pred);
 			}
 			return null;
 		}
-		
+
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.point(), key)) {
+			if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 				return e;
 			}
 		}

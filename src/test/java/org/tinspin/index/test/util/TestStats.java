@@ -9,13 +9,12 @@ package org.tinspin.index.test.util;
 import java.io.Serializable;
 import java.util.List;
 
-import org.tinspin.index.PointIndex;
-import org.tinspin.index.PointIndexWrapper;
-import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.*;
 import org.tinspin.index.array.PointArray;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.kdtree.KDTree;
+import org.tinspin.index.phtree.PHTreeMMP;
 import org.tinspin.index.phtree.PHTreeP;
 import org.tinspin.index.phtree.PHTreeR;
 import org.tinspin.index.qthypercube.QuadTreeKD;
@@ -34,14 +33,16 @@ public class TestStats implements Serializable, Cloneable {
 		KDTREE,
 		/** PH-Tree */
 		PHTREE,
+		/** PH-Tree multimap */
+		PHTREE_MM,
 		/** CritBit */
 		CRITBIT,
 		/** Quadtree with HC navigation*/
-		QUAD,
+		QUAD_HC,
 		/** Quadtree with HC navigation version 2 */
-		QUAD2,
+		QUAD_HC2,
 		/** Plain Quadtree */
-		QUAD_OLD,
+		QUAD_PLAIN,
 		/** RStarTree */
 		RSTAR,
 		/** STR-loaded RStarTree */
@@ -52,28 +53,45 @@ public class TestStats implements Serializable, Cloneable {
 
 	static <T> PointIndex<T> createPI(INDEX idx, int dims, int size) {
 		switch (idx) {
-		case ARRAY: return new PointArray<>(dims, size);
-		//case CRITBIT: return new PointArray<>(dims, size);
-		case KDTREE: return KDTree.create(dims);
-		case PHTREE: return PHTreeP.createPHTree(dims);
-		case QUAD: return QuadTreeKD.create(dims);
-		case QUAD2: return QuadTreeKD2.create(dims);
-		case QUAD_OLD: return QuadTreeKD0.create(dims);
-		case RSTAR: 
-		case STR: return PointIndexWrapper.create(RTree.createRStar(dims));
-		case COVER: return CoverTree.create(dims);
-		default:
-			throw new UnsupportedOperationException();
+			case ARRAY: return new PointArray<>(dims, size);
+			//case CRITBIT: return new PointArray<>(dims, size);
+			case KDTREE: return KDTree.create(dims);
+			case PHTREE: return PHTreeP.createPHTree(dims);
+			case QUAD_HC: return QuadTreeKD.create(dims);
+			case QUAD_HC2: return QuadTreeKD2.create(dims);
+			case QUAD_PLAIN: return QuadTreeKD0.create(dims);
+			case RSTAR:
+			case STR: return PointIndexWrapper.create(RTree.createRStar(dims));
+			case COVER: return CoverTree.create(dims);
+			default:
+				throw new UnsupportedOperationException();
 		}
 	}
-	
+
+	static <T> PointIndexMM<T> createPIMM(INDEX idx, int dims, int size) {
+		switch (idx) {
+			//case ARRAY: return new PointArray<>(dims, size);
+			//case CRITBIT: return new PointArray<>(dims, size);
+			case KDTREE: return KDTree.create(dims);
+			case PHTREE_MM: return PHTreeMMP.create(dims);
+			case QUAD_HC: return QuadTreeKD.create(dims);
+			case QUAD_HC2: return QuadTreeKD2.create(dims);
+			case QUAD_PLAIN: return QuadTreeKD0.create(dims);
+			case RSTAR:
+			case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
+			//case COVER: return CoverTree.create(dims);
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
+
 	static <T> RectangleIndex<T> createRI(INDEX idx, int dims, int size) {
 		switch (idx) {
 		case ARRAY: return new RectArray<>(dims, size);
 		//case CRITBIT: return new PointArray<>(dims, size);
 		case PHTREE: return PHTreeR.createPHTree(dims);
-		case QUAD: return QuadTreeRKD.create(dims);
-		case QUAD_OLD: return QuadTreeRKD0.create(dims);
+		case QUAD_HC: return QuadTreeRKD.create(dims);
+		case QUAD_PLAIN: return QuadTreeRKD0.create(dims);
 		case RSTAR: 
 		case STR: return RTree.createRStar(dims);
 		default:
@@ -505,14 +523,14 @@ public class TestStats implements Serializable, Cloneable {
 
 		return avg;
 	}
-	
-	public Candidate createTree(int size, TestStats ts) {
-		if (isRangeData) {
-			RectangleIndex<?> ri = createRI(INDEX, cfgNDims, size);
-			return new RectangleIndexCandidate(ri, ts);
-		} else {
-			PointIndex<?> pi = createPI(INDEX, cfgNDims, size);
-			return new PointIndexCandidate(pi, ts);
-		}
-	}
+
+//	public Candidate createTree(int size, TestStats ts) {
+//		if (isRangeData) {
+//			RectangleIndex<?> ri = createRI(INDEX, cfgNDims, size);
+//			return new RectangleIndexCandidate(ri, ts);
+//		} else {
+//			PointIndex<?> pi = createPI(INDEX, cfgNDims, size);
+//			return new PointIndexCandidate(pi, ts);
+//		}
+//	}
 }

@@ -32,8 +32,8 @@ import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
 public class QRNode<T> {
 
 	private static final int OVERLAP_WITH_CENTER = -1;
-	private double[] center;
-	private double radius;
+	private final double[] center;
+	private final double radius;
 	//null indicates that we have sub-nopde i.o. values
 	private ArrayList<QREntry<T>> values;
 	private QRNode<T>[] subs;
@@ -102,7 +102,7 @@ public class QRNode<T> {
 			while (sub != null) {
 				//This may recurse if all entries fall 
 				//into the same subnode
-				sub = (QRNode<T>) sub.tryPut(e2, maxNodeSize, false);
+				sub = sub.tryPut(e2, maxNodeSize, false);
 			}
 		}
 		return null;
@@ -202,9 +202,9 @@ public class QRNode<T> {
 				if (ret != null && requiresReinsert[0] && 
 						QUtil.isRectEnclosed(ret.lower(), ret.upper(), center, radius)) {
 					requiresReinsert[0] = false;
-					Object r = this;
-					while (r instanceof QRNode) {
-						r = ((QRNode<T>)r).tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
+					QRNode<T> r = this;
+					while (r != null) {
+						r = r.tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
 					}
 				}
 				return ret;
@@ -225,10 +225,10 @@ public class QRNode<T> {
 					requiresReinsert[0] = false;
 					int pos = calcSubPositionR(keyNewL, keyNewU);
 					if (pos == OVERLAP_WITH_CENTER) {
-						//reinsert locally;
+						// reinsert locally
 						values.add(e);
 					} else {
-						Object r;
+						QRNode<T> r;
 						//we try to use subnode directly, if there is one.
 						if (subs == null || subs[pos] == null) {
 							//create node locally for insert
@@ -237,8 +237,8 @@ public class QRNode<T> {
 							r = subs[pos];
 							currentDepth++;
 						}
-						while (r instanceof QRNode) {
-							r = ((QRNode<T>)r).tryPut(e, maxNodeSize, currentDepth++ > maxDepth);
+						while (r != null) {
+							r = r.tryPut(e, maxNodeSize, currentDepth++ > maxDepth);
 						}
 					}
 				} else {

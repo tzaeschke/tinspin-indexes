@@ -66,8 +66,7 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 		reset(center, k, null);
 		return this;
 	}
-	
-	
+
 	public void reset(double[] center, int k, RectangleDistanceFunction dist) {
 		if (dist != null) {
 			this.dist = dist;
@@ -92,7 +91,6 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 		//search
 		search(k);
 		iter = candidates.iterator();
-		//System.out.println("Queue size: " + queue.size());
 	}
 	
 	
@@ -136,7 +134,7 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	
 	private DistEntry<Object> createEntry(double[] min, double[] max, Object val, double dist) {
 		if (pool.isEmpty()) {
-			return new DistEntry<Object>(min, max, val, dist);
+			return new DistEntry<>(min, max, val, dist);
 		}
 		DistEntry<Object> e = pool.remove(pool.size() - 1);
 		e.set(min, max, val, dist);

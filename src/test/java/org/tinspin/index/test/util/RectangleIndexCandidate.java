@@ -8,15 +8,22 @@ package org.tinspin.index.test.util;
 
 import java.util.Arrays;
 
+import ch.ethz.globis.tinspin.TestStats;
+import ch.ethz.globis.tinspin.wrappers.Candidate;
 import org.tinspin.index.Index;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.RectangleEntry;
 import org.tinspin.index.RectangleEntryDist;
 import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.array.RectArray;
+import org.tinspin.index.phtree.PHTreeR;
+import org.tinspin.index.qthypercube.QuadTreeRKD;
+import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
-import org.tinspin.index.test.util.TestStats.INDEX;
+import org.tinspin.index.test.util.TestInstances.IDX;
+
 
 public class RectangleIndexCandidate extends Candidate {
 	
@@ -28,7 +35,26 @@ public class RectangleIndexCandidate extends Candidate {
 	private QueryIterator<RectangleEntry<Object>> query = null;
 	private QueryIteratorKNN<RectangleEntryDist<Object>> queryKnn = null;
 	private final boolean bulkloadSTR;
-	
+
+	public static RectangleIndexCandidate create(TestStats ts) {
+		return new RectangleIndexCandidate(createIndex(ts), ts);
+	}
+
+	private static <T> RectangleIndex<T> createIndex(TestStats s) {
+		int dims = s.cfgNDims;
+		int size = s.cfgNEntries;
+		switch ((TestInstances.IDX)s.INDEX) {
+			case ARRAY: return new RectArray<>(dims, size);
+			case PHTREE: return PHTreeR.createPHTree(dims);
+			case QUAD_HC: return QuadTreeRKD.create(dims);
+			case QUAD_PLAIN: return QuadTreeRKD0.create(dims);
+			case RSTAR:
+			case STR: return RTree.createRStar(dims);
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
+
 	/**
 	 * @param ri index 
 	 * @param ts test stats
@@ -38,7 +64,7 @@ public class RectangleIndexCandidate extends Candidate {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
 		this.idx = (RectangleIndex<Object>) ri;
-		this.bulkloadSTR = ts.INDEX.equals(INDEX.STR);
+		this.bulkloadSTR = ts.INDEX.equals(TestInstances.IDX.STR);
 	}
 	
 	@SuppressWarnings("unchecked")

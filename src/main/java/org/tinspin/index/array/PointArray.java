@@ -6,20 +6,12 @@
  */
 package org.tinspin.index.array;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.PointIndex;
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.Stats;
+import org.tinspin.index.*;
 
-public class PointArray<T> implements PointIndex<T> {
+public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 	
 	private final double[][] phc;
 	private final int dims;
@@ -51,6 +43,21 @@ public class PointArray<T> implements PointIndex<T> {
 	}
 
 	@Override
+	public boolean remove(double[] point, T value) {
+		return false;
+	}
+
+	@Override
+	public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
+		return false;
+	}
+
+	@Override
+	public QueryIterator<PointEntry<T>> query(double[] point) {
+		return null;
+	}
+
+	@Override
 	public T queryExact(double[] point) {
 		for (int j = 0; j < N; j++) { 
 			if (eq(phc[j], point)) {
@@ -58,6 +65,16 @@ public class PointArray<T> implements PointIndex<T> {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public boolean contains(double[] point, T value) {
+		for (int j = 0; j < N; j++) {
+			if (eq(phc[j], point) && Objects.equals(value, values[j].value())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean eq(double[] a, double[] b) {
@@ -91,8 +108,13 @@ public class PointArray<T> implements PointIndex<T> {
 	public AQueryIterator query(double[] min, double[] max) {
 		return new AQueryIterator(min, max);
 	}
-	
-    private class AQueryIterator implements QueryIterator<PointEntry<T>> {
+
+	@Override
+	public PointEntryDist<T> query1NN(double[] center) {
+		return PointIndex.super.query1NN(center); // TODO ????? Why do we need this?
+	}
+
+	private class AQueryIterator implements QueryIterator<PointEntry<T>> {
 
     	private Iterator<PointEntry<T>> it;
     	
@@ -123,7 +145,7 @@ public class PointArray<T> implements PointIndex<T> {
     }
     
 	@Override
-	public QueryIterator<? extends PointEntry<T>> iterator() {
+	public QueryIterator<PointEntry<T>> iterator() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
@@ -134,8 +156,13 @@ public class PointArray<T> implements PointIndex<T> {
 		return new AQueryIteratorKNN(center, k);
 	}
 
-    
-    private class AQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
+	@Override
+	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
+		return null;
+	}
+
+
+	private class AQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
 
     	private Iterator<PointEntryDist<T>> it;
     	
@@ -238,7 +265,18 @@ public class PointArray<T> implements PointIndex<T> {
 		}
 		return null;
 	}
-	
+
+	@Override
+	public boolean update(double[] oldPoint, double[] newPoint, T value) {
+		for (int i = 0; i < N; i++) {
+			if (eq(phc[i], oldPoint) && Objects.equals(values[i].value(), value)) {
+				System.arraycopy(newPoint, 0, phc[i], 0, dims);
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public T remove(double[] point) {
 		for (int i = 0; i < N; i++) { 

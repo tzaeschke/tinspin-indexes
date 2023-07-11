@@ -17,14 +17,14 @@
  */
 package org.tinspin.index.rtree;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
+import java.util.function.Predicate;
 
-import org.tinspin.index.RectangleDistanceFunction;
-import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.RectangleIndex;
-import org.tinspin.index.Stats;
+import org.tinspin.index.*;
+import org.tinspin.index.util.MutableBool;
+import org.tinspin.index.util.MutableInt;
+import org.tinspin.index.util.MutableRef;
+import org.tinspin.index.util.StringBuilderLn;
 
 
 /**
@@ -43,7 +43,7 @@ import org.tinspin.index.Stats;
  *
  * @param <T> Value type.
  */
-public class RTree<T> implements RectangleIndex<T> {
+public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	static final int NODE_MAX_DIR = 10;//56; //PAPER: M=56 for 1KB pages
 	static final int NODE_MAX_DATA = 10;//50; //PAPER: M=50 for 1KB pages
@@ -112,7 +112,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	}
 	
 	public void insert(double[] point, T value) {
-		insert(new Entry<T>(point, point, value));
+		insert(new Entry<>(point, point, value));
 	}
 
 	/**
@@ -123,7 +123,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	 */
 	@Override
 	public void insert(double[] keyMin, double[] keyMax, T value) {
-		insert(new Entry<T>(keyMin, keyMax, value));
+		insert(new Entry<>(keyMin, keyMax, value));
 	}
 	
 	/**
@@ -141,7 +141,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	}
 	
 	/**
-	 * @param e
+	 * @param e entry
 	 * @param desiredInsertionLevel Entries have to be inserted at the desired level.
 	 * The level is usually '0' (for data points) but can be higher for
 	 * reinsertion of subtrees.
@@ -186,8 +186,7 @@ public class RTree<T> implements RectangleIndex<T> {
 			}
 			return null;
 		} else {
-			RTreeNode<T> newNode = logic.split(node, e);
-			return newNode;
+			return logic.split(node, e);
 		}
 	}
 
@@ -199,7 +198,6 @@ public class RTree<T> implements RectangleIndex<T> {
 		root = bulkLoader.getRoot();
 		depth = bulkLoader.getDepth();
 	}
-	
 
 	public Object remove(double[] point) {
 		//TODO speed up
@@ -214,7 +212,38 @@ public class RTree<T> implements RectangleIndex<T> {
 	 */
 	@Override
 	public T remove(double[] min, double[] max) {
-		return findNodeEntry(min, max, true);
+		MutableRef<T> ref = new MutableRef<>();
+		Predicate<Entry<T>> pred = e -> {
+			ref.set(e.checkExactMatch(min, max) ? e.value() : null);
+			return ref.get() != null;
+		};
+		findNodes(min, max, root, node -> deleteFromNode(node, pred));
+		return ref.get();
+	}
+
+	/**
+	 * Remove an entry.
+	 *
+	 * @param min min
+	 * @param max max
+	 * @return the value of the entry or null if the entry was not found
+	 */
+	@Override
+	public boolean remove(double[] min, double[] max, T value) {
+		return removeIf(min, max, e -> Objects.equals(value, e.value()));
+	}
+
+	/**
+	 * Remove the first entry matching the geometry and condition.
+	 * @param min min
+	 * @param max max
+	 * @param condition Condition for deletion.
+	 * @return `true` iff an entry was found and removed
+	 */
+	@Override
+	public boolean removeIf(double[] min, double[] max, Predicate<RectangleEntry<T>> condition) {
+		Predicate<Entry<T>> pred = e -> e.checkExactMatch(min, max) && condition.test(e);
+		return findNodes(min, max, root, node -> deleteFromNode(node, pred));
 	}
 
 	/**
@@ -234,11 +263,46 @@ public class RTree<T> implements RectangleIndex<T> {
 		return val;
 	}
 
-	private T findNodeEntry(double[] min, double[] max, boolean delete) {
+	/**
+	 * Update the position of an entry.
+	 *
+	 * @param lo1   old min
+	 * @param up1   old max
+	 * @param lo2   new min
+	 * @param up2   new max
+	 * @param value only entry with the given value is updated
+	 * @return `true` iff the entry was found and relocated
+	 */
+	@Override
+	public boolean update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value) {
+		// TODO improve, try to move within node
+		if (remove(lo1, up1, value)) {
+			insert(lo2, up2, value);
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean contains(double[] min, double[] max, T value) {
+		return findNodeEntry(min, max, (entry, node, posInNode) -> Objects.equals(value, entry.value())) != null;
+	}
+
+	private interface Matcher<T> {
+		boolean test(Entry<T> entry, RTreeNode<T> node, int posInNode);
+	}
+
+	private interface CheckNodeAbort<T> {
+		boolean checkAbort(RTreeNodeLeaf<T> node);
+	}
+
+	// TODO either remove findNodeEntry() or remove findNodes()
+	//     --> test performance!
+	private T findNodeEntry(double[] min, double[] max, Matcher<T> matcher) {
 		int[] positions = new int[depth];
 		int level = depth-1;
 		RTreeNode<T> node = root;
-		outer: 
+		outer:
 		while (level < depth) {
 			int pos = positions[level];
 			if (node instanceof RTreeNodeDir) {
@@ -257,10 +321,7 @@ public class RTree<T> implements RectangleIndex<T> {
 				ArrayList<Entry<T>> children = node.getEntries();
 				for (int i = 0; i < children.size(); i++) {
 					Entry<T> e = children.get(i);
-					if (e.checkExactMatch(min, max)) {
-						if (delete) {
-							deleteFromNode(node, i);
-						}
+					if (e.checkExactMatch(min, max) && matcher.test(e, node, i)) {
 						return e.value();
 					}
 				}
@@ -271,7 +332,6 @@ public class RTree<T> implements RectangleIndex<T> {
 		return null;
 	}
 
-	
 	void deleteFromNode(RTreeNode<T> node, int pos) {
 		size--;
 		//this also adjusts parent MBBs
@@ -301,12 +361,66 @@ public class RTree<T> implements RectangleIndex<T> {
 		}
 	}
 
+	private boolean findNodes(double[] min, double[] max, RTreeNode<T> node, CheckNodeAbort<T> checkAbort) {
+		if (node instanceof RTreeNodeDir) {
+			ArrayList<RTreeNode<T>> children = ((RTreeNodeDir<T>)node).getChildren();
+			for (int i = 0; i < children.size(); i++) {
+				RTreeNode<T> sub = children.get(i);
+				if (sub.checkInclusion(min, max) && findNodes(min, max, sub, checkAbort)) {
+					return true;
+				}
+			}
+		} else {
+			return checkAbort.checkAbort((RTreeNodeLeaf<T>) node);
+		}
+		return false;
+	}
+
+	boolean deleteFromNode(RTreeNode<T> node, Predicate<Entry<T>> pred) {
+		//this also adjusts parent MBBs
+		//Question: Should we adjust parent MBBs later if we have to remove the sub-node?
+		//-> But later adjustment would skew with reinsertion, because the
+		//node may look bigger than it actually is.
+		//TODO no need to remove the entry (update the MBBs if we gonna remove the node...
+		//TODO check inside 'removeEntry????'
+		boolean found = false;
+		for (int i = 0; i < node.getEntries().size(); ++i) {
+			if (pred.test(node.getEntries().get(i))) {
+				node.removeEntry(i);
+				size--;
+				found = true;
+				break;
+			}
+		}
+
+		int level = 0;
+		while (node != root && node.isUnderfull()) {
+			ArrayList<Entry<T>> entries = node.getEntries();
+			RTreeNodeDir<T> parent = node.getParent();
+			parent.removeChildByIdentity(node);
+			node = parent;
+			nNodes--;
+			for (int i = 0; i < entries.size(); i++) {
+				insertAtDepth(entries.get(i), level);
+			}
+			level++;
+		}
+		if (root.getEntries().size() == 1 && root instanceof RTreeNodeDir) {
+			depth--;
+			nNodes--;
+			root = (RTreeNode<T>) root.getEntries().get(0);
+			root.setParent(null);
+		}
+		return found;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.tinspin.index.rtree.Index#queryEntry(double[], double[])
 	 */
 	@Override
 	public T queryExact(double[] min, double[] max) {
-		return findNodeEntry(min, max, false);
+		//return findNodeEntry(min, max, (entry, node, posInNode) -> true);
+		return findNodeEntry(min, max, (entry, node, posInNode) -> true);
 	}
 	
 	/* (non-Javadoc)
@@ -320,7 +434,15 @@ public class RTree<T> implements RectangleIndex<T> {
 		Arrays.fill(max, Double.POSITIVE_INFINITY);
 		return new RTreeIterator<>(this, min, max);
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.tinspin.index.rtree.Index#queryOverlap(double[], double[])
+	 */
+	@Override
+	public RTreeIterator<T> queryRectangle(double[] min, double[] max) {
+		return RTreeIterator.createExactMatch(this, min, max);
+	}
+
 	/* (non-Javadoc)
 	 * @see org.tinspin.index.rtree.Index#queryOverlap(double[], double[])
 	 */
@@ -342,13 +464,14 @@ public class RTree<T> implements RectangleIndex<T> {
 	 */
 	@Override
 	public RTreeQueryKnn<T> queryKNN(double[] center, int k) {
-		return new RTreeQueryKnn<>(this, center, k, RectangleDistanceFunction.EDGE);
+		return queryKNN(center, k, RectangleDistanceFunction.EDGE);
 	}
-	
+
+	@Override
 	public RTreeQueryKnn<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist) {
 		return new RTreeQueryKnn<>(this, center, k, dist);
 	}
-	
+
 	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(
 			double[] center, RectangleDistanceFunction dist,
 			RectangleDistanceFunction closestDist, double[] minBound, double[] maxBound) {
@@ -357,7 +480,7 @@ public class RTree<T> implements RectangleIndex<T> {
 	}
 	
 	/**
-	 * This methods returns an Iterable which returns the nodes by a combined range and 
+	 * This method returns an Iterable which returns the nodes by a combined range and
 	 * nearest number search.
 	 * The Iterator supports the {@code Iterator.remove()} method. 
 	 * 
@@ -375,30 +498,23 @@ public class RTree<T> implements RectangleIndex<T> {
 	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(double[] center, RectangleDistanceFunction dist,
 			RectangleDistanceFunction closestDist, Filter filter) {
 		RTree<T> self = this;
-		return new Iterable<RectangleEntryDist<T>>() {
-
-			@Override
-			public Iterator<RectangleEntryDist<T>> iterator() {
-				return new RTreeMixedQuery<T>(self, center, filter, dist, closestDist);
-			}
-		};
+		return () -> new RTreeMixedQuery<>(self, center, filter, dist, closestDist);
 	}
 	
 	@Override
 	public String toStringTree() {
-		StringBuilder sb = new StringBuilder();
+		StringBuilderLn sb = new StringBuilderLn();
 		toStringTree(sb, root, depth-1);
 		return sb.toString();
 	}
 	
-	private void toStringTree(StringBuilder sb, RTreeNode<T> node, int level) {
-		String NL = "\n";
+	private void toStringTree(StringBuilderLn sb, RTreeNode<T> node, int level) {
 		String pre = "";
 		for (int i = 0; i < depth-level; i++) {
 			pre += " ";
 		}
-		sb.append(pre + "L=" + level + " " + node.toString() + 
-				";P=" + System.identityHashCode(node.getParent()) + NL);
+		sb.appendLn(pre + "L=" + level + " " + node.toString() +
+				";P=" + System.identityHashCode(node.getParent()));
 		
 		ArrayList<Entry<T>> entries = node.getEntries();
 		for (int i = 0; i < entries.size(); i++) {
@@ -406,14 +522,12 @@ public class RTree<T> implements RectangleIndex<T> {
 			if (e instanceof RTreeNode) {
 				toStringTree(sb, (RTreeNode<T>) e, level-1);
 			} else {
-				sb.append(pre + "e:" + e.toString() + NL);
+				sb.append(pre).append("e:").append(e.toString()).appendLn();
 			}
 		}
 	}
 
 	public static class RTreeStats extends Stats {
-		int dims;
-		
 		RTreeStats(RTree<?> tree) {
 			super(tree.nDist1NN + tree.nDistKNN, tree.nDist1NN, tree.nDistKNN);
 			minLevel = 0;
@@ -524,6 +638,6 @@ public class RTree<T> implements RectangleIndex<T> {
 	}
 
 	void incNDistKNN() {
-		nDist1NN++;
+		nDistKNN++;
 	}
 }

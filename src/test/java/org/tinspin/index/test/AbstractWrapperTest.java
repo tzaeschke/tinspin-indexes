@@ -9,10 +9,10 @@ package org.tinspin.index.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.tinspin.index.test.util.Candidate;
-import org.tinspin.index.test.util.TestStats;
-import org.tinspin.index.test.util.TestStats.INDEX;
-import org.tinspin.index.test.util.TestStats.TST;
+import ch.ethz.globis.tinspin.TestStats;
+import ch.ethz.globis.tinspin.wrappers.Candidate;
+import org.tinspin.index.test.util.TestInstances.IDX;
+import org.tinspin.index.test.util.TestInstances.TST;
 
 public abstract class AbstractWrapperTest {
 
@@ -20,20 +20,21 @@ public abstract class AbstractWrapperTest {
 	protected static final int dims = 3;
 
 	public static TestStats createUnitTestStats(
-			INDEX idx, TST tst, int N, int dims, boolean isRangeData, double param1) {
-		TestStats ts = new TestStats(tst, idx, N, dims, isRangeData, param1);
-		ts.cfgNRepeat = 1;
+			IDX idx, TST tst, int N, int dims, double param1) {
+		TestStats ts = new TestStats(tst, idx, N, dims, param1);
 		ts.paramEnforceGC = false;
 		ts.cfgWindowQueryRepeat = 100;
 		ts.cfgPointQueryRepeat = 1000;
 		ts.cfgUpdateSize = 1000;
+		ts.minimumMsPerTest = 0;
 		return ts;
 	}
 
 	public static TestStats createUnitTestStatsDupl(
-			INDEX idx, TST tst, int N, int dims, boolean isRangeData, double param1, int duplicates) {
-		TestStats ts = createUnitTestStats(idx, tst, N, dims, isRangeData, param1);
+			IDX idx, TST tst, int N, int dims, double param1, int duplicates) {
+		TestStats ts = createUnitTestStats(idx, tst, N, dims, param1);
 		ts.cfgDuplicates = duplicates;
+		ts.isMultimap = true;
 		return ts;
 	}
 

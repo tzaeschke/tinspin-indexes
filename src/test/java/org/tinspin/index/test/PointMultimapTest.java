@@ -24,18 +24,19 @@ import org.tinspin.index.*;
 import org.tinspin.index.array.PointArray;
 import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.kdtree.KDTree;
-import org.tinspin.index.phtree.PHTreeP;
+import org.tinspin.index.phtree.PHTreeMMP;
 import org.tinspin.index.qthypercube.QuadTreeKD;
 import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.test.util.TestInstances;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
-import static org.tinspin.index.test.PointMultimapTest.INDEX.*;
+import static org.tinspin.index.test.util.TestInstances.*;
 
 @RunWith(Parameterized.class)
 public class PointMultimapTest extends AbstractWrapperTest {
@@ -43,13 +44,13 @@ public class PointMultimapTest extends AbstractWrapperTest {
     private static final int N_DUP = 4;
     private static final int BOUND = 100;
 
-    private final INDEX candidate;
-    public PointMultimapTest(INDEX candCls) {
+    private final TestInstances.IDX candidate;
+    public PointMultimapTest(TestInstances.IDX candCls) {
         this.candidate = candCls;
     }
 
-    private List<Entry> createInt(long seed, int n, int dim) {
-        List<Entry> data = new ArrayList<>(n);
+    private ArrayList<Entry> createInt(long seed, int n, int dim) {
+        ArrayList<Entry> data = new ArrayList<>(n);
         Random R = new Random(seed);
         for (int i = 0; i < n; i += N_DUP) {
             Entry e = new Entry(dim, i);
@@ -67,19 +68,18 @@ public class PointMultimapTest extends AbstractWrapperTest {
     @Parameterized.Parameters
     public static Iterable<Object[]> candidates() {
         ArrayList<Object[]> l = new ArrayList<>();
-//        l.add(new Object[]{INDEX.ARRAY});
-// TODO		l.add(new Object[]{INDEX.COVER});
-        l.add(new Object[]{KDTREE});
-//        l.add(new Object[]{INDEX.PHTREE});
-        l.add(new Object[]{INDEX.QUAD});
-        l.add(new Object[]{INDEX.QUAD2});
-        l.add(new Object[]{INDEX.QUAD_OLD});
-        l.add(new Object[]{INDEX.RSTAR});
-        l.add(new Object[]{INDEX.STR});
-//		l.add(new Object[]{INDEX.CRITBIT});
+        // l.add(new Object[]{IDX.ARRAY});
+	    // l.add(new Object[]{IDX.COVER});
+        l.add(new Object[]{IDX.KDTREE});
+        l.add(new Object[]{IDX.PHTREE_MM});
+        l.add(new Object[]{IDX.QUAD_HC});
+        l.add(new Object[]{IDX.QUAD_HC2});
+        l.add(new Object[]{IDX.QUAD_PLAIN});
+        l.add(new Object[]{IDX.RSTAR});
+        l.add(new Object[]{IDX.STR});
+		// l.add(new Object[]{IDX.CRITBIT});
         return l;
     }
-
 
     @Test
     public void smokeTestDupl() {
@@ -139,16 +139,16 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
     private void smokeTest(List<Entry> data) {
         int dim = data.get(0).p.length;
-        PointIndex<Entry> tree = createTree(data.size(), dim);
+        PointIndexMM<Entry> tree = createTree(data.size(), dim);
 
-        //PointIndex<Entry> tree = KDTree.create(dim);
         for (Entry e : data) {
             tree.insert(e.p, e);
         }
 	    // System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            Entry e2 = tree.queryExact(e.p);
-            assertNotNull("queryExact() failed: " + e, e2);
+            QueryIterator<PointEntry<Entry>> it = tree.query(e.p);
+            assertTrue("query(point) failed: " + e, it.hasNext());
+            assertArrayEquals(e.p, it.next().value().p, 0.0000);
         }
 
         for (Entry e : data) {
@@ -174,50 +174,150 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             //			System.out.println(tree.toStringTree());
             //			System.out.println("Removing: " + Arrays.toString(key));
-            Entry e2 = tree.queryExact(e.p);
-            assertNotNull("queryExact() failed: " + e, e2);
-            Entry answer = tree.remove(e.p);
-            assertArrayEquals("Expected " + e + " but got " + answer, answer.p, e.p, 0.0001);
+            QueryIterator<PointEntry<Entry>> it = tree.query(e.p);
+            assertTrue("queryExact() failed: " + e, it.hasNext());
+            PointEntry<Entry> e2 = it.next();
+            assertArrayEquals(e.p, e2.value().p, 0);
+            assertTrue(tree.remove(e.p, e));
         }
     }
 
-    enum INDEX {
-        /** Naive array implementation, for verification only */
-        ARRAY,
-        /** kD-Tree */
-        KDTREE,
-        /** PH-Tree */
-        PHTREE,
-        /** CritBit */
-        CRITBIT,
-        /** Quadtree with HC navigation*/
-        QUAD,
-        /** Quadtree with HC navigation version 2 */
-        QUAD2,
-        /** Plain Quadtree */
-        QUAD_OLD,
-        /** RStarTree */
-        RSTAR,
-        /** STR-loaded RStarTree */
-        STR,
-        /** CoverTree */
-        COVER
+    @Test
+    public void testUpdate() {
+        Random r = new Random(0);
+        int dim = 3;
+        ArrayList<Entry> data = createInt(0, 1000, 3);
+        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+
+        for (Entry e : data) {
+            tree.insert(e.p, e);
+        }
+
+        for (int i = 0; i < data.size(); ++i) {
+            Entry e = data.get(i);
+            double[] pOld = e.p.clone();
+            double[] pNew = e.p.clone();
+            Arrays.setAll(pNew, value -> (value + r.nextInt(BOUND / 10)));
+            assertTrue(tree.update(pOld, pNew, e));
+            assertFalse(tree.update(pOld, pNew, e));
+            // Update entry
+            System.arraycopy(pNew, 0, e.p, 0, dim);
+            assertFalse(containsExact(tree, pOld, e.id));
+            assertTrue(containsExact(tree, e.p, e.id));
+        }
+
+        for (int i = 0; i < data.size(); ++i) {
+            Entry e = data.get(i);
+            assertTrue(containsExact(tree, e.p, e.id));
+        }
     }
 
-    private <T> PointIndex<T> createTree(int size, int dims) {
+    private boolean containsExact(PointIndexMM<Entry> tree, double[] p, int id) {
+        QueryIterator<PointEntry<Entry>> it = tree.query(p);
+        while (it.hasNext()) {
+            if (it.next().value().id == id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Test
+    public void testRemove() {
+        Random r = new Random(0);
+        int dim = 3;
+        ArrayList<Entry> data = createInt(0, 1000, 3);
+        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+
+        Collections.shuffle(data, r);
+
+        for (Entry e : data) {
+            tree.insert(e.p, e);
+        }
+
+        // remove 1st half
+        for (int i = 0; i < data.size()/2; ++i) {
+            Entry e = data.get(i);
+            assertTrue(tree.remove(e.p, e));
+            assertFalse(containsExact(tree, e.p, e.id));
+        }
+
+        // check
+        for (int i = 0; i < data.size()/2; ++i) {
+            Entry e = data.get(i);
+            assertFalse(containsExact(tree, e.p, e.id));
+        }
+        for (int i = data.size()/2; i < data.size(); ++i) {
+            Entry e = data.get(i);
+            assertTrue(containsExact(tree, e.p, e.id));
+        }
+
+        // remove 2nd half
+        for (int i = data.size()/2; i < data.size(); ++i) {
+            Entry e = data.get(i);
+            assertTrue(tree.remove(e.p, e));
+            assertFalse(containsExact(tree, e.p, e.id));
+        }
+
+        assertEquals(0, tree.size());
+    }
+
+    @Test
+    public void testRemoveIf() {
+        Random r = new Random(0);
+        int dim = 3;
+        ArrayList<Entry> data = createInt(0, 1000, 3);
+        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+
+        Collections.shuffle(data, r);
+
+        for (Entry e : data) {
+            tree.insert(e.p, e);
+        }
+
+        // remove 1st half
+        for (int i = 0; i < data.size()/2; ++i) {
+            Entry e = data.get(i);
+            assertTrue(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
+            assertFalse(containsExact(tree, e.p, e.id));
+            assertFalse(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
+        }
+
+        // check
+        for (int i = 0; i < data.size()/2; ++i) {
+            Entry e = data.get(i);
+            assertFalse(containsExact(tree, e.p, e.id));
+        }
+        for (int i = data.size()/2; i < data.size(); ++i) {
+            Entry e = data.get(i);
+            assertTrue(containsExact(tree, e.p, e.id));
+        }
+
+        // remove 2nd half
+        for (int i = data.size()/2; i < data.size(); ++i) {
+            Entry e = data.get(i);
+            assertTrue(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
+            assertFalse(containsExact(tree, e.p, e.id));
+            assertFalse(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
+        }
+
+        assertEquals(0, tree.size());
+    }
+
+    private <T> PointIndexMM<T> createTree(int size, int dims) {
         switch (candidate) {
             case ARRAY: return new PointArray<>(dims, size);
-            //case CRITBIT: return new PointArray<>(dims, size);
+//            //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE: return KDTree.create(dims);
-            case PHTREE: return PHTreeP.createPHTree(dims);
-            case QUAD: return QuadTreeKD.create(dims);
-            case QUAD2: return QuadTreeKD2.create(dims);
-            case QUAD_OLD: return QuadTreeKD0.create(dims);
+            case PHTREE_MM: return PHTreeMMP.create(dims);
+            case QUAD_HC: return QuadTreeKD.create(dims);
+            case QUAD_HC2: return QuadTreeKD2.create(dims);
+            case QUAD_PLAIN: return QuadTreeKD0.create(dims);
             case RSTAR:
-            case STR: return PointIndexWrapper.create(RTree.createRStar(dims));
-            case COVER: return CoverTree.create(dims);
+            case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
+ //           case COVER: return CoverTree.create(dims);
             default:
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException(candidate.name());
         }
     }
 

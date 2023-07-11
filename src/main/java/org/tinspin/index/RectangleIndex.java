@@ -45,7 +45,7 @@ public interface RectangleIndex<T> extends Index<T> {
 	 * @param up2 new max
 	 * @return the value, or null if the entries was not found
 	 */
-	public T update(double[] lo1, double[] up1, double[] lo2, double[] up2);
+	T update(double[] lo1, double[] up1, double[] lo2, double[] up2);
 
 	/**
 	 * Lookup an entry, using exact match.

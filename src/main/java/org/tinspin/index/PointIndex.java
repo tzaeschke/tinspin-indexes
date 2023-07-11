@@ -19,6 +19,17 @@ package org.tinspin.index;
 
 import java.util.Iterator;
 
+/**
+ * A common interface for spatial indexes (maps) that use points as keys.
+ * This interface is somewhat inconsistent because it suggests that
+ * implementations acrt as "maps" which means that a given keys
+ * can exist only once and is overwritten when a new entry with the same key is added.
+ * <p>
+ * However, most implementations in this library (except for the PH-Tree) act as
+ * multimaps which means they allow multple entries with identical keys.
+ *
+ * @param <T> Type of the value associated with the point key.
+ */
 public interface PointIndex<T> extends Index<T> {
 
 	/**

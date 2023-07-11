@@ -19,7 +19,9 @@ package org.tinspin.index.qthypercube;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Predicate;
 
+import org.tinspin.index.PointEntry;
 import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
 
 /**
@@ -31,7 +33,7 @@ import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
  */
 public class QNode<T> {
 
-	private double[] center;
+	private final double[] center;
 	private double radius;
 	// null indicates that we have sub-node i.o. values
 	private ArrayList<QEntry<T>> values;
@@ -86,7 +88,7 @@ public class QNode<T> {
 			while (sub != null) {
 				//This may recurse if all entries fall 
 				//into the same subnode
-				sub = (QNode<T>) sub.tryPut(e2, maxNodeSize, false);
+				sub = sub.tryPut(e2, maxNodeSize, false);
 			}
 		}
 		return getOrCreateSub(e);
@@ -137,19 +139,19 @@ public class QNode<T> {
 		return subNodePos;
 	}
 
-	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize) {
+	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			int pos = calcSubPosition(key);
 			QNode<T> sub = subs[pos];
 			if (sub != null) {
-				return sub.remove(this, key, maxNodeSize);
+				return sub.remove(this, key, maxNodeSize, pred);
 			}
 			return null;
 		}
 		
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.point(), key)) {
+			if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 				values.remove(i);
 				//TODO provide threshold for re-insert
 				//i.e. do not always merge.
@@ -162,9 +164,8 @@ public class QNode<T> {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	QEntry<T> update(QNode<T> parent, double[] keyOld, double[] keyNew, int maxNodeSize,
-			boolean[] requiresReinsert, int currentDepth, int maxDepth) {
+			boolean[] requiresReinsert, int currentDepth, int maxDepth, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			int pos = calcSubPosition(keyOld);
 			QNode<T> sub = subs[pos];
@@ -172,13 +173,13 @@ public class QNode<T> {
 				return null;
 			}
 			QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
-					currentDepth+1, maxDepth);
+					currentDepth+1, maxDepth, pred);
 			if (ret != null && requiresReinsert[0] && 
 					QUtil.isPointEnclosed(ret.point(), center, radius/QUtil.EPS_MUL)) {
 				requiresReinsert[0] = false;
-				Object r = this;
-				while (r instanceof QNode) {
-					r = ((QNode<T>)r).tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
+				QNode<T> r = this;
+				while (r != null) {
+					r = r.tryPut(ret, maxNodeSize, currentDepth++ > maxDepth);
 				}
 			}
 			return ret;
@@ -186,11 +187,11 @@ public class QNode<T> {
 		
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.point(), keyOld)) {
+			if (QUtil.isPointEqual(e.point(), keyOld) && pred.test(e)) {
 				values.remove(i);
 				e.setKey(keyNew);
 				if (QUtil.isPointEnclosed(keyNew, center, radius/QUtil.EPS_MUL)) {
-					//reinsert locally;
+					// reinsert locally;
 					values.add(e);
 					requiresReinsert[0] = false;
 				} else {
@@ -243,19 +244,19 @@ public class QNode<T> {
 		return radius;
 	}
 
-	QEntry<T> getExact(double[] key) {
+	QEntry<T> getExact(double[] key, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			int pos = calcSubPosition(key);
 			QNode<T> sub = subs[pos];
 			if (sub != null) {
-				return sub.getExact(key);
+				return sub.getExact(key, pred);
 			}
 			return null;
 		}
 		
 		for (int i = 0; i < values.size(); i++) {
 			QEntry<T> e = values.get(i);
-			if (QUtil.isPointEqual(e.point(), key)) {
+			if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 				return e;
 			}
 		}

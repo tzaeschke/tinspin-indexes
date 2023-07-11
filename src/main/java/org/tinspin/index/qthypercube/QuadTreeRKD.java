@@ -24,11 +24,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.RectangleEntry;
-import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.*;
 import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
 
 /**
@@ -303,7 +299,9 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
         ArrayList<QREntryDist<T>> candidates = new ArrayList<>();
     	while (candidates.size() < k) {
     		candidates.clear();
-    		rangeSearchKNN(root, center, candidates, k, distEstimate);
+			// TODO we are always using Euclidean here, not sure how we can easily make this configurable
+			//      or whether other distances are useful at all...
+    		rangeSearchKNN(root, center, candidates, k, distEstimate, PointDistanceFunction.L2);
     		distEstimate *= 2;
     	}
     	return candidates;
@@ -344,8 +342,9 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
 		return dist;
     }
     
-    private double rangeSearchKNN(QRNode<T> node, double[] center, 
-    		ArrayList<QREntryDist<T>> candidates, int k, double maxRange) {
+    private double rangeSearchKNN(QRNode<T> node, double[] center,
+								  ArrayList<QREntryDist<T>> candidates, int k, double maxRange,
+								  PointDistanceFunction distFn) {
 		ArrayList<QREntry<T>> points = node.getEntries();
     	if (points != null) {
     		for (int i = 0; i < points.size(); i++) {
@@ -363,8 +362,8 @@ public class QuadTreeRKD<T> implements RectangleIndex<T> {
     		for (int i = 0; i < nodes.length; i++) {
     			QRNode<T> sub = nodes[i];
     			if (sub != null && 
-    					QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius()) < maxRange) {
-    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange);
+    					QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius(), distFn) < maxRange) {
+    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange, distFn);
     			}
     		}
     	}

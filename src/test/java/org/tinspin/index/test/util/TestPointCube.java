@@ -6,6 +6,8 @@
  */
 package org.tinspin.index.test.util;
 
+import ch.ethz.globis.tinspin.TestStats;
+
 import java.util.Random;
 
 /**
@@ -25,16 +27,16 @@ public class TestPointCube extends TestPoint {
 	 */
 	@Override
 	public double[] generate() {
-		log("Running: TestCube(" + S.cfgDataLen + ")");
-		double[] data = new double[getN()*DIM];
+		log("Running: TestCube(" + S.cfgDataLen + "," + S.cfgDuplicates + ")");
+		double[] data = new double[getN() * DIM];
 		int dup = S.cfgDuplicates;
 		for (int i = 0; i < getN(); i += dup) {
-			int pos = DIM*i;
+			int pos = DIM * i;
 			for (int d = 0; d < DIM; d++) {
-				data[pos+d] = R.nextDouble() * S.cfgDataLen;
+				data[pos + d] = R.nextDouble() * S.cfgDataLen;
 			}
-			for (int i2 = 1; i2 < S.cfgDuplicates && pos < getN()*DIM; ++i2) {
-				System.arraycopy(data, i * DIM, data, (i + i2) * DIM, DIM);
+			for (int i2 = 1; i2 < S.cfgDuplicates && (i + i2) < getN(); i2++) {
+				System.arraycopy(data, pos, data, pos + i2 * DIM, DIM);
 			}
 		}
 		return data;

@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
 
+import ch.ethz.globis.tinspin.TestStats;
 import org.junit.Test;
 import org.tinspin.index.QueryIterator;
 import org.tinspin.index.RectangleEntry;
@@ -31,8 +32,8 @@ import org.tinspin.index.RectangleIndex;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.test.util.JmxTools;
 import org.tinspin.index.test.util.TestRectangle;
-import org.tinspin.index.test.util.TestStats;
-import org.tinspin.index.test.util.TestStats.TST;
+import org.tinspin.index.test.util.TestRectangleCube;
+import org.tinspin.index.test.util.TestInstances.TST;
 
 public class PhTreeTest {
 
@@ -44,8 +45,8 @@ public class PhTreeTest {
 	@Test
 	public void testR() {
 		Random R = new Random(0);
-		TestStats ts = new TestStats(TST.CUBE, null, N, DIM, true, param1);
-		TestRectangle test = TestRectangle.create(R, ts);
+		TestStats ts = new TestStats(TST.CUBE_R, null, N, DIM, param1);
+		TestRectangle test = new TestRectangleCube(R, ts);
 		double[] data = test.generate();
 
 		RectArray<Integer> tree1 = new RectArray<Integer>(DIM, N);
