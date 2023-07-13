@@ -1,21 +1,54 @@
+/*
+ * Copyright 2009-2023 Tilmann Zaeschke. All rights reserved.
+ *
+ * This file is part of TinSpin.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.tinspin.index.util;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.NoSuchElementException;
+import java.util.function.ToIntBiFunction;
 
-public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
+/**
+ * Min-max heap implementation based on:
+ * <a href="https://en.wikipedia.org/wiki/Min-max_heap">https://en.wikipedia.org/wiki/Min-max_heap</a>
+ *
+ * @param <T>
+ */
+public class MinMaxHeapZ<T> implements MinMaxHeapI<T> {
 
+    private static final int DEFAULT_SIZE = 16;
     // Data. The first slot is left empty, i.e. the first data element is at [1]!
     private T[] data;
     // index of first free entry
     private int size = 0;
+    private final Comparator<T> comp;
 
-    public MinMaxHeapZ(int capacity) {
-        data = (T[]) new Comparable[capacity];
+    @SuppressWarnings("unchecked")
+    private MinMaxHeapZ(int capacity, Comparator<T> comp) {
+        data = (T[]) new Object[capacity];
+        this.comp = comp;
     }
 
     public static <T extends Comparable<T>> MinMaxHeapZ<T> create() {
-        return new MinMaxHeapZ<>(16);
+        return new MinMaxHeapZ<>(DEFAULT_SIZE, Comparable::compareTo);
+    }
+
+    public static <T> MinMaxHeapZ<T> create(ToIntBiFunction<T, T> less) {
+        return new MinMaxHeapZ<>(DEFAULT_SIZE, less::applyAsInt);
     }
 
     private static boolean isMinLevel(int index) {
@@ -60,16 +93,15 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
         int min34 = -1;
         if (start + 3 < end) {
             // 4 grand children
-            // TODO replace mopareTo with something else...?  Avoid polymorphism ????
-            min12 = data[start].compareTo(data[start + 1]) < 0 ? start : start + 1;
-            min34 = data[start + 2].compareTo(data[start + 3]) < 0 ? start + 2 : start + 3;
+            min12 = comp.compare(data[start], data[start + 1]) < 0 ? start : start + 1;
+            min34 = comp.compare(data[start + 2], data[start + 3]) < 0 ? start + 2 : start + 3;
         } else if (start + 2 < end) {
             // 3 grand children
-            min12 = data[start].compareTo(data[start + 1]) < 0 ? start : start + 1;
+            min12 = comp.compare(data[start], data[start + 1]) < 0 ? start : start + 1;
             min34 = start + 2;
         } else if (start + 1 < end) {
             // 2 grand children + 1 children
-            min12 = data[start].compareTo(data[start + 1]) < 0 ? start : start + 1;
+            min12 = comp.compare(data[start], data[start + 1]) < 0 ? start : start + 1;
             min34 = index * 2 + 1;
         } else if (start < end) {
             // 1 grand child + 1 child
@@ -83,7 +115,7 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
             // 1 child
             return index * 2;
         }
-        return data[min12].compareTo(data[min34]) < 0 ? min12 : min34;
+        return comp.compare(data[min12], data[min34]) < 0 ? min12 : min34;
     }
 
     private int indexOfLargestChildOrGrandchild(int index) {
@@ -93,15 +125,15 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
         int max34 = -1;
         if (start + 3 < end) {
             // 4 grand children
-            max12 = data[start].compareTo(data[start + 1]) > 0 ? start : start + 1;
-            max34 = data[start + 2].compareTo(data[start + 3]) > 0 ? start + 2 : start + 3;
+            max12 = comp.compare(data[start], data[start + 1]) > 0 ? start : start + 1;
+            max34 = comp.compare(data[start + 2], data[start + 3]) > 0 ? start + 2 : start + 3;
         } else if (start + 2 < end) {
             // 3 grand children
-            max12 = data[start].compareTo(data[start + 1]) > 0 ? start : start + 1;
+            max12 = comp.compare(data[start], data[start + 1]) > 0 ? start : start + 1;
             max34 = start + 2;
         } else if (start + 1 < end) {
             // 2 grand children + 1 children
-            max12 = data[start].compareTo(data[start + 1]) > 0 ? start : start + 1;
+            max12 = comp.compare(data[start], data[start + 1]) > 0 ? start : start + 1;
             max34 = index * 2 + 1;
         } else if (start < end) {
             // 1 grand child + 1 child
@@ -115,7 +147,7 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
             // 1 child
             return index * 2;
         }
-        return data[max12].compareTo(data[max34]) > 0 ? max12 : max34;
+        return comp.compare(data[max12], data[max34]) > 0 ? max12 : max34;
     }
 
     private void pushDown(int m) {
@@ -123,10 +155,10 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
             int i = m;
             if (isMinLevel(i)) {
                 m = indexOfSmallestChildOrGrandchild(i);
-                if (data[m].compareTo(data[i]) < 0) {
+                if (comp.compare(data[m], data[i]) < 0) {
                     swap(m, i);
                     if (isGrandchildOf(m, i)) {
-                        if (data[m].compareTo(data[parent(m)]) > 0) {
+                        if (comp.compare(data[m], data[parent(m)]) > 0) {
                             swap(m, parent(m));
                         }
                     } else {
@@ -137,10 +169,10 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
                 }
             } else {
                 m = indexOfLargestChildOrGrandchild(i);
-                if (data[m].compareTo(data[i]) > 0) {
+                if (comp.compare(data[m], data[i]) > 0) {
                     swap(m, i);
                     if (isGrandchildOf(m, i)) {
-                        if (data[m].compareTo(data[parent(m)]) < 0) {
+                        if (comp.compare(data[m], data[parent(m)]) < 0) {
                             swap(m, parent(m));
                         }
                     } else {
@@ -199,14 +231,14 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
     private void pushUp(int index) {
         if (index != 1) { // is not root?
             if (isMinLevel(index)) {
-                if (data[index].compareTo(data[parent(index)]) > 0) {
+                if (comp.compare(data[index], data[parent(index)]) > 0) {
                     swap(index, parent(index));
                     pushUpMax(parent(index));
                 } else {
                     pushUpMin(index);
                 }
             } else {
-                if (data[index].compareTo(data[parent(index)]) < 0) {
+                if (comp.compare(data[index], data[parent(index)]) < 0) {
                     swap(index, parent(index));
                     pushUpMin(parent(index));
                 } else {
@@ -217,14 +249,14 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
     }
 
     private void pushUpMin(int index) {
-        while (hasGrandparent(index) && data[index].compareTo(data[grandparent(index)]) < 0) {
+        while (hasGrandparent(index) && comp.compare(data[index], data[grandparent(index)]) < 0) {
             swap(index, grandparent(index));
             index = grandparent(index);
         }
     }
 
     private void pushUpMax(int index) {
-        while (hasGrandparent(index) && data[index].compareTo(data[grandparent(index)]) > 0) {
+        while (hasGrandparent(index) && comp.compare(data[index], data[grandparent(index)]) > 0) {
             swap(index, grandparent(index));
             index = grandparent(index);
         }
@@ -284,7 +316,7 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
             data[2] = null;
             return;
         }
-        int max = data[2].compareTo(data[3]) > 0 ? 2 : 3;
+        int max = comp.compare(data[2], data[3]) > 0 ? 2 : 3;
 
         if (size == 3) {
             size--;
@@ -322,7 +354,7 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
         } else if (size == 2) {
             return data[2];
         }
-        return data[2].compareTo(data[3]) >= 0 ? data[2] : data[3];
+        return comp.compare(data[2], data[3]) >= 0 ? data[2] : data[3];
     }
 
     @Override
@@ -333,27 +365,6 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
     @Override
     public boolean isEmpty() {
         return size == 0;
-    }
-
-    public void checkConsistency() {
-        if (size < 0) {
-            throw new IllegalStateException("size=" + size);
-        }
-        if (data[size] == null) {
-            throw new IllegalStateException("data[size] == null: " + size);
-        }
-        if (size + 1 < data.length && data[size + 1] != null) {
-            throw new IllegalStateException("data[size + 1] != null: " + size);
-        }
-        if (size >= 1) {
-            checkMin(1);
-        }
-        if (size >= 2) {
-            checkMax(2);
-        }
-        if (size >= 3) {
-            checkMax(3);
-        }
     }
 
     public String print() {
@@ -370,23 +381,13 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
         return s.toString();
     }
 
-    private void checkMin(int index) {
-        int child = index * 4;
-        for (int i = 0; i < 4 && child + i < end(); i++) {
-            if (data[index].compareTo(data[child + i]) > 0) {
-                throw new IllegalStateException("min tree broken: " + index + " > " + (child + i));
-            }
-            checkMin(child + i);
-        }
-    }
-
-    private void checkMax(int index) {
-        int child = index * 4;
-        for (int i = 0; i < 4 && child + i < end(); i++) {
-            if (data[index].compareTo(data[child + i]) < 0) {
-                throw new IllegalStateException("max tree broken: " + index + " < " + (child + i));
-            }
-            checkMax(child + i);
+    @SuppressWarnings("unchecked")
+    public void clear() {
+        size = 0;
+        if (data.length > DEFAULT_SIZE) {
+            data = (T[]) new Object[DEFAULT_SIZE];
+        } else {
+            Arrays.fill(data, null);
         }
     }
 }

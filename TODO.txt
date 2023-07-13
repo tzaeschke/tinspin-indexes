@@ -1,7 +1,7 @@
 API
 ===
 - Rename Indexes to PointMap/PointMultimap BoxMax/BoxMultimap; deprecate PointIndex
-
+- Remove Comparators in entries!
 
 Other
 =====
