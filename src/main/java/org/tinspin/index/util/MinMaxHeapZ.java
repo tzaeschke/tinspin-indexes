@@ -190,80 +190,115 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
         return min;
     }
 
-    private void pushDown(int i) {
-        if (isMinLevel(i)) {
-            pushDownMin(i);
-        } else {
-            pushDownMax(i);
-        }
-    }
-
-    private void pushDownMin(int i) {
-        if (hasChildren(i)) {
-            int m = indexOfSmallestChildOrGrandchild(i);
-            if (isGrandchildOf(m, i)) {
+    private void pushDown(int m) {
+        while (hasChildren(m)) {
+            int i = m;
+            if (isMinLevel(i)) {
+                m = indexOfSmallestChildOrGrandchild(i);
                 if (data[m].compareTo(data[i]) < 0) {
                     swap(m, i);
-                    if (data[m].compareTo(data[parent(m)]) > 0) {
-                        swap(m, parent(m));
+                    if (isGrandchildOf(m, i)) {
+                        if (data[m].compareTo(data[parent(m)]) > 0) {
+                            swap(m, parent(m));
+                        }
+                    } else {
+                        break;
                     }
-                    pushDown(m);
-                }
-
-            } else if (data[m].compareTo(data[i]) < 0) {
-                swap(m, i);
-            }
-        }
-    }
-
-    private void pushDownMax(int i) {
-        if (hasChildren(i)) {
-            int m = indexOfLargestChildOrGrandchild(i);
-            if (isGrandchildOf(m, i)) {
-                if (data[m].compareTo(data[i]) > 0) {
-                    swap(m, i);
-                    if (data[m].compareTo(data[parent(m)]) < 0) {
-                        swap(m, parent(m));
-                    }
-                    pushDown(m);
-                }
-            } else if (data[m].compareTo(data[i]) > 0) {
-                swap(m, i);
-            }
-        }
-    }
-
-    private void pushUp(int i) {
-        if (i != 1) { // is not root?
-            if (isMinLevel(i)) {
-                if (data[i].compareTo(data[parent(i)]) > 0) {
-                    swap(i, parent(i));
-                    pushUpMax(parent(i));
                 } else {
-                    pushUpMin(i);
+                    break;
                 }
             } else {
-                if (data[i].compareTo(data[parent(i)]) < 0) {
-                    swap(i, parent(i));
-                    pushUpMin(parent(i));
+                m = indexOfLargestChildOrGrandchild(i);
+                if (data[m].compareTo(data[i]) > 0) {
+                    swap(m, i);
+                    if (isGrandchildOf(m, i)) {
+                        if (data[m].compareTo(data[parent(m)]) < 0) {
+                            swap(m, parent(m));
+                        }
+                    } else {
+                        break;
+                    }
                 } else {
-                    pushUpMax(i);
+                    break;
                 }
             }
         }
     }
 
-    private void pushUpMin(int i) {
-        while (hasGrandparent(i) && data[i].compareTo(data[grandparent(i)]) < 0) {
-            swap(i, grandparent(i));
-            i = grandparent(i);
+//    private void pushDown2(int i) {
+//        if (isMinLevel(i)) {
+//            pushDownMin(i);
+//        } else {
+//            pushDownMax(i);
+//        }
+//    }
+//
+//    private void pushDownMin(int i) {
+//        if (hasChildren(i)) {
+//            int m = indexOfSmallestChildOrGrandchild(i);
+//            if (isGrandchildOf(m, i)) {
+//                if (data[m].compareTo(data[i]) < 0) {
+//                    swap(m, i);
+//                    if (data[m].compareTo(data[parent(m)]) > 0) {
+//                        swap(m, parent(m));
+//                    }
+//                    pushDown(m);
+//                }
+//
+//            } else if (data[m].compareTo(data[i]) < 0) {
+//                swap(m, i);
+//            }
+//        }
+//    }
+//
+//    private void pushDownMax(int i) {
+//        if (hasChildren(i)) {
+//            int m = indexOfLargestChildOrGrandchild(i);
+//            if (isGrandchildOf(m, i)) {
+//                if (data[m].compareTo(data[i]) > 0) {
+//                    swap(m, i);
+//                    if (data[m].compareTo(data[parent(m)]) < 0) {
+//                        swap(m, parent(m));
+//                    }
+//                    pushDown(m);
+//                }
+//            } else if (data[m].compareTo(data[i]) > 0) {
+//                swap(m, i);
+//            }
+//        }
+//    }
+
+    private void pushUp(int index) {
+        if (index != 1) { // is not root?
+            if (isMinLevel(index)) {
+                if (data[index].compareTo(data[parent(index)]) > 0) {
+                    swap(index, parent(index));
+                    pushUpMax(parent(index));
+                } else {
+                    pushUpMin(index);
+                }
+            } else {
+                if (data[index].compareTo(data[parent(index)]) < 0) {
+                    swap(index, parent(index));
+                    pushUpMin(parent(index));
+                } else {
+                    pushUpMax(index);
+                }
+            }
         }
     }
 
-    private void pushUpMax(int i) {
-        while (hasGrandparent(i) && data[i].compareTo(data[grandparent(i)]) > 0) {
-            swap(i, grandparent(i));
-            i = grandparent(i);
+    private void pushUpMin(int index) {
+        while (hasGrandparent(index) && data[index].compareTo(data[grandparent(index)]) < 0) {
+            swap(index, grandparent(index));
+            index = grandparent(index);
+        }
+    }
+
+    private void pushUpMax(int index) {
+        while (hasGrandparent(index) && data[index].compareTo(data[grandparent(index)]) > 0) {
+            swap(index, grandparent(index));
+            index = grandparent(index);
         }
     }
 
@@ -303,9 +338,6 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
             return;
         }
         data[1] = value;
-        if (size == 1) {
-            return;
-        }
 
         pushDown(1);
     }
