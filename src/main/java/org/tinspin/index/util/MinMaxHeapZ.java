@@ -5,7 +5,7 @@ import java.util.NoSuchElementException;
 
 public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
 
-    // Data. The first slot is left empty, i.e. the first element is at [1]!
+    // Data. The first slot is left empty, i.e. the first data element is at [1]!
     private T[] data;
     // index of first free entry
     private int size = 0;
@@ -23,7 +23,7 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
         //        int highestBit = 32 - Integer.numberOfLeadingZeros(index);
         //        // min levels are 'odd'
         //        return (highestBit & 1) != 0;
-        // We could even remove the "32 - x" because it doesn't change the trailing bit
+        // We can remove the "32 - x" because it doesn't change the trailing bit
         return (Integer.numberOfLeadingZeros(index) & 1) != 0;
     }
 
@@ -55,139 +55,67 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
 
     private int indexOfSmallestChildOrGrandchild(int index) {
         int end = end();
-        int min = -1;
-        if (index * 4 < end) {
-            int start = index * 4;
-//            if (start + 3 < end) {
-//                // 4 grand children
-//                // TODO remove ternary operator!
-//                int minG12 = end > start + 1 && data[start].compareTo(data[start + 1]) >= 0 ? start + 1 : start;
-//                int minG34 = end > start + 3 && data[start + 2].compareTo(data[start + 3]) >= 0 ? start + 3 : start + 2;
-//                min = data[minG12].compareTo(data[minG34]) < 0 ? minG12 : minG34;
-//            } else if (start + 2 < end) {
-//                // 3 grand children
-//                int minG12 = end > start + 1 && data[start].compareTo(data[start + 1]) >= 0 ? start + 1 : start;
-//                min = data[minG12].compareTo(data[start + 2]) < 0 ? minG12 : start + 2;
-//            } else if (start + 1 < end) {
-//                // 2 grand children + 1 children
-//                int minG12 = end > start + 1 && data[start].compareTo(data[start + 1]) >= 0 ? start + 1 : start;
-//                int startC = index * 2;
-//                min = data[minG12].compareTo(data[startC + 1]) < 0 ? minG12 : startC + 1;
-//            } else {
-//                // 1 grand child + 1 child
-//                int startC = index * 2;
-//                min = data[start].compareTo(data[startC + 1]) < 0 ? start : startC + 1;
-//            }
-            int x2 = end - start - 1;
-            int x = Math.min(3, x2);
-            switch (x) {
-                case 3: {
-                    // 4 grand children
-                    // TODO remove ternary operator!
-                    int minG12 = data[start].compareTo(data[start + 1]) >= 0 ? start + 1 : start;
-                    int minG34 = data[start + 2].compareTo(data[start + 3]) >= 0 ? start + 3 : start + 2;
-                    min = data[minG12].compareTo(data[minG34]) < 0 ? minG12 : minG34;
-                    break;
-                }
-                case 2: {
-                    // 3 grand children
-                    int minG12 = data[start].compareTo(data[start + 1]) >= 0 ? start + 1 : start;
-                    min = data[minG12].compareTo(data[start + 2]) < 0 ? minG12 : start + 2;
-                    break;
-                }
-                case 1: {
-                    // 2 grand children + 1 children
-                    int minG12 = data[start].compareTo(data[start + 1]) >= 0 ? start + 1 : start;
-                    int startC = index * 2;
-                    min = data[minG12].compareTo(data[startC + 1]) < 0 ? minG12 : startC + 1;
-                    break;
-                }
-                case 0: {
-                    // 1 grand child + 1 child
-                    int startC = index * 2;
-                    min = data[start].compareTo(data[startC + 1]) < 0 ? start : startC + 1;
-                }
-            }
+        int start = index * 4;
+        int min12 = -1;
+        int min34 = -1;
+        if (start + 3 < end) {
+            // 4 grand children
+            // TODO replace mopareTo with something else...?  Avoid polymorphism ????
+            min12 = data[start].compareTo(data[start + 1]) < 0 ? start : start + 1;
+            min34 = data[start + 2].compareTo(data[start + 3]) < 0 ? start + 2 : start + 3;
+        } else if (start + 2 < end) {
+            // 3 grand children
+            min12 = data[start].compareTo(data[start + 1]) < 0 ? start : start + 1;
+            min34 = start + 2;
+        } else if (start + 1 < end) {
+            // 2 grand children + 1 children
+            min12 = data[start].compareTo(data[start + 1]) < 0 ? start : start + 1;
+            min34 = index * 2 + 1;
+        } else if (start < end) {
+            // 1 grand child + 1 child
+            min12 = start;
+            min34 = index * 2 + 1;
+        } else if (index * 2 + 1 < end) {
+            // 2 children
+            min12 = index * 2;
+            min34 = min12 + 1;
         } else {
-            if (index * 2 + 1 < end) {
-                // 2 children
-                int startC = index * 2;
-                min = data[startC].compareTo(data[startC + 1]) < 0 ? startC : startC + 1;
-            } else {
-                // 1 child
-                min = index * 2;
-            }
+            // 1 child
+            return index * 2;
         }
-//        if (index * 4 + 3 < end) {
-//            // 4 grand children
-//            int start = index * 4;
-//            // TODO remove ternary operator!
-//            int minG12 = end > start + 1 && data[start].compareTo(data[start + 1]) >= 0 ? start + 1 : start;
-//            int minG34 = end > start + 3 && data[start + 2].compareTo(data[start + 3]) >= 0 ? start + 3 : start + 2;
-//            min = data[minG12].compareTo(data[minG34]) < 0 ? minG12 : minG34;
-//        } else if (index * 4 + 2 < end) {
-//            // 3 grand children
-//            int start = index * 4;
-//            int minG12 = end > start + 1 && data[start].compareTo(data[start + 1]) >= 0 ? start + 1 : start;
-//            min = data[minG12].compareTo(data[start + 2]) < 0 ? minG12 : start + 2;
-//        } else if (index * 4 + 1 < end) {
-//            // 2 grand children + 1 children
-//            int start = index * 4;
-//            int minG12 = end > start + 1 && data[start].compareTo(data[start + 1]) >= 0 ? start + 1 : start;
-//            int startC = index * 2;
-//            min = data[minG12].compareTo(data[startC + 1]) < 0 ? minG12 : startC + 1;
-//        } else if (index * 4 < end) {
-//            // 1 grand child + 1 child
-//            int startG = index * 4;
-//            int startC = index * 2;
-//            min = data[startG].compareTo(data[startC + 1]) < 0 ? startG : startC + 1;
-//        } else if (index * 2 + 1 < end) {
-//            // 2 children
-//            int startC = index * 2;
-//            min = data[startC].compareTo(data[startC + 1]) < 0 ? startC : startC + 1;
-//        } else if (index * 2 < end) {
-//            // 1 child
-//            min = index * 2;
-//        } else {
-//            throw new IllegalStateException();
-//        }
-        return min;
+        return data[min12].compareTo(data[min34]) < 0 ? min12 : min34;
     }
 
     private int indexOfLargestChildOrGrandchild(int index) {
         int end = end();
-        int min = -1;
         int start = index * 4;
-        if (index * 4 + 3 < end) {
+        int max12 = -1;
+        int max34 = -1;
+        if (start + 3 < end) {
             // 4 grand children
-            // TODO remove ternary operator!
-            int minG12 = data[start].compareTo(data[start + 1]) <= 0 ? start + 1 : start;
-            int minG34 = data[start + 2].compareTo(data[start + 3]) <= 0 ? start + 3 : start + 2;
-            min = data[minG12].compareTo(data[minG34]) > 0 ? minG12 : minG34;
-        } else if (index * 4 + 2 < end) {
+            max12 = data[start].compareTo(data[start + 1]) > 0 ? start : start + 1;
+            max34 = data[start + 2].compareTo(data[start + 3]) > 0 ? start + 2 : start + 3;
+        } else if (start + 2 < end) {
             // 3 grand children
-            int minG12 = data[start].compareTo(data[start + 1]) <= 0 ? start + 1 : start;
-            min = data[minG12].compareTo(data[start + 2]) > 0 ? minG12 : start + 2;
-        } else if (index * 4 + 1 < end) {
+            max12 = data[start].compareTo(data[start + 1]) > 0 ? start : start + 1;
+            max34 = start + 2;
+        } else if (start + 1 < end) {
             // 2 grand children + 1 children
-            int minG12 = data[start].compareTo(data[start + 1]) <= 0 ? start + 1 : start;
-            int startC = index * 2;
-            min = data[minG12].compareTo(data[startC + 1]) > 0 ? minG12 : startC + 1;
-        } else if (index * 4 < end) {
+            max12 = data[start].compareTo(data[start + 1]) > 0 ? start : start + 1;
+            max34 = index * 2 + 1;
+        } else if (start < end) {
             // 1 grand child + 1 child
-            int startC = index * 2;
-            min = data[start].compareTo(data[startC + 1]) > 0 ? start : startC + 1;
+            max12 = start;
+            max34 = index * 2 + 1;
         } else if (index * 2 + 1 < end) {
             // 2 children
-            int startC = index * 2;
-            min = data[startC].compareTo(data[startC + 1]) > 0 ? startC : startC + 1;
-        } else if (index * 2 < end) {
-            // 1 child
-            min = index * 2;
+            max12 = index * 2;
+            max34 = max12 + 1;
         } else {
-            throw new IllegalStateException();
+            // 1 child
+            return index * 2;
         }
-        return min;
+        return data[max12].compareTo(data[max34]) > 0 ? max12 : max34;
     }
 
     private void pushDown(int m) {
@@ -202,10 +130,10 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
                             swap(m, parent(m));
                         }
                     } else {
-                        break;
+                        return;
                     }
                 } else {
-                    break;
+                    return;
                 }
             } else {
                 m = indexOfLargestChildOrGrandchild(i);
@@ -216,10 +144,10 @@ public class MinMaxHeapZ<T extends Comparable<T>> implements MinMaxHeapI<T> {
                             swap(m, parent(m));
                         }
                     } else {
-                        break;
+                        return;
                     }
                 } else {
-                    break;
+                    return;
                 }
             }
         }
