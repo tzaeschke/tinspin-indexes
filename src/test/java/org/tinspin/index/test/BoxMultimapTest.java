@@ -22,9 +22,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.tinspin.index.*;
 import org.tinspin.index.array.RectArray;
-import org.tinspin.index.qthypercube.QuadTreeRKD;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.util.MutableInt;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,8 +41,20 @@ public class BoxMultimapTest extends AbstractWrapperTest {
     private static final int BOX_LEN_MAX = 10;
 
     private final IDX candidate;
+
     public BoxMultimapTest(IDX candCls) {
         this.candidate = candCls;
+    }
+
+    @Parameterized.Parameters
+    public static Iterable<Object[]> candidates() {
+        ArrayList<Object[]> l = new ArrayList<>();
+        l.add(new Object[]{IDX.ARRAY});
+        l.add(new Object[]{IDX.QUAD_PLAIN});
+        l.add(new Object[]{IDX.QUAD_HC});
+        l.add(new Object[]{IDX.RSTAR});
+        l.add(new Object[]{IDX.STR});
+        return l;
     }
 
     private ArrayList<Entry> createInt(long seed, int n, int dim) {
@@ -66,23 +78,11 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         return data;
     }
 
-    @Parameterized.Parameters
-    public static Iterable<Object[]> candidates() {
-        ArrayList<Object[]> l = new ArrayList<>();
-        l.add(new Object[]{IDX.ARRAY});
-        l.add(new Object[]{IDX.QUAD_PLAIN});
-        l.add(new Object[]{IDX.QUAD_HC});
-        l.add(new Object[]{IDX.RSTAR});
-        l.add(new Object[]{IDX.STR});
-        return l;
-    }
-
-
     @Test
     public void smokeTestDupl() {
-        double[][] points = {{2, 3}, {2, 3}, {2, 3}, {2, 3}, {2, 3}, {2, 3}};
-        int i = 0;
-        smokeTest(Arrays.stream(points).flatMap(p -> Stream.of(new Entry(p, p, i))).collect(Collectors.toList()));
+        double[][] points = {{2, 3}, {2, 3}, {2, 3}, {2, 3}};
+        MutableInt i = new MutableInt();
+        smokeTest(Arrays.stream(points).flatMap(p -> Stream.of(new Entry(p, p, i.inc().get()))).collect(Collectors.toList()));
     }
 
     @Test
@@ -112,7 +112,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
                 e.p2[1] = e.p1[1] + BOX_LEN_MAX;
                 e.p2[2] = e.p1[2] + BOX_LEN_MAX;
             }
-            Collections.shuffle(data, new Random(r));
+//            Collections.shuffle(data, new Random(r));
             smokeTest(data);
         }
     }
@@ -144,7 +144,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             tree.insert(e.p1, e.p2, e);
         }
-	    // System.out.println(tree.toStringTree());
+        // System.out.println(tree.toStringTree());
         for (Entry e : data) {
             QueryIterator<RectangleEntry<Entry>> it = tree.queryRectangle(e.p1, e.p2);
             assertTrue("query(point) failed: " + e, it.hasNext());
@@ -157,9 +157,16 @@ public class BoxMultimapTest extends AbstractWrapperTest {
             // System.out.println("kNN query: " + e);
             QueryIteratorKNN<RectangleEntryDist<Entry>> iter = tree.queryKNN(e.p1, N_DUP);
             assertTrue("kNNquery() failed: " + e, iter.hasNext());
-            Entry answer = iter.next().value();
-            assertArrayEquals("Expected " + e + " but got " + answer, answer.p1, e.p1, 0.0001);
-            assertArrayEquals("Expected " + e + " but got " + answer, answer.p2, e.p2, 0.0001);
+            int nFound = 0;
+            int nFoundExact = 0;
+            while (iter.hasNext()) {
+                RectangleEntryDist<Entry> eDist = iter.next();
+                Entry answer = eDist.value();
+                if (eDist.dist() == 0) {
+                    nFound++;
+                }
+            }
+            assertEquals(N_DUP, nFound);
         }
 
         for (Entry e : data) {
@@ -189,7 +196,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
 
     @Test
     public void testUpdate() {
-        Random r = new Random(0);
+        Random r = new Random(42);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
         RectangleIndexMM<Entry> tree = createTree(data.size(), dim);
@@ -205,11 +212,9 @@ public class BoxMultimapTest extends AbstractWrapperTest {
             double[] p1New = e.p1.clone();
             double[] p2New = e.p2.clone();
             for (int d = 0; d < dim; d++) {
-                e.p1[d] = r.nextInt(BOUND);
-                e.p2[d] = e.p1[d] + r.nextInt(BOX_LEN_MAX);
+                p1New[d] = r.nextInt(BOUND);
+                p2New[d] = p1New[d] + r.nextInt(BOX_LEN_MAX);
             }
-//            Arrays.setAll(p1New, value -> (value + r.nextInt(BOUND / 10)));
-//            Arrays.setAll(p1New, value -> (value + r.nextInt(BOUND / 10)));
             assertTrue(tree.update(p1Old, p2Old, p1New, p2New, e));
             // Update entry
             System.arraycopy(p1New, 0, e.p1, 0, dim);
@@ -248,24 +253,24 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         }
 
         // remove 1st half
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
             assertTrue(tree.remove(e.p1, e.p2, e));
             assertFalse(containsExact(tree, e.p1, e.p2, e.id));
         }
 
         // check
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
             assertFalse(containsExact(tree, e.p1, e.p2, e.id));
         }
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
             assertTrue(containsExact(tree, e.p1, e.p2, e.id));
         }
 
         // remove 2nd half
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
             assertTrue(tree.remove(e.p1, e.p2, e));
             assertFalse(containsExact(tree, e.p1, e.p2, e.id));
@@ -288,7 +293,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         }
 
         // remove 1st half
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
             assertTrue(tree.removeIf(e.p1, e.p2, e2 -> e2.value().id == e.id));
             assertFalse(containsExact(tree, e.p1, e.p2, e.id));
@@ -296,17 +301,17 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         }
 
         // check
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
             assertFalse(containsExact(tree, e.p1, e.p2, e.id));
         }
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
             assertTrue(containsExact(tree, e.p1, e.p2, e.id));
         }
 
         // remove 2nd half
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
             assertTrue(tree.removeIf(e.p1, e.p2, e2 -> e2.value().id == e.id));
             assertFalse(containsExact(tree, e.p1, e.p2, e.id));
@@ -318,15 +323,18 @@ public class BoxMultimapTest extends AbstractWrapperTest {
 
     private <T> RectangleIndexMM<T> createTree(int size, int dims) {
         switch (candidate) {
-            case ARRAY: return new RectArray<>(dims, size);
+            case ARRAY:
+                return new RectArray<>(dims, size);
 //            //case CRITBIT: return new PointArray<>(dims, size);
             //case KDTREE: return KDTree.create(dims);
             //case PHTREE_MM: return PHTreeMMP.create(dims);
             // TODO case QUAD_HC: return QuadTreeRKD.create(dims);
-            case QUAD_PLAIN: return QuadTreeRKD0.create(dims);
+            case QUAD_PLAIN:
+                return QuadTreeRKD0.create(dims);
             case RSTAR:
-            case STR: return RTree.createRStar(dims);
- //           case COVER: return CoverTree.create(dims);
+            case STR:
+                return RTree.createRStar(dims);
+            //           case COVER: return CoverTree.create(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());
         }

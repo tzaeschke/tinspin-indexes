@@ -41,8 +41,7 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
     private double[] center;
     private double currentDistance;
 
-    QIteratorKnn(QNode<T> root, int minResults, double[] center,
-                 PointDistanceFunction distFn, Predicate<PointEntry<T>> filterFn) {
+    QIteratorKnn(QNode<T> root, int minResults, double[] center, PointDistanceFunction distFn, Predicate<PointEntry<T>> filterFn) {
         this.filterFn = filterFn;
         this.distFn = distFn;
         this.root = root;

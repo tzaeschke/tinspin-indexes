@@ -18,6 +18,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	private final double[][] phc;
 	private final int dims;
 	private int N;
+	private int size;
 	private final RectangleEntry<T>[] values;
 	private int insPos = 0; 
 
@@ -31,6 +32,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	@SuppressWarnings("unchecked")
 	public RectArray(int dims, int size) {
 		this.N = size;
+		this.size = 0;
 		this.dims = dims;
 		phc = new double[2*N][dims];
 		values = new RectangleEntry[N];
@@ -43,6 +45,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		System.arraycopy(upper, 0, phc[insPos*2+1], 0, dims);
 		values[insPos] = new KnnEntry<>(lower, upper, value, -1);
 		insPos++;
+		size++;
 	}
 
 
@@ -53,6 +56,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 					&& eq(phc[(i*2)+1], upper)) {
 				phc[i*2] = null;
 				phc[(i*2)+1] = null;
+				size--;
 				return values[i].value();
 			}
 		}
@@ -71,6 +75,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 					&& eq(phc[(i*2)+1], upper) && condition.test(values[i])) {
 				phc[i*2] = null;
 				phc[(i*2)+1] = null;
+				size--;
 				return true;
 			}
 		}
@@ -127,9 +132,9 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	public QueryIterator<RectangleEntry<T>> queryRectangle(double[] lower, double[] upper) {
 		return new QueryIteratorWrapper<>(lower, upper, (low, upp) -> {
 			ArrayList<RectangleEntry<T>> result = new ArrayList<>();
-			for (int j = 0; j < N; j++) {
-				if (eq(phc[j*2], low) && eq(phc[j*2+1], upp)) {
-					result.add(values[j]);
+			for (int i = 0; i < N; i++) {
+				if (phc[i*2] != null && eq(phc[i*2], low) && eq(phc[i*2+1], upp)) {
+					result.add(values[i]);
 				}
 			}
 			return result.iterator();
@@ -311,7 +316,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	@Override
 	public int size() {
-		return N;
+		return size;
 	}
 
 	@Override
@@ -323,6 +328,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 			phc[i] = null;
 		}
 		N = 0;
+		size = 0;
 	}
 
 	@Override

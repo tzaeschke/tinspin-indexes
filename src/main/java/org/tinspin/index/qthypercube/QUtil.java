@@ -113,6 +113,7 @@ public class QUtil {
 		return true;
 	}
 
+	@Deprecated // Not really, I guess it's ok for adjustRoot()
 	public static double distance(double[] p1, double[] p2) {
 		double dist = 0;
 		for (int i = 0; i < p1.length; i++) {
@@ -121,32 +122,33 @@ public class QUtil {
 		}
 		return Math.sqrt(dist);
 	}
+
+	// TODO remove
+//	/**
+//	 * Calculates distance to center point of rectangle.
+//	 * @param p point
+//	 * @param rMin rectangle min
+//	 * @param rMax rectangle max
+//	 * @return distance to center point
+//	 */
+//	public static double distToRectCenter(double[] p, double[] rMin, double[] rMax) {
+//		double dist = 0;
+//		for (int i = 0; i < p.length; i++) {
+//			double d = (rMin[i]+rMax[i])/2. - p[i];
+//			dist += d * d;
+//		}
+//		return Math.sqrt(dist);
+//	}
 	
-	/**
-	 * Calculates distance to center point of rectangle.
-	 * @param p point
-	 * @param rMin rectangle min
-	 * @param rMax rectangle max
-	 * @return distance to center point
-	 */
-	public static double distToRectCenter(double[] p, double[] rMin, double[] rMax) {
-		double dist = 0;
-		for (int i = 0; i < p.length; i++) {
-			double d = (rMin[i]+rMax[i])/2. - p[i];
-			dist += d * d;
-		}
-		return Math.sqrt(dist);
-	}
-	
-	/**
-	 * Calculates distance to center point of rectangle.
-	 * @param p point
-	 * @param e rectangle
-	 * @return distance to center point
-	 */
-	public static double distToRectCenter(double[] p, QREntry<?> e) {
-		return distToRectCenter(p, e.lower(), e.upper());
-	}
+//	/**
+//	 * Calculates distance to center point of rectangle.
+//	 * @param p point
+//	 * @param e rectangle
+//	 * @return distance to center point
+//	 */
+//	public static double distToRectCenter(double[] p, QREntry<?> e) {
+//		return distToRectCenter(p, e.lower(), e.upper());
+//	}
 	
 	/**
 	 * Calculates distance to the edge of rectangle.
@@ -155,6 +157,7 @@ public class QUtil {
 	 * @param rMax rectangle max
 	 * @return distance to edge
 	 */
+	@Deprecated
 	static double distToRectEdge(double[] center, double[] rLower, double[] rUpper) {
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {
@@ -175,6 +178,7 @@ public class QUtil {
 	 * @param e rectangle
 	 * @return distance to edge point
 	 */
+	@Deprecated
 	public static double distToRectEdge(double[] p, QREntry<?> e) {
 		return distToRectEdge(p, e.lower(), e.upper());
 	}
@@ -199,5 +203,4 @@ public class QUtil {
 		}
 		return distFn.dist(dist, point);
 	}
-
 }

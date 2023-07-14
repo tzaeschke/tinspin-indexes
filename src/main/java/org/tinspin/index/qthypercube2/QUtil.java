@@ -56,6 +56,7 @@ public class QUtil {
 		return isPointEqual(p1L, p2L) && isPointEqual(p1U, p2U);
 	}
 
+	// TODO remove
 //	public static <T> boolean isRectEqual(QREntry<T> e, double[] keyL, double[] keyU) {
 //		return isRectEqual(e.lower(), e.upper(), keyL, keyU);
 //	}
@@ -113,6 +114,7 @@ public class QUtil {
 		return true;
 	}
 
+	// TODO remove
 //	public static double distance(double[] p1, double[] p2) {
 //		double dist = 0;
 //		for (int i = 0; i < p1.length; i++) {
@@ -197,7 +199,6 @@ public class QUtil {
 			}
 			dist[i] = d;
 		}
-		return distFn.dist(point, dist);
+		return distFn.dist(dist, point);
 	}
-
 }

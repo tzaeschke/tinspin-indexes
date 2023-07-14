@@ -35,8 +35,9 @@ public class MutableInt {
         this.i = i;
     }
 
-    public void inc() {
+    public MutableInt inc() {
         ++i;
+        return this;
     }
 
     public String toString() {
