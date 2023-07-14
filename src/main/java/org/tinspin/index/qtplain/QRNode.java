@@ -194,7 +194,7 @@ public class QRNode<T> {
 
 	QREntry<T> update(QRNode<T> parent, double[] keyOldL, double[] keyOldU,
 			double[] keyNewL, double[] keyNewU, int maxNodeSize,
-			boolean[] requiresReinsert, int currentDepth, int maxDepth) {
+			boolean[] requiresReinsert, int currentDepth, int maxDepth, Predicate<T> pred) {
 		if (subs != null) {
 			QRNode<T> sub = findSubNode(keyOldL, keyOldU);
 			if (sub != this) {
@@ -202,7 +202,7 @@ public class QRNode<T> {
 					return null;
 				}
 				QREntry<T> ret = sub.update(this, keyOldL, keyOldU, keyNewL, keyNewU, 
-						maxNodeSize, requiresReinsert, currentDepth+1, maxDepth);
+						maxNodeSize, requiresReinsert, currentDepth+1, maxDepth, pred);
 				//Divide by EPS to ensure that we do not reinsert to low
 				if (ret != null && requiresReinsert[0] && 
 						QUtil.isRectEnclosed(ret.lower(), ret.upper(), 
@@ -223,7 +223,7 @@ public class QRNode<T> {
 		}
 		for (int i = 0; i < values.size(); i++) {
 			QREntry<T> e = values.get(i);
-			if (QUtil.isRectEqual(e, keyOldL, keyOldU)) {
+			if (QUtil.isRectEqual(e, keyOldL, keyOldU) && pred.test(e.value())) {
 				values.remove(i);
 				e.setKey(keyNewL, keyNewU);
 				//Divide by EPS to ensure that we do not reinsert to low
@@ -404,6 +404,14 @@ public class QRNode<T> {
 				}
 			}
 		}
+	}
+
+	boolean hasValues() {
+		return values != null;
+	}
+
+	boolean hasChildNodes() {
+		return subs != null;
 	}
 
 	ArrayList<QRNode<T>> getChildNodes() {

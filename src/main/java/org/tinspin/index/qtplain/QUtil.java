@@ -18,6 +18,7 @@
 package org.tinspin.index.qtplain;
 
 import org.tinspin.index.PointDistanceFunction;
+import org.tinspin.index.RectangleDistanceFunction;
 
 public class QUtil {
 	
@@ -210,4 +211,17 @@ public class QUtil {
 		return distFn.dist(dist, point);
 	}
 
+	static double distToRectNodeEDGE(double[] point, double[] nodeCenter, double nodeRadius) {
+		double[] dist = new double[point.length];
+		for (int i = 0; i < point.length; i++) {
+			double d = point[i];
+			if (point[i] > nodeCenter[i] + nodeRadius) {
+				d = nodeCenter[i] + nodeRadius;
+			} else if (point[i] < nodeCenter[i] - nodeRadius) {
+				d = nodeCenter[i] - nodeRadius;
+			}
+			dist[i] = d;
+		}
+		return PointDistanceFunction.L2.dist(point, dist);
+	}
 }

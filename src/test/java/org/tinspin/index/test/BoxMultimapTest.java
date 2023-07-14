@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.tinspin.index.*;
 import org.tinspin.index.array.RectArray;
+import org.tinspin.index.qthypercube.QuadTreeRKD;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.RTree;
 import org.tinspin.index.util.MutableInt;
@@ -158,13 +159,9 @@ public class BoxMultimapTest extends AbstractWrapperTest {
             QueryIteratorKNN<RectangleEntryDist<Entry>> iter = tree.queryKNN(e.p1, N_DUP);
             assertTrue("kNNquery() failed: " + e, iter.hasNext());
             int nFound = 0;
-            int nFoundExact = 0;
             while (iter.hasNext()) {
                 RectangleEntryDist<Entry> eDist = iter.next();
-                Entry answer = eDist.value();
-                if (eDist.dist() == 0) {
-                    nFound++;
-                }
+                nFound += eDist.dist() == 0 ? 1 : 0;
             }
             assertEquals(N_DUP, nFound);
         }
@@ -328,7 +325,8 @@ public class BoxMultimapTest extends AbstractWrapperTest {
 //            //case CRITBIT: return new PointArray<>(dims, size);
             //case KDTREE: return KDTree.create(dims);
             //case PHTREE_MM: return PHTreeMMP.create(dims);
-            // TODO case QUAD_HC: return QuadTreeRKD.create(dims);
+            case QUAD_HC:
+                return QuadTreeRKD.create(dims);
             case QUAD_PLAIN:
                 return QuadTreeRKD0.create(dims);
             case RSTAR:

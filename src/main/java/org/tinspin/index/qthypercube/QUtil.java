@@ -152,20 +152,20 @@ public class QUtil {
 	
 	/**
 	 * Calculates distance to the edge of rectangle.
-	 * @param p point
-	 * @param rMin rectangle min
-	 * @param rMax rectangle max
+	 * @param point point
+	 * @param rLower rectangle min
+	 * @param rUpper rectangle max
 	 * @return distance to edge
 	 */
 	@Deprecated
-	static double distToRectEdge(double[] center, double[] rLower, double[] rUpper) {
+	static double distToRectEdge(double[] point, double[] rLower, double[] rUpper) {
 		double dist = 0;
-		for (int i = 0; i < center.length; i++) {
+		for (int i = 0; i < point.length; i++) {
 			double d = 0;
-			if (center[i] > rUpper[i]) {
-				d = center[i] - rUpper[i];
-			} else if (center[i] < rLower[i]) {
-				d = rLower[i] - center[i];
+			if (point[i] > rUpper[i]) {
+				d = point[i] - rUpper[i];
+			} else if (point[i] < rLower[i]) {
+				d = rLower[i] - point[i];
 			}
 			dist += d*d;
 		}
@@ -202,5 +202,19 @@ public class QUtil {
 			dist[i] = d;
 		}
 		return distFn.dist(dist, point);
+	}
+
+	static double distToRectNodeEDGE(double[] point, double[] nodeCenter, double nodeRadius) {
+		double[] dist = new double[point.length];
+		for (int i = 0; i < point.length; i++) {
+			double d = point[i];
+			if (point[i] > nodeCenter[i] + nodeRadius) {
+				d = nodeCenter[i] + nodeRadius;
+			} else if (point[i] < nodeCenter[i] - nodeRadius) {
+				d = nodeCenter[i] - nodeRadius;
+			}
+			dist[i] = d;
+		}
+		return PointDistanceFunction.L2.dist(point, dist);
 	}
 }
