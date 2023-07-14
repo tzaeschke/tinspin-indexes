@@ -6,25 +6,19 @@
  */
 package org.tinspin.index.array;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.RectangleEntry;
-import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.RectangleIndex;
-import org.tinspin.index.Stats;
+import org.tinspin.index.*;
+import org.tinspin.index.util.QueryIteratorWrapper;
 
-public class RectArray<T> implements RectangleIndex<T> {
+public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	private final double[][] phc;
 	private final int dims;
 	private int N;
-	private RectangleEntry<T>[] values;
+	private final RectangleEntry<T>[] values;
 	private int insPos = 0; 
 
 	/**
@@ -51,14 +45,95 @@ public class RectArray<T> implements RectangleIndex<T> {
 		insPos++;
 	}
 
+
+	@Override
+	public T remove(double[] lower, double[] upper) {
+		for (int i = 0; i < N; i++) {
+			if (phc[i*2] != null && eq(phc[i*2], lower)
+					&& eq(phc[(i*2)+1], upper)) {
+				phc[i*2] = null;
+				phc[(i*2)+1] = null;
+				return values[i].value();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public boolean remove(double[] lower, double[] upper, T value) {
+		return removeIf(lower, upper, e -> Objects.equals(value, e.value()));
+	}
+
+	@Override
+	public boolean removeIf(double[] lower, double[] upper, Predicate<RectangleEntry<T>> condition) {
+		for (int i = 0; i < N; i++) {
+			if (phc[i*2] != null && eq(phc[i*2], lower)
+					&& eq(phc[(i*2)+1], upper) && condition.test(values[i])) {
+				phc[i*2] = null;
+				phc[(i*2)+1] = null;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public T update(double[] lo1, double[] up1, double[] lo2, double[] up2) {
+		for (int i = 0; i < N; i++) {
+			if (eq(phc[i*2], lo1) && eq(phc[(i*2)+1], up1)) {
+				System.arraycopy(lo2, 0, phc[i*2], 0, dims);
+				System.arraycopy(up2, 0, phc[(i*2)+1], 0, dims);
+				return values[i].value();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public boolean update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value) {
+		for (int i = 0; i < N; i++) {
+			if (eq(phc[i*2], lo1) && eq(phc[(i*2)+1], up1)) {
+				if (eq(phc[i*2], lo1) && eq(phc[(i*2)+1], up1) && Objects.equals(value, values[i].value())) {
+					System.arraycopy(lo2, 0, phc[i * 2], 0, dims);
+					System.arraycopy(up2, 0, phc[(i * 2) + 1], 0, dims);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public T queryExact(double[] lower, double[] upper) {
-		for (int j = 0; j < N; j++) { 
+		for (int j = 0; j < N; j++) {
 			if (eq(phc[j*2], lower) && eq(phc[j*2+1], upper)) {
 				return values[j].value();
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public boolean contains(double[] lower, double[] upper, T value) {
+		for (int i = 0; i < N; i++) {
+			if (eq(phc[i*2], lower) && eq(phc[i*2+1], upper) && Objects.equals(value, values[i].value())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public QueryIterator<RectangleEntry<T>> queryRectangle(double[] lower, double[] upper) {
+		return new QueryIteratorWrapper<>(lower, upper, (low, upp) -> {
+			ArrayList<RectangleEntry<T>> result = new ArrayList<>();
+			for (int j = 0; j < N; j++) {
+				if (eq(phc[j*2], low) && eq(phc[j*2+1], upp)) {
+					result.add(values[j]);
+				}
+			}
+			return result.iterator();
+		});
 	}
 
 	private boolean eq(double[] a, double[] b) {
@@ -89,38 +164,21 @@ public class RectArray<T> implements RectangleIndex<T> {
 	}
 
 	@Override
-	public AQueryIterator queryIntersect(double[] min, double[] max) {
-		return new AQueryIterator(min, max);
-	}
-
-	private class AQueryIterator implements QueryIterator<RectangleEntry<T>> {
-
-		private Iterator<RectangleEntry<T>> it;
-
-		public AQueryIterator(double[] min, double[] max) {
-			reset(min, max);
-		}
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public RectangleEntry<T> next() {
-			return it.next();
-		}
-
-		@Override
-		public void reset(double[] min, double[] max) {
-			ArrayList<RectangleEntry<T>> results = new ArrayList<>(); 
-			for (int i = 0; i < N; i++) { 
-				if (leq(phc[i*2], max) && geq(phc[i*2+1], min)) {
+	public QueryIterator<RectangleEntry<T>> queryIntersect(double[] min, double[] max) {
+		return new QueryIteratorWrapper<>(min, max, (lower, upper) -> {
+			ArrayList<RectangleEntry<T>> results = new ArrayList<>();
+			for (int i = 0; i < N; i++) {
+				if (leq(phc[i*2], upper) && geq(phc[i*2+1], lower)) {
 					results.add(values[i]);
 				}
 			}
-			it = results.iterator();
-		}
+			return results.iterator();
+		});
+	}
+
+	@Override
+	public RectangleEntryDist<T> query1NN(double[] center) {
+		return queryKNN(center, 1).next();
 	}
 
 	@Override
@@ -131,8 +189,13 @@ public class RectArray<T> implements RectangleIndex<T> {
 	}
 
 	@Override
-	public AQueryIteratorKNN queryKNN(double[] center, int k) {
+	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k) {
 		return new AQueryIteratorKNN(center, k);
+	}
+
+	@Override
+	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k, RectangleDistanceFunction distFn) {
+		return null;
 	}
 
 
@@ -195,12 +258,7 @@ public class RectArray<T> implements RectangleIndex<T> {
 		return Math.sqrt(dist);
 	}
 
-	private final Comparator<KnnEntry<T>> COMP = new Comparator<KnnEntry<T>>() {
-		@Override
-		public int compare(KnnEntry<T> o1, KnnEntry<T> o2) {
-			return o1.compareTo(o2);
-		}
-	};
+	private final Comparator<KnnEntry<T>> COMP = KnnEntry::compareTo;
 
 	private static class KnnEntry<T> implements Comparable<KnnEntry<T>>, RectangleEntryDist<T> {
 		private final double[] min;
@@ -240,37 +298,6 @@ public class RectArray<T> implements RectangleIndex<T> {
 			return dist;
 		}
 	}
-
-	@Override
-	public T update(double[] lo1, double[] up1, double[] lo2, double[] up2) {
-		for (int i = 0; i < N; i++) { 
-			if (eq(phc[i*2], lo1) && eq(phc[(i*2)+1], up1)) {
-				System.arraycopy(lo2, 0, phc[i*2], 0, dims);
-				System.arraycopy(up2, 0, phc[(i*2)+1], 0, dims);
-				return values[i].value();
-			}
-		}
-		return null;
-	}
-
-
-
-
-
-	@Override
-	public T remove(double[] lower, double[] upper) {
-		for (int i = 0; i < N; i++) { 
-			if (phc[i*2] != null && eq(phc[i*2], lower) 
-					&& eq(phc[(i*2)+1], upper)) {
-				phc[i*2] = null;
-				phc[(i*2)+1] = null;
-				T val = values[i].value();
-				return val;
-			}
-		}
-		return null;
-	}
-
 
 	@Override
 	public String toString() {
@@ -318,8 +345,7 @@ public class RectArray<T> implements RectangleIndex<T> {
 	public String toStringTree() {
 		StringBuilder s = new StringBuilder();
 		for (int i = 0; i < N; i++) {
-			s.append(Arrays.toString(phc[i*2]) + "/" + Arrays.toString(phc[i*2+1]) + 
-					" v=" + values[i]);
+			s.append(Arrays.toString(phc[i * 2])).append("/").append(Arrays.toString(phc[i * 2 + 1])).append(" v=").append(values[i]);
 		}
 		return s.toString();
 	}

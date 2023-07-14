@@ -17,23 +17,29 @@ public abstract class TestRectangle extends AbstractTest {
 	protected TestRectangle(Random R, TestStats S) {
 		super(R, S);
 	}
-	
+
 	@Override
 	public final double[][] generateUpdates(int n, double[] data, double[][] ups) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public final double[][] generateUpdates(int n, double[] data, double[][] ups, int[] ids) {
 		double maxD = maxUpdateDistance();
 		if (ups == null) {
 			ups = new double[n*4][DIM]; //2 points, 2 versions
 		}
 		HashSet<Integer> idxSet = new HashSet<>(n);
 		for (int i = 0; i < ups.length; ) {
-			double[] lo1 = ups[i++];
-			double[] up1 = ups[i++];
-			double[] lo2 = ups[i++];
-			double[] up2 = ups[i++];
 			int pos = R.nextInt(getN());
 			while (idxSet.contains(pos)) {
 				pos = R.nextInt(getN());
 			}
+			ids[i >> 2] = pos;
+			double[] lo1 = ups[i++];
+			double[] up1 = ups[i++];
+			double[] lo2 = ups[i++];
+			double[] up2 = ups[i++];
 			idxSet.add(pos);
 			for (int d = 0; d < DIM; d++) {
 				lo1[d] = data[pos*DIM*2+d];

@@ -2,9 +2,11 @@ API
 ===
 - Rename Indexes to PointMap/PointMultimap BoxMax/BoxMultimap; deprecate PointIndex
 - Remove Comparators in entries!
+- Unify (Dist)Entries
 
 Other
 =====
+- RTree, compare 1NN with kNN query iterator, 1NN seems outdated.
 - Fix TODOs in RTree
 - quadtrees: implement/benchmark KnnHS
 - RTree implement improved KnnHS with minMaxHeap

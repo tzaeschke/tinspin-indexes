@@ -81,7 +81,7 @@ public class PointIndexMMCandidate extends Candidate {
 				double[] buf = new double[dims];
 				System.arraycopy(data, pos, buf, 0, dims);
 				pos += dims;
-				entries[i] = new Entry<Integer>(buf, buf, i);
+				entries[i] = new Entry<>(buf, buf, i);
 			}
 			PointIndexMMWrapper<Integer> rt = (PointIndexMMWrapper<Integer>) idx;
 			rt.load(entries);
@@ -109,7 +109,6 @@ public class PointIndexMMCandidate extends Candidate {
 			if (idx.contains(queries[i], ids[i])) {
 				n++;
 			}
-			//log("q=" + Arrays.toString(q));
 		}
 		return n;
 	}
@@ -148,8 +147,6 @@ public class PointIndexMMCandidate extends Candidate {
 			it.next();
 			n++;
 		}
-//		int n = ((PhTree7)idx).queryAll(min2, max2).size();
-		//log("q=" + Arrays.toString(q));
 		return n;
 	}
 	

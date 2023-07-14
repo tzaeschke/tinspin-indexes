@@ -6,16 +6,9 @@
  */
 package org.tinspin.index.test.util;
 
-import java.util.Arrays;
-
 import ch.ethz.globis.tinspin.TestStats;
 import ch.ethz.globis.tinspin.wrappers.Candidate;
-import org.tinspin.index.Index;
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.RectangleEntry;
-import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.*;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.phtree.PHTreeR;
 import org.tinspin.index.qthypercube.QuadTreeRKD;
@@ -24,47 +17,49 @@ import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
 import org.tinspin.index.test.util.TestInstances.IDX;
 
+import java.util.Arrays;
 
-public class RectangleIndexCandidate extends Candidate {
-	
-	private final RectangleIndex<Object> idx;
+
+public class RectangleIndexMMCandidate extends Candidate {
+
+	private final RectangleIndexMM<Integer> idx;
 	private final int dims;
 	private final int N;
 	private double[] data;
-	private static final Object O = new Object();
-	private QueryIterator<RectangleEntry<Object>> query = null;
-	private QueryIteratorKNN<RectangleEntryDist<Object>> queryKnn = null;
+	private QueryIterator<RectangleEntry<Integer>> query = null;
+	private QueryIteratorKNN<RectangleEntryDist<Integer>> queryKnn = null;
 	private final boolean bulkloadSTR;
 
-	public static RectangleIndexCandidate create(TestStats ts) {
-		return new RectangleIndexCandidate(createIndex(ts), ts);
+	public static RectangleIndexMMCandidate create(TestStats ts) {
+		return new RectangleIndexMMCandidate(createIndex(ts), ts);
 	}
 
-	private static <T> RectangleIndex<T> createIndex(TestStats s) {
+	private static <T> RectangleIndexMM<T> createIndex(TestStats s) {
 		int dims = s.cfgNDims;
 		int size = s.cfgNEntries;
-		switch ((TestInstances.IDX)s.INDEX) {
+		switch ((IDX)s.INDEX) {
 			case ARRAY: return new RectArray<>(dims, size);
-			case PHTREE: return PHTreeR.createPHTree(dims);
-			case QUAD_HC: return QuadTreeRKD.create(dims);
+			// case PHTREE: return PHTreeR.createPHTree(dims);
+			//case QUAD_HC: return QuadTreeRKD.create(dims);
 			case QUAD_PLAIN: return QuadTreeRKD0.create(dims);
 			case RSTAR:
 			case STR: return RTree.createRStar(dims);
 			default:
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException(s.INDEX.name());
 		}
 	}
 
 	/**
-	 * @param ri index 
+	 * @param ri index
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public RectangleIndexCandidate(RectangleIndex<?> ri, TestStats ts) {
+	public RectangleIndexMMCandidate(RectangleIndexMM<?> ri, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
-		this.idx = (RectangleIndex<Object>) ri;
-		this.bulkloadSTR = ts.INDEX.equals(TestInstances.IDX.STR);
+		this.idx = (RectangleIndexMM<Integer>) ri;
+		//this.index = ts.INDEX;
+		this.bulkloadSTR = ts.INDEX.equals(IDX.STR);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -72,7 +67,7 @@ public class RectangleIndexCandidate extends Candidate {
 	public void load(double[] data, int dims) {
 		this.data = data;
 		if (bulkloadSTR) {
-			Entry<Object>[] entries = new Entry[N];
+			Entry<Integer>[] entries = new Entry[N];
 			int pos = 0;
 			for (int i = 0; i < N; i++) {
 				double[] lo = new double[dims];
@@ -81,9 +76,9 @@ public class RectangleIndexCandidate extends Candidate {
 				pos += dims;
 				System.arraycopy(data, pos, hi, 0, dims);
 				pos += dims;
-				entries[i] = new Entry<Object>(lo, hi, O);
+				entries[i] = new Entry<>(lo, hi, i);
 			}
-			RTree<Object> rt = (RTree<Object>) idx;
+			RTree<Integer> rt = (RTree<Integer>) idx;
 			rt.load(entries);
 		} else {
 			int pos = 0;
@@ -94,7 +89,7 @@ public class RectangleIndexCandidate extends Candidate {
 				pos += dims;
 				System.arraycopy(data, pos, hi, 0, dims);
 				pos += dims;
-				idx.insert(lo, hi, O);
+				idx.insert(lo, hi, n);
 			}
 		}
 	}
@@ -105,11 +100,11 @@ public class RectangleIndexCandidate extends Candidate {
 	}
 
 	@Override
-	public int pointQuery(Object qA) {
+	public int pointQuery(Object qA, int[] ids) {
 		int n = 0;
-		double[][] dA = (double[][]) qA; 
-		for (int i = 0; i < dA.length; i+=2) {
-			if (idx.queryExact(dA[i], dA[i+1]) != null) {
+		double[][] queries = (double[][]) qA;
+		for (int i = 0; i < queries.length; i+=2) {
+			if (idx.contains(queries[i], queries[i+1], ids[i/2])) {
 				n++;
 			}
 		}
@@ -129,17 +124,17 @@ public class RectangleIndexCandidate extends Candidate {
 		for (int i = 0; i < N>>1; i++) {
 			System.arraycopy(data, i*dims*2, lo, 0, dims);
 			System.arraycopy(data, i*dims*2+dims, hi, 0, dims);
-			n += idx.remove(lo, hi) != null ? 1 : 0;
+			n += idx.remove(lo, hi, i) ? 1 : 0;
 			int i2 = N-i-1;
 			System.arraycopy(data, i2*dims*2, lo, 0, dims);
 			System.arraycopy(data, i2*dims*2+dims, hi, 0, dims);
-			n += idx.remove(lo, hi) != null? 1 : 0;
+			n += idx.remove(lo, hi, i2) ? 1 : 0;
 		}
 		if ((N%2) != 0) {
 			int i = (N>>1);
 			System.arraycopy(data, i*dims*2, lo, 0, dims);
 			System.arraycopy(data, i*dims*2+dims, hi, 0, dims);
-			n += idx.remove(lo, hi) != null ? 1 : 0;
+			n += idx.remove(lo, hi, i) ? 1 : 0;
 		}
 		return n;
 	}
@@ -173,12 +168,12 @@ public class RectangleIndexCandidate extends Candidate {
 		double ret = 0;
 		int i = 0;
 		while (queryKnn.hasNext() && i < k) {
-			RectangleEntryDist<Object> e = queryKnn.next();
+			RectangleEntryDist<Integer> e = queryKnn.next();
 			ret += e.dist();
 			i++;
 		}
 		if (i != k) {
-			throw new IllegalStateException();
+			throw new IllegalStateException("kNN: " + k + " != " + i);
 		}
 		return ret;
 	}
@@ -193,7 +188,7 @@ public class RectangleIndexCandidate extends Candidate {
 		data = null;
 	}
 
-	public Index<Object> getNative() {
+	public Index<Integer> getNative() {
 		return idx;
 	}
 
@@ -204,14 +199,15 @@ public class RectangleIndexCandidate extends Candidate {
 	}
 	
 	@Override
-	public int update(double[][] updateTable) {
+	public int update(double[][] updateTable, int[] ids) {
 		int n = 0;
 		for (int i = 0; i < updateTable.length; ) {
+			int id = ids[i >> 2];
 			double[] lo1 = updateTable[i++];
 			double[] up1 = updateTable[i++];
 			double[] lo2 = Arrays.copyOf(updateTable[i++], dims);
 			double[] up2 = Arrays.copyOf(updateTable[i++], dims);
-			if (idx.update(lo1, up1, lo2, up2) != null) {
+			if (idx.update(lo1, up1, lo2, up2, id)) {
 				n++;
 			}
 		}

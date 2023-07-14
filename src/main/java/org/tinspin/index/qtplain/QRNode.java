@@ -20,7 +20,9 @@ package org.tinspin.index.qtplain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.function.Predicate;
 
+import org.tinspin.index.RectangleEntry;
 import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
 
 /**
@@ -160,12 +162,12 @@ public class QRNode<T> {
 		return null;
 	}
 
-	QREntry<T> remove(QRNode<T> parent, double[] keyL, double[] keyU, int maxNodeSize) {
+	QREntry<T> remove(QRNode<T> parent, double[] keyL, double[] keyU, int maxNodeSize, Predicate<RectangleEntry<T>> condition) {
 		if (subs != null) {
 			QRNode<T> sub = findSubNode(keyL, keyU);
 			if (sub != this) {
 				if (sub != null) {
-					return sub.remove(this, keyL, keyU, maxNodeSize);
+					return sub.remove(this, keyL, keyU, maxNodeSize, condition);
 				}
 				return null;
 			}
@@ -177,7 +179,7 @@ public class QRNode<T> {
 		}
 		for (int i = 0; i < values.size(); i++) {
 			QREntry<T> e = values.get(i);
-			if (QUtil.isRectEqual(e, keyL, keyU)) {
+			if (QUtil.isRectEqual(e, keyL, keyU) && condition.test(e)) {
 				values.remove(i);
 				//TODO provide threshold for re-insert
 				//i.e. do not always merge.
@@ -299,12 +301,12 @@ public class QRNode<T> {
 		return radius;
 	}
 
-	QREntry<T> getExact(double[] keyL, double[] keyU) {
+	QREntry<T> getExact(double[] keyL, double[] keyU, Predicate<RectangleEntry<T>> condition) {
 		if (subs != null) {
 			QRNode<T> sub = findSubNode(keyL, keyU);
 			if (sub != this) {
 				if (sub != null) {
-					return sub.getExact(keyL, keyU);
+					return sub.getExact(keyL, keyU, condition);
 				}
 				return null;
 			}
@@ -316,7 +318,7 @@ public class QRNode<T> {
 		
 		for (int i = 0; i < values.size(); i++) {
 			QREntry<T> e = values.get(i);
-			if (QUtil.isRectEqual(e, keyL, keyU)) {
+			if (QUtil.isRectEqual(e, keyL, keyU) && condition.test(e)) {
 				return e;
 			}
 		}

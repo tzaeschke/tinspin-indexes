@@ -33,13 +33,14 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
     private final QNode<T> root;
     private final PointDistanceFunction distFn;
     private final Predicate<PointEntry<T>> filterFn;
-    MinMaxHeapZ<NodeDistT> queueN = MinMaxHeapZ.create((t1, t2) -> (int) (t1.dist - t2.dist));
-    MinMaxHeapZ<QEntryDist<T>> queueV = MinMaxHeapZ.create((t1, t2) -> (int) (t1.dist() - t2.dist()));
+    MinMaxHeapZ<NodeDistT> queueN = MinMaxHeapZ.create((t1, t2) -> Double.compare(t1.dist, t2.dist));
+    MinMaxHeapZ<QEntryDist<T>> queueV = MinMaxHeapZ.create((t1, t2) -> Double.compare(t1.dist(), t2.dist()));
     double maxNodeDist = Double.POSITIVE_INFINITY;
     private PointEntryDist<T> current;
     private int remaining;
     private double[] center;
     private double currentDistance;
+
     QIteratorKnn(QNode<T> root, int minResults, double[] center, PointDistanceFunction distFn, Predicate<PointEntry<T>> filterFn) {
         this.filterFn = filterFn;
         this.distFn = distFn;
@@ -51,9 +52,10 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
     public QueryIteratorKNN<PointEntryDist<T>> reset(double[] center, int minResults) {
         this.center = center;
         this.currentDistance = Double.MAX_VALUE;
-        remaining = minResults;
+        this.remaining = minResults;
+        this.maxNodeDist = Double.POSITIVE_INFINITY;
+        this.current = null;
         if (minResults <= 0 || root == null) {
-            this.current = null;
             return this;
         }
         queueN.clear();
@@ -128,8 +130,8 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
                     }
                 } else {
                     for (Object o : node.getEntries()) {
-                        QNode<T> subnode = (QNode<T>) o;
-                        if (subnode != null) {
+                        if (o instanceof QNode) {
+                            QNode<T> subnode = (QNode<T>) o;
                             double dist = distToRectNode(center, subnode.getCenter(), subnode.getRadius(), distFn);
                             if (dist <= maxNodeDist) {
                                 queueN.push(new NodeDistT(dist, subnode));

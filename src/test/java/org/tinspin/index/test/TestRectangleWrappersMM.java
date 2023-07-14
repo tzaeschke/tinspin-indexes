@@ -42,7 +42,7 @@ public class TestRectangleWrappersMM extends AbstractWrapperTest {
 		expectedCluster = createUnitTestStatsDupl(IDX.ARRAY, TST.CLUSTER_R, N, dims, 5.0, N_DUPL);
 		new TestRunner(expectedCluster).run();
 	}
-	
+
 	@Parameters
 	public static Iterable<Object[]> candidates() {
 		ArrayList<Object[]> l = new ArrayList<>();
@@ -65,7 +65,7 @@ public class TestRectangleWrappersMM extends AbstractWrapperTest {
 
 		check(expectedCube, ts, tr.getCandidate());
 	}
-	
+
 	@Test
 	@Parameters
     public void testCluster() {

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.qthypercube;
+package org.tinspin.index.qtplain;
 
 import org.tinspin.index.PointDistanceFunction;
 import org.tinspin.index.PointEntry;
@@ -26,7 +26,7 @@ import org.tinspin.index.util.MinMaxHeapZ;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-import static org.tinspin.index.qthypercube.QUtil.distToRectNode;
+import static org.tinspin.index.qtplain.QUtil.distToRectNode;
 
 public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
 
@@ -41,8 +41,7 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
     private double[] center;
     private double currentDistance;
 
-    QIteratorKnn(QNode<T> root, int minResults, double[] center,
-                 PointDistanceFunction distFn, Predicate<PointEntry<T>> filterFn) {
+    QIteratorKnn(QNode<T> root, int minResults, double[] center, PointDistanceFunction distFn, Predicate<PointEntry<T>> filterFn) {
         this.filterFn = filterFn;
         this.distFn = distFn;
         this.root = root;
@@ -131,11 +130,9 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
                     }
                 } else {
                     for (QNode<T> subnode : node.getChildNodes()) {
-                        if (subnode != null) {
-                            double dist = distToRectNode(center, subnode.getCenter(), subnode.getRadius(), distFn);
-                            if (dist <= maxNodeDist) {
-                                queueN.push(new NodeDistT(dist, subnode));
-                            }
+                        double dist = distToRectNode(center, subnode.getCenter(), subnode.getRadius(), distFn);
+                        if (dist <= maxNodeDist) {
+                            queueN.push(new NodeDistT(dist, subnode));
                         }
                     }
                 }

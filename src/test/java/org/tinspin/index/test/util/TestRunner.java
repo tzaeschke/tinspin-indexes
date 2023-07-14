@@ -223,7 +223,11 @@ public class TestRunner {
 		long t1 = timer();
 
 		if (ts.isRangeData) {
-			tree = RectangleIndexCandidate.create(ts);
+			if (ts.isMultimap) {
+				tree = RectangleIndexMMCandidate.create(ts);
+			} else {
+				tree = RectangleIndexCandidate.create(ts);
+			}
 		} else {
 			if (ts.isMultimap) {
 				tree = PointIndexMMCandidate.create(ts);

@@ -22,14 +22,14 @@ import org.tinspin.index.test.util.TestInstances.TST;
 public class TestPointWrappers extends AbstractWrapperTest {
 
 	private final IDX candidate;
-	
+
 	private static TestStats expectedCube = null;
 	private static TestStats expectedCluster = null;
-	
+
 	public TestPointWrappers(IDX candCls) {
 		this.candidate = candCls;
 	}
-	
+
 	@BeforeClass
 	public static void beforeClass() {
 		//init results
@@ -41,7 +41,7 @@ public class TestPointWrappers extends AbstractWrapperTest {
 		expectedCluster = createUnitTestStats(IDX.ARRAY, TST.CLUSTER_P, N, dims, 5.0);
 		new TestRunner(expectedCluster).run();
 	}
-	
+
 	@Parameters
 	public static Iterable<Object[]> candidates() {
 		ArrayList<Object[]> l = new ArrayList<>();
@@ -67,7 +67,7 @@ public class TestPointWrappers extends AbstractWrapperTest {
 
 		check(expectedCube, ts, tr.getCandidate());
 	}
-	
+
 	@Test
 	@Parameters
     public void testCluster() {
