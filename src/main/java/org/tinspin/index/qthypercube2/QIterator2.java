@@ -142,7 +142,7 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 			while (se.pos < se.len) {
 				if (se.isLeaf()) {
 					QEntry<T> e = (QEntry<T>) se.entries[(int) se.pos++];
-					if (e.enclosedBy(min, max)) {
+					if (QUtil.isPointEnclosed(e.point(), min, max)) {
 						next = e;
 						return;
 					}
@@ -160,7 +160,7 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 							se = stack.prepareAndPush(node, min, max);
 						} else {
 							QEntry<T> qe = (QEntry<T>) e;
-							if (qe.enclosedBy(min, max)) {
+							if (QUtil.isPointEnclosed(qe.point(), min, max)) {
 								next = qe;
 								return;
 							}

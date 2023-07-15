@@ -130,36 +130,20 @@ class QUtil {
 	}
 	
 	/**
-	 * Calculates distance to center point of rectangle.
-	 * @param p point
-	 * @param rMin rectangle min
-	 * @param rMax rectangle max
-	 * @return distance to center point
-	 */
-	public static double distToRectCenter(double[] p, double[] rMin, double[] rMax) {
-		double dist = 0;
-		for (int i = 0; i < p.length; i++) {
-			double d = (rMin[i]+rMax[i])/2. - p[i];
-			dist += d * d;
-		}
-		return Math.sqrt(dist);
-	}
-	
-	/**
 	 * Calculates distance to the edge of rectangle.
-	 * @param center point
+	 * @param point point
 	 * @param rLower rectangle min
 	 * @param rUpper rectangle max
 	 * @return distance to edge
 	 */
-	static double distToRectEdge(double[] center, double[] rLower, double[] rUpper) {
+	static double distToRectEdge(double[] point, double[] rLower, double[] rUpper) {
 		double dist = 0;
-		for (int i = 0; i < center.length; i++) {
+		for (int i = 0; i < point.length; i++) {
 			double d = 0;
-			if (center[i] > rUpper[i]) {
-				d = center[i] - rUpper[i];
-			} else if (center[i] < rLower[i]) {
-				d = rLower[i] - center[i];
+			if (point[i] > rUpper[i]) {
+				d = point[i] - rUpper[i];
+			} else if (point[i] < rLower[i]) {
+				d = rLower[i] - point[i];
 			}
 			dist += d*d;
 		}

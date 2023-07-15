@@ -19,9 +19,11 @@ package org.tinspin.index.qthypercube2;
 
 import org.tinspin.index.PointDistanceFunction;
 
-public class QUtil {
-	
+class QUtil {
+
 	static final double EPS_MUL = 1.000000001;
+
+	private QUtil() {}
 
 	public static boolean isPointEnclosed(double[] point,
 			double[] min, double[] max) {
@@ -33,10 +35,14 @@ public class QUtil {
 		return true;
 	}
 
-	public static boolean isPointEnclosed(double[] point,
-			double[] center, double radius) {
+
+	/**
+	 * The tests for inclusion with UPPER BOUNDARY EXCLUSIVE!
+	 * I.e. it firs only if point is SMALLER than (center + radius).
+	 */
+	public static boolean fitsIntoNode(double[] point, double[] center, double radius) {
 		for (int d = 0; d < center.length; d++) {
-			if (point[d] < center[d]-radius || point[d] > center[d]+radius) {
+			if (point[d] < center[d] - radius || point[d] >= center[d] + radius) {
 				return false;
 			}
 		}
@@ -52,15 +58,6 @@ public class QUtil {
 		return true;
 	}
 
-	public static boolean isRectEqual(double[] p1L, double[] p1U, double[] p2L, double[] p2U) {
-		return isPointEqual(p1L, p2L) && isPointEqual(p1U, p2U);
-	}
-
-	// TODO remove
-//	public static <T> boolean isRectEqual(QREntry<T> e, double[] keyL, double[] keyU) {
-//		return isRectEqual(e.lower(), e.upper(), keyL, keyU);
-//	}
-	
 	public static boolean overlap(double[] min, double[] max, double[] min2, double[] max2) {
 		for (int d = 0; d < min.length; d++) {
 			if (max[d] < min2[d] || min[d] > max2[d]) {
@@ -89,98 +86,17 @@ public class QUtil {
 		return true;
 	}
 
-	public static boolean isRectEnclosed(double[] minEnclosed, double[] maxEnclosed,
-			double[] centerOuter, double radiusOuter) {
+	public static boolean isNodeEnclosed(double[] centerEnclosed, double radiusEnclosed,
+										 double[] centerOuter, double radiusOuter) {
 		for (int d = 0; d < centerOuter.length; d++) {
-			double radOuter = radiusOuter;
-			if ((centerOuter[d]+radOuter) < maxEnclosed[d] || 
-					(centerOuter[d]-radOuter) > minEnclosed[d]) {
+			if ((centerOuter[d] + radiusOuter) < (centerEnclosed[d] + radiusEnclosed) ||
+					(centerOuter[d] - radiusOuter) > (centerEnclosed[d] - radiusEnclosed)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public static boolean isRectEnclosed(double[] centerEnclosed, double radiusEnclosed,
-			double[] centerOuter, double radiusOuter) {
-		for (int d = 0; d < centerOuter.length; d++) {
-			double radOuter = radiusOuter;
-			double radEncl = radiusEnclosed;
-			if ((centerOuter[d]+radOuter) < (centerEnclosed[d]+radEncl) || 
-					(centerOuter[d]-radOuter) > (centerEnclosed[d]-radEncl)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	// TODO remove
-//	public static double distance(double[] p1, double[] p2) {
-//		double dist = 0;
-//		for (int i = 0; i < p1.length; i++) {
-//			double d = p1[i]-p2[i];
-//			dist += d * d;
-//		}
-//		return Math.sqrt(dist);
-//	}
-	
-//	/**
-//	 * Calculates distance to center point of rectangle.
-//	 * @param p point
-//	 * @param rMin rectangle min
-//	 * @param rMax rectangle max
-//	 * @return distance to center point
-//	 */
-//	public static double distToRectCenter(double[] p, double[] rMin, double[] rMax) {
-//		double dist = 0;
-//		for (int i = 0; i < p.length; i++) {
-//			double d = (rMin[i]+rMax[i])/2. - p[i];
-//			dist += d * d;
-//		}
-//		return Math.sqrt(dist);
-//	}
-	
-//	/**
-//	 * Calculates distance to center point of rectangle.
-//	 * @param p point
-//	 * @param e rectangle
-//	 * @return distance to center point
-//	 */
-//	public static double distToRectCenter(double[] p, QREntry<?> e) {
-//		return distToRectCenter(p, e.lower(), e.upper());
-//	}
-	
-//	/**
-//	 * Calculates distance to the edge of rectangle.
-//	 * @param p point
-//	 * @param rMin rectangle min
-//	 * @param rMax rectangle max
-//	 * @return distance to edge
-//	 */
-//	static double distToRectEdge(double[] center, double[] rLower, double[] rUpper) {
-//		double dist = 0;
-//		for (int i = 0; i < center.length; i++) {
-//			double d = 0;
-//			if (center[i] > rUpper[i]) {
-//				d = center[i] - rUpper[i];
-//			} else if (center[i] < rLower[i]) {
-//				d = rLower[i] - center[i];
-//			}
-//			dist += d*d;
-//		}
-//		return Math.sqrt(dist);
-//	}
-	
-//	/**
-//	 * Calculates distance to edge of rectangle.
-//	 * @param p point
-//	 * @param e rectangle
-//	 * @return distance to edge point
-//	 */
-//	public static double distToRectEdge(double[] p, QREntry<?> e) {
-//		return distToRectEdge(p, e.lower(), e.upper());
-//	}
-	
 	/**
 	 * Calculates distance to the edge of a node.
 	 * @param point the point

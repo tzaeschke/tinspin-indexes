@@ -272,11 +272,11 @@ public class QuadTreeRKD<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	@SuppressWarnings("unused")
 	private void ensureCoverage(QREntry<T> e) {
 		double[] pLow = e.lower();
-		//double[] pUpp = e.upper();
-		while (!e.enclosedBy(root.getCenter(), root.getRadius())) {
+		while (!QUtil.fitsIntoNode(e.lower(), e.upper(), root.getCenter(), root.getRadius())) {
 			double[] center = root.getCenter();
 			double radius = root.getRadius();
 			double[] center2 = new double[center.length];
+			radius = radius == 0.0 ? 1 : radius;
 			double radius2 = radius*2;
 			int subNodePos = 0;
 			for (int d = 0; d < center.length; d++) {
@@ -291,7 +291,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 					center2[d] = center[d]+radius; 
 				}
 			}
-			if (QuadTreeRKD.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
+			if (QuadTreeRKD.DEBUG && !QUtil.isNodeEnclosed(center, radius, center2, radius2)) {
 				throw new IllegalStateException("e=" + Arrays.toString(e.lower()) + 
 						"/" + Arrays.toString(e.upper()) + 
 						" center/radius=" + Arrays.toString(center) + "/" + radius);
@@ -364,8 +364,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
     	if (node.getChildNodes() != null) {
     		QRNode<T>[] nodes = node.getChildNodes(); 
     		for (int i = 0; i < nodes.length; i++) {
-    			if (nodes[i] != null && 
-    					QUtil.isPointEnclosed(point, nodes[i].getCenter(), nodes[i].getRadius())) {
+    			if (nodes[i] != null && QUtil.fitsIntoNode(point, nodes[i].getCenter(), nodes[i].getRadius())) {
     				return distanceEstimate(nodes[i], point, k, comp);
     			}
     		}

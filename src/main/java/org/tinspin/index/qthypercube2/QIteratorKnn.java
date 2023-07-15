@@ -113,20 +113,7 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
 
                 if (node.isLeaf()) {
                     for (QEntry<T> entry : node.getValues()) {
-                        if (entry != null && filterFn.test(entry)) {
-                            double d = distFn.dist(center, entry.point());
-                            // Using '<=' allows dealing with infinite distances.
-                            if (d <= maxNodeDist) {
-                                queueV.push(new QEntryDist<>(entry, d));
-                                if (queueV.size() >= remaining) {
-                                    if (queueV.size() > remaining) {
-                                        queueV.popMax();
-                                    }
-                                    double dMax = queueV.peekMax().dist();
-                                    maxNodeDist = Math.min(maxNodeDist, dMax);
-                                }
-                            }
-                        }
+                        processEntry(entry);
                     }
                 } else {
                     for (Object o : node.getEntries()) {
@@ -136,6 +123,8 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
                             if (dist <= maxNodeDist) {
                                 queueN.push(new NodeDistT(dist, subnode));
                             }
+                        } else {
+                            processEntry((QEntry<T>) o);
                         }
                     }
                 }
@@ -143,6 +132,23 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
         }
         current = null;
         currentDistance = Double.MAX_VALUE;
+    }
+
+    private void processEntry(QEntry<T> entry) {
+        if (entry != null && filterFn.test(entry)) {
+            double d = distFn.dist(center, entry.point());
+            // Using '<=' allows dealing with infinite distances.
+            if (d <= maxNodeDist) {
+                queueV.push(new QEntryDist<>(entry, d));
+                if (queueV.size() >= remaining) {
+                    if (queueV.size() > remaining) {
+                        queueV.popMax();
+                    }
+                    double dMax = queueV.peekMax().dist();
+                    maxNodeDist = Math.min(maxNodeDist, dMax);
+                }
+            }
+        }
     }
 
     private class NodeDistT {

@@ -57,7 +57,7 @@ public class QRNode<T> {
 
 	@SuppressWarnings({ "unchecked", "unused" })
 	QRNode<T> tryPut(QREntry<T> e, int maxNodeSize, boolean enforceLeaf) {
-		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
+		if (QuadTreeKD.DEBUG && !QUtil.fitsIntoNode(e.lower(), e.upper(), center, radius)) {
 			throw new IllegalStateException("e=" + e + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
@@ -203,7 +203,7 @@ public class QRNode<T> {
 				QREntry<T> ret = sub.update(this, keyOldL, keyOldU, keyNewL, keyNewU, 
 						maxNodeSize, requiresReinsert, currentDepth+1, maxDepth, pred);
 				if (ret != null && requiresReinsert[0] && 
-						QUtil.isRectEnclosed(ret.lower(), ret.upper(), center, radius)) {
+						QUtil.fitsIntoNode(ret.lower(), ret.upper(), center, radius)) {
 					requiresReinsert[0] = false;
 					QRNode<T> r = this;
 					while (r != null) {
@@ -224,7 +224,7 @@ public class QRNode<T> {
 				values.remove(i);
 				e.setKey(keyNewL, keyNewU);
 				//Divide by EPS to ensure that we do not reinsert to low
-				if (QUtil.isRectEnclosed(keyNewL, keyNewU, center, radius)) {
+				if (QUtil.fitsIntoNode(keyNewL, keyNewU, center, radius)) {
 					requiresReinsert[0] = false;
 					int pos = calcSubPositionR(keyNewL, keyNewU);
 					if (pos == OVERLAP_WITH_CENTER) {
@@ -343,7 +343,7 @@ public class QRNode<T> {
 		s.nNodes++;
 		
 		if (parent != null) {
-			if (!QUtil.isRectEnclosed(center, radius, parent.center, parent.radius*QUtil.EPS_MUL)) {
+			if (!QUtil.isNodeEnclosed(center, radius, parent.center, parent.radius*QUtil.EPS_MUL)) {
 				//TODO?
 				//throw new IllegalStateException();
 			}
@@ -351,7 +351,7 @@ public class QRNode<T> {
 		if (values != null) {
 			for (int i = 0; i < values.size(); i++) {
 				QREntry<T> e = values.get(i);
-				if (!QUtil.isRectEnclosed(e.lower(), e.upper(), center, radius*QUtil.EPS_MUL)) {
+				if (!QUtil.fitsIntoNode(e.lower(), e.upper(), center, radius*QUtil.EPS_MUL)) {
 					throw new IllegalStateException();
 				}
 				//TODO check that they overlap with the centerpoint or that subs==null

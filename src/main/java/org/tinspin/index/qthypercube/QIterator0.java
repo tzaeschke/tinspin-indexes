@@ -107,7 +107,7 @@ public class QIterator0<T> implements QueryIterator<PointEntry<T>> {
 				int pos = se.pos++;
 				if (se.isLeaf()) {
 					QEntry<T> e = se.vals.get(pos);
-					if (e.enclosedBy(min, max)) {
+					if (QUtil.isPointEnclosed(e.point(), min, max)) {
 						next = e;
 						return;
 					}
