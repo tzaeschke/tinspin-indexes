@@ -284,7 +284,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	@SuppressWarnings("unused")
 	private void ensureCoverage(QEntry<T> e) {
 		double[] p = e.point();
-		while(!e.enclosedBy(root.getCenter(), root.getRadius())) {
+		while(!QUtil.fitsIntoNode(e.point(), root.getCenter(), root.getRadius())) {
 			double[] center = root.getCenter();
 			double radius = root.getRadius();
 			double[] center2 = new double[center.length];
@@ -302,7 +302,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 					center2[d] = center[d]+radius; 
 				}
 			}
-			if (QuadTreeKD2.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
+			if (QuadTreeKD2.DEBUG && !QUtil.isNodeEnclosed(center, radius, center2, radius2)) {
 				throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 						" center/radius=" + Arrays.toString(center2) + 
 						"/"+ radius);
