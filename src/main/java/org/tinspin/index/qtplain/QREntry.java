@@ -48,10 +48,6 @@ public class QREntry<T> implements RectangleEntry<T> {
 		return value;
 	}
 
-	public boolean enclosedBy(double[] center, double radius) {
-		return QUtil.isRectEnclosed(this.pointL, this.pointU, center, radius);
-	}
-
 	public boolean isExact(QREntry<T> e) {
 		return QUtil.isPointEqual(pointL, e.lower()) 
 				&& QUtil.isPointEqual(pointU, e.upper());
@@ -67,5 +63,4 @@ public class QREntry<T> implements RectangleEntry<T> {
 		this.pointL = newPointL;
 		this.pointU = newPointU;
 	}
-
 }

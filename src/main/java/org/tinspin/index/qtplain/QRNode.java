@@ -56,7 +56,7 @@ public class QRNode<T> {
 
 	@SuppressWarnings("unused")
 	QRNode<T> tryPut(QREntry<T> e, int maxNodeSize, boolean enforceLeaf) {
-		if (QuadTreeKD0.DEBUG && !e.enclosedBy(center, radius)) {
+		if (QuadTreeKD0.DEBUG && !QUtil.fitsIntoNode(e.lower(), e.upper(), center, radius)) {
 			throw new IllegalStateException("e=" + e + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
@@ -136,14 +136,15 @@ public class QRNode<T> {
 	 * The subnode position has reverse ordering of the point's
 	 * dimension ordering. Dimension 0 of a point is the highest
 	 * ordered bit in the position.
-	 * @param p point
+	 * @param pMin box min
+	 * @param pMax box max
 	 * @return subnode position
 	 */
 	private QRNode<T> findSubNode(double[] pMin, double[] pMax) {
 		if (subs != null) {
 			for (int i = 0; i < subs.size(); i++) {
 				QRNode<T> n = subs.get(i);
-				if (QUtil.isRectEnclosed(pMin, pMax, n.center, n.radius)) {
+				if (QUtil.fitsIntoNode(pMin, pMax, n.center, n.radius)) {
 					return n;
 				}
 			}
@@ -205,7 +206,7 @@ public class QRNode<T> {
 						maxNodeSize, requiresReinsert, currentDepth+1, maxDepth, pred);
 				//Divide by EPS to ensure that we do not reinsert to low
 				if (ret != null && requiresReinsert[0] && 
-						QUtil.isRectEnclosed(ret.lower(), ret.upper(), 
+						QUtil.fitsIntoNode(ret.lower(), ret.upper(),
 								center, radius)) {
 					requiresReinsert[0] = false;
 					QRNode<T> r = this;
@@ -227,7 +228,7 @@ public class QRNode<T> {
 				values.remove(i);
 				e.setKey(keyNewL, keyNewU);
 				//Divide by EPS to ensure that we do not reinsert to low
-				if (QUtil.isRectEnclosed(keyNewL, keyNewU, center, radius)) {
+				if (QUtil.fitsIntoNode(keyNewL, keyNewU, center, radius)) {
 					requiresReinsert[0] = false;
 					QRNode<T> sub = findSubNode(keyNewL, keyNewU);
 					if (sub == this) {
@@ -381,7 +382,7 @@ public class QRNode<T> {
 		s.nNodes++;
 		
 		if (parent != null) {
-			if (!QUtil.isRectEnclosed(center, radius, parent.center, parent.radius*QUtil.EPS_MUL)) {
+			if (!QUtil.isNodeEnclosed(center, radius, parent.center, parent.radius*QUtil.EPS_MUL)) {
 				//TODO?
 				//throw new IllegalStateException();
 			}
@@ -389,7 +390,7 @@ public class QRNode<T> {
 		if (values != null) {
 			for (int i = 0; i < values.size(); i++) {
 				QREntry<T> e = values.get(i);
-				if (!QUtil.isRectEnclosed(e.lower(), e.upper(), center, radius*QUtil.EPS_MUL)) {
+				if (!QUtil.fitsIntoNode(e.lower(), e.upper(), center, radius*QUtil.EPS_MUL)) {
 					throw new IllegalStateException();
 				}
 				//TODO check that they overlap with the centerpoint or that subs==null

@@ -115,8 +115,9 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 			if (keyU[d]-keyL[d] > radius) {
 				radius = keyU[d] -keyL[d];
 			}
-		}			
+		}
 		radius *= 5; //for good measure
+		radius = radius == 0.0 ? 1 : radius;
 		root = new QRNode<>(center, radius);
 	}
 	
@@ -194,7 +195,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	@Override
 	public boolean remove(double[] lower, double[] upper, T value) {
-		return removeIf(lower, upper, e -> Objects.equals(value, e.value()));
+		return removeIf(lower, upper, e -> Objects.equals(e.value(), value));
 	}
 
 	@Override
@@ -264,7 +265,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		}
 		return e.value();
 	}
-	
+
 	/**
 	 * Ensure that the tree covers the entry.
 	 * @param e Entry to cover.
@@ -273,7 +274,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	private void ensureCoverage(QREntry<T> e) {
 		double[] pLow = e.lower();
 		//double[] pUpp = e.upper();
-		while (!e.enclosedBy(root.getCenter(), root.getRadius())) {
+		while (!QUtil.fitsIntoNode(e.lower(), e.upper(), root.getCenter(), root.getRadius())) {
 			double[] center = root.getCenter();
 			double radius = root.getRadius();
 			double[] center2 = new double[center.length];
@@ -288,7 +289,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 					center2[d] = center[d]+radius; 
 				}
 			}
-			if (QuadTreeRKD0.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
+			if (QuadTreeRKD0.DEBUG && !QUtil.isNodeEnclosed(center, radius, center2, radius2)) {
 				throw new IllegalStateException("e=" + Arrays.toString(e.lower()) + 
 						"/" + Arrays.toString(e.upper()) + 
 						" center/radius=" + Arrays.toString(center) + "/" + radius);
@@ -439,7 +440,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
     		ArrayList<QRNode<T>> nodes = node.getChildNodes(); 
     		for (int i = 0; i < nodes.size(); i++) {
     			QRNode<T> sub = nodes.get(i);
-    			if (QUtil.isPointEnclosed(point, sub.getCenter(), sub.getRadius())) {
+    			if (QUtil.fitsIntoNode(point, sub.getCenter(), sub.getRadius())) {
     				return distanceEstimate(sub, point, k, comp);
     			}
     		}
