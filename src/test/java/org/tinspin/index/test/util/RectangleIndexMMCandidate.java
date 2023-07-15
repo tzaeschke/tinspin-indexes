@@ -40,7 +40,7 @@ public class RectangleIndexMMCandidate extends Candidate {
 		switch ((IDX)s.INDEX) {
 			case ARRAY: return new RectArray<>(dims, size);
 			// case PHTREE: return PHTreeR.createPHTree(dims);
-			//case QUAD_HC: return QuadTreeRKD.create(dims);
+			case QUAD_HC: return QuadTreeRKD.create(dims);
 			case QUAD_PLAIN: return QuadTreeRKD0.create(dims);
 			case RSTAR:
 			case STR: return RTree.createRStar(dims);
