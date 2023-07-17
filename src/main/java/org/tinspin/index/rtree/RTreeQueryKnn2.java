@@ -22,6 +22,7 @@ import org.tinspin.index.RectangleDistanceFunction;
 import org.tinspin.index.RectangleEntry;
 import org.tinspin.index.RectangleEntryDist;
 import org.tinspin.index.util.MinMaxHeapZ;
+import org.tinspin.index.util.MinMaxHeapZ2;
 
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
@@ -31,8 +32,8 @@ public class RTreeQueryKnn2<T> implements QueryIteratorKNN<RectangleEntryDist<T>
     private final RTree<T> tree;
     private final RectangleDistanceFunction distFn;
     private final Predicate<RectangleEntry<T>> filterFn;
-    MinMaxHeapZ<NodeDistT> queueN = MinMaxHeapZ.create((t1, t2) -> Double.compare(t1.dist, t2.dist));
-    MinMaxHeapZ<DistEntry<T>> queueV = MinMaxHeapZ.create((t1, t2) -> Double.compare(t1.dist(), t2.dist()));
+    MinMaxHeapZ2<NodeDistT> queueN = MinMaxHeapZ2.create((t1, t2) -> t1.dist < t2.dist);
+    MinMaxHeapZ2<DistEntry<T>> queueV = MinMaxHeapZ2.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
     private DistEntry<T> current;
     private int remaining;

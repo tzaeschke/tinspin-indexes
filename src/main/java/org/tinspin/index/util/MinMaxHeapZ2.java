@@ -75,7 +75,7 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
      * @return A new MinMaxHeap
      * @param <T> The entry type.
      */
-    public static <T> MinMaxHeapZ2<T> create(Comparator<T> compareFn) {
+    public static <T> MinMaxHeapZ2<T> createWithComparator(Comparator<T> compareFn) {
         return new MinMaxHeapZ2<>(DEFAULT_SIZE, new LessWrapper<>(compareFn));
     }
 
@@ -267,38 +267,38 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
 //        }
 //    }
 
-    private void pushUp(int index) {
-        if (index != 1) { // is not root?
-            if (isMinLevel(index)) {
-                if (!less.less(data[index], data[parent(index)])) {
-                    swap(index, parent(index));
-                    pushUpMax(parent(index));
-                } else {
-                    pushUpMin(index);
-                }
+    private void pushUp(int index, T value) {
+        if (isMinLevel(index)) {
+            if (!less.less(value, data[parent(index)])) {
+                data[index] = data[parent(index)];
+                pushUpMax(parent(index), value);
             } else {
-                if (less.less(data[index], data[parent(index)])) {
-                    swap(index, parent(index));
-                    pushUpMin(parent(index));
-                } else {
-                    pushUpMax(index);
-                }
+                pushUpMin(index, value);
+            }
+        } else {
+            if (less.less(value, data[parent(index)])) {
+                data[index] = data[parent(index)];
+                pushUpMin(parent(index), value);
+            } else {
+                pushUpMax(index, value);
             }
         }
     }
 
-    private void pushUpMin(int index) {
-        while (hasGrandparent(index) && less.less(data[index], data[grandparent(index)])) {
-            swap(index, grandparent(index));
+    private void pushUpMin(int index, T value) {
+        while (hasGrandparent(index) && less.less(value, data[grandparent(index)])) {
+            data[index] = data[grandparent(index)];
             index = grandparent(index);
         }
+        data[index] = value;
     }
 
-    private void pushUpMax(int index) {
-        while (hasGrandparent(index) && !less.less(data[index], data[grandparent(index)])) {
-            swap(index, grandparent(index));
+    private void pushUpMax(int index, T value) {
+        while (hasGrandparent(index) && !less.less(value, data[grandparent(index)])) {
+            data[index] = data[grandparent(index)];
             index = grandparent(index);
         }
+        data[index] = value;
     }
 
 
@@ -318,9 +318,8 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
             data = Arrays.copyOf(data, data.length * 2);
         }
 
-        data[end()] = value;
         size++;
-        pushUp(size);
+        pushUp(size, value);
     }
 
     @Override
