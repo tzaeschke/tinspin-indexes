@@ -16,16 +16,18 @@
  * limitations under the License.
  */package org.tinspin;
 
-import org.junit.Assert;
-import static org.junit.Assert.*;
 import org.junit.Test;
-import org.tinspin.index.util.*;
+import org.tinspin.index.util.MinMaxHeapI;
+import org.tinspin.index.util.MinMaxHeapI2;
+import org.tinspin.index.util.MinMaxHeapZ2;
+import org.tinspin.index.util.MinMaxHeapZ3;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
-public class MinMaxTest {
+import static org.junit.Assert.*;
+
+public class MinMaxTest2 {
 
     static class Entry implements Comparable<Entry> {
 
@@ -47,11 +49,11 @@ public class MinMaxTest {
         }
     }
 
-    private MinMaxHeapI<Entry> create() {
+    private MinMaxHeapI2<Integer> create() {
         // return new MinMaxHeapB(64);
         // return MinMaxHeapC2.create();
         // return MinMaxHeapZ2.create();
-        return MinMaxHeapZ2.create((o1, o2) -> o1.d < o2.d);
+        return MinMaxHeapZ3.create();
         // return MinMaxHeapZ3.create((o1, o2) -> o1.d < o2.d ? 1 : 0);
     }
 
@@ -64,13 +66,13 @@ public class MinMaxTest {
         return data;
     }
 
-    private void populate(MinMaxHeapI<Entry> heap, Entry[] data) {
+    private void populate(MinMaxHeapI2<Integer> heap, Entry[] data) {
         assertTrue(heap.isEmpty());
         assertEquals(0, heap.size());
         double min = Double.POSITIVE_INFINITY;
         double max = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < data.length; i++) {
-            heap.push(data[i]);
+            heap.push(data[i].id, data[i].d);
             assertFalse(heap.isEmpty());
             assertEquals(i+1, heap.size());
             min = Math.min(min, data[i].d);
@@ -95,7 +97,7 @@ public class MinMaxTest {
 
     private void testMin(int n, int seed) {
         Entry[] data = data(n, seed);
-        MinMaxHeapI<Entry> heap = create();
+        MinMaxHeapI2<Integer> heap = create();
         populate(heap, data);
 
         Arrays.sort(data);
@@ -128,7 +130,7 @@ public class MinMaxTest {
 
     private void testMax(int n, int seed) {
         Entry[] data = data(n, seed);
-        MinMaxHeapI<Entry> heap = create();
+        MinMaxHeapI2<Integer> heap = create();
         populate(heap, data);
 
         Arrays.sort(data);

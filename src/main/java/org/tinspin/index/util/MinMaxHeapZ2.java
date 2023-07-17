@@ -130,30 +130,72 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
         int start = index * 4;
         int min12 = -1;
         int min34 = -1;
-        if (start + 3 < end) {
-            // 4 grand children
-            min12 = less.less(data[start], data[start + 1]) ? start : start + 1;
-            min34 = less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
-        } else if (start + 2 < end) {
-            // 3 grand children
-            min12 = less.less(data[start], data[start + 1]) ? start : start + 1;
-            min34 = start + 2;
-        } else if (start + 1 < end) {
-            // 2 grand children + 1 children
-            min12 = less.less(data[start], data[start + 1]) ? start : start + 1;
-            min34 = index * 2 + 1;
-        } else if (start < end) {
-            // 1 grand child + 1 child
-            min12 = start;
-            min34 = index * 2 + 1;
-        } else if (index * 2 + 1 < end) {
-            // 2 children
-            min12 = index * 2;
-            min34 = min12 + 1;
-        } else {
-            // 1 child
-            return index * 2;
+
+        final int firstChild = index * 2;
+        if (start >= end) {
+            // no grandchildren
+            if (firstChild + 1 < end) {
+                return less.less(data[firstChild], data[firstChild + 1]) ? firstChild : firstChild + 1;
+            }
+            return firstChild;
         }
+
+        if (start + 1 < end) {
+            min12 = start + (less.less(data[start], data[start + 1]) ? 0 : 1);
+            if (start + 3 < end) {
+                min34 = less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
+            } else {
+                min34 = start + 2 < end ? start + 2 : index * 2 + 1;
+            }
+        } else {
+            min12 = start;
+            min34 = start + 2 < end ? start + 2 : index * 2 + 1;
+        }
+//        if (start + 3 < end) {
+//            min34 = less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
+//        } else {
+//            min34 = start + 2 < end ? start + 2 : index * 2 + 1;
+//        }
+
+//        if (start + 1 < end) {
+//            min12 = start + (less.less(data[start], data[start + 1]) ? 0 : 1);
+//        } else {
+//            min12 = start < end ? start : index * 2;
+//        }
+//        if (start + 3 < end) {
+//            min34 = less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
+//        } else if (start + 2 < end) {
+//            min34 = start + 2;
+//        } else if (index * 2 + 1 < end) {
+//            min34 = index * 2 + 1;
+//        } else {
+//            return index * 2;
+//        }
+
+//        if (start + 3 < end) {
+//            // 4 grand children
+//            min12 = less.less(data[start], data[start + 1]) ? start : start + 1;
+//            min34 = less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
+//        } else if (start >= end && index * 2 + 1 < end) {
+//            // 2 children
+//            min12 = index * 2;
+//            min34 = min12 + 1;
+//        } else if (start + 2 < end) {
+//            // 3 grand children
+//            min12 = less.less(data[start], data[start + 1]) ? start : start + 1;
+//            min34 = start + 2;
+//        } else if (start + 1 < end) {
+//            // 2 grand children + 1 children
+//            min12 = less.less(data[start], data[start + 1]) ? start : start + 1;
+//            min34 = index * 2 + 1;
+//        } else if (start < end) {
+//            // 1 grand child + 1 child
+//            min12 = start;
+//            min34 = index * 2 + 1;
+//        } else {
+//            // 1 child
+//            return index * 2;
+//        }
         return less.less(data[min12], data[min34]) ? min12 : min34;
     }
 
