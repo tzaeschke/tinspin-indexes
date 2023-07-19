@@ -27,7 +27,7 @@ import java.util.NoSuchElementException;
  *
  * @param <T>
  */
-public class MinHeapZ<T> implements MinHeapI<T> {
+public class MinHeap<T> implements MinHeapI<T> {
 
     private static final int DEFAULT_SIZE = 16;
     // Data. The first slot is left empty, i.e. the first data element is at [1]!
@@ -37,7 +37,7 @@ public class MinHeapZ<T> implements MinHeapI<T> {
     private final Less<T> less;
 
     @SuppressWarnings("unchecked")
-    private MinHeapZ(int capacity, Less<T> lessFn) {
+    private MinHeap(int capacity, Less<T> lessFn) {
         data = (T[]) new Object[capacity];
         this.less = lessFn;
     }
@@ -64,8 +64,8 @@ public class MinHeapZ<T> implements MinHeapI<T> {
      * @return A new MinMaxHeap
      * @param <T> The entry type. Must implement Comparable<T>.
      */
-    public static <T extends Comparable<T>> MinHeapZ<T> create() {
-        return new MinHeapZ<>(DEFAULT_SIZE, new LessWrapper<>(Comparable::compareTo));
+    public static <T extends Comparable<T>> MinHeap<T> create() {
+        return new MinHeap<>(DEFAULT_SIZE, new LessWrapper<>(Comparable::compareTo));
     }
 
     /**
@@ -75,8 +75,8 @@ public class MinHeapZ<T> implements MinHeapI<T> {
      * @return A new MinMaxHeap
      * @param <T> The entry type.
      */
-    public static <T> MinHeapZ<T> create(Less<T> less) {
-        return new MinHeapZ<>(DEFAULT_SIZE, less);
+    public static <T> MinHeap<T> create(Less<T> less) {
+        return new MinHeap<>(DEFAULT_SIZE, less);
     }
 
     private boolean hasChildren(int i) {

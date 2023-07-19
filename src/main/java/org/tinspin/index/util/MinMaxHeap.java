@@ -27,7 +27,7 @@ import java.util.NoSuchElementException;
  *
  * @param <T>
  */
-public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
+public class MinMaxHeap<T> implements MinMaxHeapI<T> {
 
     private static final int DEFAULT_SIZE = 16;
     // Data. The first slot is left empty, i.e. the first data element is at [1]!
@@ -37,7 +37,7 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
     private final Less<T> less;
 
     @SuppressWarnings("unchecked")
-    private MinMaxHeapZ2(int capacity, Less<T> lessFn) {
+    private MinMaxHeap(int capacity, Less<T> lessFn) {
         data = (T[]) new Object[capacity];
         this.less = lessFn;
     }
@@ -64,8 +64,8 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
      * @return A new MinMaxHeap
      * @param <T> The entry type. Must implement Comparable<T>.
      */
-    public static <T extends Comparable<T>> MinMaxHeapZ2<T> create() {
-        return new MinMaxHeapZ2<>(DEFAULT_SIZE, new LessWrapper<>(Comparable::compareTo));
+    public static <T extends Comparable<T>> MinMaxHeap<T> create() {
+        return new MinMaxHeap<>(DEFAULT_SIZE, new LessWrapper<>(Comparable::compareTo));
     }
 
     /**
@@ -75,8 +75,8 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
      * @return A new MinMaxHeap
      * @param <T> The entry type.
      */
-    public static <T> MinMaxHeapZ2<T> createWithComparator(Comparator<T> compareFn) {
-        return new MinMaxHeapZ2<>(DEFAULT_SIZE, new LessWrapper<>(compareFn));
+    public static <T> MinMaxHeap<T> createWithComparator(Comparator<T> compareFn) {
+        return new MinMaxHeap<>(DEFAULT_SIZE, new LessWrapper<>(compareFn));
     }
 
     /**
@@ -86,8 +86,8 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
      * @return A new MinMaxHeap
      * @param <T> The entry type.
      */
-    public static <T> MinMaxHeapZ2<T> create(Less<T> less) {
-        return new MinMaxHeapZ2<>(DEFAULT_SIZE, less);
+    public static <T> MinMaxHeap<T> create(Less<T> less) {
+        return new MinMaxHeap<>(DEFAULT_SIZE, less);
     }
 
     private static boolean isMinLevel(int index) {
@@ -128,8 +128,6 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
     private int indexOfSmallestChildOrGrandchild(int index) {
         int end = end();
         int start = index * 4;
-        int min12 = -1;
-        int min34 = -1;
 
         final int firstChild = index * 2;
         if (start >= end) {
@@ -140,95 +138,53 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
             return firstChild;
         }
 
+        int min12;
+        int min34;
         if (start + 1 < end) {
             min12 = start + (less.less(data[start], data[start + 1]) ? 0 : 1);
-            if (start + 3 < end) {
-                min34 = less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
+            start += 2;
+            if (start + 1 < end) {
+                min34 = less.less(data[start], data[start + 1]) ? start : start + 1;
             } else {
-                min34 = start + 2 < end ? start + 2 : index * 2 + 1;
+                min34 = start < end ? start : index * 2 + 1;
             }
         } else {
             min12 = start;
-            min34 = start + 2 < end ? start + 2 : index * 2 + 1;
+            start += 2;
+            min34 = start < end ? start : index * 2 + 1;
         }
-//        if (start + 3 < end) {
-//            min34 = less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
-//        } else {
-//            min34 = start + 2 < end ? start + 2 : index * 2 + 1;
-//        }
-
-//        if (start + 1 < end) {
-//            min12 = start + (less.less(data[start], data[start + 1]) ? 0 : 1);
-//        } else {
-//            min12 = start < end ? start : index * 2;
-//        }
-//        if (start + 3 < end) {
-//            min34 = less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
-//        } else if (start + 2 < end) {
-//            min34 = start + 2;
-//        } else if (index * 2 + 1 < end) {
-//            min34 = index * 2 + 1;
-//        } else {
-//            return index * 2;
-//        }
-
-//        if (start + 3 < end) {
-//            // 4 grand children
-//            min12 = less.less(data[start], data[start + 1]) ? start : start + 1;
-//            min34 = less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
-//        } else if (start >= end && index * 2 + 1 < end) {
-//            // 2 children
-//            min12 = index * 2;
-//            min34 = min12 + 1;
-//        } else if (start + 2 < end) {
-//            // 3 grand children
-//            min12 = less.less(data[start], data[start + 1]) ? start : start + 1;
-//            min34 = start + 2;
-//        } else if (start + 1 < end) {
-//            // 2 grand children + 1 children
-//            min12 = less.less(data[start], data[start + 1]) ? start : start + 1;
-//            min34 = index * 2 + 1;
-//        } else if (start < end) {
-//            // 1 grand child + 1 child
-//            min12 = start;
-//            min34 = index * 2 + 1;
-//        } else {
-//            // 1 child
-//            return index * 2;
-//        }
         return less.less(data[min12], data[min34]) ? min12 : min34;
     }
 
     private int indexOfLargestChildOrGrandchild(int index) {
         int end = end();
         int start = index * 4;
-        int max12 = -1;
-        int max34 = -1;
-        if (start + 3 < end) {
-            // 4 grand children
-            max12 = !less.less(data[start], data[start + 1]) ? start : start + 1;
-            max34 = !less.less(data[start + 2], data[start + 3]) ? start + 2 : start + 3;
-        } else if (start + 2 < end) {
-            // 3 grand children
-            max12 = !less.less(data[start], data[start + 1]) ? start : start + 1;
-            max34 = start + 2;
-        } else if (start + 1 < end) {
-            // 2 grand children + 1 children
-            max12 = !less.less(data[start], data[start + 1]) ? start : start + 1;
-            max34 = index * 2 + 1;
-        } else if (start < end) {
-            // 1 grand child + 1 child
-            max12 = start;
-            max34 = index * 2 + 1;
-        } else if (index * 2 + 1 < end) {
-            // 2 children
-            max12 = index * 2;
-            max34 = max12 + 1;
-        } else {
-            // 1 child
-            return index * 2;
+
+        final int firstChild = index * 2;
+        if (start >= end) {
+            // no grandchildren
+            if (firstChild + 1 < end) {
+                return less.less(data[firstChild], data[firstChild + 1]) ? firstChild + 1 : firstChild;
+            }
+            return firstChild;
         }
-        return !less.less(data[max12], data[max34]) ? max12 : max34;
+
+        int max12;
+        int max34;
+        if (start + 1 < end) {
+            max12 = start + (less.less(data[start], data[start + 1]) ? 1 : 0);
+            start += 2;
+            if (start + 1 < end) {
+                max34 = less.less(data[start], data[start + 1]) ? start + 1 : start;
+            } else {
+                max34 = start < end ? start : index * 2 + 1;
+            }
+        } else {
+            max12 = start;
+            start += 2;
+            max34 = start < end ? start : index * 2 + 1;
+        }
+        return less.less(data[max12], data[max34]) ? max34 : max12;
     }
 
     private void pushDown(int m) {
@@ -265,49 +221,6 @@ public class MinMaxHeapZ2<T> implements MinMaxHeapI<T> {
             }
         }
     }
-
-//    private void pushDown2(int i) {
-//        if (isMinLevel(i)) {
-//            pushDownMin(i);
-//        } else {
-//            pushDownMax(i);
-//        }
-//    }
-//
-//    private void pushDownMin(int i) {
-//        if (hasChildren(i)) {
-//            int m = indexOfSmallestChildOrGrandchild(i);
-//            if (isGrandchildOf(m, i)) {
-//                if (data[m].compareTo(data[i]) < 0) {
-//                    swap(m, i);
-//                    if (data[m].compareTo(data[parent(m)]) > 0) {
-//                        swap(m, parent(m));
-//                    }
-//                    pushDown(m);
-//                }
-//
-//            } else if (data[m].compareTo(data[i]) < 0) {
-//                swap(m, i);
-//            }
-//        }
-//    }
-//
-//    private void pushDownMax(int i) {
-//        if (hasChildren(i)) {
-//            int m = indexOfLargestChildOrGrandchild(i);
-//            if (isGrandchildOf(m, i)) {
-//                if (data[m].compareTo(data[i]) > 0) {
-//                    swap(m, i);
-//                    if (data[m].compareTo(data[parent(m)]) < 0) {
-//                        swap(m, parent(m));
-//                    }
-//                    pushDown(m);
-//                }
-//            } else if (data[m].compareTo(data[i]) > 0) {
-//                swap(m, i);
-//            }
-//        }
-//    }
 
     private void pushUp(int index, T value) {
         if (isMinLevel(index)) {

@@ -16,16 +16,14 @@
  * limitations under the License.
  */package org.tinspin;
 
-import org.junit.Assert;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import org.tinspin.index.util.*;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
-public class MinMaxTest {
+public class MinMaxHeapTest {
 
     static class Entry implements Comparable<Entry> {
 
@@ -51,7 +49,7 @@ public class MinMaxTest {
         // return new MinMaxHeapB(64);
         // return MinMaxHeapC2.create();
         // return MinMaxHeapZ2.create();
-        return MinMaxHeapZ2.create((o1, o2) -> o1.d < o2.d);
+        return MinMaxHeap.create((o1, o2) -> o1.d < o2.d);
         // return MinMaxHeapZ3.create((o1, o2) -> o1.d < o2.d ? 1 : 0);
     }
 

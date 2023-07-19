@@ -18,7 +18,7 @@
 
 import org.junit.Test;
 import org.tinspin.index.util.MinHeapI;
-import org.tinspin.index.util.MinHeapZ;
+import org.tinspin.index.util.MinHeap;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -48,7 +48,7 @@ public class MinHeapTest {
     }
 
     private MinHeapI<Entry> create() {
-        return MinHeapZ.create((o1, o2) -> o1.d < o2.d);
+        return MinHeap.create((o1, o2) -> o1.d < o2.d);
     }
 
     private Entry[] data(int n, int seed) {

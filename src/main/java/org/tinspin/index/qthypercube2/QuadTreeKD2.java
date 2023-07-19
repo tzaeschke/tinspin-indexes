@@ -372,7 +372,8 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	 */
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
-		return new QQueryIteratorKNN(center, k, distFn);
+		return new QIteratorKnn<>(root, k, center, distFn, e -> true);
+		// return new QQueryIteratorKNN(center, k, distFn);
 	}
 
 	public List<QEntryDist<T>> knnQuery(double[] center, int k) {

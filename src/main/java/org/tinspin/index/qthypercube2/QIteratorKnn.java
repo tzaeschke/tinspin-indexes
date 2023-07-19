@@ -21,7 +21,8 @@ import org.tinspin.index.PointDistanceFunction;
 import org.tinspin.index.PointEntry;
 import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.util.MinMaxHeapZ2;
+import org.tinspin.index.util.MinHeap;
+import org.tinspin.index.util.MinMaxHeap;
 
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
@@ -33,8 +34,8 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
     private final QNode<T> root;
     private final PointDistanceFunction distFn;
     private final Predicate<PointEntry<T>> filterFn;
-    MinMaxHeapZ2<NodeDistT> queueN = MinMaxHeapZ2.create((t1, t2) -> t1.dist < t2.dist);
-    MinMaxHeapZ2<QEntryDist<T>> queueV = MinMaxHeapZ2.create((t1, t2) -> t1.dist() < t2.dist());
+    MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
+    MinMaxHeap<QEntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
     private PointEntryDist<T> current;
     private int remaining;

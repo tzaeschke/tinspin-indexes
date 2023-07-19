@@ -21,7 +21,8 @@ import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.RectangleDistanceFunction;
 import org.tinspin.index.RectangleEntry;
 import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.util.MinMaxHeapZ;
+import org.tinspin.index.util.MinHeap;
+import org.tinspin.index.util.MinMaxHeap;
 
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
@@ -33,8 +34,8 @@ public class QRIteratorKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
     private final QRNode<T> root;
     private final RectangleDistanceFunction distFn;
     private final Predicate<RectangleEntry<T>> filterFn;
-    MinMaxHeapZ<NodeDistT> queueN = MinMaxHeapZ.create((t1, t2) -> Double.compare(t1.dist, t2.dist));
-    MinMaxHeapZ<QREntryDist<T>> queueV = MinMaxHeapZ.create((t1, t2) -> Double.compare(t1.dist(), t2.dist()));
+    MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
+    MinMaxHeap<QREntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
     private RectangleEntryDist<T> current;
     private int remaining;
