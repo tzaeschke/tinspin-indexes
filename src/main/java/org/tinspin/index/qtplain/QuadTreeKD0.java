@@ -21,7 +21,6 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
-import org.tinspin.index.qthypercube.QuadTreeKD;
 
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
@@ -394,7 +393,7 @@ public class QuadTreeKD0<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	@Override
 	public PointEntryDist<T> query1NN(double[] center) {
-		return PointIndex.super.query1NN(center);
+		return new QIteratorKnn<>(this.root, 1, center, PointDistanceFunction.L2, e -> true).next();
 	}
 
 	/**
@@ -410,10 +409,12 @@ public class QuadTreeKD0<T> implements PointIndex<T>, PointIndexMM<T> {
 		return new QIteratorKnn<>(this.root, k, center, dist, e -> true);
 	}
 
+	@Deprecated
 	public List<QEntryDist<T>> knnQuery(double[] center, int k) {
 		return knnQuery(center, k, PointDistanceFunction.L2);
 	}
 
+	@Deprecated
 	public List<QEntryDist<T>> knnQuery(double[] center, int k, PointDistanceFunction distFn) {
 		if (root == null) {
     		return Collections.emptyList();
@@ -510,35 +511,7 @@ public class QuadTreeKD0<T> implements PointIndex<T>, PointIndexMM<T> {
         return range;
 	}
 	
-    private class QQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
-
-		private final PointDistanceFunction distFn;
-    	private Iterator<PointEntryDist<T>> it;
-    	
-		public QQueryIteratorKNN(double[] center, int k, PointDistanceFunction distFn) {
-			this.distFn = distFn;
-			reset(center, k);
-		}
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public PointEntryDist<T> next() {
-			return it.next();
-		}
-
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		@Override
-		public QQueryIteratorKNN reset(double[] center, int k) {
-			it = ((List)knnQuery(center, k, distFn)).iterator();
-			return this;
-		}
-    }
-    
-    /**
+	/**
 	 * Returns a printable list of the tree.
 	 * @return the tree as String
 	 */

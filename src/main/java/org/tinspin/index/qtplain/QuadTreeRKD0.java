@@ -409,7 +409,8 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 			}
 		}
 	}
-	
+
+	@Deprecated
 	public List<QREntryDist<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
     		return Collections.emptyList();
@@ -591,12 +592,11 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	@Override
 	public QRIteratorKnn<T> queryKNN(double[] center, int k) {
 		return new QRIteratorKnn<>(root, k, center, RectangleDistanceFunction.EDGE, e -> true);
-		//return new QRQueryIteratorKNN(center, k);
 	}
 
 	@Override
 	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k, RectangleDistanceFunction distFn) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

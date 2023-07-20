@@ -334,6 +334,7 @@ public class QuadTreeRKD<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		return queryKNN(center, 1).next();
 	}
 
+	@Deprecated
 	public List<QREntryDist<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
     		return Collections.emptyList();
@@ -517,7 +518,6 @@ public class QuadTreeRKD<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	@Override
 	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k) {
-		//return new QRQueryIteratorKNN(center, k);
 		return queryKNN(center, k, RectangleDistanceFunction.EDGE);
 	}
 
