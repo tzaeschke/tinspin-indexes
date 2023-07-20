@@ -25,7 +25,7 @@ import java.util.NoSuchElementException;
  * Min-max heap implementation based on:
  * <a href="https://en.wikipedia.org/wiki/Min-max_heap">https://en.wikipedia.org/wiki/Min-max_heap</a>
  *
- * @param <T>
+ * @param <T> Entry type
  */
 public class MinHeap<T> implements MinHeapI<T> {
 
@@ -62,7 +62,7 @@ public class MinHeap<T> implements MinHeapI<T> {
      * WARNING: This is slow, see {@link #create(Less)}.
      * Creates a new MinMaxHeap using the compareTo method of the provided entry type.
      * @return A new MinMaxHeap
-     * @param <T> The entry type. Must implement Comparable<T>.
+     * @param <T> The entry type. Must implement {@code Comparable<T>}.
      */
     public static <T extends Comparable<T>> MinHeap<T> create() {
         return new MinHeap<>(DEFAULT_SIZE, new LessWrapper<>(Comparable::compareTo));

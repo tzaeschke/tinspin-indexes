@@ -44,6 +44,7 @@ public interface RectangleIndexMM<T> extends Index<T> {
      *
      * @param lower minimum corner
      * @param upper maximum corner
+     * @param value value
      * @return the value of the entry or null if the entry was not found
      */
     boolean remove(double[] lower, double[] upper, T value);

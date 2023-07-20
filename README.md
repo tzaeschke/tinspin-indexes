@@ -8,7 +8,7 @@ This is a library of in-memory indexes. They are used in the TinSpin [TinSpin pr
 
  - Several versions of **critbit** index, with support for 64bit keys (fastest), very long keys, or multi-dimensional keys (interleaved with z-ordering). See details below.
  - A **CoverTree** implementation which is loosely based on the "Faster Cover Trees" by M. Izbicki and C.R. Shelton
- - A **kD-Tree** implementation. The kD-Tree provides separate implementations for 1NN-queries and kNN-queries. It also has a an optimization  that allows it to use a faster code-path as long as no elements with partially equal coordinates have been removed (see javadoc in code).  
+ - A **kD-Tree** implementation. The kD-Tree provides separate implementations for 1NN-queries and kNN-queries. It also has an optimization that allows it to use a faster code-path as long as no elements with partially equal coordinates have been removed (see javadoc in code).  
  - An adapter for the [**PH-Tree**](http://www.phtree.org). This is only an example integration. For high performance applications it is strongly recommended to use the PH-Tree API directly to be able to use features such as reusable iterators, reusable result objects, other data converters, or custom distance functions. 
  - Several multi-dimensional **quadtree** indexes with separate implementations for point data and rectangle data. The implementations are 'region-quadtrees', they split space in 2^k quadratic quadrants in each level.
      - **qtplain** is a standard quadtree implementation
@@ -27,9 +27,12 @@ TinSpin indexes are also available via maven:
 </dependency>
 ```
   
-Changelog
-==============
+## Changelog
+
+**NOTE: The next release 2.0.0 will have a major API rewrite**.
+
 See [CHANGELOG](CHANGELOG.md) for details.
+ - 1.8.0 Full multimap support; many fixes; rewrote all kNN searches; Java 11.  
  - 1.7.1 Dependency on latest PH-Tree
  - 1.7.0 CoverTree and improved index statistics
  - 1.6.1 Improved kD-Tree performance
@@ -37,8 +40,15 @@ See [CHANGELOG](CHANGELOG.md) for details.
  - 1.5.0 Added quadtree HC v2
  - 1.4.0 Added kD-Tree
 
-CritBit
-=======
+## Performance
+Some hints to improve performance:
+- For kD-trees, try disabling defensive copy via `IndexConfig`. "Defensive copying" creates a copy of all `double[]` 
+  when inserted into the tree. Avoiding this copy may slightly improve performance and garbage collection but risks 
+  tree inconsistencies when modifying the key externally. Other indexes may also become inconsistent, 
+  but it is more severe for kD-tree because they use keys as positions for nodes.  
+
+
+## CritBit
 
 A Critical Bit tree for k-dimensional or arbitrary length keys.
 (Also called: binary patricia trie, radix-tree, ...)
@@ -56,9 +66,11 @@ v1.1: Slight performance improvements
 v1.0: Initial release
 
 This is a Java implementation of a crit-bit tree. 
-A crit-bit tree is a Patricie-Trie for binary data. Patricia-Tries have are very space efficient due to their prefix sharing. They are also update efficent because they are 'stable' trees, meaning that any update will affect at most two nodes.
+A crit-bit tree is a Patricie-Trie for binary data. Patricia-Tries achieve space efficiency by using prefix sharing. 
+They are also update efficient because they are 'stable' trees, meaning that any update will affect at most two nodes.
 
-Unlike other crit-bit trees, this tree also supports multi-dimensional data by interleaving the bits of each dimension and allowing k-dimensional queries on the tree.
+Unlike other crit-bit trees, this tree also supports multi-dimensional data by interleaving the bits of each 
+dimension and allowing k-dimensional queries on the tree.
 
 Alternatively it supports 1-dimensional keys with arbitrary length (>64 bit).
 

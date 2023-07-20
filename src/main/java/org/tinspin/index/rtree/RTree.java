@@ -21,8 +21,6 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
-import org.tinspin.index.util.MutableBool;
-import org.tinspin.index.util.MutableInt;
 import org.tinspin.index.util.MutableRef;
 import org.tinspin.index.util.StringBuilderLn;
 

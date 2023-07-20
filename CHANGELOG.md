@@ -6,12 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-########## Fix qeury1NN!!!
-
 ### Changed
 - Moved to GitHub Actions CI. [#13](https://github.com/tzaeschke/tinspin-indexes/pull/13)
 - Java JDK 11 default + updated maven dependencies + updated CHANGELOG.md. 
   [#12](https://github.com/tzaeschke/tinspin-indexes/pull/12)
+- removed travis.yml and fixed javadoc. [#18](https://github.com/tzaeschke/tinspin-indexes/pull/18)
 
 ### Added
 - MinMaxHeap & MinHeap for better kNN queries. [#17](https://github.com/tzaeschke/tinspin-indexes/pull/17)
