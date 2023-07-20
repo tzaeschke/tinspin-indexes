@@ -28,18 +28,20 @@ public class IndexConfig {
 
 	/**
 	 * Number of dimensions.
+	 * @param dimensions Number of dimensions of keys.
 	 */
 	public void setDimensions(int dimensions) {
 		this.dimensions = dimensions;
 	}
 
 	/**
+	 * @param defensiveKeyCopy
 	 * Defensive keys copying. If `false`, the kd-tree will store the passed in
 	 * double[] keys internally (this reduces required memory).
 	 * If `true`, the keys are copied in order to avoid accidental modification.
 	 * The latter obviously requires more memory.
 	 * <p>
-	 * This setting has effect only for kd-trees and R-trees/STR-Trees.
+	 * This setting works only for kd-trees.
 	 */
 	public void setDefensiveKeyCopy(boolean defensiveKeyCopy) {
 		this.defensiveKeyCopy = defensiveKeyCopy;

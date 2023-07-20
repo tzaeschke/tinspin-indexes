@@ -220,6 +220,7 @@ public class QuadTreeKD0<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * Reinsert the key.
 	 * @param oldKey old key
 	 * @param newKey new key
+	 * @param condition A predicate that must evaluate to 'true' for an entry to be updated.
 	 * @return the value associated with the key or 'null' if the key was not found.
 	 */
 	public T updateIf(double[] oldKey, double[] newKey, Predicate<PointEntry<T>> condition) {
@@ -249,7 +250,6 @@ public class QuadTreeKD0<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * Ensure that the tree covers the entry.
 	 * @param e Entry to cover.
 	 */
-	@SuppressWarnings("unused")
 	private void ensureCoverage(QEntry<T> e) {
 		double[] p = e.point();
 		while(!QUtil.fitsIntoNode(e.point(), root.getCenter(), root.getRadius())) {

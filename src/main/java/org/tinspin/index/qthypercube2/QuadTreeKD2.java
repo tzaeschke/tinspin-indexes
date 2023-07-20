@@ -246,6 +246,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * Reinsert the key.
 	 * @param oldKey old key
 	 * @param newKey new key
+	 * @param condition A predicate that must evaluate to 'true' for an entry to be updated.
 	 * @return the value associated with the key or 'null' if the key was not found.
 	 */
 	public T updateIf(double[] oldKey, double[] newKey, Predicate<PointEntry<T>> condition) {
@@ -257,15 +258,9 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 				0, MAX_DEPTH, condition);
 		if (e == null) {
 			//not found
-			if (DEBUG) {
-				System.err.println("Failed reinsert 1: " + Arrays.toString(newKey));
-			}
 			return null;
 		}
 		if (requiresReinsert[0]) {
-			if (DEBUG) {
-				System.err.println("Failed reinsert 2: " + Arrays.toString(newKey));
-			}
 			//does not fit in root node...
 			ensureCoverage(e);
 			QNode<T> r = root;
