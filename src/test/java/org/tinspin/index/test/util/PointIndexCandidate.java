@@ -165,8 +165,13 @@ public class PointIndexCandidate extends Candidate {
 			itKnn.reset(center, k);
 		}
 		double ret = 0;
-		while (itKnn.hasNext()) {
+		int i = 0;
+		while (itKnn.hasNext() && i < k) {
 			ret += itKnn.next().dist();
+			i++;
+		}
+		if (i != k) {
+			throw new IllegalStateException();
 		}
 		return ret;
 	}

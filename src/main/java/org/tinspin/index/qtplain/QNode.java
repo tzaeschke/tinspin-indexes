@@ -56,7 +56,7 @@ public class QNode<T> {
 
 	@SuppressWarnings("unused")
 	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
-		if (QuadTreeKD0.DEBUG && !e.enclosedBy(center, radius)) {
+		if (QuadTreeKD0.DEBUG && !QUtil.fitsIntoNode(e.point(), center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
@@ -128,7 +128,7 @@ public class QNode<T> {
 	private QNode<T> findSubNode(double[] p) {
 		for (int i = 0; i < subs.size(); i++) {
 			QNode<T> n = subs.get(i);
-			if (QUtil.isPointEnclosed(p, n.center, n.radius)) {
+			if (QUtil.fitsIntoNode(p, n.center, n.radius)) {
 				return n;
 			}
 		}
@@ -169,7 +169,7 @@ public class QNode<T> {
 			QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
 					currentDepth+1, maxDepth, pred);
 			if (ret != null && requiresReinsert[0] && 
-					QUtil.isPointEnclosed(ret.point(), center, radius)) {
+					QUtil.fitsIntoNode(ret.point(), center, radius)) {
 				requiresReinsert[0] = false;
 				QNode<T> r = this;
 				while (r != null) {
@@ -184,7 +184,7 @@ public class QNode<T> {
 			if (QUtil.isPointEqual(e.point(), keyOld) && pred.test(e)) {
 				values.remove(i);
 				e.setKey(keyNew);
-				if (QUtil.isPointEnclosed(keyNew, center, radius)) {
+				if (QUtil.fitsIntoNode(keyNew, center, radius)) {
 					// reinsert locally;
 					values.add(e);
 					requiresReinsert[0] = false;
@@ -276,7 +276,7 @@ public class QNode<T> {
 		s.nNodes++;
 		
 		if (parent != null) {
-			if (!QUtil.isRectEnclosed(center, radius, 
+			if (!QUtil.isNodeEnclosed(center, radius,
 					parent.center, parent.radius*QUtil.EPS_MUL)) {
 				for (int d = 0; d < center.length; d++) {
 //					if ((centerOuter[d]+radiusOuter) / (centerEnclosed[d]+radiusEnclosed) < 0.9999999 || 
@@ -297,7 +297,7 @@ public class QNode<T> {
 		if (values != null) {
 			for (int i = 0; i < values.size(); i++) {
 				QEntry<T> e = values.get(i);
-				if (!QUtil.isPointEnclosed(e.point(), center, radius*QUtil.EPS_MUL)) {
+				if (!QUtil.fitsIntoNode(e.point(), center, radius*QUtil.EPS_MUL)) {
 					System.out.println("Node: " + radius + " " + Arrays.toString(center));
 					System.out.println("Child: " + Arrays.toString(e.point()));
 					for (int d = 0; d < center.length; d++) {

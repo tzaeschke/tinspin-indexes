@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.qthypercube2;
+package org.tinspin.index.qthypercube;
 
 import org.tinspin.index.PointDistanceFunction;
 import org.tinspin.index.PointEntry;
@@ -27,7 +27,7 @@ import org.tinspin.index.util.MinMaxHeap;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-import static org.tinspin.index.qthypercube2.QUtil.distToRectNode;
+import static org.tinspin.index.qthypercube.QUtil.distToRectNode;
 
 public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
 
@@ -113,19 +113,29 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
                 }
 
                 if (node.isLeaf()) {
-                    for (QEntry<T> entry : node.getValues()) {
-                        processEntry(entry);
+                    for (QEntry<T> entry : node.getEntries()) {
+                        if (filterFn.test(entry)) {
+                            double d = distFn.dist(center, entry.point());
+                            // Using '<=' allows dealing with infinite distances.
+                            if (d <= maxNodeDist) {
+                                queueV.push(new QEntryDist<>(entry, d));
+                                if (queueV.size() >= remaining) {
+                                    if (queueV.size() > remaining) {
+                                        queueV.popMax();
+                                    }
+                                    double dMax = queueV.peekMax().dist();
+                                    maxNodeDist = Math.min(maxNodeDist, dMax);
+                                }
+                            }
+                        }
                     }
                 } else {
-                    for (Object o : node.getEntries()) {
-                        if (o instanceof QNode) {
-                            QNode<T> subnode = (QNode<T>) o;
+                    for (QNode<T> subnode : node.getChildNodes()) {
+                        if (subnode != null) {
                             double dist = distToRectNode(center, subnode.getCenter(), subnode.getRadius(), distFn);
                             if (dist <= maxNodeDist) {
                                 queueN.push(new NodeDistT(dist, subnode));
                             }
-                        } else {
-                            processEntry((QEntry<T>) o);
                         }
                     }
                 }
@@ -133,23 +143,6 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
         }
         current = null;
         currentDistance = Double.MAX_VALUE;
-    }
-
-    private void processEntry(QEntry<T> entry) {
-        if (entry != null && filterFn.test(entry)) {
-            double d = distFn.dist(center, entry.point());
-            // Using '<=' allows dealing with infinite distances.
-            if (d <= maxNodeDist) {
-                queueV.push(new QEntryDist<>(entry, d));
-                if (queueV.size() >= remaining) {
-                    if (queueV.size() > remaining) {
-                        queueV.popMax();
-                    }
-                    double dMax = queueV.peekMax().dist();
-                    maxNodeDist = Math.min(maxNodeDist, dMax);
-                }
-            }
-        }
     }
 
     private class NodeDistT {

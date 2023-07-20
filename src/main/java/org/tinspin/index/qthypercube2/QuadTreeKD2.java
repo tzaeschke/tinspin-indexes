@@ -284,7 +284,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	@SuppressWarnings("unused")
 	private void ensureCoverage(QEntry<T> e) {
 		double[] p = e.point();
-		while(!e.enclosedBy(root.getCenter(), root.getRadius())) {
+		while(!QUtil.fitsIntoNode(e.point(), root.getCenter(), root.getRadius())) {
 			double[] center = root.getCenter();
 			double radius = root.getRadius();
 			double[] center2 = new double[center.length];
@@ -302,7 +302,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 					center2[d] = center[d]+radius; 
 				}
 			}
-			if (QuadTreeKD2.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
+			if (QuadTreeKD2.DEBUG && !QUtil.isNodeEnclosed(center, radius, center2, radius2)) {
 				throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 						" center/radius=" + Arrays.toString(center2) + 
 						"/"+ radius);
@@ -372,9 +372,10 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	 */
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
-		return new QQueryIteratorKNN(center, k, distFn);
+		return new QIteratorKnn<>(root, k, center, distFn, e -> true);
 	}
 
+	@Deprecated
 	public List<QEntryDist<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
 			return Collections.emptyList();
@@ -384,6 +385,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 		return candidates;
 	}
 
+	@Deprecated
 	public List<QEntryDist<T>> knnQuery(double[] center, int k, PointDistanceFunction distFn) {
 		if (root == null) {
 			return Collections.emptyList();
@@ -479,34 +481,6 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
     			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
     		};
 
-    private class QQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
-
-		private final PointDistanceFunction distFn;
-    	private Iterator<PointEntryDist<T>> it;
-    	
-		public QQueryIteratorKNN(double[] center, int k, PointDistanceFunction distFn) {
-			this.distFn = distFn;
-			reset(center, k);
-		}
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public PointEntryDist<T> next() {
-			return it.next();
-		}
-
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		@Override
-		public QQueryIteratorKNN reset(double[] center, int k) {
-			it = ((List)knnQuery(center, k, distFn)).iterator();
-			return this;
-		}
-    }
-    
     /**
 	 * Returns a printable list of the tree.
 	 * @return the tree as String
@@ -612,7 +586,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-		return new QQueryIteratorKNN(center, k, PointDistanceFunction.L2);
+		return queryKNN(center, k, PointDistanceFunction.L2);
 	}
 
 	@Override

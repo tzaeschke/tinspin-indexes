@@ -56,7 +56,7 @@ public class QNode<T> {
 
 	@SuppressWarnings({ "unchecked", "unused" })
 	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
-		if (QuadTreeKD.DEBUG && !e.enclosedBy(center, radius)) {
+		if (QuadTreeKD.DEBUG && !QUtil.fitsIntoNode(e.point(), center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
@@ -175,7 +175,7 @@ public class QNode<T> {
 			QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
 					currentDepth+1, maxDepth, pred);
 			if (ret != null && requiresReinsert[0] && 
-					QUtil.isPointEnclosed(ret.point(), center, radius/QUtil.EPS_MUL)) {
+					QUtil.fitsIntoNode(ret.point(), center, radius/QUtil.EPS_MUL)) {
 				requiresReinsert[0] = false;
 				QNode<T> r = this;
 				while (r != null) {
@@ -190,7 +190,7 @@ public class QNode<T> {
 			if (QUtil.isPointEqual(e.point(), keyOld) && pred.test(e)) {
 				values.remove(i);
 				e.setKey(keyNew);
-				if (QUtil.isPointEnclosed(keyNew, center, radius/QUtil.EPS_MUL)) {
+				if (QUtil.fitsIntoNode(keyNew, center, radius/QUtil.EPS_MUL)) {
 					// reinsert locally;
 					values.add(e);
 					requiresReinsert[0] = false;
@@ -281,8 +281,7 @@ public class QNode<T> {
 		s.nNodes++;
 		
 		if (parent != null) {
-			if (!QUtil.isRectEnclosed(center, radius, 
-					parent.center, parent.radius*QUtil.EPS_MUL)) {
+			if (!QUtil.isNodeEnclosed(center, radius, parent.center, parent.radius*QUtil.EPS_MUL)) {
 				for (int d = 0; d < center.length; d++) {
 //					if ((centerOuter[d]+radiusOuter) / (centerEnclosed[d]+radiusEnclosed) < 0.9999999 || 
 //							(centerOuter[d]-radiusOuter) / (centerEnclosed[d]-radiusEnclosed) > 1.0000001) {
@@ -305,7 +304,7 @@ public class QNode<T> {
 			s.histoValues[values.size()]++;
 			for (int i = 0; i < values.size(); i++) {
 				QEntry<T> e = values.get(i);
-				if (!QUtil.isPointEnclosed(e.point(), center, radius*QUtil.EPS_MUL)) {
+				if (!QUtil.fitsIntoNode(e.point(), center, radius*QUtil.EPS_MUL)) {
 					System.out.println("Node: " + radius + " " + Arrays.toString(center));
 					System.out.println("Child: " + Arrays.toString(e.point()));
 					for (int d = 0; d < center.length; d++) {

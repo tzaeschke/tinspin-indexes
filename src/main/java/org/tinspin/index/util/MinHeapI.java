@@ -1,6 +1,7 @@
 /*
- * Copyright 2023 Tilmann Zaeschke
+ * Copyright 2009-2023 Tilmann Zaeschke. All rights reserved.
  *
+ * This file is part of TinSpin.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +17,17 @@
  */
 package org.tinspin.index.util;
 
-public class MutableInt {
-    private int i;
+public interface MinHeapI<T> {
 
-    public MutableInt() {
-        i = 0;
-    }
+    void push(T value);
 
-    public MutableInt(int i) {
-        this.i = i;
-    }
+    void popMin();
 
-    public int get() {
-        return i;
-    }
+    T peekMin();
 
-    public void set(int i) {
-        this.i = i;
-    }
+    int size();
 
-    public MutableInt inc() {
-        ++i;
-        return this;
-    }
+    boolean isEmpty();
 
-    public String toString() {
-        return Integer.toString(i);
-    }
-
-    public void add(int i) {
-        this.i += i;
-    }
+    void clear();
 }

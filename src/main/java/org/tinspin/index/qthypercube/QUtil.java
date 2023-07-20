@@ -19,9 +19,11 @@ package org.tinspin.index.qthypercube;
 
 import org.tinspin.index.PointDistanceFunction;
 
-public class QUtil {
-	
+class QUtil {
+
 	static final double EPS_MUL = 1.000000001;
+
+	private QUtil() {}
 
 	public static boolean isPointEnclosed(double[] point,
 			double[] min, double[] max) {
@@ -33,10 +35,14 @@ public class QUtil {
 		return true;
 	}
 
-	public static boolean isPointEnclosed(double[] point,
-			double[] center, double radius) {
+
+	/**
+	 * The tests for inclusion with UPPER BOUNDARY EXCLUSIVE!
+	 * I.e. it firs only if point is SMALLER than (center + radius).
+	 */
+	public static boolean fitsIntoNode(double[] point, double[] center, double radius) {
 		for (int d = 0; d < center.length; d++) {
-			if (point[d] < center[d]-radius || point[d] > center[d]+radius) {
+			if (point[d] < center[d] - radius || point[d] >= center[d] + radius) {
 				return false;
 			}
 		}
@@ -88,31 +94,33 @@ public class QUtil {
 		return true;
 	}
 
-	public static boolean isRectEnclosed(double[] minEnclosed, double[] maxEnclosed,
-			double[] centerOuter, double radiusOuter) {
-		for (int d = 0; d < centerOuter.length; d++) {
-			double radOuter = radiusOuter;
-			if ((centerOuter[d]+radOuter) < maxEnclosed[d] || 
-					(centerOuter[d]-radOuter) > minEnclosed[d]) {
+	/**
+	 * The tests for inclusion with UPPER BOUNDARY EXCLUSIVE!
+	 * I.e. it firs only if maxEnclosed is SMALLER than (center + radius).
+	 */
+	public static boolean fitsIntoNode(double[] minEnclosed, double[] maxEnclosed,
+									   double[] centerNode, double radiusNode) {
+		for (int d = 0; d < centerNode.length; d++) {
+			if ((centerNode[d] + radiusNode) <= maxEnclosed[d] ||
+					(centerNode[d] - radiusNode) > minEnclosed[d]) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public static boolean isRectEnclosed(double[] centerEnclosed, double radiusEnclosed,
-			double[] centerOuter, double radiusOuter) {
+	public static boolean isNodeEnclosed(double[] centerEnclosed, double radiusEnclosed,
+										 double[] centerOuter, double radiusOuter) {
 		for (int d = 0; d < centerOuter.length; d++) {
-			double radOuter = radiusOuter;
-			double radEncl = radiusEnclosed;
-			if ((centerOuter[d]+radOuter) < (centerEnclosed[d]+radEncl) || 
-					(centerOuter[d]-radOuter) > (centerEnclosed[d]-radEncl)) {
+			if ((centerOuter[d] + radiusOuter) < (centerEnclosed[d] + radiusEnclosed) ||
+					(centerOuter[d] - radiusOuter) > (centerEnclosed[d] - radiusEnclosed)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
+	@Deprecated // Not really, I guess it's ok for adjustRoot()
 	public static double distance(double[] p1, double[] p2) {
 		double dist = 0;
 		for (int i = 0; i < p1.length; i++) {
@@ -121,48 +129,23 @@ public class QUtil {
 		}
 		return Math.sqrt(dist);
 	}
-	
-	/**
-	 * Calculates distance to center point of rectangle.
-	 * @param p point
-	 * @param rMin rectangle min
-	 * @param rMax rectangle max
-	 * @return distance to center point
-	 */
-	public static double distToRectCenter(double[] p, double[] rMin, double[] rMax) {
-		double dist = 0;
-		for (int i = 0; i < p.length; i++) {
-			double d = (rMin[i]+rMax[i])/2. - p[i];
-			dist += d * d;
-		}
-		return Math.sqrt(dist);
-	}
-	
-	/**
-	 * Calculates distance to center point of rectangle.
-	 * @param p point
-	 * @param e rectangle
-	 * @return distance to center point
-	 */
-	public static double distToRectCenter(double[] p, QREntry<?> e) {
-		return distToRectCenter(p, e.lower(), e.upper());
-	}
-	
+
 	/**
 	 * Calculates distance to the edge of rectangle.
-	 * @param p point
-	 * @param rMin rectangle min
-	 * @param rMax rectangle max
+	 * @param point point
+	 * @param rLower rectangle min
+	 * @param rUpper rectangle max
 	 * @return distance to edge
 	 */
-	static double distToRectEdge(double[] center, double[] rLower, double[] rUpper) {
+	@Deprecated
+	static double distToRectEdge(double[] point, double[] rLower, double[] rUpper) {
 		double dist = 0;
-		for (int i = 0; i < center.length; i++) {
+		for (int i = 0; i < point.length; i++) {
 			double d = 0;
-			if (center[i] > rUpper[i]) {
-				d = center[i] - rUpper[i];
-			} else if (center[i] < rLower[i]) {
-				d = rLower[i] - center[i];
+			if (point[i] > rUpper[i]) {
+				d = point[i] - rUpper[i];
+			} else if (point[i] < rLower[i]) {
+				d = rLower[i] - point[i];
 			}
 			dist += d*d;
 		}
@@ -175,6 +158,7 @@ public class QUtil {
 	 * @param e rectangle
 	 * @return distance to edge point
 	 */
+	@Deprecated
 	public static double distToRectEdge(double[] p, QREntry<?> e) {
 		return distToRectEdge(p, e.lower(), e.upper());
 	}
@@ -200,4 +184,17 @@ public class QUtil {
 		return distFn.dist(dist, point);
 	}
 
+	static double distToRectNodeEDGE(double[] point, double[] nodeCenter, double nodeRadius) {
+		double[] dist = new double[point.length];
+		for (int i = 0; i < point.length; i++) {
+			double d = point[i];
+			if (point[i] > nodeCenter[i] + nodeRadius) {
+				d = nodeCenter[i] + nodeRadius;
+			} else if (point[i] < nodeCenter[i] - nodeRadius) {
+				d = nodeCenter[i] - nodeRadius;
+			}
+			dist[i] = d;
+		}
+		return PointDistanceFunction.L2.dist(point, dist);
+	}
 }

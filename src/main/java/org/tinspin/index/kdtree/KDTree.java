@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 
 import org.tinspin.index.*;
 import org.tinspin.index.util.MutableRef;
+import org.tinspin.index.util.StringBuilderLn;
 
 /**
  * A simple KD-Tree implementation. 
@@ -31,8 +32,6 @@ import org.tinspin.index.util.MutableRef;
  * @param <T> Value type
  */
 public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
-
-	private static final String NL = System.lineSeparator();
 
 	public static final boolean DEBUG = false;
 
@@ -58,7 +57,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	//Identifying these points is relatively cheap, we can do this while searching for 
 	//the min/max during removal. However, _moving_ these point may be very expensive.
 	//
-	//Our (pragmatic) solution is identify when the invariant gets broken.
+	//Our (pragmatic) solution is to identify when the invariant gets broken.
 	//When it is not broken, we use the simple search. If it gets broken, we use the slower search.
 	//This is especially useful in scenarios where 'remove()' is not required or where
 	//points have never the same values (such as for physical measurements or other experimental results).
@@ -67,66 +66,6 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	private Node<T> root;
 
 	private final PointDistanceFunction distOld;
-
-	public static void main(String... args) {
-		for (int i = 0; i < 10; i++) {
-			try {
-				System.out.println("Testing round: " + i);
-				test(i);
-			} catch (Exception e) {
-				System.out.println("Failed with r=" + i);
-				throw new RuntimeException(e);
-			}
-		}
-	}
-
-	private static void test(int r) {
-        // double[][] point_list = {{2,3}, {5,4}, {9,6}, {4,7}, {8,1}, {7,2}};
-		double[][] point_list = new double[500000][14];
-		Random R = new Random(r);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, i -> R.nextInt(100));
-		}
-		KDTree<double[]> tree = create(point_list[0].length);
-		for (double[] data : point_list) {
-			tree.insert(data, data);
-		}
-		//	    System.out.println(tree.toStringTree());
-		for (double[] key : point_list) {
-			if (!tree.containsExact(key)) {
-				throw new IllegalStateException(Arrays.toString(key));
-			}
-		}
-		//		for (double[] key : point_list) {
-		//			System.out.println(Arrays.toString(tree.queryExact(key)));
-		//		}
-		//	    System.out.println(tree.toStringTree());
-
-		for (double[] key : point_list) {
-			//			System.out.println(tree.toStringTree());
-			// System.out.println("kNN query: " + Arrays.toString(key));
-			QueryIteratorKNN<PointEntryDist<double[]>> iter = tree.queryKNN(key, 1);
-			if (!iter.hasNext()) {
-				throw new IllegalStateException("kNN() failed: " + Arrays.toString(key));
-			}
-			double[] answer = iter.next().point();
-			if (answer != key && !Arrays.equals(answer, key)) {
-				throw new IllegalStateException("Expected " + Arrays.toString(key) + " but got " + Arrays.toString(answer));
-			}
-		}
-
-		for (double[] key : point_list) {
-			//			System.out.println(tree.toStringTree());
-			// System.out.println("Removing: " + Arrays.toString(key));
-			if (!tree.containsExact(key)) {
-				throw new IllegalStateException("containsExact() failed: " + Arrays.toString(key));
-			}
-			double[] answer = tree.remove(key);
-			if (answer != key && !Arrays.equals(answer, key)) {
-				throw new IllegalStateException("Expected " + Arrays.toString(key) + " but got " + Arrays.toString(answer));
-			}
-		}
-	}
 
 	@Deprecated
 	private KDTree(int dims, PointDistanceFunction dist) {
@@ -685,7 +624,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	 */
     @Override
 	public String toStringTree() {
-		StringBuilder sb = new StringBuilder();
+		StringBuilderLn sb = new StringBuilderLn();
 		if (root == null) {
 			sb.append("empty tree");
 		} else {
@@ -694,23 +633,21 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 		return sb.toString();
 	}
 	
-	private void toStringTree(StringBuilder sb, Node<T> node, int depth) {
-		String prefix = "";
-		for (int i = 0; i < depth; i++) {
-			prefix += ".";
-		}
-		//sb.append(prefix + " d=" + depth + NL);
-		prefix += " ";
+	private void toStringTree(StringBuilderLn sb, Node<T> node, int depth) {
 		if (node.getLo() != null) {
 			toStringTree(sb, node.getLo(), depth+1);
 		}
-		sb.append(prefix + Arrays.toString(node.point()));
-		sb.append(" v=" + node.value());
+		for (int i = 0; i < depth; i++) {
+			sb.append(".");
+		}
+		sb.append(" ");
+		sb.append(Arrays.toString(node.point()));
+		sb.append(" v=").append(node.value());
 		sb.append(" l/r=");
 		sb.append(node.getLo() == null ? null : Arrays.toString(node.getLo().point()));
 		sb.append("/");
 		sb.append(node.getHi() == null ? null : Arrays.toString(node.getHi().point()));
-		sb.append(NL);
+		sb.appendLn();
 		if (node.getHi() != null) {
 			toStringTree(sb, node.getHi(), depth+1);
 		}
@@ -757,18 +694,26 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public KDEntryDist<T> query1NN(double[] center) {
-		return nnQuery(center);
+	public PointEntryDist<T> query1NN(double[] center) {
+		return queryKNN(center, 1).next();
 	}
 
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-		return new KDQueryIteratorKNN<>(this, center, k, dist());
+		if (size < 1_000_000) {
+			return new KDQueryIteratorKNN<>(this, center, k, dist());
+		}
+		return new KDIteratorKnn<>(root, k, center, dist(), e -> true);
 	}
 
 	@Override
 	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
-		return new KDQueryIteratorKNN<>(this, center, k, distFn);
+		// For small trees, the old iterator is about 3x fatser.
+		// For 1M it is about even, for 10M the new HS-iterator is about 2x faster.
+		if (size < 1_000_000) {
+			return new KDQueryIteratorKNN<>(this, center, k, distFn);
+		}
+		return new KDIteratorKnn<>(root, k, center, distFn, e -> true);
 	}
 
 	@Override

@@ -215,12 +215,7 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 		return Math.sqrt(dist);
 	}
 
-	private final Comparator<KnnEntry<T>> COMP = new Comparator<KnnEntry<T>>() {
-		@Override
-		public int compare(KnnEntry<T> o1, KnnEntry<T> o2) {
-			return o1.compareTo(o2);
-		}
-	};
+	private final Comparator<KnnEntry<T>> COMP = KnnEntry::compareTo;
 	
 	private static class KnnEntry<T> implements Comparable<KnnEntry<T>>, PointEntryDist<T> {
 		private final double[] p;

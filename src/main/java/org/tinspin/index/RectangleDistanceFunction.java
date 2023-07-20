@@ -23,7 +23,13 @@ public interface RectangleDistanceFunction {
 	RectangleDistanceFunction CENTER = RectangleDistanceFunction::centerDistance;
 	RectangleDistanceFunction EDGE = RectangleDistanceFunction::edgeDistance;
 
-	double dist(double[] center, double[] min, double[] max);
+	/**
+	 * @param point A point
+	 * @param min Minimum corner of axis aligned box
+	 * @param max Maximum corner of axis aligned box
+	 * @return Distance between point and box
+	 */
+	double dist(double[] point, double[] min, double[] max);
 
 	/**
 	 * Some algorithm use this method on the entries containing user supplied values.

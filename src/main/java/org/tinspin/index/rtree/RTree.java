@@ -463,13 +463,14 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 * @see org.tinspin.index.rtree.Index#queryKNN(double[], int, org.tinspin.index.rtree.RectangleDistanceFunction)
 	 */
 	@Override
-	public RTreeQueryKnn<T> queryKNN(double[] center, int k) {
+	public RTreeQueryKnn2<T> queryKNN(double[] center, int k) {
 		return queryKNN(center, k, RectangleDistanceFunction.EDGE);
 	}
 
 	@Override
-	public RTreeQueryKnn<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist) {
-		return new RTreeQueryKnn<>(this, center, k, dist);
+	public RTreeQueryKnn2<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist) {
+		//return new RTreeQueryKnn<>(this, center, k, dist);
+		return new RTreeQueryKnn2<>(this, k, center, dist, e -> true);
 	}
 
 	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(

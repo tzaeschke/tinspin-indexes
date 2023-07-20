@@ -20,6 +20,7 @@ package org.tinspin.index.kdtree;
 import java.util.Comparator;
 
 import org.tinspin.index.PointEntryDist;
+import org.tinspin.index.rtree.Entry;
 
 public class KDEntryDist<T> implements PointEntryDist<T> {
 	
@@ -74,5 +75,4 @@ public class KDEntryDist<T> implements PointEntryDist<T> {
 	public T value() {
 		return entry.value();
 	}
-
 }

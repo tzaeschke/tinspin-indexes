@@ -17,17 +17,12 @@
  */
 package org.tinspin.index.qtplain;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.function.Predicate;
 
 import org.tinspin.index.*;
 import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
+import org.tinspin.index.util.QueryIteratorWrapper;
 
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
@@ -37,7 +32,7 @@ import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
  *
  * @param <T> Value type.
  */
-public class QuadTreeRKD0<T> implements RectangleIndex<T> {
+public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	private static final int MAX_DEPTH = 50;
 	
@@ -98,7 +93,6 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 	 * @param value the value
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public void insert(double[] keyL, double[] keyU, T value) {
 		size++;
 		QREntry<T> e = new QREntry<>(keyL, keyU, value);
@@ -106,13 +100,13 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 			initializeRoot(keyL, keyU);
 		}
 		ensureCoverage(e);
-		Object r = root;
+		QRNode<T> r = root;
 		int depth = 0;
-		while (r instanceof QRNode) {
-			r = ((QRNode<T>)r).tryPut(e, maxNodeSize, depth++>MAX_DEPTH);
+		while (r != null) {
+			r = r.tryPut(e, maxNodeSize, depth++>MAX_DEPTH);
 		}
 	}
-	
+
 	private void initializeRoot(double[] keyL, double[] keyU) {
 		double[] center = new double[dims];
 		double radius = 0;
@@ -121,8 +115,9 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 			if (keyU[d]-keyL[d] > radius) {
 				radius = keyU[d] -keyL[d];
 			}
-		}			
+		}
 		radius *= 5; //for good measure
+		radius = radius == 0.0 ? 1 : radius;
 		root = new QRNode<>(center, radius);
 	}
 	
@@ -136,7 +131,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 		if (root == null) {
 			return false;
 		}
-		return root.getExact(keyL, keyU) != null;
+		return root.getExact(keyL, keyU, e -> true) != null;
 	}
 	
 	/**
@@ -150,10 +145,35 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 		if (root == null) {
 			return null;
 		}
-		QREntry<T> e = root.getExact(keyL, keyU);
+		QREntry<T> e = root.getExact(keyL, keyU, x -> true);
 		return e == null ? null : e.value();
 	}
-	
+
+	@Override
+	public boolean contains(double[] lower, double[] upper, T value) {
+		if (root == null) {
+			return false;
+		}
+		return root.getExact(lower, upper, x -> Objects.equals(value, x.value())) != null;
+	}
+
+	@Override
+	public QueryIterator<RectangleEntry<T>> queryRectangle(double[] lower, double[] upper) {
+		if (root == null) {
+			return null;
+		}
+
+		return new QueryIteratorWrapper<>(lower, upper, (low, upp2) -> {
+			ArrayList<RectangleEntry<T>> results = new ArrayList<>();
+			// Hack: we use the 'condition' to collect results, however, in order to continue search, we return `false`.
+			if (root != null) {
+				root.getExact(lower, upper, x -> !results.add(x));
+			}
+			return results.iterator();
+		});
+	}
+
+
 	/**
 	 * Remove a key.
 	 * @param keyL key to remove
@@ -163,18 +183,55 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 	@Override
 	public T remove(double[] keyL, double[] keyU) {
 		if (root == null) {
-			System.err.println("Failed remove 1: " + 
-					Arrays.toString(keyL) + Arrays.toString(keyU)); //TODO
 			return null;
 		}
-		QREntry<T> e = root.remove(null, keyL, keyU, maxNodeSize);
+		QREntry<T> e = root.remove(null, keyL, keyU, maxNodeSize, x -> true);
 		if (e == null) {
-			System.err.println("Failed remove 2: " + 
-					Arrays.toString(keyL) + Arrays.toString(keyU)); //TODO
 			return null;
 		}
 		size--;
 		return e.value();
+	}
+
+	@Override
+	public boolean remove(double[] lower, double[] upper, T value) {
+		return removeIf(lower, upper, e -> Objects.equals(e.value(), value));
+	}
+
+	@Override
+	public boolean removeIf(double[] lower, double[] upper, Predicate<RectangleEntry<T>> condition) {
+		if (root == null) {
+			return false;
+		}
+		QREntry<T> e = root.remove(null, lower, upper, maxNodeSize, condition);
+		if (e == null) {
+			return false;
+		}
+		size--;
+		return true;
+	}
+
+	@Override
+	public boolean update(double[] oldKeyL, double[] oldKeyU, double[] newKeyL, double[] newKeyU, T value) {
+		if (root == null) {
+			return false;
+		}
+		boolean[] requiresReinsert = new boolean[]{false};
+		QREntry<T> e = root.update(null, oldKeyL, oldKeyU, newKeyL, newKeyU,
+				maxNodeSize, requiresReinsert, 0, MAX_DEPTH, t -> Objects.equals(value, t));
+		if (e == null) {
+			return false;
+		}
+		if (requiresReinsert[0]) {
+			//does not fit in root node...
+			ensureCoverage(e);
+			QRNode<T> r = root;
+			int depth = 0;
+			while (r != null) {
+				r = r.tryPut(e, maxNodeSize, depth++>MAX_DEPTH);
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -186,34 +243,29 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 	 * @return the value associated with the key or 'null' if the key was not found.
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public T update(double[] oldKeyL, double[] oldKeyU, double[] newKeyL, double[] newKeyU) {
 		if (root == null) {
 			return null;
 		}
 		boolean[] requiresReinsert = new boolean[]{false};
 		QREntry<T> e = root.update(null, oldKeyL, oldKeyU, newKeyL, newKeyU, 
-				maxNodeSize, requiresReinsert, 0, MAX_DEPTH);
+				maxNodeSize, requiresReinsert, 0, MAX_DEPTH, t -> true);
 		if (e == null) {
 			//not found
-			System.err.println("Failed reinsert 1: " + 
-					Arrays.toString(oldKeyL) + Arrays.toString(oldKeyU)); //TODO
 			return null;
 		}
 		if (requiresReinsert[0]) {
-			System.err.println("Failed reinsert 2: " + 
-					Arrays.toString(oldKeyL) + Arrays.toString(oldKeyU)); //TODO
 			//does not fit in root node...
 			ensureCoverage(e);
-			Object r = root;
+			QRNode<T> r = root;
 			int depth = 0;
-			while (r instanceof QNode) {
-				r = ((QRNode<T>)r).tryPut(e, maxNodeSize, depth++>MAX_DEPTH);
+			while (r != null) {
+				r = r.tryPut(e, maxNodeSize, depth++>MAX_DEPTH);
 			}
 		}
 		return e.value();
 	}
-	
+
 	/**
 	 * Ensure that the tree covers the entry.
 	 * @param e Entry to cover.
@@ -222,7 +274,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 	private void ensureCoverage(QREntry<T> e) {
 		double[] pLow = e.lower();
 		//double[] pUpp = e.upper();
-		while (!e.enclosedBy(root.getCenter(), root.getRadius())) {
+		while (!QUtil.fitsIntoNode(e.lower(), e.upper(), root.getCenter(), root.getRadius())) {
 			double[] center = root.getCenter();
 			double radius = root.getRadius();
 			double[] center2 = new double[center.length];
@@ -237,7 +289,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 					center2[d] = center[d]+radius; 
 				}
 			}
-			if (QuadTreeRKD0.DEBUG && !QUtil.isRectEnclosed(center, radius, center2, radius2)) {
+			if (QuadTreeRKD0.DEBUG && !QUtil.isNodeEnclosed(center, radius, center2, radius2)) {
 				throw new IllegalStateException("e=" + Arrays.toString(e.lower()) + 
 						"/" + Arrays.toString(e.upper()) + 
 						" center/radius=" + Arrays.toString(center) + "/" + radius);
@@ -273,6 +325,11 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 	@Override
 	public QRIterator<T> queryIntersect(double[] min, double[] max) {
 		return new QRIterator<>(this, min, max);
+	}
+
+	@Override
+	public RectangleEntryDist<T> query1NN(double[] center) {
+		return queryKNN(center, 1).next();
 	}
 
 	/**
@@ -352,7 +409,8 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 			}
 		}
 	}
-	
+
+	@Deprecated
 	public List<QREntryDist<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
     		return Collections.emptyList();
@@ -383,7 +441,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
     		ArrayList<QRNode<T>> nodes = node.getChildNodes(); 
     		for (int i = 0; i < nodes.size(); i++) {
     			QRNode<T> sub = nodes.get(i);
-    			if (QUtil.isPointEnclosed(point, sub.getCenter(), sub.getRadius())) {
+    			if (QUtil.fitsIntoNode(point, sub.getCenter(), sub.getRadius())) {
     				return distanceEstimate(sub, point, k, comp);
     			}
     		}
@@ -453,32 +511,6 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
         return range;
 	}
 	
-    private class QRQueryIteratorKNN implements QueryIteratorKNN<RectangleEntryDist<T>> {
-
-    	private Iterator<RectangleEntryDist<T>> it;
-    	
-		public QRQueryIteratorKNN(double[] center, int k) {
-			reset(center, k);
-		}
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public RectangleEntryDist<T> next() {
-			return it.next();
-		}
-
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		@Override
-		public QRQueryIteratorKNN reset(double[] center, int k) {
-			it = ((List)knnQuery(center, k)).iterator();
-			return this;
-		}
-    }
-    
     /**
 	 * Returns a printable list of the tree.
 	 * @return the tree as String
@@ -558,8 +590,13 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T> {
 	}
 
 	@Override
-	public QRQueryIteratorKNN queryKNN(double[] center, int k) {
-		return new QRQueryIteratorKNN(center, k);
+	public QRIteratorKnn<T> queryKNN(double[] center, int k) {
+		return new QRIteratorKnn<>(root, k, center, RectangleDistanceFunction.EDGE, e -> true);
+	}
+
+	@Override
+	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k, RectangleDistanceFunction distFn) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
