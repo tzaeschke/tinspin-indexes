@@ -45,7 +45,7 @@ public class KDTreeTest {
 		double[][] point_list = new double[20][2];
 		Random R = new Random(0);
 		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+			Arrays.setAll(p, (i) -> R.nextInt(100));
 		}
 		smokeTest(point_list);
 	}
@@ -55,7 +55,7 @@ public class KDTreeTest {
 		double[][] point_list = new double[20][2];
 		Random R = new Random(1);
 		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+			Arrays.setAll(p, (i) -> R.nextInt(100));
 		}
 		smokeTest(point_list);
 	}
@@ -75,7 +75,7 @@ public class KDTreeTest {
 	 */
 	@Test
 	public void smokeTest2D_Line() {
-		double[][] point_list = new double[10000][3];
+		double[][] point_list = new double[10_000][3];
 		int n = 0;
 		for (double[] p : point_list) {
 			p[0] = n % 3;
@@ -137,7 +137,7 @@ public class KDTreeTest {
 //	    System.out.println(tree.toStringTree());
 		for (double[] key : point_list) {
 			if (!tree.containsExact(key)) {
-				throw new IllegalStateException("" + Arrays.toString(key));
+				throw new IllegalStateException(Arrays.toString(key));
 			}
 		}
 
@@ -165,6 +165,4 @@ public class KDTreeTest {
 			}
 		}
 	}
-
-	
 }

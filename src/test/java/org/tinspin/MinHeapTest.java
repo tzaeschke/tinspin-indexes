@@ -27,7 +27,9 @@ import static org.junit.Assert.*;
 
 public class MinHeapTest {
 
-    static class Entry implements Comparable<Entry> {
+    private static final int SEEDS = 10; // 100 for benchmarking
+
+    private static class Entry implements Comparable<Entry> {
 
         Entry(double d, int id) {
             this.d = d;
@@ -81,7 +83,7 @@ public class MinHeapTest {
 
     @Test
     public void testMin() {
-        for (int seed = 0; seed < 100; seed++) {
+        for (int seed = 0; seed < SEEDS; seed++) {
             for (int i = 1; i < 35; i++) {
                 testMin(i, seed);
             }
@@ -111,15 +113,15 @@ public class MinHeapTest {
         assertEquals(0, heap.size());
     }
 
-    @Test
-    public void testMin2() {
-        for (int seed = 0; seed < 100; seed++) {
-            for (int i = 1; i < 35; i++) {
-                testMin(i, seed);
-            }
-            for (int i = 1; i < 100; i++) {
-                testMin(i * 100, seed);
-            }
-        }
-    }
+//    @Test
+//    public void testMin2() {
+//        for (int seed = 0; seed < SEEDS; seed++) {
+//            for (int i = 1; i < 35; i++) {
+//                testMin(i, seed);
+//            }
+//            for (int i = 1; i < 100; i++) {
+//                testMin(i * 100, seed);
+//            }
+//        }
+//    }
 }

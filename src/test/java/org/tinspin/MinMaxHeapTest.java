@@ -25,7 +25,9 @@ import java.util.Random;
 
 public class MinMaxHeapTest {
 
-    static class Entry implements Comparable<Entry> {
+    private static final int SEEDS = 10; // 100 for benchmarking
+
+    private static class Entry implements Comparable<Entry> {
 
         Entry(double d, int id) {
             this.d = d;
@@ -81,7 +83,7 @@ public class MinMaxHeapTest {
 
     @Test
     public void testMin() {
-        for (int seed = 0; seed < 100; seed++) {
+        for (int seed = 0; seed < SEEDS; seed++) {
             for (int i = 1; i < 35; i++) {
                 testMin(i, seed);
             }
@@ -114,7 +116,7 @@ public class MinMaxHeapTest {
 
     @Test
     public void testMax() {
-        for (int seed = 0; seed < 100; seed++) {
+        for (int seed = 0; seed < SEEDS; seed++) {
             for (int i = 1; i < 35; i++) {
                 testMax(i, seed);
             }

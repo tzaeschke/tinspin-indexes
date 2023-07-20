@@ -3,6 +3,14 @@ API
 - Rename Indexes to PointMap/PointMultimap BoxMax/BoxMultimap; deprecate PointIndex
 - Remove Comparators in entries!
 - Unify (Dist)Entries
+- KD-tree remove stored dist function
+- QueryIterator should be of type <T> instead of PointEntryDIst<T>  (It should still return PED!)
+- QueryIterator nextReuse()
+- MinMaxHeap: leave entries in array -> reuse/pool
+- MinHeap: n-ary heap
+- kNN filter should take PointEntryDist i.o PointEntry
+
+TODO TInSpin: common wrapper base class for all TinSpin indexes
 
 Other
 =====
@@ -28,4 +36,4 @@ CritBit
 - Why do Point queries scale much worse than kd-Tree? Because of merging???? O(k)
 - Profile:
   - Consider using table for maskDst in CritBit.x.unsetBitAfterSplit() / setBitAfterSplit()
-    --> Aternatively, consider operating on merged value? 
+    --> Alternatively, consider operating on merged value?
