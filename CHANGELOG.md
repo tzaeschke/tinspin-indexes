@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Java JDK 11 default + updated maven dependencies + updated CHANGELOG.md. 
   [#12](https://github.com/tzaeschke/tinspin-indexes/pull/12)
 - removed travis.yml and fixed javadoc. [#18](https://github.com/tzaeschke/tinspin-indexes/pull/18)
+- Added javadoc and sources generation to pom.xml. [#19](https://github.com/tzaeschke/tinspin-indexes/pull/19)
 
 ### Added
 - MinMaxHeap & MinHeap for better kNN queries. [#17](https://github.com/tzaeschke/tinspin-indexes/pull/17)
