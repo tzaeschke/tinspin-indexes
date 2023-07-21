@@ -34,6 +34,8 @@ import org.tinspin.index.test.util.TestRectangle;
 import org.tinspin.index.test.util.TestRectangleCube;
 import org.tinspin.index.test.util.TestInstances.TST;
 
+import static org.tinspin.index.Index.*;
+
 public class PhTreeTest {
 
 	private static final int N = 10000;

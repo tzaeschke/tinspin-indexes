@@ -273,7 +273,6 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	@SuppressWarnings("unused")
 	private void ensureCoverage(QREntry<T> e) {
 		double[] pLow = e.lower();
-		//double[] pUpp = e.upper();
 		while (!QUtil.fitsIntoNode(e.lower(), e.upper(), root.getCenter(), root.getRadius())) {
 			double[] center = root.getCenter();
 			double radius = root.getRadius();
@@ -340,7 +339,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	public static class QRIterator<T> implements BoxIterator<T> {
 
 		private final QuadTreeRKD0<T> tree;
-		private ArrayDeque<Iterator<?>> stack;
+		private final ArrayDeque<Iterator<?>> stack;
 		private QREntry<T> next = null;
 		private double[] min;
 		private double[] max;
@@ -394,11 +393,13 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 		/**
 		 * Reset the iterator. This iterator can be reused in order to reduce load on the
 		 * garbage collector.
+		 *
 		 * @param min lower left corner of query
 		 * @param max upper right corner of query
+		 * @return this.
 		 */
 		@Override
-		public void reset(double[] min, double[] max) {
+		public BoxIterator<T> reset(double[] min, double[] max) {
 			stack.clear();
 			this.min = min;
 			this.max = max;
@@ -407,6 +408,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 				stack.push(tree.root.getChildIterator());
 				findNext();
 			}
+			return this;
 		}
 	}
 

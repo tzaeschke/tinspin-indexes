@@ -86,11 +86,13 @@ public class QRIterator<T> implements BoxIterator<T> {
 	/**
 	 * Reset the iterator. This iterator can be reused in order to reduce load on the
 	 * garbage collector.
+	 *
 	 * @param min lower left corner of query
 	 * @param max upper right corner of query
+	 * @return this.
 	 */
 	@Override
-	public void reset(double[] min, double[] max) {
+	public BoxIterator<T> reset(double[] min, double[] max) {
 		stack.clear();
 		this.min = min;
 		this.max = max;
@@ -99,6 +101,7 @@ public class QRIterator<T> implements BoxIterator<T> {
 			stack.prepareAndPush(tree.getRoot(), min, max);
 			findNext();
 		}
+		return this;
 	}
 	
 	private class IteratorStack {
@@ -192,5 +195,4 @@ public class QRIterator<T> implements BoxIterator<T> {
 			//return (r <= v) ? -1 : r;
 		}
 	}
-
 }

@@ -111,7 +111,8 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 
 	@Override
 	public PointEntryDist<T> query1nn(double[] center) {
-		return PointMap.super.query1nn(center); // TODO ????? Why do we need this?
+		PointIteratorKnn<T> it = queryKnn(center, 1);
+		return it.hasNext() ? it.next() : null;
 	}
 
 	private class AQueryIterator implements PointIterator<T> {
@@ -133,7 +134,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
+		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
 			ArrayList<PointEntry<T>> results = new ArrayList<>(); 
 			for (int i = 0; i < N; i++) { 
 				if (leq(phc[i], max) && geq(phc[i], min)) {
@@ -141,6 +142,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 				}
 			}
 			it = results.iterator();
+			return this;
 		}
     }
     

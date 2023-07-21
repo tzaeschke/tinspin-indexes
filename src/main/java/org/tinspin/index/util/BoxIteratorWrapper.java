@@ -28,7 +28,8 @@ public class BoxIteratorWrapper<E> implements BoxIterator<E> {
     }
 
     @Override
-    public void reset(double[] min, double[] max) {
+    public BoxIterator<E> reset(double[] min, double[] max) {
         it = fn.apply(min, max);
+        return this;
     }
 }

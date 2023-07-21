@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
+import static org.tinspin.index.Index.*;
 import static org.tinspin.index.test.util.TestInstances.*;
 
 @RunWith(Parameterized.class)
@@ -146,14 +147,14 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 	    // System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            QueryIterator<PointEntry<Entry>> it = tree.query(e.p);
+            PointIterator<Entry> it = tree.query(e.p);
             assertTrue("query(point) failed: " + e, it.hasNext());
             assertArrayEquals(e.p, it.next().value().p, 0.0000);
         }
 
         for (Entry e : data) {
             // System.out.println("kNN query: " + e);
-            QueryIteratorKnn<PointEntryDist<Entry>> iter = tree.queryKnn(e.p, N_DUP);
+            PointIteratorKnn<Entry> iter = tree.queryKnn(e.p, N_DUP);
             assertTrue("kNNquery() failed: " + e, iter.hasNext());
             Entry answer = iter.next().value();
             assertArrayEquals("Expected " + e + " but got " + answer, answer.p, e.p, 0.0001);
@@ -161,7 +162,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
         for (Entry e : data) {
             // System.out.println("query: " + Arrays.toString(e.p));
-            QueryIterator<PointEntry<Entry>> iter = tree.query(e.p, e.p);
+            PointIterator<Entry> iter = tree.query(e.p, e.p);
             assertTrue("query() failed: " + e, iter.hasNext());
             for (int i = 0; i < N_DUP; ++i) {
                 // System.out.println("  found: " + i + " " + e);
@@ -174,7 +175,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             //			System.out.println(tree.toStringTree());
             //			System.out.println("Removing: " + Arrays.toString(key));
-            QueryIterator<PointEntry<Entry>> it = tree.query(e.p);
+            PointIterator<Entry> it = tree.query(e.p);
             assertTrue("queryExact() failed: " + e, it.hasNext());
             PointEntry<Entry> e2 = it.next();
             assertArrayEquals(e.p, e2.value().p, 0);
@@ -213,7 +214,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
     }
 
     private boolean containsExact(PointMultimap<Entry> tree, double[] p, int id) {
-        QueryIterator<PointEntry<Entry>> it = tree.query(p);
+        PointIterator<Entry> it = tree.query(p);
         while (it.hasNext()) {
             if (it.next().value().id == id) {
                 return true;

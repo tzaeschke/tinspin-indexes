@@ -89,8 +89,9 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
+		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
 			it.reset(min, max);
+			return this;
 		}
 	}
 	

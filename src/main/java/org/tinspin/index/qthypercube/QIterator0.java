@@ -55,8 +55,8 @@ public class QIterator0<T> implements PointIterator<T> {
 			return stack.get(size-1);
 		}
 
-		StackEntry<T> pop() {
-			return stack.get(--size);
+		void pop() {
+			--size;
 		}
 
 		public void clear() {
@@ -65,7 +65,7 @@ public class QIterator0<T> implements PointIterator<T> {
 	}
 
 	private final QuadTreeKD<T> tree;
-	private IteratorStack stack;
+	private final IteratorStack stack;
 	private QEntry<T> next = null;
 	private double[] min;
 	private double[] max;
@@ -74,7 +74,7 @@ public class QIterator0<T> implements PointIterator<T> {
 		int pos;
 		QNode<T>[] subs;
 		ArrayList<QEntry<T>> vals;
-		public int len;
+		int len;
 		
 		void set(QNode<T> node) {
 			this.pos = 0;
@@ -142,11 +142,13 @@ public class QIterator0<T> implements PointIterator<T> {
 	/**
 	 * Reset the iterator. This iterator can be reused in order to reduce load on the
 	 * garbage collector.
+	 *
 	 * @param min lower left corner of query
 	 * @param max upper right corner of query
+	 * @return this.
 	 */
 	@Override
-	public void reset(double[] min, double[] max) {
+	public PointIterator<T> reset(double[] min, double[] max) {
 		stack.clear();
 		this.min = min;
 		this.max = max;
@@ -155,5 +157,6 @@ public class QIterator0<T> implements PointIterator<T> {
 			stack.prepareAndPush(tree.getRoot());
 			findNext();
 		}
+		return this;
 	}
 }

@@ -117,7 +117,7 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
 
     @Override
     public PointIterator<T> query(double[] key) {
-        return new IteratorPlain<>(key, tree.get(key).iterator());
+        return new IteratorPlain(key);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
 
     @Override
     public PointIterator<T> iterator() {
-        return new IteratorExtent<>(tree.queryExtent());
+        return new ExtentWrapper();
     }
 
     @Override
@@ -140,12 +140,12 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
         throw new UnsupportedOperationException();
     }
 
-    private static class IteratorExtent<T> implements PointIterator<T> {
+    private class ExtentWrapper implements PointIterator<T> {
 
-        private final PhIteratorF<T> iter;
+        private PhIteratorF<T> iter;
 
-        private IteratorExtent(PhIteratorF<T> iter) {
-            this.iter = iter;
+        private ExtentWrapper() {
+            reset(null, null);
         }
 
         @Override
@@ -161,9 +161,12 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
         }
 
         @Override
-        public void reset(double[] min, double[] max) {
-            //TODO
-            throw new UnsupportedOperationException();
+        public PointIterator<T> reset(double[] min, double[] max) {
+            if (min != null || max != null) {
+                throw new UnsupportedOperationException("min/max must be `null`");
+            }
+            iter = tree.queryExtent();
+            return this;
         }
 
     }
@@ -189,20 +192,20 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
         }
 
         @Override
-        public void reset(double[] min, double[] max) {
+        public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
             iter.reset(min, max);
+            return this;
         }
 
     }
 
-    private static class IteratorPlain<T> implements PointIterator<T> {
+    private class IteratorPlain implements PointIterator<T> {
 
-        private final Iterator<T> iter;
-        private final double[] key;
+        private Iterator<T> iter;
+        private double[] key;
 
-        private IteratorPlain(double[] key, Iterator<T> iter) {
-            this.iter = iter;
-            this.key = key;
+        private IteratorPlain(double[] key) {
+            reset(key, null);
         }
 
         @Override
@@ -216,8 +219,13 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
         }
 
         @Override
-        public void reset(double[] min, double[] max) {
-            throw new UnsupportedOperationException();
+        public PointIterator<T> reset(double[] point, double[] mustBeNull) {
+            if (mustBeNull != null) {
+                throw new UnsupportedOperationException("second argument must be `null`");
+            }
+            iter = tree.get(point).iterator();
+            key = point;
+            return this;
         }
     }
 

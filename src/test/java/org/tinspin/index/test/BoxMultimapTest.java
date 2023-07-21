@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
+import static org.tinspin.index.Index.*;
 import static org.tinspin.index.test.util.TestInstances.IDX;
 
 @RunWith(Parameterized.class)
@@ -147,7 +148,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         }
         // System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            QueryIterator<BoxEntry<Entry>> it = tree.queryRectangle(e.p1, e.p2);
+            BoxIterator<Entry> it = tree.queryRectangle(e.p1, e.p2);
             assertTrue("query(point) failed: " + e, it.hasNext());
             BoxEntry<Entry> next = it.next();
             assertArrayEquals(e.p1, next.value().p1, 0.0000);
@@ -156,7 +157,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
 
         for (Entry e : data) {
             // System.out.println("kNN query: " + e);
-            QueryIteratorKnn<BoxEntryDist<Entry>> iter = tree.queryKnn(e.p1, N_DUP);
+            BoxIteratorKnn<Entry> iter = tree.queryKnn(e.p1, N_DUP);
             assertTrue("kNNquery() failed: " + e, iter.hasNext());
             int nFound = 0;
             while (iter.hasNext()) {

@@ -96,7 +96,7 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 	}
 
 	@Override
-	public void reset(double[] min, double[] max) {
+	public BoxIterator<T> reset(double[] min, double[] max) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth());
 		} else {
@@ -108,10 +108,11 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 		
 		if (!Entry.checkOverlap(min, max, tree.getRoot())) {
 			hasNext = false;
-			return;
+			return null;
 		}
 		this.stack.prepareAndPush(tree.getRoot());
 		findNext();
+		return this;
 	}
 	
 	private void findNext() {

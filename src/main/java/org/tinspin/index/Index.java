@@ -56,7 +56,6 @@ public interface Index {
 		QueryIterator<T> reset(double[] min, double[] max);
 	}
 
-
 	interface PointIterator<T> extends QueryIterator<PointEntry<T>> {
 	}
 

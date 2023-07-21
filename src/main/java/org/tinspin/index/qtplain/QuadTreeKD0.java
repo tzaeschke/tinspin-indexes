@@ -25,7 +25,7 @@ import org.tinspin.index.*;
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
  * (if desired) automatic guessing of root rectangle. 
- * 
+ * <p>
  * This version of the quadtree stores for each node only the center point and the
  * distance (radius) to the edges.
  * This reduces space requirements but increases problems with numerical precision.
@@ -43,7 +43,6 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 
 	public static final boolean DEBUG = false;
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
-	private static final double INITIAL_RADIUS = Double.MAX_VALUE;
 
 	private final int dims;
 	private final int maxNodeSize;
@@ -377,9 +376,10 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 		 * garbage collector.
 		 * @param min lower left corner of query
 		 * @param max upper right corner of query
+		 * @return this.
 		 */
 		@Override
-		public void reset(double[] min, double[] max) {
+		public PointIterator<T> reset(double[] min, double[] max) {
 			stack.clear();
 			this.min = min;
 			this.max = max;
@@ -388,6 +388,7 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 				stack.push(tree.root.getChildIterator());
 				findNext();
 			}
+			return this;
 		}
 	}
 

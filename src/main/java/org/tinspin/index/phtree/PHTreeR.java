@@ -96,7 +96,7 @@ public class PHTreeR<T> implements BoxMap<T> {
 
 	@Override
 	public BoxIterator<T> iterator() {
-		return new IteratorPH<>(tree.iterator());
+		return new ExtentWrapper();
 	}
 
 	@Override
@@ -109,12 +109,12 @@ public class PHTreeR<T> implements BoxMap<T> {
 		return new QueryIteratorKnnPH<>(tree.nearestNeighbour(k, null, center));
 	}
 
-	private static class IteratorPH<T> implements BoxIterator<T> {
+	private class ExtentWrapper implements BoxIterator<T> {
 
-		private final PhIteratorSF<T> iter;
+		private PhIteratorSF<T> iter;
 		
-		private IteratorPH(PhIteratorSF<T> iter) {
-			this.iter = iter;
+		private ExtentWrapper() {
+			reset(null, null);
 		}
 		
 		@Override
@@ -130,11 +130,13 @@ public class PHTreeR<T> implements BoxMap<T> {
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
-			//TODO
-			throw new UnsupportedOperationException();
+		public QueryIterator<BoxEntry<T>> reset(double[] min, double[] max) {
+			if (min != null || max != null) {
+				throw new UnsupportedOperationException("min/max must be `null`");
+			}
+			iter = tree.iterator();
+			return this;
 		}
-		
 	}
 	
 	private static class QueryIteratorPH<T> implements BoxIterator<T> {
@@ -158,10 +160,10 @@ public class PHTreeR<T> implements BoxMap<T> {
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
+		public QueryIterator<BoxEntry<T>> reset(double[] min, double[] max) {
 			iter.reset(min, max);
+			return this;
 		}
-		
 	}
 	
 	private static class QueryIteratorKnnPH<T> implements BoxIteratorKnn<T> {

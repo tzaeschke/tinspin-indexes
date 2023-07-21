@@ -86,6 +86,7 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
         return currentDistance;
     }
 
+    @SuppressWarnings("unchecked")
     private void FindNextElement() {
         while (remaining > 0 && !(queueN.isEmpty() && queueV.isEmpty())) {
             boolean useV = !queueV.isEmpty();
@@ -94,7 +95,7 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
             }
             if (useV) {
                 // data entry
-                PointEntryDist<T> result = queueV.peekMin(); // TODO
+                PointEntryDist<T> result = queueV.peekMin();
                 queueV.popMin();
                 --remaining;
                 this.current = result;

@@ -102,7 +102,7 @@ public class PHTreeP<T> implements PointMap<T> {
 
 	@Override
 	public PointIterator<T> iterator() {
-		return new IteratorPH<>(tree.queryExtent());
+		return new ExtentWrapper();
 	}
 
 	@Override
@@ -110,12 +110,12 @@ public class PHTreeP<T> implements PointMap<T> {
 		return new QueryIteratorKnnPH<>(tree.nearestNeighbour(k, center));
 	}
 
-	private static class IteratorPH<T> implements PointIterator<T> {
+	private class ExtentWrapper implements PointIterator<T> {
 
-		private final PhIteratorF<T> iter;
+		private PhIteratorF<T> iter;
 		
-		private IteratorPH(PhIteratorF<T> iter) {
-			this.iter = iter;
+		private ExtentWrapper() {
+			reset(null, null);
 		}
 		
 		@Override
@@ -131,11 +131,13 @@ public class PHTreeP<T> implements PointMap<T> {
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
-			//TODO
-			throw new UnsupportedOperationException();
+		public PointIterator<T> reset(double[] min, double[] max) {
+			if (min != null || max != null) {
+				throw new UnsupportedOperationException("min/max must be `null`");
+			}
+			iter = tree.queryExtent();
+			return this;
 		}
-		
 	}
 	
 	private static class QueryIteratorPH<T> implements PointIterator<T> {
@@ -159,8 +161,9 @@ public class PHTreeP<T> implements PointMap<T> {
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
+		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
 			iter.reset(min, max);
+			return this;
 		}
 		
 	}

@@ -11,7 +11,6 @@ import java.util.Arrays;
 import ch.ethz.globis.tinspin.TestStats;
 import ch.ethz.globis.tinspin.wrappers.Candidate;
 import org.tinspin.index.Index;
-import org.tinspin.index.BoxEntry;
 import org.tinspin.index.BoxEntryDist;
 import org.tinspin.index.BoxMap;
 import org.tinspin.index.array.RectArray;
@@ -21,6 +20,8 @@ import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
 
+import static org.tinspin.index.Index.*;
+
 
 public class RectangleIndexCandidate extends Candidate {
 	
@@ -29,8 +30,8 @@ public class RectangleIndexCandidate extends Candidate {
 	private final int N;
 	private double[] data;
 	private static final Object O = new Object();
-	private QueryIterator<BoxEntry<Object>> query = null;
-	private QueryIteratorKnn<BoxEntryDist<Object>> queryKnn = null;
+	private BoxIterator<Object> query = null;
+	private BoxIteratorKnn<Object> queryKnn = null;
 	private final boolean bulkloadSTR;
 
 	public static RectangleIndexCandidate create(TestStats ts) {
@@ -102,7 +103,7 @@ public class RectangleIndexCandidate extends Candidate {
 	}
 
 	@Override
-	public int pointQuery(Object qA) {
+	public int pointQuery(Object qA, int[] ids) {
 		int n = 0;
 		double[][] dA = (double[][]) qA; 
 		for (int i = 0; i < dA.length; i+=2) {
@@ -201,7 +202,7 @@ public class RectangleIndexCandidate extends Candidate {
 	}
 	
 	@Override
-	public int update(double[][] updateTable) {
+	public int update(double[][] updateTable, int[] ids) {
 		int n = 0;
 		for (int i = 0; i < updateTable.length; ) {
 			double[] lo1 = updateTable[i++];

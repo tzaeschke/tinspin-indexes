@@ -116,7 +116,8 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 			return;
 		}
 		if (root.getRadius() == INITIAL_RADIUS) {
-			double dist = QUtil.distance(key, root.getCenter());
+			// We just use Euclidean here, that should be good enough in all cases.
+			double dist = PointDistance.L2.dist(key, root.getCenter());
 			if (dist > 0) {
 				root.adjustRadius(2 * dist);
 			} else if (root.getEntries().size() >= maxNodeSize - 1) {

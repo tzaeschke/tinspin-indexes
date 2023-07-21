@@ -161,11 +161,13 @@ public class QIterator1<T> implements PointIterator<T> {
 	/**
 	 * Reset the iterator. This iterator can be reused in order to reduce load on the
 	 * garbage collector.
+	 *
 	 * @param min lower left corner of query
 	 * @param max upper right corner of query
+	 * @return this.
 	 */
 	@Override
-	public void reset(double[] min, double[] max) {
+	public PointIterator<T> reset(double[] min, double[] max) {
 		stack.clear();
 		this.min = min;
 		this.max = max;
@@ -174,5 +176,6 @@ public class QIterator1<T> implements PointIterator<T> {
 			stack.prepareAndPush(tree.getRoot(), min, max);
 			findNext();
 		}
+		return this;
 	}
 }

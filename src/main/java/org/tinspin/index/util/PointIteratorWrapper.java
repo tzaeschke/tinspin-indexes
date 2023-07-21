@@ -28,7 +28,8 @@ public class PointIteratorWrapper<E> implements PointIterator<E> {
     }
 
     @Override
-    public void reset(double[] min, double[] max) {
+    public PointIterator<E> reset(double[] min, double[] max) {
         it = fn.apply(min, max);
+        return this;
     }
 }

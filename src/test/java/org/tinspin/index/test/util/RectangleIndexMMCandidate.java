@@ -18,6 +18,8 @@ import org.tinspin.index.test.util.TestInstances.IDX;
 
 import java.util.Arrays;
 
+import static org.tinspin.index.Index.*;
+
 
 public class RectangleIndexMMCandidate extends Candidate {
 
@@ -25,8 +27,8 @@ public class RectangleIndexMMCandidate extends Candidate {
 	private final int dims;
 	private final int N;
 	private double[] data;
-	private QueryIterator<BoxEntry<Integer>> query = null;
-	private QueryIteratorKnn<BoxEntryDist<Integer>> queryKnn = null;
+	private BoxIterator<Integer> query = null;
+	private BoxIteratorKnn<Integer> queryKnn = null;
 	private final boolean bulkloadSTR;
 
 	public static RectangleIndexMMCandidate create(TestStats ts) {

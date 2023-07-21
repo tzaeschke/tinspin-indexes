@@ -23,14 +23,16 @@ import org.tinspin.index.util.PointMultimapWrapper;
 
 import java.util.Arrays;
 
+import static org.tinspin.index.Index.*;
+
 public class PointIndexMMCandidate extends Candidate {
 
 	private final PointMultimap<Integer> idx;
 	private final int dims;
 	private final int N;
 	private double[] data;
-	private QueryIterator<PointEntry<Integer>> it;
-	private QueryIteratorKnn<PointEntryDist<Integer>> itKnn;
+	private PointIterator<Integer> it;
+	private PointIteratorKnn<Integer> itKnn;
 	private final boolean bulkloadSTR;
 	private final IndexHandle index;
 

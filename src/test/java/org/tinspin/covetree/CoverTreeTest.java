@@ -28,6 +28,8 @@ import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.covertree.Point;
 
+import static org.tinspin.index.Index.*;
+
 public class CoverTreeTest {
 
 	@Test
@@ -267,7 +269,7 @@ public class CoverTreeTest {
 //	    System.out.println(tree.toStringTree());
 		for (double[] key : point_list) {
 			if (!tree.containsExact(key)) {
-				throw new IllegalStateException("" + Arrays.toString(key));
+				throw new IllegalStateException(Arrays.toString(key));
 			}
 		}
 
@@ -285,7 +287,7 @@ public class CoverTreeTest {
 	    
 		for (double[] key : point_list) {
 //			System.out.println("kNN query: " + Arrays.toString(key));
-			QueryIteratorKnn<PointEntryDist<double[]>> iter = tree.queryKnn(key, 1);
+			PointIteratorKnn<double[]> iter = tree.queryKnn(key, 1);
 			if (!iter.hasNext()) {
 				throw new IllegalStateException("kNN() failed: " + Arrays.toString(key));
 			}
@@ -307,5 +309,4 @@ public class CoverTreeTest {
 //			}
 //		}
 	}
-	
 }

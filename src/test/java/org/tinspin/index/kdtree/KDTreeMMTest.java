@@ -18,12 +18,12 @@
 package org.tinspin.index.kdtree;
 
 import org.junit.Test;
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.PointEntryDist;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.tinspin.index.Index.*;
 
 public class KDTreeMMTest {
 
@@ -115,7 +115,7 @@ public class KDTreeMMTest {
 
         for (Entry e : data) {
             // System.out.println("kNN query: " + e);
-            QueryIteratorKnn<PointEntryDist<Entry>> iter = tree.queryKnn(e.p, N_DUP);
+            PointIteratorKnn<Entry> iter = tree.queryKnn(e.p, N_DUP);
             if (!iter.hasNext()) {
                 throw new IllegalStateException("kNN() failed: " + Arrays.toString(e.p));
             }
@@ -127,7 +127,7 @@ public class KDTreeMMTest {
 
         for (Entry e : data) {
             // System.out.println("query: " + Arrays.toString(e.p));
-            QueryIterator<PointEntry<Entry>> iter = tree.query(e.p, e.p);
+            PointIterator<Entry> iter = tree.query(e.p, e.p);
             if (!iter.hasNext()) {
                 throw new IllegalStateException("query() failed: " + Arrays.toString(e.p));
             }
