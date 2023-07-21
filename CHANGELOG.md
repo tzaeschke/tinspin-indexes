@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.8.0] - 2023-07-21
+
 ### Changed
 - Moved to GitHub Actions CI. [#13](https://github.com/tzaeschke/tinspin-indexes/pull/13)
 - Java JDK 11 default + updated maven dependencies + updated CHANGELOG.md. 
@@ -97,7 +99,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added CHANGELOG - [2015-10-11]
 - Pushed to v1.3.3-SNAPSHOT - [2015-10-11]
 
-[Unreleased]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.7.1...HEAD
+[Unreleased]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.8.0...HEAD
+[1.8.0]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.7.1...tinspin-indexes-1.8.0
 [1.7.1]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.7.0...tinspin-indexes-1.7.1
 [1.7.0]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.6.1...tinspin-indexes-1.7.0
 [1.6.1]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.6.0...tinspin-indexes-1.6.1
