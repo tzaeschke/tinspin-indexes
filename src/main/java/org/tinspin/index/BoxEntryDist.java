@@ -1,6 +1,7 @@
 /*
- * Copyright 2017 Tilmann Zaeschke
+ * Copyright 2016-2017 Tilmann Zaeschke
  * 
+ * This file is part of TinSpin.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index.phtree;
+package org.tinspin.index;
 
-import org.tinspin.index.BoxEntryDist;
+public interface BoxEntryDist<T> extends BoxEntry<T> {
 
-public class DistEntryR<T> extends EntryR<T> implements BoxEntryDist<T> {
-	
-	private double dist;
-	
 	/**
-	 * Create a new entry with distance
-	 * @param min min
-	 * @param max max
-	 * @param val value
-	 * @param dist distance
-	 */
-	public DistEntryR(double[] min, double[] max, T val, double dist) {
-		super(min, max, val);
-		this.dist = dist;
-	}
-	
-	/**
+	 * An entry with distance property. This is, for example, used
+	 * as a return value for nearest neighbor queries.
 	 * @return the distance
 	 */
-	@Override
-	public double dist() {
-		return dist;
-	}
+	double dist();
 	
-	@Override
-	public String toString() {
-		return super.toString() + ";dist=" + dist;
-	}
 }

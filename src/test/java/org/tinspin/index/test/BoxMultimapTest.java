@@ -140,27 +140,27 @@ public class BoxMultimapTest extends AbstractWrapperTest {
 
     private void smokeTest(List<Entry> data) {
         int dim = data.get(0).p1.length;
-        RectangleIndexMM<Entry> tree = createTree(data.size(), dim);
+        BoxMultimap<Entry> tree = createTree(data.size(), dim);
 
         for (Entry e : data) {
             tree.insert(e.p1, e.p2, e);
         }
         // System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            QueryIterator<RectangleEntry<Entry>> it = tree.queryRectangle(e.p1, e.p2);
+            QueryIterator<BoxEntry<Entry>> it = tree.queryRectangle(e.p1, e.p2);
             assertTrue("query(point) failed: " + e, it.hasNext());
-            RectangleEntry<Entry> next = it.next();
+            BoxEntry<Entry> next = it.next();
             assertArrayEquals(e.p1, next.value().p1, 0.0000);
             assertArrayEquals(e.p2, next.value().p2, 0.0000);
         }
 
         for (Entry e : data) {
             // System.out.println("kNN query: " + e);
-            QueryIteratorKNN<RectangleEntryDist<Entry>> iter = tree.queryKNN(e.p1, N_DUP);
+            QueryIteratorKnn<BoxEntryDist<Entry>> iter = tree.queryKnn(e.p1, N_DUP);
             assertTrue("kNNquery() failed: " + e, iter.hasNext());
             int nFound = 0;
             while (iter.hasNext()) {
-                RectangleEntryDist<Entry> eDist = iter.next();
+                BoxEntryDist<Entry> eDist = iter.next();
                 nFound += eDist.dist() == 0 ? 1 : 0;
             }
             assertEquals(N_DUP, nFound);
@@ -168,7 +168,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
 
         for (Entry e : data) {
             // System.out.println("query: " + Arrays.toString(e.p));
-            QueryIterator<RectangleEntry<Entry>> iter = tree.queryRectangle(e.p1, e.p2);
+            QueryIterator<BoxEntry<Entry>> iter = tree.queryRectangle(e.p1, e.p2);
             assertTrue("query() failed: " + e, iter.hasNext());
             for (int i = 0; i < N_DUP; ++i) {
                 // System.out.println("  found: " + i + " " + e);
@@ -182,9 +182,9 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             //			System.out.println(tree.toStringTree());
             //			System.out.println("Removing: " + Arrays.toString(key));
-            QueryIterator<RectangleEntry<Entry>> it = tree.queryRectangle(e.p1, e.p2);
+            QueryIterator<BoxEntry<Entry>> it = tree.queryRectangle(e.p1, e.p2);
             assertTrue("queryExact() failed: " + e, it.hasNext());
-            RectangleEntry<Entry> e2 = it.next();
+            BoxEntry<Entry> e2 = it.next();
             assertArrayEquals(e.p1, e2.value().p1, 0);
             assertArrayEquals(e.p2, e2.value().p2, 0);
             assertTrue(tree.remove(e.p1, e.p2, e));
@@ -196,7 +196,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         Random r = new Random(42);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        RectangleIndexMM<Entry> tree = createTree(data.size(), dim);
+        BoxMultimap<Entry> tree = createTree(data.size(), dim);
 
         for (Entry e : data) {
             tree.insert(e.p1, e.p2, e);
@@ -226,8 +226,8 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         }
     }
 
-    private boolean containsExact(RectangleIndexMM<Entry> tree, double[] p1, double[] p2, int id) {
-        QueryIterator<RectangleEntry<Entry>> it = tree.queryRectangle(p1, p2);
+    private boolean containsExact(BoxMultimap<Entry> tree, double[] p1, double[] p2, int id) {
+        QueryIterator<BoxEntry<Entry>> it = tree.queryRectangle(p1, p2);
         while (it.hasNext()) {
             if (it.next().value().id == id) {
                 return true;
@@ -241,7 +241,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        RectangleIndexMM<Entry> tree = createTree(data.size(), dim);
+        BoxMultimap<Entry> tree = createTree(data.size(), dim);
 
         Collections.shuffle(data, r);
 
@@ -281,7 +281,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        RectangleIndexMM<Entry> tree = createTree(data.size(), dim);
+        BoxMultimap<Entry> tree = createTree(data.size(), dim);
 
         Collections.shuffle(data, r);
 
@@ -318,7 +318,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         assertEquals(0, tree.size());
     }
 
-    private <T> RectangleIndexMM<T> createTree(int size, int dims) {
+    private <T> BoxMultimap<T> createTree(int size, int dims) {
         switch (candidate) {
             case ARRAY:
                 return new RectArray<>(dims, size);

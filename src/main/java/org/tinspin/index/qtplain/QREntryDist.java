@@ -19,9 +19,9 @@ package org.tinspin.index.qtplain;
 
 import java.util.Comparator;
 
-import org.tinspin.index.RectangleEntryDist;
+import org.tinspin.index.BoxEntryDist;
 
-public class QREntryDist<T> extends QREntry<T> implements RectangleEntryDist<T> {
+public class QREntryDist<T> extends QREntry<T> implements BoxEntryDist<T> {
 	private double distance;
 	
 	public QREntryDist(QREntry<T> e, double dist) {

@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
-import org.tinspin.index.RectangleEntry;
+import org.tinspin.index.BoxEntry;
 import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
 
 /**
@@ -163,7 +163,7 @@ public class QRNode<T> {
 		return null;
 	}
 
-	QREntry<T> remove(QRNode<T> parent, double[] keyL, double[] keyU, int maxNodeSize, Predicate<RectangleEntry<T>> condition) {
+	QREntry<T> remove(QRNode<T> parent, double[] keyL, double[] keyU, int maxNodeSize, Predicate<BoxEntry<T>> condition) {
 		if (subs != null) {
 			QRNode<T> sub = findSubNode(keyL, keyU);
 			if (sub != this) {
@@ -302,7 +302,7 @@ public class QRNode<T> {
 		return radius;
 	}
 
-	QREntry<T> getExact(double[] keyL, double[] keyU, Predicate<RectangleEntry<T>> condition) {
+	QREntry<T> getExact(double[] keyL, double[] keyU, Predicate<BoxEntry<T>> condition) {
 		if (subs != null) {
 			QRNode<T> sub = findSubNode(keyL, keyU);
 			if (sub != this) {

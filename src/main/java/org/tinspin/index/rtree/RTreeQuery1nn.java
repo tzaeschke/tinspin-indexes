@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import org.tinspin.index.RectangleDistanceFunction;
+import org.tinspin.index.BoxDistance;
 
 /**
  * 1-NN search with EDGE distance and presorting of entries.
@@ -29,7 +29,7 @@ import org.tinspin.index.RectangleDistanceFunction;
  *
  * @param <T> Value type.
  */
-public class RTreeQuery1NN<T> {
+public class RTreeQuery1nn<T> {
 	
 	private class IteratorStack {
 		private final IterPos<T>[] stack;
@@ -47,21 +47,20 @@ public class RTreeQuery1NN<T> {
 			return size == 0;
 		}
 
-		IterPos<T> prepareAndPush(RTreeNode<T> node, double minDist) {
+		void prepareAndPush(RTreeNode<T> node, double minDist) {
 			IterPos<T> ni = stack[size++];
 			ni.init(node);
 			if (ni.node instanceof RTreeNodeDir) {
 				sortEntries(ni, minDist);
 			}
-			return ni;
 		}
 
 		IterPos<T> peek() {
 			return stack[size-1];
 		}
 
-		IterPos<T> pop() {
-			return stack[--size];
+		void pop() {
+			--size;
 		}
 	}
 
@@ -77,7 +76,7 @@ public class RTreeQuery1NN<T> {
 	private final RTree<T> tree;
 	private double[] center;
 	private IteratorStack stack;
-	private RectangleDistanceFunction dist;
+	private BoxDistance dist;
 	
 	private static class IterPos<T> {
 		final DistEntry<RTreeNode<T>>[] subNodes;
@@ -99,12 +98,12 @@ public class RTreeQuery1NN<T> {
 		}
 	}
 	
-	public RTreeQuery1NN(RTree<T> tree) {
+	public RTreeQuery1nn(RTree<T> tree) {
 		this.stack = new IteratorStack(tree.getDepth(), RTree.NODE_MAX_DIR);
 		this.tree = tree;
 	}
 
-	public DistEntry<T> reset(double[] center, RectangleDistanceFunction dist) {
+	public DistEntry<T> reset(double[] center, BoxDistance dist) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth(), RTree.NODE_MAX_DIR);
 		} else {
@@ -115,9 +114,9 @@ public class RTreeQuery1NN<T> {
 		}
 		//set default if none is given
 		if (this.dist == null) {
-			this.dist = RectangleDistanceFunction.EDGE;
+			this.dist = BoxDistance.EDGE;
 		}
-		if (this.dist != RectangleDistanceFunction.EDGE) {
+		if (this.dist != BoxDistance.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
 		this.center = center;

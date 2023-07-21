@@ -17,22 +17,20 @@
  */
 package org.tinspin.index.qthypercube;
 
-import org.tinspin.index.PointDistanceFunction;
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.*;
 import org.tinspin.index.util.MinHeap;
 import org.tinspin.index.util.MinMaxHeap;
 
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
+import static org.tinspin.index.Index.*;
 import static org.tinspin.index.qthypercube.QUtil.distToRectNode;
 
-public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+public class QIteratorKnn<T> implements PointIteratorKnn<T> {
 
     private final QNode<T> root;
-    private final PointDistanceFunction distFn;
+    private final PointDistance distFn;
     private final Predicate<PointEntry<T>> filterFn;
     MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
     MinMaxHeap<QEntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
@@ -42,7 +40,7 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
     private double[] center;
     private double currentDistance;
 
-    QIteratorKnn(QNode<T> root, int minResults, double[] center, PointDistanceFunction distFn, Predicate<PointEntry<T>> filterFn) {
+    QIteratorKnn(QNode<T> root, int minResults, double[] center, PointDistance distFn, Predicate<PointEntry<T>> filterFn) {
         this.filterFn = filterFn;
         this.distFn = distFn;
         this.root = root;
@@ -50,7 +48,7 @@ public class QIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
     }
 
     @Override
-    public QueryIteratorKNN<PointEntryDist<T>> reset(double[] center, int minResults) {
+    public Index.PointIteratorKnn<T> reset(double[] center, int minResults) {
         this.center = center;
         this.currentDistance = Double.MAX_VALUE;
         this.remaining = minResults;

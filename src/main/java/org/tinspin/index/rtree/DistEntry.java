@@ -16,9 +16,9 @@
  */
 package org.tinspin.index.rtree;
 
-import org.tinspin.index.RectangleEntryDist;
+import org.tinspin.index.BoxEntryDist;
 
-public class DistEntry<T> extends Entry<T> implements RectangleEntryDist<T> {
+public class DistEntry<T> extends Entry<T> implements BoxEntryDist<T> {
 	
 	private double dist;
 	

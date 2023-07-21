@@ -33,7 +33,7 @@ import java.util.function.Predicate;
  *
  * @param <T> The value type associated with each entry.
  */
-public class PHTreeMMP<T> implements PointIndexMM<T> {
+public class PHTreeMMP<T> implements PointMultimap<T> {
 
     private final PhTreeMultiMapF2<T> tree;
 
@@ -116,31 +116,31 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
     }
 
     @Override
-    public QueryIterator<PointEntry<T>> query(double[] key) {
+    public PointIterator<T> query(double[] key) {
         return new IteratorPlain<>(key, tree.get(key).iterator());
     }
 
     @Override
-    public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
+    public PointIterator<T> query(double[] min, double[] max) {
         return new IteratorWQ<>(tree.query(min, max));
     }
 
     @Override
-    public QueryIterator<PointEntry<T>> iterator() {
+    public PointIterator<T> iterator() {
         return new IteratorExtent<>(tree.queryExtent());
     }
 
     @Override
-    public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
+    public PointIteratorKnn<T> queryKnn(double[] center, int k) {
         return new IteratorKnn<>(tree.nearestNeighbour(k, center));
     }
 
     @Override
-    public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
-        return null;
+    public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
+        throw new UnsupportedOperationException();
     }
 
-    private static class IteratorExtent<T> implements QueryIterator<PointEntry<T>> {
+    private static class IteratorExtent<T> implements PointIterator<T> {
 
         private final PhIteratorF<T> iter;
 
@@ -168,7 +168,7 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
 
     }
 
-    private static class IteratorWQ<T> implements QueryIterator<PointEntry<T>> {
+    private static class IteratorWQ<T> implements PointIterator<T> {
 
         private final PhQueryF<T> iter;
 
@@ -195,7 +195,7 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
 
     }
 
-    private static class IteratorPlain<T> implements QueryIterator<PointEntry<T>> {
+    private static class IteratorPlain<T> implements PointIterator<T> {
 
         private final Iterator<T> iter;
         private final double[] key;
@@ -221,7 +221,7 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
         }
     }
 
-    private static class IteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+    private static class IteratorKnn<T> implements PointIteratorKnn<T> {
 
         private final PhKnnQueryF<T> iter;
 

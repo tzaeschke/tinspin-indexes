@@ -20,18 +20,17 @@ package org.tinspin.index.qthypercube;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.RectangleEntry;
+import static org.tinspin.index.Index.*;
 
 /**
  * Resetable query iterator.
  *
  * @param <T> Value type.
  */
-public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
+public class QRIterator<T> implements BoxIterator<T> {
 
 	private final QuadTreeRKD<T> tree;
-	private IteratorStack stack;
+	private final IteratorStack stack;
 	private QREntry<T> next = null;
 	private double[] min;
 	private double[] max;
@@ -58,7 +57,7 @@ public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 				}
 			}
 			while (se.posE < se.lenE) {
-				QREntry<T> e = se.vals.get((int) se.posE++);
+				QREntry<T> e = se.vals.get(se.posE++);
 				if (QUtil.overlap(min, max, e.lower(), e.upper())) {
 					next = e;
 					return;
@@ -128,8 +127,8 @@ public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			return stack.get(size-1);
 		}
 
-		StackEntry<T> pop() {
-			return stack.get(--size);
+		void pop() {
+			--size;
 		}
 
 		public void clear() {

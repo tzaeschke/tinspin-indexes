@@ -49,7 +49,7 @@ import org.tinspin.index.util.StringBuilderLn;
  *
  * @param <T> Value type.
  */
-public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
+public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 
 	/** Enable basic HCI navigation with Algo #1 isInI(), for example for window queries. */
 	public static boolean ENABLE_HCI_1 = true;
@@ -132,7 +132,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 			return;
 		}
 		if (root.getRadius() == INITIAL_RADIUS) {
-			double dist = PointDistanceFunction.L2.dist(key, root.getCenter());
+			double dist = PointDistance.L2.dist(key, root.getCenter());
 			if (dist > 0) {
 				root.adjustRadius(2 * dist);
 			} else if (root.getValueCount() >= maxNodeSize - 1) {
@@ -327,9 +327,9 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	/**
 	 * @param point the point
 	 * @return an iterator over all entries at the given coordinate.
-	 * @see PointIndexMM#query(double[])
+	 * @see PointMultimap#query(double[])
 	 */
-	public QueryIterator<PointEntry<T>> query(double[] point) {
+	public PointIterator<T> query(double[] point) {
 		return query(point, point);
 	}
 
@@ -340,7 +340,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * @return all entries in the rectangle
 	 */
 	@Override
-	public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
+	public PointIterator<T> query(double[] min, double[] max) {
 		if (ENABLE_HCI_2) {
 			return new QIterator2<>(this, min, max);
 		} else if (ENABLE_HCI_1) {
@@ -353,8 +353,8 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public PointEntryDist<T> query1NN(double[] center) {
-		return PointIndex.super.query1NN(center);
+	public PointEntryDist<T> query1nn(double[] center) {
+		return PointMap.super.query1nn(center);
 	}
 
 	/**
@@ -363,10 +363,10 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * @param k        number of neighbors
 	 * @param distFn   the point distance function to be used
 	 * @return Iterator over query result
-	 * @see PointIndexMM#queryKNN(double[], int, PointDistanceFunction)
+	 * @see PointMultimap#queryKnn(double[], int, PointDistance)
 	 */
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
 		return new QIteratorKnn<>(root, k, center, distFn, e -> true);
 	}
 
@@ -376,12 +376,12 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 			return Collections.emptyList();
 		}
 		ArrayList<QEntryDist<T>> candidates = new ArrayList<>();
-		rangeSearchKNN(root, center, candidates, k, Double.MAX_VALUE, PointDistanceFunction.L2);
+		rangeSearchKNN(root, center, candidates, k, Double.MAX_VALUE, PointDistance.L2);
 		return candidates;
 	}
 
 	@Deprecated
-	public List<QEntryDist<T>> knnQuery(double[] center, int k, PointDistanceFunction distFn) {
+	public List<QEntryDist<T>> knnQuery(double[] center, int k, PointDistance distFn) {
 		if (root == null) {
 			return Collections.emptyList();
 		}
@@ -392,7 +392,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	@SuppressWarnings("unchecked")
 	private double rangeSearchKNN(QNode<T> node, double[] center, 
-    		ArrayList<QEntryDist<T>> candidates, int k, double maxRange, PointDistanceFunction distFn) {
+    		ArrayList<QEntryDist<T>> candidates, int k, double maxRange, PointDistance distFn) {
     	int posHC = node.calcSubPosition(center);
     	Object[] entries = node.getEntries();
     	Object alreadyVisited = null;
@@ -570,7 +570,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> iterator() {
+	public PointIterator<T> iterator() {
 		if (root == null) {
 			return query(new double[dims], new double[dims]);
 		}
@@ -580,8 +580,8 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-		return queryKNN(center, k, PointDistanceFunction.L2);
+	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
+		return queryKnn(center, k, PointDistance.L2);
 	}
 
 	@Override

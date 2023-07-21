@@ -18,9 +18,9 @@ package org.tinspin.index.phtree;
 
 import java.util.Arrays;
 
-import org.tinspin.index.RectangleEntry;
+import org.tinspin.index.BoxEntry;
 
-public class EntryR<T> implements RectangleEntry<T> {
+public class EntryR<T> implements BoxEntry<T> {
 	protected double[] min;
 	protected double[] max;
 	private T val;

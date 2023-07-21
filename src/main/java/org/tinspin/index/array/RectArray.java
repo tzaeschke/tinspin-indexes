@@ -7,23 +7,22 @@
 package org.tinspin.index.array;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
-import org.tinspin.index.util.QueryIteratorWrapper;
+import org.tinspin.index.util.BoxIteratorWrapper;
 
-public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
+public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	private final double[][] phc;
 	private final int dims;
 	private int N;
 	private int size;
-	private final RectangleEntry<T>[] values;
+	private final BoxEntry<T>[] values;
 	private int insPos = 0; 
 
 	/**
-	 * Setup of an simple array data structure (no indexing).
+	 * Setup of a simple array data structure (no indexing).
 	 * 
 	 * @param dims dimensions
 	 * @param size size
@@ -35,7 +34,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		this.size = 0;
 		this.dims = dims;
 		phc = new double[2*N][dims];
-		values = new RectangleEntry[N];
+		values = new BoxEntry[N];
 	}
 
 
@@ -69,7 +68,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 
 	@Override
-	public boolean removeIf(double[] lower, double[] upper, Predicate<RectangleEntry<T>> condition) {
+	public boolean removeIf(double[] lower, double[] upper, Predicate<BoxEntry<T>> condition) {
 		for (int i = 0; i < N; i++) {
 			if (phc[i*2] != null && eq(phc[i*2], lower)
 					&& eq(phc[(i*2)+1], upper) && condition.test(values[i])) {
@@ -129,9 +128,9 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<RectangleEntry<T>> queryRectangle(double[] lower, double[] upper) {
-		return new QueryIteratorWrapper<>(lower, upper, (low, upp) -> {
-			ArrayList<RectangleEntry<T>> result = new ArrayList<>();
+	public BoxIterator<T> queryRectangle(double[] lower, double[] upper) {
+		return new BoxIteratorWrapper<>(lower, upper, (low, upp) -> {
+			ArrayList<BoxEntry<T>> result = new ArrayList<>();
 			for (int i = 0; i < N; i++) {
 				if (phc[i*2] != null && eq(phc[i*2], low) && eq(phc[i*2+1], upp)) {
 					result.add(values[i]);
@@ -169,9 +168,9 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<RectangleEntry<T>> queryIntersect(double[] min, double[] max) {
-		return new QueryIteratorWrapper<>(min, max, (lower, upper) -> {
-			ArrayList<RectangleEntry<T>> results = new ArrayList<>();
+	public BoxIterator<T> queryIntersect(double[] min, double[] max) {
+		return new BoxIteratorWrapper<>(min, max, (lower, upper) -> {
+			ArrayList<BoxEntry<T>> results = new ArrayList<>();
 			for (int i = 0; i < N; i++) {
 				if (leq(phc[i*2], upper) && geq(phc[i*2+1], lower)) {
 					results.add(values[i]);
@@ -182,33 +181,33 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 
 	@Override
-	public RectangleEntryDist<T> query1NN(double[] center) {
-		return queryKNN(center, 1).next();
+	public BoxEntryDist<T> query1nn(double[] center) {
+		return queryKnn(center, 1).next();
 	}
 
 	@Override
-	public QueryIterator<RectangleEntry<T>> iterator() {
+	public BoxIterator<T> iterator() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
 	}
 
 	@Override
-	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k) {
-		return new AQueryIteratorKNN(center, k);
+	public BoxIteratorKnn<T> queryKnn(double[] center, int k) {
+		return new AQueryIteratorKnn(center, k);
 	}
 
 	@Override
-	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k, RectangleDistanceFunction distFn) {
+	public BoxIteratorKnn<T> queryKnn(double[] center, int k, BoxDistance distFn) {
 		return null;
 	}
 
 
-	private class AQueryIteratorKNN implements QueryIteratorKNN<RectangleEntryDist<T>> {
+	private class AQueryIteratorKnn implements BoxIteratorKnn<T> {
 
-		private Iterator<RectangleEntryDist<T>> it;
+		private Iterator<BoxEntryDist<T>> it;
 
-		public AQueryIteratorKNN(double[] center, int k) {
+		public AQueryIteratorKnn(double[] center, int k) {
 			reset(center, k);
 		}
 
@@ -218,13 +217,13 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		}
 
 		@Override
-		public RectangleEntryDist<T> next() {
+		public BoxEntryDist<T> next() {
 			return it.next();
 		}
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
-		public AQueryIteratorKNN reset(double[] center, int k) {
+		public AQueryIteratorKnn reset(double[] center, int k) {
 			it = ((List)knnQuery(center, k)).iterator();
 			return this;
 		}
@@ -265,7 +264,7 @@ public class RectArray<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 
 	private final Comparator<KnnEntry<T>> COMP = KnnEntry::compareTo;
 
-	private static class KnnEntry<T> implements Comparable<KnnEntry<T>>, RectangleEntryDist<T> {
+	private static class KnnEntry<T> implements Comparable<KnnEntry<T>>, BoxEntryDist<T> {
 		private final double[] min;
 		private final double[] max;
 		private final T val;

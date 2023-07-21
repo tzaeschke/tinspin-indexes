@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
-import org.tinspin.index.RectangleEntry;
+import org.tinspin.index.BoxEntry;
 import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
 
 /**
@@ -158,7 +158,7 @@ public class QRNode<T> {
 		return subNodePos;
 	}
 
-	QREntry<T> remove(QRNode<T> parent, double[] keyL, double[] keyU, int maxNodeSize, Predicate<RectangleEntry<T>> pred) {
+	QREntry<T> remove(QRNode<T> parent, double[] keyL, double[] keyU, int maxNodeSize, Predicate<BoxEntry<T>> pred) {
 		if (subs != null) {
 			int pos = calcSubPositionR(keyL, keyU);
 			if (pos != OVERLAP_WITH_CENTER) {
@@ -301,7 +301,7 @@ public class QRNode<T> {
 		return radius;
 	}
 
-	QREntry<T> getExact(double[] keyL, double[] keyU, Predicate<RectangleEntry<T>> condition) {
+	QREntry<T> getExact(double[] keyL, double[] keyU, Predicate<BoxEntry<T>> condition) {
 		if (subs != null) {
 			int pos = calcSubPositionR(keyL, keyU);
 			if (pos != OVERLAP_WITH_CENTER) {

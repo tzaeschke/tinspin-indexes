@@ -17,7 +17,7 @@
  */
 package org.tinspin.index.qtplain;
 
-import org.tinspin.index.PointDistanceFunction;
+import org.tinspin.index.PointDistance;
 
 class QUtil {
 
@@ -167,7 +167,7 @@ class QUtil {
 	 * @param nodeRadius radius of the node
 	 * @return distance to edge of the node or 0 if the point is inside the node
 	 */
-	static double distToRectNode(double[] point, double[] nodeCenter, double nodeRadius, PointDistanceFunction distFn) {
+	static double distToRectNode(double[] point, double[] nodeCenter, double nodeRadius, PointDistance distFn) {
 		double[] dist = new double[point.length];
 		for (int i = 0; i < point.length; i++) {
 			double d = point[i];
@@ -192,6 +192,6 @@ class QUtil {
 			}
 			dist[i] = d;
 		}
-		return PointDistanceFunction.L2.dist(point, dist);
+		return PointDistance.L2.dist(point, dist);
 	}
 }

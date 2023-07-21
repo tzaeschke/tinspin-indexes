@@ -20,15 +20,14 @@ package org.tinspin.index.qthypercube;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.QueryIterator;
+import static org.tinspin.index.Index.*;
 
 /**
  * Resettable query iterator.
  *
  * @param <T> Value type
  */
-public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
+public class QIterator2<T> implements PointIterator<T> {
 
 	private class IteratorStack {
 		private final ArrayList<StackEntry<T>> stack;

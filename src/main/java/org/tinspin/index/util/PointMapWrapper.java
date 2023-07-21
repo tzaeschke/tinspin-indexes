@@ -15,34 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinspin.index;
+package org.tinspin.index.util;
 
+import org.tinspin.index.*;
 import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
 
-import java.util.function.Predicate;
+public class PointMapWrapper<T> implements PointMap<T> {
 
-public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
-
-	private final RectangleIndexMM<T> ind;
-
-	private PointIndexMMWrapper(RectangleIndexMM<T> ind) {
+	private final BoxMap<T> ind;
+	
+	private PointMapWrapper(BoxMap<T> ind) {
 		this.ind = ind;
 	}
 	
-	public static <T> PointIndexMM<T> create(RectangleIndexMM<T> ind) {
-		return new PointIndexMMWrapper<>(ind);
+	public static <T> PointMap<T> create(BoxMap<T> ind) {
+		return new PointMapWrapper<>(ind);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public QueryIterator<PointEntry<T>> iterator() {
+	public PointIterator<T> iterator() {
 		return new PointIter(ind.iterator());
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
+	public PointIterator<T> query(double[] min, double[] max) {
 		return new PointIter(ind.queryIntersect(min, max));
 	}
 
@@ -68,11 +67,11 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 		
 	}
 	
-	private static class PointIter<T> implements QueryIterator<PointEntry<T>> {
+	private static class PointIter<T> implements PointIterator<T> {
 
-		private final QueryIterator<RectangleEntry<T>> it;
+		private final BoxIterator<T> it;
 		
-		PointIter(QueryIterator<RectangleEntry<T>> it) {
+		PointIter(BoxIterator<T> it) {
 			this.it = it;
 		}
 		
@@ -83,32 +82,27 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 
 		@Override
 		public PointEntry<T> next() {
-			RectangleEntry<T> e = it.next();
+			BoxEntry<T> e = it.next();
 			return new PointW<>(e.lower(), e.value());
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
+		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
 			it.reset(min, max);
+			return this;
 		}
 	}
 	
 	@Override
-	public PointEntryDist<T> query1NN(double[] center) {
-		RectangleEntryDist<T> r = ind.query1NN(center);
+	public PointEntryDist<T> query1nn(double[] center) {
+		BoxEntryDist<T> r = ind.query1nn(center);
 		return new PointDistW<>(r.lower(), r.value(), r.dist());
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-		return new PointDIter(ind.queryKNN(center, k));
-	}
-
-	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
-		RectangleDistanceFunction.EdgeDistance fn = new RectangleDistanceFunction.EdgeDistance(distFn);
-		return new PointDIter<>(ind.queryKNN(center, k, fn::edgeDistance));
+	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
+		return new PointDIter(ind.queryKnn(center, k));
 	}
 
 	private static class PointDistW<T> extends PointW<T> implements PointEntryDist<T> {
@@ -126,11 +120,11 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 		}
 	}
 	
-	private static class PointDIter<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+	private static class PointDIter<T> implements PointIteratorKnn<T> {
 
-		private final QueryIteratorKNN<RectangleEntryDist<T>> it;
+		private final BoxIteratorKnn<T> it;
 		
-		PointDIter(QueryIteratorKNN<RectangleEntryDist<T>> it) {
+		PointDIter(BoxIteratorKnn<T> it) {
 			this.it = it;
 		}
 		
@@ -141,7 +135,7 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 
 		@Override
 		public PointEntryDist<T> next() {
-			RectangleEntryDist<T> e = it.next();
+			BoxEntryDist<T> e = it.next();
 			return new PointDistW<>(e.lower(), e.value(), e.dist());
 		}
 
@@ -158,28 +152,18 @@ public class PointIndexMMWrapper<T> implements PointIndexMM<T> {
 	}
 
 	@Override
-	public boolean remove(double[] point, T value) {
-		return ind.remove(point, point, value);
+	public T remove(double[] point) {
+		return ind.remove(point, point);
 	}
 
 	@Override
-	public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
-		return ind.removeIf(point, point, e -> condition.test(new PointW<>(e.lower(), e.value())));
+	public T update(double[] oldPoint, double[] newPoint) {
+		return ind.update(oldPoint, oldPoint, newPoint, newPoint);
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> query(double[] point) {
-		return new PointIter<>(ind.queryRectangle(point, point));
-	}
-
-	@Override
-	public boolean update(double[] oldPoint, double[] newPoint, T value) {
-		return ind.update(oldPoint, oldPoint, newPoint, newPoint, value);
-	}
-
-	@Override
-	public boolean contains(double[] point, T value) {
-		return ind.contains(point, point, value);
+	public T queryExact(double[] point) {
+		return ind.queryExact(point, point);
 	}
 
 	@Override

@@ -28,7 +28,7 @@ import java.util.function.Predicate;
  *
  * @param <T> Type of the value associated with the rectangles key.
  */
-public interface RectangleIndexMM<T> extends Index<T> {
+public interface BoxMultimap<T> extends Index {
 
     /**
      * Insert a rectangle.
@@ -57,7 +57,7 @@ public interface RectangleIndexMM<T> extends Index<T> {
      * @param condition the condition required for removing an entry
      * @return the value of the entry or null if the entry was not found
      */
-    boolean removeIf(double[] lower, double[] upper, Predicate<RectangleEntry<T>> condition);
+    boolean removeIf(double[] lower, double[] upper, Predicate<BoxEntry<T>> condition);
 
     /**
      * Update the position of an entry.
@@ -88,19 +88,19 @@ public interface RectangleIndexMM<T> extends Index<T> {
      * @param upper maximum corner
      * @return an iterator over all entries at with the exact given rectangle
      */
-    QueryIterator<RectangleEntry<T>> queryRectangle(double[] lower, double[] upper);
+    BoxIterator<T> queryRectangle(double[] lower, double[] upper);
 
     /**
      * @return An iterator over all entries.
      */
-    QueryIterator<RectangleEntry<T>> iterator();
+    BoxIterator<T> iterator();
 
     /**
      * @param min Lower left corner of the query window
      * @param max Upper right corner of the query window
      * @return All rectangles that intersect with the query rectangle.
      */
-    QueryIterator<RectangleEntry<T>> queryIntersect(double[] min, double[] max);
+    BoxIterator<T> queryIntersect(double[] min, double[] max);
 
     /**
      * Finds the nearest neighbor. This uses Euclidean 'edge distance'.
@@ -109,8 +109,8 @@ public interface RectangleIndexMM<T> extends Index<T> {
      * @param center center point
      * @return the nearest neighbor
      */
-    default RectangleEntryDist<T> query1NN(double[] center) {
-        Iterator<? extends RectangleEntryDist<T>> it = queryKNN(center, 1);
+    default BoxEntryDist<T> query1nn(double[] center) {
+        Iterator<BoxEntryDist<T>> it = queryKnn(center, 1);
         if (it.hasNext()) {
             return it.next();
         }
@@ -127,7 +127,7 @@ public interface RectangleIndexMM<T> extends Index<T> {
      * @param k      number of neighbors
      * @return list of nearest neighbors
      */
-    QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k);
+    BoxIteratorKnn<T> queryKnn(double[] center, int k);
 
     /**
      * Finds the nearest neighbor.
@@ -138,5 +138,5 @@ public interface RectangleIndexMM<T> extends Index<T> {
      * @param distFn distance function
      * @return list of nearest neighbors
      */
-    QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k, RectangleDistanceFunction distFn);
+    BoxIteratorKnn<T> queryKnn(double[] center, int k, BoxDistance distFn);
 }

@@ -17,7 +17,9 @@
  */
 package org.tinspin.index;
 
-public interface Index<T> {
+import java.util.Iterator;
+
+public interface Index {
 
 	/**
 	 * @return the number of dimensions
@@ -50,4 +52,24 @@ public interface Index<T> {
 	 */
 	String toStringTree();
 
+	interface QueryIterator<T> extends Iterator<T> {
+		QueryIterator<T> reset(double[] min, double[] max);
+	}
+
+
+	interface PointIterator<T> extends QueryIterator<PointEntry<T>> {
+	}
+
+	interface BoxIterator<T> extends QueryIterator<BoxEntry<T>> {
+	}
+
+	interface QueryIteratorKnn<T> extends Iterator<T> {
+		QueryIteratorKnn<T> reset(double[] center, int k);
+	}
+
+	interface PointIteratorKnn<T> extends QueryIteratorKnn<PointEntryDist<T>> {
+	}
+
+	interface BoxIteratorKnn<T> extends QueryIteratorKnn<BoxEntryDist<T>> {
+	}
 }

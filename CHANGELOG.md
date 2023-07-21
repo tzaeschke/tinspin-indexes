@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- New API: [#20](https://github.com/tzaeschke/tinspin-indexes/pull/20)
+  - Moved a lot of smaller classes & interfaces into `Index` which should be a lot cleaner and simplifies imports.
+  - Renamed `Rectangle` to `Box` to make it shorter
+  - Renamed (most) `...Index` to `...Map` and `...IndexMM` to `...Multimap` to make it clearer
+  - Simplified return type of `...Index.iterator`.
+  - renamed all `KNN` to `Knn` to be more consistent
+  - Renamed `...DistanceFunction` to `Distance` which is shorter
+  - Renamed `...EntryDist` to `EntryKnn` to be more consistent and clearer
+  - New query result interface types: `PointIterator<T>`, `BoxIterator<T>`, ` PointIteratorKnn<T>` and `BoxIteratorKnn<T>` which are more concise.
+
+
 ## [1.8.0] - 2023-07-21
 
 ### Changed

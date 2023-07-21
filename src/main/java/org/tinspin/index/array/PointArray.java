@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 
 import org.tinspin.index.*;
 
-public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
+public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	
 	private final double[][] phc;
 	private final int dims;
@@ -53,7 +53,7 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> query(double[] point) {
+	public PointIterator<T> query(double[] point) {
 		return null;
 	}
 
@@ -110,11 +110,11 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public PointEntryDist<T> query1NN(double[] center) {
-		return PointIndex.super.query1NN(center); // TODO ????? Why do we need this?
+	public PointEntryDist<T> query1nn(double[] center) {
+		return PointMap.super.query1nn(center); // TODO ????? Why do we need this?
 	}
 
-	private class AQueryIterator implements QueryIterator<PointEntry<T>> {
+	private class AQueryIterator implements PointIterator<T> {
 
     	private Iterator<PointEntry<T>> it;
     	
@@ -145,28 +145,28 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
     }
     
 	@Override
-	public QueryIterator<PointEntry<T>> iterator() {
+	public PointIterator<T> iterator() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
 	}
 
 	@Override
-	public AQueryIteratorKNN queryKNN(double[] center, int k) {
-		return new AQueryIteratorKNN(center, k);
+	public AQueryIteratorKnn queryKnn(double[] center, int k) {
+		return new AQueryIteratorKnn(center, k);
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
 		return null;
 	}
 
 
-	private class AQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
+	private class AQueryIteratorKnn implements PointIteratorKnn<T> {
 
     	private Iterator<PointEntryDist<T>> it;
     	
-		public AQueryIteratorKNN(double[] center, int k) {
+		public AQueryIteratorKnn(double[] center, int k) {
 			reset(center, k);
 		}
 
@@ -182,7 +182,7 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
-		public AQueryIteratorKNN reset(double[] center, int k) {
+		public AQueryIteratorKnn reset(double[] center, int k) {
 			it = ((List)knnQuery(center, k)).iterator();
 			return this;
 		}

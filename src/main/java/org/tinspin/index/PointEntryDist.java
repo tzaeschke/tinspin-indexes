@@ -25,5 +25,4 @@ public interface PointEntryDist<T> extends PointEntry<T> {
 	 * @return the distance
 	 */
 	double dist();
-	
 }

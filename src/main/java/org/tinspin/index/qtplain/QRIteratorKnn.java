@@ -17,32 +17,32 @@
  */
 package org.tinspin.index.qtplain;
 
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.RectangleDistanceFunction;
-import org.tinspin.index.RectangleEntry;
-import org.tinspin.index.RectangleEntryDist;
+import org.tinspin.index.BoxDistance;
+import org.tinspin.index.BoxEntry;
+import org.tinspin.index.BoxEntryDist;
 import org.tinspin.index.util.MinHeap;
 import org.tinspin.index.util.MinMaxHeap;
 
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
+import static org.tinspin.index.Index.*;
 import static org.tinspin.index.qtplain.QUtil.distToRectNodeEDGE;
 
-public class QRIteratorKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>> {
+public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
 
     private final QRNode<T> root;
-    private final RectangleDistanceFunction distFn;
-    private final Predicate<RectangleEntry<T>> filterFn;
+    private final BoxDistance distFn;
+    private final Predicate<BoxEntry<T>> filterFn;
     MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
     MinMaxHeap<QREntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
-    private RectangleEntryDist<T> current;
+    private BoxEntryDist<T> current;
     private int remaining;
     private double[] center;
     private double currentDistance;
 
-    QRIteratorKnn(QRNode<T> root, int minResults, double[] center, RectangleDistanceFunction distFn, Predicate<RectangleEntry<T>> filterFn) {
+    QRIteratorKnn(QRNode<T> root, int minResults, double[] center, BoxDistance distFn, Predicate<BoxEntry<T>> filterFn) {
         this.filterFn = filterFn;
         this.distFn = distFn;
         this.root = root;
@@ -50,7 +50,7 @@ public class QRIteratorKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
     }
 
     @Override
-    public QueryIteratorKNN<RectangleEntryDist<T>> reset(double[] center, int minResults) {
+    public BoxIteratorKnn<T> reset(double[] center, int minResults) {
         this.center = center;
         this.currentDistance = Double.MAX_VALUE;
         this.remaining = minResults;
@@ -73,11 +73,11 @@ public class QRIteratorKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
     }
 
     @Override
-    public RectangleEntryDist<T> next() {
+    public BoxEntryDist<T> next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        RectangleEntryDist<T> ret = current;
+        BoxEntryDist<T> ret = current;
         FindNextElement();
         return ret;
     }
@@ -94,7 +94,7 @@ public class QRIteratorKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
             }
             if (useV) {
                 // data entry
-                RectangleEntryDist<T> result = queueV.peekMin(); // TODO
+                BoxEntryDist<T> result = queueV.peekMin(); // TODO
                 queueV.popMin();
                 --remaining;
                 this.current = result;

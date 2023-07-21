@@ -41,7 +41,7 @@ import org.tinspin.index.util.StringBuilderLn;
  *
  * @param <T> Value type.
  */
-public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
+public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	static final int NODE_MAX_DIR = 10;//56; //PAPER: M=56 for 1KB pages
 	static final int NODE_MAX_DATA = 10;//50; //PAPER: M=50 for 1KB pages
@@ -239,7 +239,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 * @return `true` iff an entry was found and removed
 	 */
 	@Override
-	public boolean removeIf(double[] min, double[] max, Predicate<RectangleEntry<T>> condition) {
+	public boolean removeIf(double[] min, double[] max, Predicate<BoxEntry<T>> condition) {
 		Predicate<Entry<T>> pred = e -> e.checkExactMatch(min, max) && condition.test(e);
 		return findNodes(min, max, root, node -> deleteFromNode(node, pred));
 	}
@@ -453,27 +453,27 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 * @see org.tinspin.index.rtree.Index#query1N
 	 */
 	@Override
-	public RectangleEntryDist<T> query1NN(double[] center) {
-		return new RTreeQuery1NN<>(this).reset(center, RectangleDistanceFunction.EDGE);
+	public BoxEntryDist<T> query1nn(double[] center) {
+		return new RTreeQuery1nn<>(this).reset(center, BoxDistance.EDGE);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.tinspin.index.rtree.Index#queryKNN(double[], int, org.tinspin.index.rtree.RectangleDistanceFunction)
 	 */
 	@Override
-	public RTreeQueryKnn2<T> queryKNN(double[] center, int k) {
-		return queryKNN(center, k, RectangleDistanceFunction.EDGE);
+	public RTreeQueryKnn2<T> queryKnn(double[] center, int k) {
+		return queryKnn(center, k, BoxDistance.EDGE);
 	}
 
 	@Override
-	public RTreeQueryKnn2<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist) {
+	public RTreeQueryKnn2<T> queryKnn(double[] center, int k, BoxDistance dist) {
 		//return new RTreeQueryKnn<>(this, center, k, dist);
 		return new RTreeQueryKnn2<>(this, k, center, dist, e -> true);
 	}
 
-	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(
-			double[] center, RectangleDistanceFunction dist,
-			RectangleDistanceFunction closestDist, double[] minBound, double[] maxBound) {
+	public Iterable<BoxEntryDist<T>> queryRangedNearestNeighbor(
+			double[] center, BoxDistance dist,
+			BoxDistance closestDist, double[] minBound, double[] maxBound) {
 		return queryRangedNearestNeighbor(center, dist, closestDist, 
 				new Filter.RectangleIntersectFilter(minBound, maxBound));
 	}
@@ -494,8 +494,8 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 *                     (example: {@code new Filter.RectangleIntersectFilter(min, max)})
 	 * @return             An Iterable which lazily calculates the nearest neighbors. 
 	 */
-	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(double[] center, RectangleDistanceFunction dist,
-			RectangleDistanceFunction closestDist, Filter filter) {
+	public Iterable<BoxEntryDist<T>> queryRangedNearestNeighbor(double[] center, BoxDistance dist,
+																BoxDistance closestDist, Filter filter) {
 		RTree<T> self = this;
 		return () -> new RTreeMixedQuery<>(self, center, filter, dist, closestDist);
 	}

@@ -18,9 +18,9 @@ package org.tinspin.index.rtree;
 
 import java.util.Arrays;
 
-import org.tinspin.index.RectangleEntry;
+import org.tinspin.index.BoxEntry;
 
-public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
+public class Entry<T> implements BoxEntry<T>, Comparable<Entry<T>> {
 	protected double[] min;
 	protected double[] max;
 	private T val;

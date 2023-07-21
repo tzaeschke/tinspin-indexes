@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 
 import org.tinspin.index.*;
 import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
-import org.tinspin.index.util.QueryIteratorWrapper;
+import org.tinspin.index.util.BoxIteratorWrapper;
 
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
@@ -32,7 +32,7 @@ import org.tinspin.index.util.QueryIteratorWrapper;
  *
  * @param <T> Value type.
  */
-public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
+public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	private static final int MAX_DEPTH = 50;
 	
@@ -158,13 +158,13 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<RectangleEntry<T>> queryRectangle(double[] lower, double[] upper) {
+	public BoxIterator<T> queryRectangle(double[] lower, double[] upper) {
 		if (root == null) {
 			return null;
 		}
 
-		return new QueryIteratorWrapper<>(lower, upper, (low, upp2) -> {
-			ArrayList<RectangleEntry<T>> results = new ArrayList<>();
+		return new BoxIteratorWrapper<>(lower, upper, (low, upp2) -> {
+			ArrayList<BoxEntry<T>> results = new ArrayList<>();
 			// Hack: we use the 'condition' to collect results, however, in order to continue search, we return `false`.
 			if (root != null) {
 				root.getExact(lower, upper, x -> !results.add(x));
@@ -199,7 +199,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 
 	@Override
-	public boolean removeIf(double[] lower, double[] upper, Predicate<RectangleEntry<T>> condition) {
+	public boolean removeIf(double[] lower, double[] upper, Predicate<BoxEntry<T>> condition) {
 		if (root == null) {
 			return false;
 		}
@@ -328,8 +328,8 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 
 	@Override
-	public RectangleEntryDist<T> query1NN(double[] center) {
-		return queryKNN(center, 1).next();
+	public BoxEntryDist<T> query1nn(double[] center) {
+		return queryKnn(center, 1).next();
 	}
 
 	/**
@@ -337,7 +337,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 *
 	 * @param <T> Value type
 	 */
-	public static class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
+	public static class QRIterator<T> implements BoxIterator<T> {
 
 		private final QuadTreeRKD0<T> tree;
 		private ArrayDeque<Iterator<?>> stack;
@@ -427,7 +427,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
     	while (candidates.size() < k) {
     		candidates.clear();
 			// TODO use other distance function !
-    		rangeSearchKNN(root, center, candidates, k, distEstimate, PointDistanceFunction.L2);
+    		rangeSearchKNN(root, center, candidates, k, distEstimate, PointDistance.L2);
     		distEstimate *= 2;
     	}
     	return candidates;
@@ -470,7 +470,7 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
     
     private double rangeSearchKNN(QRNode<T> node, double[] center,
 								  ArrayList<QREntryDist<T>> candidates, int k, double maxRange,
-								  PointDistanceFunction distFn) {
+								  PointDistance distFn) {
 		ArrayList<QREntry<T>> points = node.getEntries();
     	if (points != null) {
     		for (int i = 0; i < points.size(); i++) {
@@ -583,19 +583,19 @@ public class QuadTreeRKD0<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<RectangleEntry<T>> iterator() {
+	public BoxIterator<T> iterator() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
 	}
 
 	@Override
-	public QRIteratorKnn<T> queryKNN(double[] center, int k) {
-		return new QRIteratorKnn<>(root, k, center, RectangleDistanceFunction.EDGE, e -> true);
+	public QRIteratorKnn<T> queryKnn(double[] center, int k) {
+		return new QRIteratorKnn<>(root, k, center, BoxDistance.EDGE, e -> true);
 	}
 
 	@Override
-	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k, RectangleDistanceFunction distFn) {
+	public BoxIteratorKnn<T> queryKnn(double[] center, int k, BoxDistance distFn) {
 		throw new UnsupportedOperationException();
 	}
 

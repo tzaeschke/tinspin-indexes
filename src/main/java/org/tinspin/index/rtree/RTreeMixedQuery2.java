@@ -21,12 +21,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.PriorityQueue;
 
-import org.tinspin.index.RectangleDistanceFunction;
-import org.tinspin.index.RectangleEntryDist;
+import org.tinspin.index.BoxDistance;
+import org.tinspin.index.BoxEntryDist;
 
-class RTreeMixedQuery2<T> implements Iterator<RectangleEntryDist<T>> {
+class RTreeMixedQuery2<T> implements Iterator<BoxEntryDist<T>> {
 	
-	private static class RTreeNodeWrapper<T> implements RectangleEntryDist<T>, Comparable<RTreeNodeWrapper<T>> {
+	private static class RTreeNodeWrapper<T> implements BoxEntryDist<T>, Comparable<RTreeNodeWrapper<T>> {
 
 		Entry<T> node;
 		double distance;
@@ -102,8 +102,8 @@ class RTreeMixedQuery2<T> implements Iterator<RectangleEntryDist<T>> {
 
 	private final RTree<T> tree;
 	private final double[] center;
-	private final RectangleDistanceFunction dist;
-	private final RectangleDistanceFunction closestDist;
+	private final BoxDistance dist;
+	private final BoxDistance closestDist;
 	private final PriorityQueue<RTreeNodeWrapper<T>> queue = new PriorityQueue<>();
 	private final Filter filter;
 	private RTreeNodeWrapper<T> next;
@@ -118,8 +118,8 @@ class RTreeMixedQuery2<T> implements Iterator<RectangleEntryDist<T>> {
 	private int remove_pointerLoss;
 	private int remove_hit;
 
-	public RTreeMixedQuery2(RTree<T> tree, double[] center, Filter filter, 
-			RectangleDistanceFunction dist, RectangleDistanceFunction closestDist) {
+	public RTreeMixedQuery2(RTree<T> tree, double[] center, Filter filter,
+							BoxDistance dist, BoxDistance closestDist) {
 		this.tree = tree;
 		this.center = center;
 		this.closestDist = closestDist;
@@ -221,7 +221,7 @@ class RTreeMixedQuery2<T> implements Iterator<RectangleEntryDist<T>> {
 	}
 
 	@Override
-	public RectangleEntryDist<T> next() {
+	public BoxEntryDist<T> next() {
 		if (!hasNext()) {
 			throw new IllegalStateException();
 		}

@@ -28,7 +28,7 @@ import java.util.function.Predicate;
  *
  * @param <T> Type of the value associated with the point key.
  */
-public interface PointIndexMM<T> extends Index<T> {
+public interface PointMultimap<T> extends Index {
 
     /**
      * Insert a point.
@@ -81,19 +81,19 @@ public interface PointIndexMM<T> extends Index<T> {
      * @param point the point
      * @return an iterator over all entries at the given point
      */
-    QueryIterator<PointEntry<T>> query(double[] point);
+    PointIterator<T> query(double[] point);
 
     /**
      * @return An iterator over all entries.
      */
-    QueryIterator<PointEntry<T>> iterator();
+    PointIterator<T> iterator();
 
     /**
      * @param min Lower left corner of the query window
      * @param max Upper right corner of the query window
      * @return All points that lie inside the query rectangle.
      */
-    QueryIterator<PointEntry<T>> query(double[] min, double[] max);
+    PointIterator<T> query(double[] min, double[] max);
 
     /**
      * Finds the nearest neighbor. This uses Euclidean distance.
@@ -102,8 +102,8 @@ public interface PointIndexMM<T> extends Index<T> {
      * @param center center point
      * @return the nearest neighbor
      */
-    default PointEntryDist<T> query1NN(double[] center) {
-        Iterator<? extends PointEntryDist<T>> it = queryKNN(center, 1);
+    default PointEntryDist<T> query1nn(double[] center) {
+        Iterator<PointEntryDist<T>> it = queryKnn(center, 1);
         if (it.hasNext()) {
             return it.next();
         }
@@ -118,8 +118,8 @@ public interface PointIndexMM<T> extends Index<T> {
      * @param k      number of neighbors
      * @return list of nearest neighbors
      */
-    default QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-        return queryKNN(center, k, PointDistanceFunction.L2);
+    default PointIteratorKnn<T> queryKnn(double[] center, int k) {
+        return queryKnn(center, k, PointDistance.L2);
     }
 
     /**
@@ -131,5 +131,5 @@ public interface PointIndexMM<T> extends Index<T> {
      * @param distFn the point distance function to be used
      * @return list of nearest neighbors
      */
-    QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn);
+    PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn);
 }

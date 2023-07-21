@@ -21,9 +21,9 @@ import java.util.PriorityQueue;
 import java.util.Comparator;
 import java.util.Iterator;
 
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.RectangleDistanceFunction;
-import org.tinspin.index.RectangleEntryDist;
+import org.tinspin.index.BoxDistance;
+
+import static org.tinspin.index.Index.*;
 
 /**
  * kNN search with EDGE distance and presorting of entries.
@@ -35,7 +35,7 @@ import org.tinspin.index.RectangleEntryDist;
  *
  * @param <T> Type Value type.
  */
-public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>> {
+public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
 	
 	private static class DEComparator implements Comparator<DistEntry<?>> {
 		@Override
@@ -49,15 +49,15 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 	private final RTree<T> tree;
 	private double[] center;
 	private Iterator<DistEntry<T>> iter;
-	private RectangleDistanceFunction dist;
+	private BoxDistance dist;
 	private final ArrayList<DistEntry<T>> candidates = new ArrayList<>();
 	private final ArrayList<DistEntry<Object>> pool = new ArrayList<>();
 	private final PriorityQueue<DistEntry<Object>> queue = new PriorityQueue<>(COMP);
 	
 	
-	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, RectangleDistanceFunction dist) {
+	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, BoxDistance dist) {
 		this.tree = tree;
-		reset(center, k, dist == null ? RectangleDistanceFunction.EDGE : dist);
+		reset(center, k, dist == null ? BoxDistance.EDGE : dist);
 	}
 
 	
@@ -67,11 +67,11 @@ public class RTreeQueryKnn<T> implements QueryIteratorKNN<RectangleEntryDist<T>>
 		return this;
 	}
 
-	public void reset(double[] center, int k, RectangleDistanceFunction dist) {
+	public void reset(double[] center, int k, BoxDistance dist) {
 		if (dist != null) {
 			this.dist = dist;
 		}
-		if (this.dist != RectangleDistanceFunction.EDGE) {
+		if (this.dist != BoxDistance.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
 		this.center = center;

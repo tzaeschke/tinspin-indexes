@@ -21,10 +21,9 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.RectangleEntry;
+import static org.tinspin.index.Index.*;
 
-public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
+public class RTreeIterator<T> implements BoxIterator<T> {
 	
 	private class IteratorStack {
 		private final IterPos<T>[] stack;
@@ -39,7 +38,7 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			return size == 0;
 		}
 
-		IterPos<T> prepareAndPush(RTreeNode<T> node) {
+		void prepareAndPush(RTreeNode<T> node) {
 			IterPos<T> ni = stack[size++];
 			if (ni == null)  {
 				ni = new IterPos<>();
@@ -47,15 +46,14 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			}
 			
 			ni.init(node);
-			return ni;
 		}
 
 		IterPos<T> peek() {
 			return stack[size-1];
 		}
 
-		IterPos<T> pop() {
-			return stack[--size];
+		void pop() {
+			--size;
 		}
 	}
 
@@ -65,7 +63,7 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 	private IteratorStack stack;
 	private boolean hasNext = true;
 	private Entry<T> next;
-	private Predicate<Entry<T>> filter;
+	private final Predicate<Entry<T>> filter;
 	
 	private static class IterPos<T> {
 		private RTreeNode<T> node;

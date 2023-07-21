@@ -21,12 +21,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.tinspin.index.PointDistanceFunction;
-import org.tinspin.index.PointEntry;
+import org.tinspin.index.PointDistance;
 import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.PointIndex;
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.PointMap;
 import org.tinspin.index.Stats;
 
 
@@ -66,7 +63,7 @@ import org.tinspin.index.Stats;
  *     
  * @author Tilmann Zäschke
  */
-public class CoverTree<T> implements PointIndex<T> {
+public class CoverTree<T> implements PointMap<T> {
 
 	private final int dims;
 	private int nEntries;
@@ -80,7 +77,7 @@ public class CoverTree<T> implements PointIndex<T> {
 	private final double BASE;
 	private final double LOG_BASE;
 	
-	private final PointDistanceFunction dist;
+	private final PointDistance dist;
 
 	private long nDistCalc = 0;
 	private long nDist1NN = 0;
@@ -91,11 +88,11 @@ public class CoverTree<T> implements PointIndex<T> {
 		return Math.log(n) / LOG_BASE;
 	}
 	
-	private CoverTree(int nDims, double base, PointDistanceFunction dist) {
+	private CoverTree(int nDims, double base, PointDistance dist) {
 		this.dims = nDims;
 		this.BASE = base;
 		this.LOG_BASE = Math.log(BASE);
-		this.dist = dist != null ? dist : PointDistanceFunction.L2;
+		this.dist = dist != null ? dist : PointDistance.L2;
 	}
 		
 	public static <T> Point<T> create(double[] point, T value) {
@@ -103,15 +100,15 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 
 	public static <T> CoverTree<T> create(int nDims) {
-		return new CoverTree<>(nDims, DEFAULT_BASE, PointDistanceFunction.L2);
+		return new CoverTree<>(nDims, DEFAULT_BASE, PointDistance.L2);
 	}
 	
-	public static <T> CoverTree<T> create(int nDims, double base, PointDistanceFunction dist) {
+	public static <T> CoverTree<T> create(int nDims, double base, PointDistance dist) {
 		return new CoverTree<>(nDims, base, dist);
 	}
 	
 	public static <T> CoverTree<T> create(Point<T>[] data, double base, 
-			PointDistanceFunction distFn) {
+			PointDistance distFn) {
 		if (data == null || data.length == 0) {
 			throw new IllegalStateException("Bulk load with empty data no possible.");
 		}
@@ -711,21 +708,21 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public QueryIterator<? extends PointEntry<T>> iterator() {
+	public PointIterator<T> iterator() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
+	public PointIterator<T> query(double[] min, double[] max) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
 	}
 	
 	@Override
-	public PointEntryDist<T> query1NN(double[] center) {
+	public PointEntryDist<T> query1nn(double[] center) {
 		if (root == null) {
 			return null;
 		}
@@ -777,7 +774,7 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
 		return new KNNIterator<>(this).reset(center, k);
 		//The kNN search above is consistently 2x faster so we use it instead of
 		//the Hjaltason/Samet algorithm below.
@@ -832,7 +829,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		}
 	}
 
-	private static class KNNIterator<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+	private static class KNNIterator<T> implements PointIteratorKnn<T> {
 
 		private final CoverTree<T> tree;
 		private final ArrayList<PointDist<T>> result = new ArrayList<>();
@@ -853,7 +850,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		}
 
 		@Override
-		public QueryIteratorKNN<PointEntryDist<T>> reset(double[] center, int k) {
+		public PointIteratorKnn<T> reset(double[] center, int k) {
 			result.clear();
 			if (tree.root != null) {
 				double distPX = tree.d(tree.root.point(), center);
@@ -987,7 +984,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		return this.getClass().getSimpleName() + 
 				";BASE=" + BASE +  
 				";NEAREST_ANCESTOR=" + NEAREST_ANCESTOR + 
-				";DistFn=" + PointDistanceFunction.getName(dist);
+				";DistFn=" + PointDistance.getName(dist);
 	}
 
 }

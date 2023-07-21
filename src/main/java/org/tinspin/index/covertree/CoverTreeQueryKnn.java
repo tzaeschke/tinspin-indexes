@@ -21,9 +21,9 @@ import java.util.PriorityQueue;
 import java.util.Comparator;
 import java.util.Iterator;
 
-import org.tinspin.index.PointDistanceFunction;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.PointDistance;
+
+import static org.tinspin.index.Index.*;
 
 
 /**
@@ -36,22 +36,22 @@ import org.tinspin.index.QueryIteratorKNN;
  *
  * @param <T> Type
  */
-public class CoverTreeQueryKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 	
 	private final Comparator<PointDist<?>> COMP = PointDist.COMPARATOR;
 	private final CoverTree<T> tree;
 	private double[] center;
 	private Iterator<PointDist<T>> iter;
-	private PointDistanceFunction dist;
+	private PointDistance dist;
 	private final ArrayList<PointDist<T>> candidates = new ArrayList<>();
 	private final ArrayList<PointDist<Object>> pool = new ArrayList<>();
 	private final PriorityQueue<PointDist<Object>> queue = new PriorityQueue<>(COMP);
 	
 	
 	public CoverTreeQueryKnn(CoverTree<T> tree, double[] center, int k, 
-			PointDistanceFunction dist) {
+			PointDistance dist) {
 		this.tree = tree;
-		reset(center, k, dist == null ? PointDistanceFunction.L2 : dist);
+		reset(center, k, dist == null ? PointDistance.L2 : dist);
 	}
 
 	
@@ -62,11 +62,11 @@ public class CoverTreeQueryKnn<T> implements QueryIteratorKNN<PointEntryDist<T>>
 	}
 	
 	
-	public void reset(double[] center, int k, PointDistanceFunction dist) {
+	public void reset(double[] center, int k, PointDistance dist) {
 		if (dist != null) {
 			this.dist = dist;
 		}
-		if (this.dist != PointDistanceFunction.L2) {
+		if (this.dist != PointDistance.L2) {
 			System.err.println("This distance iterator only works for L2 distance");
 		}
 		this.center = center;

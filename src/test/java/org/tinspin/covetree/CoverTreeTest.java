@@ -23,9 +23,8 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
-import org.tinspin.index.PointDistanceFunction;
+import org.tinspin.index.PointDistance;
 import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.QueryIteratorKNN;
 import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.covertree.Point;
 
@@ -259,7 +258,7 @@ public class CoverTreeTest {
 			Point<double[]> p = CoverTree.create(point_list[i], point_list[i]);
 			points[i] = p;
 		}
-		CoverTree<double[]> tree = CoverTree.create(points, 1.3, PointDistanceFunction.L2);
+		CoverTree<double[]> tree = CoverTree.create(points, 1.3, PointDistance.L2);
 		smokeTestAccess(tree, point_list);
 	}
 	
@@ -274,7 +273,7 @@ public class CoverTreeTest {
 
 		for (double[] key : point_list) {
 //			System.out.println("1NN query: " + Arrays.toString(key));
-			PointEntryDist<double[]> p = tree.query1NN(key);
+			PointEntryDist<double[]> p = tree.query1nn(key);
 			if (p == null) {
 				throw new IllegalStateException("1NN() failed: " + Arrays.toString(key));
 			}
@@ -286,7 +285,7 @@ public class CoverTreeTest {
 	    
 		for (double[] key : point_list) {
 //			System.out.println("kNN query: " + Arrays.toString(key));
-			QueryIteratorKNN<PointEntryDist<double[]>> iter = tree.queryKNN(key, 1);
+			QueryIteratorKnn<PointEntryDist<double[]>> iter = tree.queryKnn(key, 1);
 			if (!iter.hasNext()) {
 				throw new IllegalStateException("kNN() failed: " + Arrays.toString(key));
 			}

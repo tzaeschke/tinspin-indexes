@@ -22,7 +22,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.tinspin.index.*;
 import org.tinspin.index.array.PointArray;
-import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.kdtree.KDTree;
 import org.tinspin.index.phtree.PHTreeMMP;
 import org.tinspin.index.qthypercube.QuadTreeKD;
@@ -30,6 +29,7 @@ import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.rtree.RTree;
 import org.tinspin.index.test.util.TestInstances;
+import org.tinspin.index.util.PointMultimapWrapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -139,7 +139,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
     private void smokeTest(List<Entry> data) {
         int dim = data.get(0).p.length;
-        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+        PointMultimap<Entry> tree = createTree(data.size(), dim);
 
         for (Entry e : data) {
             tree.insert(e.p, e);
@@ -153,7 +153,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
         for (Entry e : data) {
             // System.out.println("kNN query: " + e);
-            QueryIteratorKNN<PointEntryDist<Entry>> iter = tree.queryKNN(e.p, N_DUP);
+            QueryIteratorKnn<PointEntryDist<Entry>> iter = tree.queryKnn(e.p, N_DUP);
             assertTrue("kNNquery() failed: " + e, iter.hasNext());
             Entry answer = iter.next().value();
             assertArrayEquals("Expected " + e + " but got " + answer, answer.p, e.p, 0.0001);
@@ -187,7 +187,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+        PointMultimap<Entry> tree = createTree(data.size(), dim);
 
         for (Entry e : data) {
             tree.insert(e.p, e);
@@ -212,7 +212,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
     }
 
-    private boolean containsExact(PointIndexMM<Entry> tree, double[] p, int id) {
+    private boolean containsExact(PointMultimap<Entry> tree, double[] p, int id) {
         QueryIterator<PointEntry<Entry>> it = tree.query(p);
         while (it.hasNext()) {
             if (it.next().value().id == id) {
@@ -227,7 +227,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+        PointMultimap<Entry> tree = createTree(data.size(), dim);
 
         Collections.shuffle(data, r);
 
@@ -267,7 +267,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        PointIndexMM<Entry> tree = createTree(data.size(), dim);
+        PointMultimap<Entry> tree = createTree(data.size(), dim);
 
         Collections.shuffle(data, r);
 
@@ -304,7 +304,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         assertEquals(0, tree.size());
     }
 
-    private <T> PointIndexMM<T> createTree(int size, int dims) {
+    private <T> PointMultimap<T> createTree(int size, int dims) {
         switch (candidate) {
             case ARRAY: return new PointArray<>(dims, size);
 //            //case CRITBIT: return new PointArray<>(dims, size);
@@ -314,7 +314,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             case QUAD_HC2: return QuadTreeKD2.create(dims);
             case QUAD_PLAIN: return QuadTreeKD0.create(dims);
             case RSTAR:
-            case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
+            case STR: return PointMultimapWrapper.create(RTree.createRStar(dims));
  //           case COVER: return CoverTree.create(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());

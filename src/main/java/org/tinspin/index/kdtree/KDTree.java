@@ -31,7 +31,7 @@ import org.tinspin.index.util.StringBuilderLn;
  *
  * @param <T> Value type
  */
-public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
+public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 
 	public static final boolean DEBUG = false;
 
@@ -65,15 +65,15 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	private Node<T> root;
 
-	private final PointDistanceFunction distOld;
+	private final PointDistance distOld;
 
 	@Deprecated
-	private KDTree(int dims, PointDistanceFunction dist) {
+	private KDTree(int dims, PointDistance dist) {
 		if (DEBUG) {
 			System.err.println("Warning: DEBUG enabled");
 		}
 		this.dims = dims;
-		this.distOld = dist != null ? dist : PointDistanceFunction.L2;
+		this.distOld = dist != null ? dist : PointDistance.L2;
 		this.defensiveKeyCopy = true;
 	}
 
@@ -86,8 +86,8 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 		this.defensiveKeyCopy = defensiveKeyCopy;
 	}
 
-	private PointDistanceFunction dist() {
-		return distOld != null ? distOld : PointDistanceFunction.L2;
+	private PointDistance dist() {
+		return distOld != null ? distOld : PointDistance.L2;
 	}
 
 	public static <T> KDTree<T> create(int dims) {
@@ -95,7 +95,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Deprecated // Distance function should be set while querying. TODO remove
-	public static <T> KDTree<T> create(int dims, PointDistanceFunction dist) {
+	public static <T> KDTree<T> create(int dims, PointDistance dist) {
 		return new KDTree<>(dims, dist);
 	}
 
@@ -469,7 +469,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     }
 
     private double rangeSearch1NN(Node<T> node, double[] center, 
-    		KDEntryDist<T> candidate, double maxRange, PointDistanceFunction fn) {
+    		KDEntryDist<T> candidate, double maxRange, PointDistance fn) {
     	int pos = node.getDim();
     	if (node.getLo() != null && (center[pos] < node.getKey()[pos] || node.getHi() == null)) {
         	//go down
@@ -499,7 +499,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     }
         
     private double addCandidate(Node<T> node, double[] center, 
-    		final KDEntryDist<T> candidate, double maxRange, PointDistanceFunction fn) {
+    		final KDEntryDist<T> candidate, double maxRange, PointDistance fn) {
     	nDist1NN++;
     	double dist = fn.dist(center, node.getKey());
     	if (dist >= maxRange) {
@@ -515,7 +515,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 		return knnQuery(center, k, dist());
 	}
 
-	public List<KDEntryDist<T>> knnQuery(double[] center, int k, PointDistanceFunction distFn) {
+	public List<KDEntryDist<T>> knnQuery(double[] center, int k, PointDistance distFn) {
 		if (root == null) {
 			return Collections.emptyList();
 		}
@@ -525,7 +525,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	private double rangeSearchKNN(Node<T> node, double[] center,
-    		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange, PointDistanceFunction distFn) {
+    		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange, PointDistance distFn) {
     	int pos = node.getDim();
     	if (node.getLo() != null && (center[pos] < node.getKey()[pos] || node.getHi() == null)) {
         	//go down
@@ -563,7 +563,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
     
     private double addCandidate(Node<T> node, double[] center, 
-    		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange, PointDistanceFunction distFn) {
+    		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange, PointDistance distFn) {
     	nDistKNN++;
     	//add ?
     	double dist = distFn.dist(center, node.getKey());
@@ -589,13 +589,13 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     }
     
 	
-    private static class KDQueryIteratorKNN<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+    private static class KDQueryIteratorKnn<T> implements PointIteratorKnn<T> {
 
-    	private Iterator<? extends PointEntryDist<T>> it;
+    	private Iterator<KDEntryDist<T>> it;
     	private final KDTree<T> tree;
-		private final PointDistanceFunction distFn;
+		private final PointDistance distFn;
 
-		public KDQueryIteratorKNN(KDTree<T> tree, double[] center, int k, PointDistanceFunction distFn) {
+		public KDQueryIteratorKnn(KDTree<T> tree, double[] center, int k, PointDistance distFn) {
 			this.tree = tree;
 			this.distFn = distFn;
 			reset(center, k);
@@ -612,7 +612,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 		}
 
 		@Override
-		public KDQueryIteratorKNN<T> reset(double[] center, int k) {
+		public KDQueryIteratorKnn<T> reset(double[] center, int k) {
 			it = tree.knnQuery(center, k, distFn).iterator();
 			return this;
 		}
@@ -684,7 +684,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> iterator() {
+	public PointIterator<T> iterator() {
 		if (root == null) {
 			return query(new double[dims], new double[dims]);
 		}
@@ -694,24 +694,24 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public PointEntryDist<T> query1NN(double[] center) {
-		return queryKNN(center, 1).next();
+	public PointEntryDist<T> query1nn(double[] center) {
+		return queryKnn(center, 1).next();
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
 		if (size < 1_000_000) {
-			return new KDQueryIteratorKNN<>(this, center, k, dist());
+			return new KDQueryIteratorKnn<>(this, center, k, dist());
 		}
 		return new KDIteratorKnn<>(root, k, center, dist(), e -> true);
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
 		// For small trees, the old iterator is about 3x fatser.
 		// For 1M it is about even, for 10M the new HS-iterator is about 2x faster.
 		if (size < 1_000_000) {
-			return new KDQueryIteratorKNN<>(this, center, k, distFn);
+			return new KDQueryIteratorKnn<>(this, center, k, distFn);
 		}
 		return new KDIteratorKnn<>(root, k, center, distFn, e -> true);
 	}

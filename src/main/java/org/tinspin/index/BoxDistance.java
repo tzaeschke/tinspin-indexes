@@ -18,10 +18,10 @@
 package org.tinspin.index;
 
 @FunctionalInterface
-public interface RectangleDistanceFunction {
+public interface BoxDistance {
 
-	RectangleDistanceFunction CENTER = RectangleDistanceFunction::centerDistance;
-	RectangleDistanceFunction EDGE = RectangleDistanceFunction::edgeDistance;
+	BoxDistance CENTER = BoxDistance::centerDistance;
+	BoxDistance EDGE = BoxDistance::edgeDistance;
 
 	/**
 	 * @param point A point
@@ -42,7 +42,7 @@ public interface RectangleDistanceFunction {
 	 * @param entry a rectangle
 	 * @return distance between point and rectangle
 	 */
-	default double dist(double[] center, RectangleEntry<?> entry) {
+	default double dist(double[] center, BoxEntry<?> entry) {
 		return dist(center, entry.lower(), entry.upper());
 	}
 
@@ -54,7 +54,7 @@ public interface RectangleDistanceFunction {
 	 * TODO: maybe we could get rid of the center parameter altogether and always let 
 	 *       the RectangleDistanceFunction hold it's reference points?
 	 */
-	public static class RectangleDist implements RectangleDistanceFunction {
+	class RectangleDist implements BoxDistance {
 		private final double[] lower;
 		private final double[] upper;
 
@@ -85,11 +85,11 @@ public interface RectangleDistanceFunction {
 	 * Special wrapper class which takes the inverse or the given function.
 	 * Can be used to get the farthest neighbors using the nearest neighbor algorithm.
 	 */
-	public static class FarthestNeighbor implements RectangleDistanceFunction {
+	class FarthestNeighbor implements BoxDistance {
 		private static final double EPSILON = 2 * Double.MIN_VALUE;
-		private final RectangleDistanceFunction dist;
+		private final BoxDistance dist;
 
-		public FarthestNeighbor(RectangleDistanceFunction dist) {
+		public FarthestNeighbor(BoxDistance dist) {
 			this.dist = dist;
 		}
 
@@ -104,7 +104,7 @@ public interface RectangleDistanceFunction {
 		}
 
 		@Override
-		public double dist(double[] center, RectangleEntry<?> entry) {
+		public double dist(double[] center, BoxEntry<?> entry) {
 			double d = dist.dist(center, entry);
 			if (d < EPSILON) {
 				return Double.POSITIVE_INFINITY;
@@ -137,8 +137,8 @@ public interface RectangleDistanceFunction {
 	}
 
 	class EdgeDistance {
-		final PointDistanceFunction distFn;
-		public EdgeDistance(PointDistanceFunction distFn) {
+		final PointDistance distFn;
+		public EdgeDistance(PointDistance distFn) {
 			this.distFn = distFn;
 		}
 
@@ -155,6 +155,5 @@ public interface RectangleDistanceFunction {
 			}
 			return distFn.dist(dist, center);
 		}
-
 	}
 }

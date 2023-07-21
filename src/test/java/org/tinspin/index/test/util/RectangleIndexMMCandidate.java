@@ -10,7 +10,6 @@ import ch.ethz.globis.tinspin.TestStats;
 import ch.ethz.globis.tinspin.wrappers.Candidate;
 import org.tinspin.index.*;
 import org.tinspin.index.array.RectArray;
-import org.tinspin.index.phtree.PHTreeR;
 import org.tinspin.index.qthypercube.QuadTreeRKD;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.Entry;
@@ -22,19 +21,19 @@ import java.util.Arrays;
 
 public class RectangleIndexMMCandidate extends Candidate {
 
-	private final RectangleIndexMM<Integer> idx;
+	private final BoxMultimap<Integer> idx;
 	private final int dims;
 	private final int N;
 	private double[] data;
-	private QueryIterator<RectangleEntry<Integer>> query = null;
-	private QueryIteratorKNN<RectangleEntryDist<Integer>> queryKnn = null;
+	private QueryIterator<BoxEntry<Integer>> query = null;
+	private QueryIteratorKnn<BoxEntryDist<Integer>> queryKnn = null;
 	private final boolean bulkloadSTR;
 
 	public static RectangleIndexMMCandidate create(TestStats ts) {
 		return new RectangleIndexMMCandidate(createIndex(ts), ts);
 	}
 
-	private static <T> RectangleIndexMM<T> createIndex(TestStats s) {
+	private static <T> BoxMultimap<T> createIndex(TestStats s) {
 		int dims = s.cfgNDims;
 		int size = s.cfgNEntries;
 		switch ((IDX)s.INDEX) {
@@ -54,10 +53,10 @@ public class RectangleIndexMMCandidate extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public RectangleIndexMMCandidate(RectangleIndexMM<?> ri, TestStats ts) {
+	public RectangleIndexMMCandidate(BoxMultimap<?> ri, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
-		this.idx = (RectangleIndexMM<Integer>) ri;
+		this.idx = (BoxMultimap<Integer>) ri;
 		//this.index = ts.INDEX;
 		this.bulkloadSTR = ts.INDEX.equals(IDX.STR);
 	}
@@ -158,17 +157,17 @@ public class RectangleIndexMMCandidate extends Candidate {
 	@Override
 	public double knnQuery(int k, double[] center) {
 		if (k == 1) {
-			return idx.query1NN(center).dist();
+			return idx.query1nn(center).dist();
 		}
 		if (queryKnn == null) {
-			queryKnn = idx.queryKNN(center, k);
+			queryKnn = idx.queryKnn(center, k);
 		} else {
 			queryKnn.reset(center, k);
 		}
 		double ret = 0;
 		int i = 0;
 		while (queryKnn.hasNext() && i < k) {
-			RectangleEntryDist<Integer> e = queryKnn.next();
+			BoxEntryDist<Integer> e = queryKnn.next();
 			ret += e.dist();
 			i++;
 		}
@@ -188,7 +187,7 @@ public class RectangleIndexMMCandidate extends Candidate {
 		data = null;
 	}
 
-	public Index<Integer> getNative() {
+	public Index getNative() {
 		return idx;
 	}
 

@@ -17,20 +17,19 @@
  */
 package org.tinspin.index.kdtree;
 
-import org.tinspin.index.PointDistanceFunction;
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.*;
 import org.tinspin.index.util.MinHeap;
 import org.tinspin.index.util.MinMaxHeap;
 
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-public class KDIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+import static org.tinspin.index.Index.*;
+
+public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
 
     private final Node<T> root;
-    private final PointDistanceFunction distFn;
+    private final PointDistance distFn;
     private final Predicate<PointEntry<T>> filterFn;
     MinHeap<NodeDist<T>> queueN = MinHeap.create((t1, t2) -> t1.closestDist < t2.closestDist);
     MinMaxHeap<KDEntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
@@ -40,7 +39,7 @@ public class KDIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
     private double[] center;
     private double currentDistance;
 
-    KDIteratorKnn(Node<T> root, int minResults, double[] center, PointDistanceFunction distFn, Predicate<PointEntry<T>> filterFn) {
+    KDIteratorKnn(Node<T> root, int minResults, double[] center, PointDistance distFn, Predicate<PointEntry<T>> filterFn) {
         this.filterFn = filterFn;
         this.distFn = distFn;
         this.root = root;
@@ -48,7 +47,7 @@ public class KDIteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
     }
 
     @Override
-    public QueryIteratorKNN<PointEntryDist<T>> reset(double[] center, int minResults) {
+    public PointIteratorKnn<T> reset(double[] center, int minResults) {
         this.center = center;
         this.currentDistance = Double.MAX_VALUE;
         this.remaining = minResults;

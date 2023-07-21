@@ -16,11 +16,9 @@
  */
 package org.tinspin.index.phtree;
 
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.RectangleEntry;
-import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.BoxEntry;
+import org.tinspin.index.BoxEntryDist;
+import org.tinspin.index.BoxMap;
 
 import ch.ethz.globis.phtree.PhTreeSolidF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhEntryDistSF;
@@ -29,7 +27,7 @@ import ch.ethz.globis.phtree.PhTreeSolidF.PhIteratorSF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhKnnQuerySF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhQuerySF;
 
-public class PHTreeR<T> implements RectangleIndex<T> {
+public class PHTreeR<T> implements BoxMap<T> {
 
 	private final PhTreeSolidF<T> tree;
 	
@@ -97,21 +95,21 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 	}
 
 	@Override
-	public QueryIterator<RectangleEntry<T>> iterator() {
+	public BoxIterator<T> iterator() {
 		return new IteratorPH<>(tree.iterator());
 	}
 
 	@Override
-	public QueryIterator<RectangleEntry<T>> queryIntersect(double[] min, double[] max) {
+	public BoxIterator<T> queryIntersect(double[] min, double[] max) {
 		return new QueryIteratorPH<>(tree.queryIntersect(min, max));
 	}
 
 	@Override
-	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k) {
+	public BoxIteratorKnn<T> queryKnn(double[] center, int k) {
 		return new QueryIteratorKnnPH<>(tree.nearestNeighbour(k, null, center));
 	}
 
-	private static class IteratorPH<T> implements QueryIterator<RectangleEntry<T>> {
+	private static class IteratorPH<T> implements BoxIterator<T> {
 
 		private final PhIteratorSF<T> iter;
 		
@@ -125,7 +123,7 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 		}
 
 		@Override
-		public RectangleEntry<T> next() {
+		public BoxEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntrySF<T> e = iter.nextEntryReuse();
 			return new EntryR<>(e.lower().clone(), e.upper().clone(), e.value());
@@ -139,7 +137,7 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 		
 	}
 	
-	private static class QueryIteratorPH<T> implements QueryIterator<RectangleEntry<T>> {
+	private static class QueryIteratorPH<T> implements BoxIterator<T> {
 
 		private final PhQuerySF<T> iter;
 		
@@ -153,7 +151,7 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 		}
 
 		@Override
-		public RectangleEntry<T> next() {
+		public BoxEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntrySF<T> e = iter.nextEntryReuse();
 			return new EntryR<>(e.lower().clone(), e.upper().clone(), e.value());
@@ -166,7 +164,7 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 		
 	}
 	
-	private static class QueryIteratorKnnPH<T> implements QueryIteratorKNN<RectangleEntryDist<T>> {
+	private static class QueryIteratorKnnPH<T> implements BoxIteratorKnn<T> {
 
 		private final PhKnnQuerySF<T> iter;
 		
@@ -180,7 +178,7 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 		}
 
 		@Override
-		public RectangleEntryDist<T> next() {
+		public BoxEntryDist<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryDistSF<T> e = iter.nextEntryReuse();
 			return new DistEntryR<>(e.lower().clone(), e.upper().clone(), e.value(), e.dist());

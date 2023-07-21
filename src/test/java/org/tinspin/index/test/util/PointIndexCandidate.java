@@ -15,7 +15,6 @@ import org.tinspin.index.*;
 import org.tinspin.index.array.PointArray;
 import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.kdtree.KDTree;
-import org.tinspin.index.phtree.PHTreeMMP;
 import org.tinspin.index.phtree.PHTreeP;
 import org.tinspin.index.qthypercube.QuadTreeKD;
 import org.tinspin.index.qthypercube2.QuadTreeKD2;
@@ -23,15 +22,18 @@ import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
 import org.tinspin.index.test.util.TestInstances.IDX;
+import org.tinspin.index.util.PointMapWrapper;
+
+import static org.tinspin.index.Index.*;
 
 public class PointIndexCandidate extends Candidate {
 	
-	private final PointIndex<double[]> idx;
+	private final PointMap<double[]> idx;
 	private final int dims;
 	private final int N;
 	private double[] data;
 	private QueryIterator<PointEntry<double[]>> it;
-	private QueryIteratorKNN<PointEntryDist<double[]>> itKnn;
+	private QueryIteratorKnn<PointEntryDist<double[]>> itKnn;
 	private final boolean bulkloadSTR;
 	private final IndexHandle index;
 
@@ -42,7 +44,7 @@ public class PointIndexCandidate extends Candidate {
 		return new PointIndexCandidate(create(idx, dims, size), ts);
 	}
 
-	private static <T> PointIndex<T> create(IDX idx, int dims, int size) {
+	private static <T> PointMap<T> create(IDX idx, int dims, int size) {
 		switch (idx) {
 			case ARRAY: return new PointArray<>(dims, size);
 			//case CRITBIT: return new PointArray<>(dims, size);
@@ -52,7 +54,7 @@ public class PointIndexCandidate extends Candidate {
 			case QUAD_HC2: return QuadTreeKD2.create(dims);
 			case QUAD_PLAIN: return QuadTreeKD0.create(dims);
 			case RSTAR:
-			case STR: return PointIndexWrapper.create(RTree.createRStar(dims));
+			case STR: return PointMapWrapper.create(RTree.createRStar(dims));
 			case COVER: return CoverTree.create(dims);
 			default:
 				throw new UnsupportedOperationException(idx.name());
@@ -64,10 +66,10 @@ public class PointIndexCandidate extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public PointIndexCandidate(PointIndex<?> pi, TestStats ts) {
+	public PointIndexCandidate(PointMap<?> pi, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
-		idx = (PointIndex<double[]>) pi;
+		idx = (PointMap<double[]>) pi;
 		this.index = ts.INDEX;
 		this.bulkloadSTR = IDX.STR == this.index;
 	}
@@ -85,7 +87,7 @@ public class PointIndexCandidate extends Candidate {
 				pos += dims;
 				entries[i] = new Entry<double[]>(buf, buf, buf);
 			}
-			PointIndexWrapper<double[]> rt = (PointIndexWrapper<double[]>) idx;
+			PointMapWrapper<double[]> rt = (PointMapWrapper<double[]>) idx;
 			rt.load(entries);
 		} else {
 			for (int i = 0; i < N; i++) {
@@ -157,10 +159,10 @@ public class PointIndexCandidate extends Candidate {
 	@Override
 	public double knnQuery(int k, double[] center) {
 		if (k == 1) {
-			return idx.query1NN(center).dist();
+			return idx.query1nn(center).dist();
 		}
 		if (itKnn == null) {
-			itKnn = idx.queryKNN(center, k);
+			itKnn = idx.queryKnn(center, k);
 		} else {
 			itKnn.reset(center, k);
 		}
@@ -192,7 +194,7 @@ public class PointIndexCandidate extends Candidate {
 	 * 
 	 * @return The internally used index structure
 	 */
-	public Index<double[]> getNative() {
+	public Index getNative() {
 		return idx;
 	}
 

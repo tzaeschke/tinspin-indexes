@@ -19,9 +19,9 @@ package org.tinspin.index.qthypercube;
 
 import java.util.Arrays;
 
-import org.tinspin.index.RectangleEntry;
+import org.tinspin.index.BoxEntry;
 
-public class QREntry<T> implements RectangleEntry<T> {
+public class QREntry<T> implements BoxEntry<T> {
 
 	private double[] pointL;
 	private double[] pointU;
