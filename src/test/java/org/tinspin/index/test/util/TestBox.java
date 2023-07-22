@@ -12,9 +12,9 @@ import ch.ethz.globis.tinspin.data.AbstractTest;
 import java.util.HashSet;
 import java.util.Random;
 
-public abstract class TestRectangle extends AbstractTest {
+public abstract class TestBox extends AbstractTest {
 	
-	protected TestRectangle(Random R, TestStats S) {
+	protected TestBox(Random R, TestStats S) {
 		super(R, S);
 	}
 

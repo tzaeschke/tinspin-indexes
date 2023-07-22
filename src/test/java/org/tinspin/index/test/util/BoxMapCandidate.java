@@ -23,7 +23,7 @@ import org.tinspin.index.rtree.RTree;
 import static org.tinspin.index.Index.*;
 
 
-public class RectangleIndexCandidate extends Candidate {
+public class BoxMapCandidate extends Candidate {
 	
 	private final BoxMap<Object> idx;
 	private final int dims;
@@ -34,8 +34,8 @@ public class RectangleIndexCandidate extends Candidate {
 	private BoxIteratorKnn<Object> queryKnn = null;
 	private final boolean bulkloadSTR;
 
-	public static RectangleIndexCandidate create(TestStats ts) {
-		return new RectangleIndexCandidate(createIndex(ts), ts);
+	public static BoxMapCandidate create(TestStats ts) {
+		return new BoxMapCandidate(createIndex(ts), ts);
 	}
 
 	private static <T> BoxMap<T> createIndex(TestStats s) {
@@ -58,7 +58,7 @@ public class RectangleIndexCandidate extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public RectangleIndexCandidate(BoxMap<?> ri, TestStats ts) {
+	public BoxMapCandidate(BoxMap<?> ri, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
 		this.idx = (BoxMap<Object>) ri;

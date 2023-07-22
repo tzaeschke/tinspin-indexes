@@ -25,7 +25,7 @@ import java.util.Arrays;
 
 import static org.tinspin.index.Index.*;
 
-public class PointIndexMMCandidate extends Candidate {
+public class PointMultimapCandidate extends Candidate {
 
 	private final PointMultimap<Integer> idx;
 	private final int dims;
@@ -36,11 +36,11 @@ public class PointIndexMMCandidate extends Candidate {
 	private final boolean bulkloadSTR;
 	private final IndexHandle index;
 
-	public static PointIndexMMCandidate create(TestStats ts) {
+	public static PointMultimapCandidate create(TestStats ts) {
 		IDX idx = (IDX) ts.INDEX;
 		int dims = ts.cfgNDims;
 		int size = ts.cfgNEntries;
-		return new PointIndexMMCandidate(create(idx, dims, size), ts);
+		return new PointMultimapCandidate(create(idx, dims, size), ts);
 	}
 
 	private static <T> PointMultimap<T> create(IDX idx, int dims, int size) {
@@ -65,7 +65,7 @@ public class PointIndexMMCandidate extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public PointIndexMMCandidate(PointMultimap<?> pi, TestStats ts) {
+	public PointMultimapCandidate(PointMultimap<?> pi, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
 		idx = (PointMultimap<Integer>) pi;

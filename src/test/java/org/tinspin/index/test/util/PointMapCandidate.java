@@ -26,7 +26,7 @@ import org.tinspin.index.util.PointMapWrapper;
 
 import static org.tinspin.index.Index.*;
 
-public class PointIndexCandidate extends Candidate {
+public class PointMapCandidate extends Candidate {
 	
 	private final PointMap<double[]> idx;
 	private final int dims;
@@ -37,11 +37,11 @@ public class PointIndexCandidate extends Candidate {
 	private final boolean bulkloadSTR;
 	private final IndexHandle index;
 
-	public static PointIndexCandidate create(TestStats ts) {
+	public static PointMapCandidate create(TestStats ts) {
 		IDX idx = (IDX) ts.INDEX;
 		int dims = ts.cfgNDims;
 		int size = ts.cfgNEntries;
-		return new PointIndexCandidate(create(idx, dims, size), ts);
+		return new PointMapCandidate(create(idx, dims, size), ts);
 	}
 
 	private static <T> PointMap<T> create(IDX idx, int dims, int size) {
@@ -66,7 +66,7 @@ public class PointIndexCandidate extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public PointIndexCandidate(PointMap<?> pi, TestStats ts) {
+	public PointMapCandidate(PointMap<?> pi, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
 		idx = (PointMap<double[]>) pi;

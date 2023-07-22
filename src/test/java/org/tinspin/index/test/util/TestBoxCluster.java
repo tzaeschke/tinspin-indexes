@@ -17,7 +17,7 @@ import java.util.Random;
  * 
  * @author Tilmann Zaeschke
  */
-public class TestRectangleCluster extends TestRectangle {
+public class TestBoxCluster extends TestBox {
 
 	private static int BOX_N = 10*1000;
 	private static final double BOX_LEN = 0.00001;
@@ -43,7 +43,7 @@ public class TestRectangleCluster extends TestRectangle {
 	}
 	
 	
-	public TestRectangleCluster(Random R, TestStats S) {
+	public TestBoxCluster(Random R, TestStats S) {
 		super(R, S);
 	}
 	

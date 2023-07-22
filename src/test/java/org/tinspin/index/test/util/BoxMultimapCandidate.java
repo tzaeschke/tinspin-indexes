@@ -21,7 +21,7 @@ import java.util.Arrays;
 import static org.tinspin.index.Index.*;
 
 
-public class RectangleIndexMMCandidate extends Candidate {
+public class BoxMultimapCandidate extends Candidate {
 
 	private final BoxMultimap<Integer> idx;
 	private final int dims;
@@ -31,8 +31,8 @@ public class RectangleIndexMMCandidate extends Candidate {
 	private BoxIteratorKnn<Integer> queryKnn = null;
 	private final boolean bulkloadSTR;
 
-	public static RectangleIndexMMCandidate create(TestStats ts) {
-		return new RectangleIndexMMCandidate(createIndex(ts), ts);
+	public static BoxMultimapCandidate create(TestStats ts) {
+		return new BoxMultimapCandidate(createIndex(ts), ts);
 	}
 
 	private static <T> BoxMultimap<T> createIndex(TestStats s) {
@@ -55,7 +55,7 @@ public class RectangleIndexMMCandidate extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public RectangleIndexMMCandidate(BoxMultimap<?> ri, TestStats ts) {
+	public BoxMultimapCandidate(BoxMultimap<?> ri, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
 		this.idx = (BoxMultimap<Integer>) ri;

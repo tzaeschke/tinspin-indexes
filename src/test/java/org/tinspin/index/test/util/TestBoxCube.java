@@ -14,11 +14,11 @@ import java.util.Random;
  * 
  * @author Tilmann Zaeschke
  */
-public class TestRectangleCube extends TestRectangle {
+public class TestBoxCube extends TestBox {
 
 	public static final double MIN_X = 0;
 	
-	public TestRectangleCube(Random R, TestStats S) {
+	public TestBoxCube(Random R, TestStats S) {
 		super(R, S);
 	}
 	

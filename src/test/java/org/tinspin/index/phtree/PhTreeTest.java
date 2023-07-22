@@ -30,8 +30,8 @@ import org.tinspin.index.BoxEntry;
 import org.tinspin.index.BoxMap;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.test.util.JmxTools;
-import org.tinspin.index.test.util.TestRectangle;
-import org.tinspin.index.test.util.TestRectangleCube;
+import org.tinspin.index.test.util.TestBox;
+import org.tinspin.index.test.util.TestBoxCube;
 import org.tinspin.index.test.util.TestInstances.TST;
 
 import static org.tinspin.index.Index.*;
@@ -47,7 +47,7 @@ public class PhTreeTest {
 	public void testR() {
 		Random R = new Random(0);
 		TestStats ts = new TestStats(TST.CUBE_R, null, N, DIM, param1);
-		TestRectangle test = new TestRectangleCube(R, ts);
+		TestBox test = new TestBoxCube(R, ts);
 		double[] data = test.generate();
 
 		RectArray<Integer> tree1 = new RectArray<Integer>(DIM, N);
@@ -74,7 +74,7 @@ public class PhTreeTest {
 		}
 	}
 	
-	private void repeatQuery(TestRectangle test, BoxMap<Integer> tree1, BoxMap<Integer> tree2, int repeat) {
+	private void repeatQuery(TestBox test, BoxMap<Integer> tree1, BoxMap<Integer> tree2, int repeat) {
 		int dims = DIM;
 		//log("N=" + N);
 		log("querying index ... repeat = " + repeat);
