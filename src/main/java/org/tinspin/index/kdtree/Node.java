@@ -19,7 +19,7 @@ package org.tinspin.index.kdtree;
 
 import java.util.Arrays;
 
-import org.tinspin.index.PointEntry;
+import org.tinspin.index.Index;
 import org.tinspin.index.kdtree.KDTree.KDStats;
 
 /**
@@ -29,24 +29,21 @@ import org.tinspin.index.kdtree.KDTree.KDStats;
  *
  * @param <T> Value type
  */
-public class Node<T> implements PointEntry<T> {
+public class Node<T> extends Index.PointEntry<T> {
 
-	private double[] coordinate;
-	private T value;
 	private Node<T> left;
 	private Node<T> right;
 	private final int dim;
 	
 	Node(double[] p, T value, int dim, boolean defensiveKeyCopy) {
-		this.coordinate = defensiveKeyCopy ? p.clone() : p;
-		this.value = value;
+		super(defensiveKeyCopy ? p.clone() : p, value);
 		this.dim = dim;
 	}
 	
 	Node<T> getClosestNodeOrAddPoint(double[] p, T value, int dims, boolean defensiveKeyCopy) {
 		//Find best sub-node.
 		//If there is no node, we create one and return null
-		if (p[dim] >= coordinate[dim]) {
+		if (p[dim] >= point()[dim]) {
 			if (right != null) {
 				return right;
 			}
@@ -58,14 +55,6 @@ public class Node<T> implements PointEntry<T> {
 		}
 		left = new Node<>(p, value, (dim + 1) % dims, defensiveKeyCopy);
 		return null;
-	}
-
-	double[] getKey() {
-		return coordinate;
-	}
-
-	T getValue() {
-		return value;
 	}
 
 	Node<T> getLo() {
@@ -82,21 +71,6 @@ public class Node<T> implements PointEntry<T> {
 
 	void setRight(Node<T> right) {
 		this.right = right;
-	}
-
-	void setKeyValue(double[] key, T value) {
-		this.coordinate = key;
-		this.value = value;
-	}
-
-	@Override
-	public double[] point() {
-		return this.coordinate;
-	}
-
-	@Override
-	public T value() {
-		return this.value;
 	}
 
 	void checkNode(KDStats s, int depth) {
@@ -123,5 +97,9 @@ public class Node<T> implements PointEntry<T> {
 
 	int getDim() {
 		return dim;
+	}
+
+	public void set(double[] point, T value) {
+		super.set(point, value);
 	}
 }

@@ -17,10 +17,11 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	private final int dims;
 	private int N;
 	private PointEntry<T>[] values;
-	private int insPos = 0; 
-	
+	private int insPos = 0;
+	private final PEComparator<T> comparator = new PEComparator<>();
+
 	/**
-	 * Setup of an simple array data structure (no indexing).
+	 * Setup of a simple array data structure (no indexing).
 	 * 
 	 * @param dims dimensions
 	 * @param size size
@@ -38,7 +39,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	@Override
 	public void insert(double[] key, T value) {
 		System.arraycopy(key, 0, phc[insPos], 0, dims);
-		values[insPos] = new KnnEntry<>(key, value, -1);
+		values[insPos] = new PointEntryDist<>(key, value, -1);
 		insPos++;
 	}
 
@@ -191,18 +192,18 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
     }
     
 
-	private ArrayList<KnnEntry<T>> knnQuery(double[] center, int k) {
-		ArrayList<KnnEntry<T>> ret = new ArrayList<>(k);
+	private ArrayList<PointEntryDist<T>> knnQuery(double[] center, int k) {
+		ArrayList<PointEntryDist<T>> ret = new ArrayList<>(k);
 		for (int i = 0; i < phc.length; i++) {
 			double[] p = phc[i];
 			double dist = dist(center, p);
 			if (ret.size() < k) {
-				ret.add(new KnnEntry<>(p, values[i].value(), dist));
-				ret.sort(COMP);
-			} else if (ret.get(k-1).dist > dist) {
+				ret.add(new PointEntryDist<>(p, values[i].value(), dist));
+				ret.sort(comparator);
+			} else if (ret.get(k-1).dist() > dist) {
 				ret.remove(k-1);
-				ret.add(new KnnEntry<>(p, values[i].value(), dist));
-				ret.sort(COMP);
+				ret.add(new PointEntryDist<>(p, values[i].value(), dist));
+				ret.sort(comparator);
 			}
 		}
 		return ret;
@@ -217,41 +218,6 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 		return Math.sqrt(dist);
 	}
 
-	private final Comparator<KnnEntry<T>> COMP = KnnEntry::compareTo;
-	
-	private static class KnnEntry<T> implements Comparable<KnnEntry<T>>, PointEntryDist<T> {
-		private final double[] p;
-		private final double dist;
-		private final T val;
-		KnnEntry(double[] p, T val, double dist) {
-			this.p = p;
-			this.val = val;
-			this.dist = dist;
-		}
-		@Override
-		public int compareTo(KnnEntry<T> o) {
-			double d = dist-o.dist;
-			return d < 0 ? -1 : d > 0 ? 1 : 0;
-		}
-		
-		@Override
-		public String toString() {
-			return "d=" + dist + ":" + Arrays.toString(p);
-		}
-		@Override
-		public double[] point() {
-			return p;
-		}
-		@Override
-		public T value() {
-			return val;
-		}
-		@Override
-		public double dist() {
-			return dist;
-		}
-	}
-	
 	@Override
 	public T update(double[] oldPoint, double[] newPoint) {
 		for (int i = 0; i < N; i++) { 

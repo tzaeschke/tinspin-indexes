@@ -1,10 +1,6 @@
 API
 ===
-- Rename Indexes to PointMap/PointMultimap BoxMax/BoxMultimap; deprecate PointIndex
-- Remove Comparators in entries!
-- Unify (Dist)Entries
 - KD-tree remove stored dist function
-- QueryIterator should be of type <T> instead of PointEntryDIst<T>  (It should still return PED!)
 - QueryIterator nextReuse()
 - MinMaxHeap: leave entries in array -> reuse/pool
 - MinHeap: n-ary heap

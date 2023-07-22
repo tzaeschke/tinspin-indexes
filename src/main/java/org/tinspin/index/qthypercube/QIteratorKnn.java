@@ -33,7 +33,7 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
     private final PointDistance distFn;
     private final Predicate<PointEntry<T>> filterFn;
     MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
-    MinMaxHeap<QEntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
+    MinMaxHeap<PointEntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
     private PointEntryDist<T> current;
     private int remaining;
@@ -92,7 +92,7 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
             }
             if (useV) {
                 // data entry
-                PointEntryDist<T> result = queueV.peekMin(); // TODO
+                PointEntryDist<T> result = queueV.peekMin();
                 queueV.popMin();
                 --remaining;
                 this.current = result;
@@ -111,12 +111,12 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
                 }
 
                 if (node.isLeaf()) {
-                    for (QEntry<T> entry : node.getEntries()) {
+                    for (PointEntry<T> entry : node.getEntries()) {
                         if (filterFn.test(entry)) {
                             double d = distFn.dist(center, entry.point());
                             // Using '<=' allows dealing with infinite distances.
                             if (d <= maxNodeDist) {
-                                queueV.push(new QEntryDist<>(entry, d));
+                                queueV.push(new PointEntryDist<>(entry, d));
                                 if (queueV.size() >= remaining) {
                                     if (queueV.size() > remaining) {
                                         queueV.popMax();

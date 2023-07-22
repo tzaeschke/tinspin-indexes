@@ -1,7 +1,5 @@
 package org.tinspin.index.util;
 
-import org.tinspin.index.PointEntry;
-
 import java.util.Iterator;
 import java.util.function.BiFunction;
 

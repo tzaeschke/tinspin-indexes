@@ -55,8 +55,8 @@ public class QIterator1<T> implements PointIterator<T> {
 			return stack.get(size-1);
 		}
 
-		StackEntry<T> pop() {
-			return stack.get(--size);
+		void pop() {
+			--size;
 		}
 
 		public void clear() {
@@ -65,8 +65,8 @@ public class QIterator1<T> implements PointIterator<T> {
 	}
 
 	private final QuadTreeKD<T> tree;
-	private IteratorStack stack;
-	private QEntry<T> next = null;
+	private final IteratorStack stack;
+	private PointEntry<T> next = null;
 	private double[] min;
 	private double[] max;
 	
@@ -75,8 +75,8 @@ public class QIterator1<T> implements PointIterator<T> {
 		long m0;
 		long m1;
 		QNode<T>[] subs;
-		ArrayList<QEntry<T>> vals;
-		public int len;
+		ArrayList<PointEntry<T>> vals;
+		int len;
 		
 		void set(QNode<T> node, double[] min, double[] max) {
 			this.vals = node.getEntries();
@@ -126,7 +126,7 @@ public class QIterator1<T> implements PointIterator<T> {
 			while (se.pos < se.len) {
 				int pos = (int) se.pos++;
 				if (se.isLeaf()) {
-					QEntry<T> e = se.vals.get(pos);
+					PointEntry<T> e = se.vals.get(pos);
 					if (QUtil.isPointEnclosed(e.point(), min, max)) {
 						next = e;
 						return;
@@ -149,11 +149,11 @@ public class QIterator1<T> implements PointIterator<T> {
 	}
 
 	@Override
-	public QEntry<T> next() {
+	public PointEntry<T> next() {
 		if (!hasNext()) {
 			throw new NoSuchElementException();
 		}
-		QEntry<T> ret = next;
+		PointEntry<T> ret = next;
 		findNext();
 		return ret;
 	}

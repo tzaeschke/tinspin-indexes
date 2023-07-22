@@ -24,9 +24,7 @@ import java.util.Random;
 
 import org.junit.Test;
 import org.tinspin.index.PointDistance;
-import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.covertree.CoverTree;
-import org.tinspin.index.covertree.Point;
 
 import static org.tinspin.index.Index.*;
 
@@ -255,9 +253,9 @@ public class CoverTreeTest {
 	
 	@SuppressWarnings("unchecked")
 	private void smokeTestBulk(double[][] point_list) {
-		Point<double[]>[] points = new Point[point_list.length];
+		PointEntry<double[]>[] points = new PointEntry[point_list.length];
 		for (int i = 0; i < point_list.length; i++) {
-			Point<double[]> p = CoverTree.create(point_list[i], point_list[i]);
+			PointEntry<double[]> p = CoverTree.create(point_list[i], point_list[i]);
 			points[i] = p;
 		}
 		CoverTree<double[]> tree = CoverTree.create(points, 1.3, PointDistance.L2);

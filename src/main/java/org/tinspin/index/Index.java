@@ -17,6 +17,8 @@
  */
 package org.tinspin.index;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 
 public interface Index {
@@ -51,6 +53,89 @@ public interface Index {
 	 * @return a full string output of the tree structure with all entries 
 	 */
 	String toStringTree();
+
+	class PointEntry<T> {
+
+		private double[] point;
+		private T value;
+
+		public PointEntry(double[] point, T value) {
+			this.point = point;
+			this.value = value;
+		}
+
+		/**
+		 * @return The coordinates of the entry.
+		 */
+		public double[] point() {
+			return point;
+		}
+
+		/**
+		 * @return The value associated with the rectangle or point.
+		 */
+		public T value() {
+			return value;
+		}
+
+		@Override
+		public String toString() {
+			return Arrays.toString(point) + ";v=" + value;
+		}
+
+		public void setPoint(double[] point) {
+			this.point = point;
+		}
+
+		protected void set(double[] point, T value) {
+			this.point = point;
+			this.value = value;
+		}
+	}
+
+	class PointEntryDist<T> extends PointEntry<T> {
+
+		private double dist;
+
+		public PointEntryDist(double[] point, T value, double dist) {
+			super(point, value);
+			this.dist = dist;
+		}
+
+		public PointEntryDist(PointEntry<T> entry, double dist) {
+			super(entry.point(), entry.value());
+			this.dist = dist;
+		}
+
+		/**
+		 * An entry with distance property. This is, for example, used
+		 * as a return value for nearest neighbour queries.
+		 * @return the distance
+		 */
+		public double dist() {
+			return dist;
+		}
+
+		public void set(double[] point, T value, double dist) {
+			super.set(point, value);
+			this.dist = dist;
+		}
+
+		public void set(PointEntry<T> entry, double dist) {
+			super.set(entry.point(), entry.value);
+			this.dist = dist;
+		}
+	}
+
+	//Comparator<PointEntryDist<T>> PEComparator = (o1, o2) -> (int)(o1.dist() - o2.dist());
+	class PEComparator<T> implements Comparator<PointEntryDist<T>> {
+
+		@Override
+		public int compare(PointEntryDist<T> o1, PointEntryDist<T> o2) {
+			double d = o1.dist - o2.dist;
+			return d < 0 ? -1 : d > 0 ? 1 : 0;
+		}
+	}
 
 	interface QueryIterator<T> extends Iterator<T> {
 		QueryIterator<T> reset(double[] min, double[] max);

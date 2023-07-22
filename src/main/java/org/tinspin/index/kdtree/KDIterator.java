@@ -22,7 +22,7 @@ public class KDIterator<T> implements PointIterator<T> {
 		void set(Node<T> node, double[] min, double[] max, int depth, int dims) {
 			this.node = node;
 			this.depth = depth;
-			double[] key = node.getKey();
+			double[] key = node.point();
 			int pos = depth % dims;
 			doLeft = min[pos] <= key[pos];
 			doRight = max[pos] >= key[pos];
@@ -86,7 +86,7 @@ public class KDIterator<T> implements PointIterator<T> {
 			}
 			if (itPos.doKey) {
 				itPos.doKey = false;
-				if (KDTree.isEnclosed(node.getKey(), min, max)) {
+				if (KDTree.isEnclosed(node.point(), min, max)) {
 					next = node;
 					return;
 				}

@@ -33,7 +33,7 @@ public interface PointDistance {
 	 * @param entry another point
 	 * @return distance between the points
 	 */
-	default double dist(double[] p1, PointEntry<?> entry) {
+	default double dist(double[] p1, Index.PointEntry<?> entry) {
 		return dist(p1, entry.point());
 	}
 

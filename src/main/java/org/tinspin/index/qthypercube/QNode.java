@@ -21,8 +21,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
-import org.tinspin.index.PointEntry;
 import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
+
+import static org.tinspin.index.Index.*;
 
 /**
  * Node class for the quadtree.
@@ -36,7 +37,7 @@ public class QNode<T> {
 	private final double[] center;
 	private double radius;
 	// null indicates that we have sub-node i.o. values
-	private ArrayList<QEntry<T>> values;
+	private ArrayList<PointEntry<T>> values;
 	private QNode<T>[] subs;
 	
 	QNode(double[] center, double radius) {
@@ -55,7 +56,7 @@ public class QNode<T> {
 	}
 
 	@SuppressWarnings({ "unchecked", "unused" })
-	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
+	QNode<T> tryPut(PointEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
 		if (QuadTreeKD.DEBUG && !QUtil.fitsIntoNode(e.point(), center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
@@ -73,17 +74,17 @@ public class QNode<T> {
 		//   in cases where splitting won't help. For n>1 the
 		//   local limit is (temporarily) violated.
 		if (values.size() < maxNodeSize || enforceLeaf || 
-				e.isExact(values.get(0))) {
+				QUtil.isPointEqual(e.point(), values.get(0).point())) {
 			values.add(e);
 			return null;
 		}
 		
 		//split
-		ArrayList<QEntry<T>> vals = values;
+		ArrayList<PointEntry<T>> vals = values;
 		values = null;
 		subs = new QNode[1 << center.length];
 		for (int i = 0; i < vals.size(); i++) {
-			QEntry<T> e2 = vals.get(i); 
+			PointEntry<T> e2 = vals.get(i);
 			QNode<T> sub = getOrCreateSub(e2);
 			while (sub != null) {
 				//This may recurse if all entries fall 
@@ -94,7 +95,7 @@ public class QNode<T> {
 		return getOrCreateSub(e);
 	}
 
-	private QNode<T> getOrCreateSub(QEntry<T> e) {
+	private QNode<T> getOrCreateSub(PointEntry<T> e) {
 		int pos = calcSubPosition(e.point());
 		QNode<T> n = subs[pos];
 		if (n == null) {
@@ -139,7 +140,7 @@ public class QNode<T> {
 		return subNodePos;
 	}
 
-	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize, Predicate<PointEntry<T>> pred) {
+	PointEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			int pos = calcSubPosition(key);
 			QNode<T> sub = subs[pos];
@@ -150,7 +151,7 @@ public class QNode<T> {
 		}
 		
 		for (int i = 0; i < values.size(); i++) {
-			QEntry<T> e = values.get(i);
+			PointEntry<T> e = values.get(i);
 			if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 				values.remove(i);
 				//TODO provide threshold for re-insert
@@ -164,7 +165,7 @@ public class QNode<T> {
 		return null;
 	}
 
-	QEntry<T> update(QNode<T> parent, double[] keyOld, double[] keyNew, int maxNodeSize,
+	PointEntry<T> update(QNode<T> parent, double[] keyOld, double[] keyNew, int maxNodeSize,
 			boolean[] requiresReinsert, int currentDepth, int maxDepth, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			int pos = calcSubPosition(keyOld);
@@ -172,7 +173,7 @@ public class QNode<T> {
 			if (sub == null) {
 				return null;
 			}
-			QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
+			PointEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
 					currentDepth+1, maxDepth, pred);
 			if (ret != null && requiresReinsert[0] && 
 					QUtil.fitsIntoNode(ret.point(), center, radius/QUtil.EPS_MUL)) {
@@ -186,10 +187,10 @@ public class QNode<T> {
 		}
 		
 		for (int i = 0; i < values.size(); i++) {
-			QEntry<T> e = values.get(i);
+			PointEntry<T> e = values.get(i);
 			if (QUtil.isPointEqual(e.point(), keyOld) && pred.test(e)) {
 				values.remove(i);
-				e.setKey(keyNew);
+				e.setPoint(keyNew);
 				if (QUtil.fitsIntoNode(keyNew, center, radius/QUtil.EPS_MUL)) {
 					// reinsert locally;
 					values.add(e);
@@ -244,7 +245,7 @@ public class QNode<T> {
 		return radius;
 	}
 
-	QEntry<T> getExact(double[] key, Predicate<PointEntry<T>> pred) {
+	PointEntry<T> getExact(double[] key, Predicate<PointEntry<T>> pred) {
 		if (values == null) {
 			int pos = calcSubPosition(key);
 			QNode<T> sub = subs[pos];
@@ -255,7 +256,7 @@ public class QNode<T> {
 		}
 		
 		for (int i = 0; i < values.size(); i++) {
-			QEntry<T> e = values.get(i);
+			PointEntry<T> e = values.get(i);
 			if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 				return e;
 			}
@@ -263,7 +264,7 @@ public class QNode<T> {
 		return null;
 	}
 
-	ArrayList<QEntry<T>> getEntries() {
+	ArrayList<PointEntry<T>> getEntries() {
 		return values;
 	}
 
@@ -303,7 +304,7 @@ public class QNode<T> {
 			s.nEntries += values.size();
 			s.histoValues[values.size()]++;
 			for (int i = 0; i < values.size(); i++) {
-				QEntry<T> e = values.get(i);
+				PointEntry<T> e = values.get(i);
 				if (!QUtil.fitsIntoNode(e.point(), center, radius*QUtil.EPS_MUL)) {
 					System.out.println("Node: " + radius + " " + Arrays.toString(center));
 					System.out.println("Child: " + Arrays.toString(e.point()));

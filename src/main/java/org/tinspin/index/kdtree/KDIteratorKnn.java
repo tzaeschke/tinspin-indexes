@@ -32,7 +32,7 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
     private final PointDistance distFn;
     private final Predicate<PointEntry<T>> filterFn;
     MinHeap<NodeDist<T>> queueN = MinHeap.create((t1, t2) -> t1.closestDist < t2.closestDist);
-    MinMaxHeap<KDEntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
+    MinMaxHeap<PointEntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
     private PointEntryDist<T> current;
     private int remaining;
@@ -93,7 +93,7 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
             }
             if (useV) {
                 // data entry
-                KDEntryDist<T> result = queueV.peekMin();
+                PointEntryDist<T> result = queueV.peekMin();
                 queueV.popMin();
                 --remaining;
                 this.current = result;
@@ -111,11 +111,11 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
 
                 Node<T> node = entry.node;
                 if (filterFn.test(node)) {
-                    double d = distFn.dist(center, node.getKey());
+                    double d = distFn.dist(center, node.point());
                     // Using '<=' allows dealing with infinite distances.
                     if (d <= maxNodeDist) {
                         // TODO we could just set d and push "top"
-                        queueV.push(new KDEntryDist<>(node, d));
+                        queueV.push(new PointEntryDist<>(node, d));
                         if (queueV.size() >= remaining) {
                             if (queueV.size() > remaining) {
                                 queueV.popMax();
@@ -144,7 +144,7 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
         int splitDim = node.getDim();
         double[] newClosest;
         double newClosestDist;
-        double splitX = node.getKey()[splitDim];
+        double splitX = node.point()[splitDim];
         if (center[splitDim] < splitX) {
             newClosest = entry.closest.clone();  // copy
             newClosest[splitDim] = splitX;
@@ -163,7 +163,7 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
         int splitDim = node.getDim();
         double[] newClosest;
         double newClosestDist;
-        double splitX = node.getKey()[splitDim];
+        double splitX = node.point()[splitDim];
         if (center[splitDim] > splitX) {
             newClosest = entry.closest.clone();  // copy
             newClosest[splitDim] = splitX;

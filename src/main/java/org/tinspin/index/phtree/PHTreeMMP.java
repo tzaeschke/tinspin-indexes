@@ -93,7 +93,7 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
     @Override
     public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
         for (T t : tree.get(point)) {
-            if (condition.test(new EntryP<>(point, t))) {
+            if (condition.test(new PointEntry<>(point, t))) {
                 return tree.remove(point, t);
             }
         }
@@ -157,7 +157,7 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
         public PointEntry<T> next() {
             //This reuses the entry object, but we have to clone the arrays...
             PhEntryF<T> e = iter.nextEntryReuse();
-            return new EntryP<>(e.getKey().clone(), e.getValue());
+            return new PointEntry<>(e.getKey().clone(), e.getValue());
         }
 
         @Override
@@ -188,7 +188,7 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
         public PointEntry<T> next() {
             //This reuses the entry object, but we have to clone the arrays...
             PhEntryF<T> e = iter.nextEntryReuse();
-            return new EntryP<>(e.getKey().clone(), e.getValue());
+            return new PointEntry<>(e.getKey().clone(), e.getValue());
         }
 
         @Override
@@ -215,7 +215,7 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
 
         @Override
         public PointEntry<T> next() {
-            return new EntryP<>(key, iter.next());
+            return new PointEntry<>(key, iter.next());
         }
 
         @Override
@@ -246,7 +246,7 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
         public PointEntryDist<T> next() {
             //This reuses the entry object, but we have to clone the arrays...
             PhEntryDistF<T> e = iter.nextEntryReuse();
-            return new DistEntryP<>(e.getKey().clone(), e.getValue(), e.dist());
+            return new PointEntryDist<>(e.getKey().clone(), e.getValue(), e.dist());
         }
 
         @Override

@@ -47,28 +47,6 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 		return new PointIter(ind.queryIntersect(min, max));
 	}
 
-	private static class PointW<T> implements PointEntry<T> {
-
-		private final double[] point;
-		private final T value;
-		
-		PointW(double[] point, T value) {
-			this.point = point;
-			this.value = value;
-		}
-		
-		@Override
-		public double[] point() {
-			return point;
-		}
-
-		@Override
-		public T value() {
-			return value;
-		}
-		
-	}
-	
 	private static class PointIter<T> implements PointIterator<T> {
 
 		private final BoxIterator<T> it;
@@ -85,7 +63,7 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 		@Override
 		public PointEntry<T> next() {
 			BoxEntry<T> e = it.next();
-			return new PointW<>(e.lower(), e.value());
+			return new PointEntry<>(e.lower(), e.value());
 		}
 
 		@Override
@@ -98,7 +76,7 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 	@Override
 	public PointEntryDist<T> query1nn(double[] center) {
 		BoxEntryDist<T> r = ind.query1nn(center);
-		return new PointDistW<>(r.lower(), r.value(), r.dist());
+		return new PointEntryDist<>(r.lower(), r.value(), r.dist());
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -113,21 +91,6 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 		return new PointDIter<>(ind.queryKnn(center, k, fn::edgeDistance));
 	}
 
-	private static class PointDistW<T> extends PointW<T> implements PointEntryDist<T> {
-
-		private final double dist;
-		
-		PointDistW(double[] point, T value, double dist) {
-			super(point, value);
-			this.dist = dist;
-		}
-		
-		@Override
-		public double dist() {
-			return dist;
-		}
-	}
-	
 	private static class PointDIter<T> implements PointIteratorKnn<T> {
 
 		private final BoxIteratorKnn<T> it;
@@ -144,7 +107,7 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 		@Override
 		public PointEntryDist<T> next() {
 			BoxEntryDist<T> e = it.next();
-			return new PointDistW<>(e.lower(), e.value(), e.dist());
+			return new PointEntryDist<>(e.lower(), e.value(), e.dist());
 		}
 
 		@Override
@@ -166,7 +129,7 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 
 	@Override
 	public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
-		return ind.removeIf(point, point, e -> condition.test(new PointW<>(e.lower(), e.value())));
+		return ind.removeIf(point, point, e -> condition.test(new PointEntry<>(e.lower(), e.value())));
 	}
 
 	@Override

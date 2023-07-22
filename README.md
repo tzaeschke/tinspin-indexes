@@ -10,7 +10,7 @@ This is a library of in-memory indexes. They are used in the TinSpin [TinSpin pr
  - A **CoverTree** implementation which is loosely based on the "Faster Cover Trees" by M. Izbicki and C.R. Shelton
  - A **kD-Tree** implementation. The kD-Tree provides separate implementations for 1NN-queries and kNN-queries. It also has an optimization that allows it to use a faster code-path as long as no elements with partially equal coordinates have been removed (see javadoc in code).  
  - An adapter for the [**PH-Tree**](http://www.phtree.org). This is only an example integration. For high performance applications it is strongly recommended to use the PH-Tree API directly to be able to use features such as reusable iterators, reusable result objects, other data converters, or custom distance functions. 
- - Several multi-dimensional **quadtree** indexes with separate implementations for point data and rectangle data. The implementations are 'region-quadtrees', they split space in 2^k quadratic quadrants in each level.
+ - Several multi-dimensional **quadtree** indexes with separate implementations for point data and box data. The implementations are 'region-quadtrees', they split space in 2^k quadratic quadrants in each level.
      - **qtplain** is a standard quadtree implementation
      - **qthypercube** is a quadtree that has a fixed node size of 2^k slots per node, even if not all slots are filled with subnodes or entries. This causes much worse scaling of memory requirements (with dimensionality k), however, it allows much better scaling (also with k) of query and update times. 
      - **qthypercube2** a more space efficient version of qthypercube that allows directory nodes to also contain data entries.

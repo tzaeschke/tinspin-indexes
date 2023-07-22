@@ -34,9 +34,9 @@ public class QREntryDist<T> extends QREntry<T> implements BoxEntryDist<T> {
 		return distance;
 	}
 	
-	public static final QEntryComparator COMP = new QEntryComparator();
+	public static final PointEntryComparator COMP = new PointEntryComparator();
 	
-	static class QEntryComparator implements Comparator<QREntryDist<?>> {
+	static class PointEntryComparator implements Comparator<QREntryDist<?>> {
 
 	    /**
 	    * Compares the two specified MBRs according to

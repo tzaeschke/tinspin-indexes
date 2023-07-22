@@ -16,8 +16,6 @@
  */
 package org.tinspin.index.phtree;
 
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.PointEntryDist;
 import org.tinspin.index.PointMap;
 import org.tinspin.index.Stats;
 
@@ -127,7 +125,7 @@ public class PHTreeP<T> implements PointMap<T> {
 		public PointEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryF<T> e = iter.nextEntryReuse();
-			return new EntryP<>(e.getKey().clone(), e.getValue());
+			return new PointEntry<>(e.getKey().clone(), e.getValue());
 		}
 
 		@Override
@@ -157,7 +155,7 @@ public class PHTreeP<T> implements PointMap<T> {
 		public PointEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryF<T> e = iter.nextEntryReuse();
-			return new EntryP<>(e.getKey().clone(), e.getValue());
+			return new PointEntry<>(e.getKey().clone(), e.getValue());
 		}
 
 		@Override
@@ -185,7 +183,7 @@ public class PHTreeP<T> implements PointMap<T> {
 		public PointEntryDist<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryDistF<T> e = iter.nextEntryReuse();
-			return new DistEntryP<>(e.getKey().clone(), e.getValue(), e.dist());
+			return new PointEntryDist<>(e.getKey().clone(), e.getValue(), e.dist());
 		}
 
 		@Override
