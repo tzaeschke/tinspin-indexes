@@ -1,6 +1,7 @@
 API
 ===
 - KD-tree remove stored dist function
+- remove (most) knnQuery implementations
 - QueryIterator nextReuse()
 - MinMaxHeap: leave entries in array -> reuse/pool
 - MinHeap: n-ary heap
