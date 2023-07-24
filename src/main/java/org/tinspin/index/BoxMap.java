@@ -75,10 +75,7 @@ public interface BoxMap<T> extends Index {
 	 */
 	default BoxEntryDist<T> query1nn(double[] center) {
 		Iterator<BoxEntryDist<T>> it = queryKnn(center, 1);
-		if (it.hasNext()) {
-			return it.next();
-		}
-		return null;
+		return it.hasNext() ? it.next() : null;
 	}
 
 	/**

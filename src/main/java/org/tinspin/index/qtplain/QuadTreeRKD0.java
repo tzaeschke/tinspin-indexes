@@ -593,7 +593,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	@Override
 	public QRIteratorKnn<T> queryKnn(double[] center, int k) {
-		return new QRIteratorKnn<>(root, k, center, BoxDistance.EDGE, e -> true);
+		return new QRIteratorKnn<>(root, k, center, BoxDistance.EDGE, (e, d) -> true);
 	}
 
 	@Override

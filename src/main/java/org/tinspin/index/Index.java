@@ -160,6 +160,16 @@ public interface Index {
         }
     }
 
+    @FunctionalInterface
+    interface PointFilterKnn<T> {
+        boolean test(PointEntry<T> entry, double distance);
+    }
+
+    @FunctionalInterface
+    interface BoxFilterKnn<T> {
+        boolean test(BoxEntry<T> entry, double distance);
+    }
+
     @Deprecated
     class PEComparator<T> implements Comparator<PointEntryDist<T>> {
 

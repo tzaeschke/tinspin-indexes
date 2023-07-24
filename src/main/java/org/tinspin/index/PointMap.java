@@ -79,14 +79,11 @@ public interface PointMap<T> extends Index {
 	 */
 	default PointEntryDist<T> query1nn(double[] center) {
 		PointIteratorKnn<T> it = queryKnn(center, 1);
-		if (it.hasNext()) {
-			return it.next();
-		}
-		return null;
+		return it.hasNext() ? it.next() : null;
 	}
 
 	/**
-	 * Finds the nearest neighbor. This uses euclidean distance. 
+	 * Finds the nearest neighbor. This uses Euclidean distance.
 	 * Other distance types can only be specified directly on the index implementations. 
 	 * @param center center point
 	 * @param k number of neighbors

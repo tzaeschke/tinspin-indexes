@@ -22,7 +22,6 @@ import org.tinspin.index.util.MinHeap;
 import org.tinspin.index.util.MinMaxHeap;
 
 import java.util.NoSuchElementException;
-import java.util.function.Predicate;
 
 import static org.tinspin.index.Index.*;
 
@@ -30,7 +29,7 @@ public class RTreeQueryKnn2<T> implements BoxIteratorKnn<T> {
 
     private final RTree<T> tree;
     private final BoxDistance distFn;
-    private final Predicate<BoxEntry<T>> filterFn;
+    private final BoxFilterKnn<T> filterFn;
     MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
     MinMaxHeap<DistEntry<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
@@ -39,7 +38,7 @@ public class RTreeQueryKnn2<T> implements BoxIteratorKnn<T> {
     private double[] center;
     private double currentDistance;
 
-    RTreeQueryKnn2(RTree<T> tree, int minResults, double[] center, BoxDistance distFn, Predicate<BoxEntry<T>> filterFn) {
+    RTreeQueryKnn2(RTree<T> tree, int minResults, double[] center, BoxDistance distFn, BoxFilterKnn<T> filterFn) {
         this.filterFn = filterFn;
         this.distFn = distFn;
         this.tree = tree;
@@ -111,8 +110,8 @@ public class RTreeQueryKnn2<T> implements BoxIteratorKnn<T> {
 
                 if (node instanceof RTreeNodeLeaf) {
                     for (Entry<T> entry : node.getEntries()) {
-                        if (filterFn.test(entry)) {
-                            double d = distFn.dist(center, entry);
+                        double d = distFn.dist(center, entry);
+                        if (filterFn.test(entry, d)) {
                             // Using '<=' allows dealing with infinite distances.
                             if (d <= maxNodeDist) {
                                 queueV.push(new DistEntry<>(entry.min, entry.max, entry.value(), d));
