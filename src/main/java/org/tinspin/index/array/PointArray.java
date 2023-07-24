@@ -189,26 +189,27 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 			it = ((List)knnQuery(center, k)).iterator();
 			return this;
 		}
-    }
+
+		private ArrayList<PointEntryKnn<T>> knnQuery(double[] center, int k) {
+			ArrayList<PointEntryKnn<T>> ret = new ArrayList<>(k);
+			for (int i = 0; i < phc.length; i++) {
+				double[] p = phc[i];
+				double dist = dist(center, p);
+				if (ret.size() < k) {
+					ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
+					ret.sort(comparator);
+				} else if (ret.get(k-1).dist() > dist) {
+					ret.remove(k-1);
+					ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
+					ret.sort(comparator);
+				}
+			}
+			return ret;
+		}
+	}
     
 
-	private ArrayList<PointEntryKnn<T>> knnQuery(double[] center, int k) {
-		ArrayList<PointEntryKnn<T>> ret = new ArrayList<>(k);
-		for (int i = 0; i < phc.length; i++) {
-			double[] p = phc[i];
-			double dist = dist(center, p);
-			if (ret.size() < k) {
-				ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
-				ret.sort(comparator);
-			} else if (ret.get(k-1).dist() > dist) {
-				ret.remove(k-1);
-				ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
-				ret.sort(comparator);
-			}
-		}
-		return ret;
-	}
-	
+
 	private static double dist(double[] a, double[] b) {
 		double dist = 0;
 		for (int i = 0; i < a.length; i++) {

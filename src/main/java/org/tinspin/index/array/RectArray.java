@@ -227,25 +227,24 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 			it = ((List)knnQuery(center, k)).iterator();
 			return this;
 		}
-	}
 
-
-	private ArrayList<BoxEntryKnn<T>> knnQuery(double[] center, int k) {
-		ArrayList<BoxEntryKnn<T>> ret = new ArrayList<>(k);
-		for (int i = 0; i < phc.length/2; i++) {
-			double[] min = phc[i*2];
-			double[] max = phc[i*2+1];
-			double dist = distREdge(center, min, max);
-			if (ret.size() < k) {
-				ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
-				ret.sort(COMP);
-			} else if (ret.get(k-1).dist() > dist) {
-				ret.remove(k-1);
-				ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
-				ret.sort(COMP);
+		private ArrayList<BoxEntryKnn<T>> knnQuery(double[] center, int k) {
+			ArrayList<BoxEntryKnn<T>> ret = new ArrayList<>(k);
+			for (int i = 0; i < phc.length/2; i++) {
+				double[] min = phc[i*2];
+				double[] max = phc[i*2+1];
+				double dist = distREdge(center, min, max);
+				if (ret.size() < k) {
+					ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
+					ret.sort(COMP);
+				} else if (ret.get(k-1).dist() > dist) {
+					ret.remove(k-1);
+					ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
+					ret.sort(COMP);
+				}
 			}
+			return ret;
 		}
-		return ret;
 	}
 
 	private static double distREdge(double[] center, double[] rLower, double[] rUpper) {
