@@ -55,17 +55,12 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	public static boolean ENABLE_HCI_1 = true;
 	/** Enable basic HCI navigation with Algo #2 inc(), for example for window queries. */
 	public static boolean ENABLE_HCI_2 = true;
-	
 	private static final int MAX_DEPTH = 50;
-	
-	private static final String NL = System.lineSeparator();
-
 	public static final boolean DEBUG = false;
-	//This is the MINIMUM MAX_NODE_SIZE. MAX__NODE_SIZE is adjust upwards automatically
-	//with increasing dimensionality
+	// This is the MINIMUM MAX_NODE_SIZE. MAX__NODE_SIZE is adjust upwards automatically
+	// with increasing dimensionality
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
 	private static final double INITIAL_RADIUS = Double.MAX_VALUE;
-
 	private final int dims;
 	private final int maxNodeSize;
 	private QNode<T> root = null;
@@ -147,7 +142,7 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	 * @param key the key to check
 	 * @return true iff the key exists
 	 */
-	public boolean containsExact(double[] key) {
+	public boolean contains(double[] key) {
 		if (root == null) {
 			return false;
 		}
@@ -183,18 +178,11 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	 */
 	@Override
 	public T remove(double[] key) {
-		// TODO
 		if (root == null) {
-			if (DEBUG) {
-				System.err.println("Failed remove 1: " + Arrays.toString(key));
-			}
 			return null;
 		}
 		PointEntry<T> e = root.remove(null, key, maxNodeSize, x -> true);
 		if (e == null) {
-			if (DEBUG) {
-				System.err.println("Failed remove 2: " + Arrays.toString(key));
-			}
 			return null;
 		}
 		size--;
@@ -327,9 +315,9 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	/**
 	 * @param point the point
 	 * @return an iterator over all entries at the given coordinate.
-	 * @see PointMultimap#query(double[])
+	 * @see PointMultimap#queryExactPoint(double[])
 	 */
-	public PointIterator<T> query(double[] point) {
+	public PointIterator<T> queryExactPoint(double[] point) {
 		return query(point, point);
 	}
 
@@ -367,114 +355,8 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	 */
 	@Override
 	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
-		return new QIteratorKnn<>(root, k, center, distFn, e -> true);
+		return new QIteratorKnn<>(root, k, center, distFn, (e, d) -> true);
 	}
-
-	@Deprecated
-	public List<PointEntryKnn<T>> knnQuery(double[] center, int k) {
-		if (root == null) {
-			return Collections.emptyList();
-		}
-		ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
-		rangeSearchKNN(root, center, candidates, k, Double.MAX_VALUE, PointDistance.L2);
-		return candidates;
-	}
-
-	@Deprecated
-	public List<PointEntryKnn<T>> knnQuery(double[] center, int k, PointDistance distFn) {
-		if (root == null) {
-			return Collections.emptyList();
-		}
-		ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
-		rangeSearchKNN(root, center, candidates, k, Double.MAX_VALUE, distFn);
-		return candidates;
-	}
-
-	@SuppressWarnings("unchecked")
-	private double rangeSearchKNN(QNode<T> node, double[] center,
-                                  ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange, PointDistance distFn) {
-    	int posHC = node.calcSubPosition(center);
-    	Object[] entries = node.getEntries();
-    	Object alreadyVisited = null;
-    	if (!node.isLeaf()) {
-    		// Search the best node first
-	    	Object ePos = entries[posHC];
-	    	if (ePos instanceof QNode) {
-				maxRange = rangeSearchKNN((QNode<T>)ePos, center, candidates, k, maxRange, distFn);
-				alreadyVisited = ePos;
-	    	}
-    	}
-    	//TODO first sort entries by distance!
-    	//TODO reuse buffer!
-    	ArrayList<KnnTemp> buffer = new ArrayList<>();
-    	for (int i = 0; i < entries.length; i++) {
-    		Object e = entries[i];
-    		if (e instanceof QNode && e != alreadyVisited) {
-    			QNode<T> n = (QNode<T>) e;
-    			double dist = QUtil.distToRectNode(center, n.getCenter(), n.getRadius(), distFn);
-    			addToBuffer(n, dist, maxRange, buffer);
-    		} else if (e instanceof PointEntry) {
-    			PointEntry<T> p = (PointEntry<T>) e;
-   				double dist = distFn.dist(center, p.point());
-    			addToBuffer(p, dist, maxRange, buffer);
-    		}
-    	}
-    	
-    	buffer.sort(KnnTempComp);
-    	for (int i = 0; i < buffer.size(); i++) {
-    		KnnTemp t = buffer.get(i);
-    		if (t.dist > maxRange) {
-    			//check again, because maxDist may change during this loop
-    			continue;
-    		}
-    		Object o = t.o;
-    		if (o instanceof QNode && o != alreadyVisited) {
-    			maxRange = rangeSearchKNN((QNode<T>)o, center, candidates, k, maxRange, distFn);
-    		} else if (o instanceof PointEntry) {
-    			PointEntry<T> p = (PointEntry<T>) o;
-   				candidates.add(new PointEntryKnn<>(p, t.dist));
-   	    		maxRange = adjustRegionKNN(candidates, k, maxRange);
-    		}
-    	}
-    	return maxRange;
-    }
-
-    private void addToBuffer(Object o, double dist, double maxDist, ArrayList<KnnTemp> buffer) {
-		if (dist < maxDist) {
-			buffer.add(new KnnTemp(o, dist));
-		}
-	}
-
-	private double adjustRegionKNN(ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange) {
-        if (candidates.size() < k) {
-        	//wait for more candidates
-        	return maxRange;
-        }
-
-        // use stored distances instead of recalculating them
-        candidates.sort((o1, o2) -> (int)(o1.dist() - o2.dist()));
-        while (candidates.size() > k) {
-        	candidates.remove(candidates.size()-1);
-        }
-        
-        double range = candidates.get(candidates.size()-1).dist();
-        return range;
-	}
-	
-    private static class KnnTemp {
-    	Object o;
-    	double dist;
-    	public KnnTemp(Object o, double d) {
-    		this.o = o;
-    		this.dist = d;
-		}
-    }
-
-    private static Comparator<KnnTemp> KnnTempComp =  
-    		(KnnTemp point1, KnnTemp point2) -> {
-    			double deltaDist = point1.dist - point2.dist;
-    			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
-    		};
 
     /**
 	 * Returns a printable list of the tree.
@@ -494,13 +376,10 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	@SuppressWarnings("unchecked")
 	private void toStringTree(StringBuilderLn sb, QNode<T> node,
 							  int depth, int posInParent) {
-		String prefix = "";
-		for (int i = 0; i < depth; i++) {
-			prefix += ".";
-		}
+		String prefix = ".".repeat(depth);
 		sb.append(prefix + posInParent + " d=" + depth);
 		sb.append(" " + Arrays.toString(node.getCenter()));
-		sb.append("/" + node.getRadius() + NL);
+		sb.appendLn("/" + node.getRadius());
 		prefix += " ";
 		for (int i = 0; i < node.getEntries().length; i++) {
 			Object o = node.getEntries()[i];
@@ -542,12 +421,11 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 		final int[] histoValues = new int[100];
 		final int[] histoSubs;
 		static final int HISTO_MAX = (1 << 10) + 1;
-		final int dims;
 		public QStats(int dims) {
 			super(0, 0, 0);
 			this.dims = dims;
 			int histoSize = 1 + (1 << dims);
-			this.histoSubs = new int[histoSize > HISTO_MAX ? HISTO_MAX : histoSize];
+			this.histoSubs = new int[Math.min(histoSize, HISTO_MAX)];
 		}
 		public void histo(int pos) {
 			if (pos < histoSubs.length) {

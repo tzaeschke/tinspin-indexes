@@ -22,7 +22,6 @@ import org.tinspin.index.util.MinHeap;
 import org.tinspin.index.util.MinMaxHeap;
 
 import java.util.NoSuchElementException;
-import java.util.function.Predicate;
 
 import static org.tinspin.index.Index.*;
 
@@ -30,7 +29,7 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
 
     private final Node<T> root;
     private final PointDistance distFn;
-    private final Predicate<PointEntry<T>> filterFn;
+    private final PointFilterKnn<T> filterFn;
     MinHeap<NodeDist<T>> queueN = MinHeap.create((t1, t2) -> t1.closestDist < t2.closestDist);
     MinMaxHeap<PointEntryKnn<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
@@ -39,7 +38,7 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
     private double[] center;
     private double currentDistance;
 
-    KDIteratorKnn(Node<T> root, int minResults, double[] center, PointDistance distFn, Predicate<PointEntry<T>> filterFn) {
+    KDIteratorKnn(Node<T> root, int minResults, double[] center, PointDistance distFn, PointFilterKnn<T> filterFn) {
         this.filterFn = filterFn;
         this.distFn = distFn;
         this.root = root;
@@ -110,19 +109,16 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
                 }
 
                 Node<T> node = entry.node;
-                if (filterFn.test(node)) {
-                    double d = distFn.dist(center, node.point());
-                    // Using '<=' allows dealing with infinite distances.
-                    if (d <= maxNodeDist) {
-                        // TODO we could just set d and push "top"
-                        queueV.push(new PointEntryKnn<>(node, d));
-                        if (queueV.size() >= remaining) {
-                            if (queueV.size() > remaining) {
-                                queueV.popMax();
-                            }
-                            double dMax = queueV.peekMax().dist();
-                            maxNodeDist = Math.min(maxNodeDist, dMax);
+                double d = distFn.dist(center, node.point());
+                // Using '<=' allows dealing with infinite distances.
+                if (filterFn.test(node, d) && d <= maxNodeDist) {
+                    queueV.push(new PointEntryKnn<>(node, d));
+                    if (queueV.size() >= remaining) {
+                        if (queueV.size() > remaining) {
+                            queueV.popMax();
                         }
+                        double dMax = queueV.peekMax().dist();
+                        maxNodeDist = Math.min(maxNodeDist, dMax);
                     }
                 }
                 // left

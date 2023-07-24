@@ -34,7 +34,7 @@ public class PHTreeP<T> implements PointMap<T> {
 		tree = PhTreeF.create(dims);
 	} 
 	
-	public static <T> PHTreeP<T> createPHTree(int dims) {
+	public static <T> PHTreeP<T> create(int dims) {
 		return new PHTreeP<>(dims);
 	}
 	
@@ -86,6 +86,11 @@ public class PHTreeP<T> implements PointMap<T> {
 	@Override
 	public T update(double[] oldPoint, double[] newPoint) {
 		return tree.update(oldPoint, newPoint);
+	}
+
+	@Override
+	public boolean contains(double[] key) {
+		return tree.contains(key);
 	}
 
 	@Override
@@ -159,7 +164,7 @@ public class PHTreeP<T> implements PointMap<T> {
 		}
 
 		@Override
-		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
+		public PointIterator<T> reset(double[] min, double[] max) {
 			iter.reset(min, max);
 			return this;
 		}

@@ -58,7 +58,7 @@ public class TestStats implements Serializable, Cloneable {
 			case ARRAY: return new PointArray<>(dims, size);
 			//case CRITBIT: return new PointArray<>(dims, size);
 			case KDTREE: return KDTree.create(dims);
-			case PHTREE: return PHTreeP.createPHTree(dims);
+			case PHTREE: return PHTreeP.create(dims);
 			case QUAD_HC: return QuadTreeKD.create(dims);
 			case QUAD_HC2: return QuadTreeKD2.create(dims);
 			case QUAD_PLAIN: return QuadTreeKD0.create(dims);

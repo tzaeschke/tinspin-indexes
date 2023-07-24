@@ -20,6 +20,7 @@ public class StringBuilderLn {
     private final StringBuilder sb = new StringBuilder();
 
     public StringBuilderLn() {
+        // Nothing to do here
     }
 
     public StringBuilderLn append(String str) {

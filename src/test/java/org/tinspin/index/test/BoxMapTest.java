@@ -20,25 +20,22 @@ package org.tinspin.index.test;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.tinspin.index.*;
+import org.tinspin.index.BoxMap;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.qthypercube.QuadTreeRKD;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.RTree;
-import org.tinspin.index.util.MutableInt;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
-import static org.tinspin.index.Index.*;
+import static org.tinspin.index.Index.BoxEntryKnn;
+import static org.tinspin.index.Index.BoxIteratorKnn;
 import static org.tinspin.index.test.util.TestInstances.IDX;
 
 @RunWith(Parameterized.class)
-public class BoxMultimapTest extends AbstractWrapperTest {
+public class BoxMapTest extends AbstractWrapperTest {
 
-    private static final int N_DUP = 4;
     private static final int BOUND = 10000;
     private static final int BOX_LEN_MAX = 10;
     private static final int LARGE = 10_000;
@@ -46,7 +43,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
 
     private final IDX candidate;
 
-    public BoxMultimapTest(IDX candCls) {
+    public BoxMapTest(IDX candCls) {
         this.candidate = candCls;
     }
 
@@ -64,29 +61,16 @@ public class BoxMultimapTest extends AbstractWrapperTest {
     private ArrayList<Entry> createInt(long seed, int n, int dim) {
         ArrayList<Entry> data = new ArrayList<>(n);
         Random R = new Random(seed);
-        for (int i = 0; i < n; i += N_DUP) {
+        for (int i = 0; i < n; i++) {
             Entry e = new Entry(dim, i);
             data.add(e);
             for (int d = 0; d < dim; d++) {
-                e.p1[d] = R.nextInt(BOUND);
-                e.p2[d] = e.p1[d] + R.nextInt(BOX_LEN_MAX);
-            }
-            for (int i2 = 1; i2 < N_DUP; ++i2) {
-                Entry e2 = new Entry(dim, i + i2);
-                data.add(e2);
-                System.arraycopy(e.p1, 0, e2.p1, 0, e.p1.length);
-                System.arraycopy(e.p2, 0, e2.p2, 0, e.p2.length);
+                e.p1[d] = R.nextInt() * BOUND;
+                e.p2[d] = e.p1[d] + R.nextDouble() * BOX_LEN_MAX;
             }
         }
         assertEquals(n, data.size());
         return data;
-    }
-
-    @Test
-    public void smokeTestDupl() {
-        double[][] points = {{2, 3}, {2, 3}, {2, 3}, {2, 3}};
-        MutableInt i = new MutableInt();
-        smokeTest(Arrays.stream(points).flatMap(p -> Stream.of(new Entry(p, p, i.inc().get()))).collect(Collectors.toList()));
     }
 
     @Test
@@ -108,7 +92,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
             List<Entry> data = createInt(0, 1000, 3);
             int nAll = 0;
             for (Entry e : data) {
-                int n = nAll++ / N_DUP;
+                int n = nAll++;
                 e.p1[0] = n % 3;
                 e.p1[1] = n++;
                 e.p1[2] = n % 5;
@@ -143,54 +127,49 @@ public class BoxMultimapTest extends AbstractWrapperTest {
 
     private void smokeTest(List<Entry> data) {
         int dim = data.get(0).p1.length;
-        BoxMultimap<Entry> tree = createTree(data.size(), dim);
+        BoxMap<Entry> tree = createTree(data.size(), dim);
 
         for (Entry e : data) {
             tree.insert(e.p1, e.p2, e);
         }
         // System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            BoxIterator<Entry> it = tree.queryExactBox(e.p1, e.p2);
-            assertTrue("query(point) failed: " + e, it.hasNext());
-            BoxEntry<Entry> next = it.next();
-            assertArrayEquals(e.p1, next.value().p1, 0.0000);
-            assertArrayEquals(e.p2, next.value().p2, 0.0000);
+            assertTrue("contains(point) failed: " + e, tree.contains(e.p1, e.p2));
+            Entry e2 = tree.queryExact(e.p1, e.p2);
+            assertNotNull("queryExact(point) failed: " + e, e2);
+            assertArrayEquals(e.p1, e2.p1, 0.0000);
+            assertArrayEquals(e.p2, e2.p2, 0.0000);
         }
 
         for (Entry e : data) {
             // System.out.println("kNN query: " + e);
-            BoxIteratorKnn<Entry> iter = tree.queryKnn(e.p1, N_DUP);
+            BoxIteratorKnn<Entry> iter = tree.queryKnn(e.p1, 1);
             assertTrue("kNNquery() failed: " + e, iter.hasNext());
-            int nFound = 0;
-            while (iter.hasNext()) {
-                BoxEntryKnn<Entry> eDist = iter.next();
-                nFound += eDist.dist() == 0 ? 1 : 0;
-            }
-            assertEquals(N_DUP, nFound);
+            BoxEntryKnn<Entry> be = iter.next();
+            Entry answer = be.value();
+            // assertArrayEquals("Expected " + e + " but got " + answer, answer.p1, e.p1, 0.0001);
+            // assertArrayEquals("Expected " + e + " but got " + answer, answer.p2, e.p2, 0.0001);
+            assertEquals(0, be.dist(), 0.0);
         }
 
         for (Entry e : data) {
             // System.out.println("query: " + Arrays.toString(e.p));
-            BoxIterator<Entry> iter = tree.queryExactBox(e.p1, e.p2);
-            assertTrue("query() failed: " + e, iter.hasNext());
-            for (int i = 0; i < N_DUP; ++i) {
-                // System.out.println("  found: " + i + " " + e);
-                assertTrue("Expected next for i=" + i + " / " + e, iter.hasNext());
-                Entry answer = iter.next().value();
-                assertArrayEquals("Expected " + e + " but got " + answer, answer.p1, e.p1, 0.0001);
-                assertArrayEquals("Expected " + e + " but got " + answer, answer.p2, e.p2, 0.0001);
-            }
+            Entry e2 = tree.queryExact(e.p1, e.p2);
+            assertNotNull("query() failed: " + e, e2);
+            assertArrayEquals("Expected " + e + " but got " + e2, e2.p1, e.p1, 0.0001);
+            assertArrayEquals("Expected " + e + " but got " + e2, e2.p2, e.p2, 0.0001);
+            assertEquals(e.id, e2.id);
         }
 
         for (Entry e : data) {
             //			System.out.println(tree.toStringTree());
             //			System.out.println("Removing: " + Arrays.toString(key));
-            BoxIterator<Entry> it = tree.queryExactBox(e.p1, e.p2);
-            assertTrue("queryExact() failed: " + e, it.hasNext());
-            BoxEntry<Entry> e2 = it.next();
-            assertArrayEquals(e.p1, e2.value().p1, 0);
-            assertArrayEquals(e.p2, e2.value().p2, 0);
-            assertTrue(tree.remove(e.p1, e.p2, e));
+            Entry e2 = tree.queryExact(e.p1, e.p2);
+            assertNotNull("queryExact() failed: " + e, e2);
+            assertArrayEquals(e.p1, e2.p1, 0);
+            assertArrayEquals(e.p2, e2.p2, 0);
+            assertNotNull(tree.remove(e.p1, e.p2));
+            assertNull(tree.remove(e.p1, e.p2));
         }
     }
 
@@ -199,7 +178,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         Random r = new Random(42);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        BoxMultimap<Entry> tree = createTree(data.size(), dim);
+        BoxMap<Entry> tree = createTree(data.size(), dim);
 
         for (Entry e : data) {
             tree.insert(e.p1, e.p2, e);
@@ -212,10 +191,11 @@ public class BoxMultimapTest extends AbstractWrapperTest {
             double[] p1New = e.p1.clone();
             double[] p2New = e.p2.clone();
             for (int d = 0; d < dim; d++) {
-                p1New[d] = r.nextInt(BOUND);
-                p2New[d] = p1New[d] + r.nextInt(BOX_LEN_MAX);
+                p1New[d] = r.nextDouble() * BOUND;
+                p2New[d] = p1New[d] + r.nextDouble() * BOX_LEN_MAX;
             }
-            assertTrue(tree.update(p1Old, p2Old, p1New, p2New, e));
+            assertNotNull(tree.update(p1Old, p2Old, p1New, p2New));
+            assertNull(tree.update(p1Old, p2Old, p1New, p2New));
             // Update entry
             System.arraycopy(p1New, 0, e.p1, 0, dim);
             System.arraycopy(p2New, 0, e.p2, 0, dim);
@@ -229,14 +209,9 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         }
     }
 
-    private boolean containsExact(BoxMultimap<Entry> tree, double[] p1, double[] p2, int id) {
-        BoxIterator<Entry> it = tree.queryExactBox(p1, p2);
-        while (it.hasNext()) {
-            if (it.next().value().id == id) {
-                return true;
-            }
-        }
-        return false;
+    private boolean containsExact(BoxMap<Entry> tree, double[] p1, double[] p2, int id) {
+        Entry e = tree.queryExact(p1, p2);
+        return e != null && e.id == id;
     }
 
     @Test
@@ -244,7 +219,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        BoxMultimap<Entry> tree = createTree(data.size(), dim);
+        BoxMap<Entry> tree = createTree(data.size(), dim);
 
         Collections.shuffle(data, r);
 
@@ -255,8 +230,10 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         // remove 1st half
         for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
-            assertTrue(tree.remove(e.p1, e.p2, e));
+            assertNotNull(tree.remove(e.p1, e.p2));
+            assertNull(tree.remove(e.p1, e.p2));
             assertFalse(containsExact(tree, e.p1, e.p2, e.id));
+            assertFalse(tree.contains(e.p1, e.p2));
         }
 
         // check
@@ -272,56 +249,16 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         // remove 2nd half
         for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
-            assertTrue(tree.remove(e.p1, e.p2, e));
+            assertNotNull(tree.remove(e.p1, e.p2));
+            assertNull(tree.remove(e.p1, e.p2));
             assertFalse(containsExact(tree, e.p1, e.p2, e.id));
+            assertFalse(tree.contains(e.p1, e.p2));
         }
 
         assertEquals(0, tree.size());
     }
 
-    @Test
-    public void testRemoveIf() {
-        Random r = new Random(0);
-        int dim = 3;
-        ArrayList<Entry> data = createInt(0, 1000, 3);
-        BoxMultimap<Entry> tree = createTree(data.size(), dim);
-
-        Collections.shuffle(data, r);
-
-        for (Entry e : data) {
-            tree.insert(e.p1, e.p2, e);
-        }
-
-        // remove 1st half
-        for (int i = 0; i < data.size() / 2; ++i) {
-            Entry e = data.get(i);
-            assertTrue(tree.removeIf(e.p1, e.p2, e2 -> e2.value().id == e.id));
-            assertFalse(containsExact(tree, e.p1, e.p2, e.id));
-            assertFalse(tree.removeIf(e.p1, e.p2, e2 -> e2.value().id == e.id));
-        }
-
-        // check
-        for (int i = 0; i < data.size() / 2; ++i) {
-            Entry e = data.get(i);
-            assertFalse(containsExact(tree, e.p1, e.p2, e.id));
-        }
-        for (int i = data.size() / 2; i < data.size(); ++i) {
-            Entry e = data.get(i);
-            assertTrue(containsExact(tree, e.p1, e.p2, e.id));
-        }
-
-        // remove 2nd half
-        for (int i = data.size() / 2; i < data.size(); ++i) {
-            Entry e = data.get(i);
-            assertTrue(tree.removeIf(e.p1, e.p2, e2 -> e2.value().id == e.id));
-            assertFalse(containsExact(tree, e.p1, e.p2, e.id));
-            assertFalse(tree.removeIf(e.p1, e.p2, e2 -> e2.value().id == e.id));
-        }
-
-        assertEquals(0, tree.size());
-    }
-
-    private <T> BoxMultimap<T> createTree(int size, int dims) {
+    private <T> BoxMap<T> createTree(int size, int dims) {
         switch (candidate) {
             case ARRAY:
                 return new RectArray<>(dims, size);

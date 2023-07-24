@@ -94,6 +94,11 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
+	public boolean contains(double[] min, double[] max) {
+		return queryExact(min, max) != null;
+	}
+
+	@Override
 	public boolean update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value) {
 		for (int i = 0; i < N; i++) {
 			if (eq(phc[i*2], lo1) && eq(phc[(i*2)+1], up1)) {
@@ -109,9 +114,9 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	@Override
 	public T queryExact(double[] lower, double[] upper) {
-		for (int j = 0; j < N; j++) {
-			if (eq(phc[j*2], lower) && eq(phc[j*2+1], upper)) {
-				return values[j].value();
+		for (int i = 0; i < N; i++) {
+			if (phc[i*2] != null && eq(phc[i*2], lower) && eq(phc[i*2+1], upper)) {
+				return values[i].value();
 			}
 		}
 		return null;
@@ -120,7 +125,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 	@Override
 	public boolean contains(double[] lower, double[] upper, T value) {
 		for (int i = 0; i < N; i++) {
-			if (eq(phc[i*2], lower) && eq(phc[i*2+1], upper) && Objects.equals(value, values[i].value())) {
+			if (phc[i*2] != null && eq(phc[i*2], lower) && eq(phc[i*2+1], upper) && Objects.equals(value, values[i].value())) {
 				return true;
 			}
 		}
@@ -128,7 +133,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
-	public BoxIterator<T> queryRectangle(double[] lower, double[] upper) {
+	public BoxIterator<T> queryExactBox(double[] lower, double[] upper) {
 		return new BoxIteratorWrapper<>(lower, upper, (low, upp) -> {
 			ArrayList<BoxEntry<T>> result = new ArrayList<>();
 			for (int i = 0; i < N; i++) {
@@ -227,25 +232,24 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 			it = ((List)knnQuery(center, k)).iterator();
 			return this;
 		}
-	}
 
-
-	private ArrayList<BoxEntryKnn<T>> knnQuery(double[] center, int k) {
-		ArrayList<BoxEntryKnn<T>> ret = new ArrayList<>(k);
-		for (int i = 0; i < phc.length/2; i++) {
-			double[] min = phc[i*2];
-			double[] max = phc[i*2+1];
-			double dist = distREdge(center, min, max);
-			if (ret.size() < k) {
-				ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
-				ret.sort(COMP);
-			} else if (ret.get(k-1).dist() > dist) {
-				ret.remove(k-1);
-				ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
-				ret.sort(COMP);
+		private ArrayList<BoxEntryKnn<T>> knnQuery(double[] center, int k) {
+			ArrayList<BoxEntryKnn<T>> ret = new ArrayList<>(k);
+			for (int i = 0; i < phc.length/2; i++) {
+				double[] min = phc[i*2];
+				double[] max = phc[i*2+1];
+				double dist = distREdge(center, min, max);
+				if (ret.size() < k) {
+					ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
+					ret.sort(COMP);
+				} else if (ret.get(k-1).dist() > dist) {
+					ret.remove(k-1);
+					ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
+					ret.sort(COMP);
+				}
 			}
+			return ret;
 		}
-		return ret;
 	}
 
 	private static double distREdge(double[] center, double[] rLower, double[] rUpper) {

@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.util.StringBuilderLn;
 
 public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	
@@ -54,8 +55,14 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	}
 
 	@Override
-	public PointIterator<T> query(double[] point) {
+	public PointIterator<T> queryExactPoint(double[] point) {
 		return null;
+	}
+
+
+	@Override
+	public boolean contains(double[] key) {
+		return queryExact(key) != null;
 	}
 
 	@Override
@@ -135,7 +142,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 		}
 
 		@Override
-		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
+		public PointIterator<T> reset(double[] min, double[] max) {
 			ArrayList<PointEntry<T>> results = new ArrayList<>(); 
 			for (int i = 0; i < N; i++) { 
 				if (leq(phc[i], max) && geq(phc[i], min)) {
@@ -189,26 +196,27 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 			it = ((List)knnQuery(center, k)).iterator();
 			return this;
 		}
-    }
+
+		private ArrayList<PointEntryKnn<T>> knnQuery(double[] center, int k) {
+			ArrayList<PointEntryKnn<T>> ret = new ArrayList<>(k);
+			for (int i = 0; i < phc.length; i++) {
+				double[] p = phc[i];
+				double dist = dist(center, p);
+				if (ret.size() < k) {
+					ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
+					ret.sort(comparator);
+				} else if (ret.get(k-1).dist() > dist) {
+					ret.remove(k-1);
+					ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
+					ret.sort(comparator);
+				}
+			}
+			return ret;
+		}
+	}
     
 
-	private ArrayList<PointEntryKnn<T>> knnQuery(double[] center, int k) {
-		ArrayList<PointEntryKnn<T>> ret = new ArrayList<>(k);
-		for (int i = 0; i < phc.length; i++) {
-			double[] p = phc[i];
-			double dist = dist(center, p);
-			if (ret.size() < k) {
-				ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
-				ret.sort(comparator);
-			} else if (ret.get(k-1).dist() > dist) {
-				ret.remove(k-1);
-				ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
-				ret.sort(comparator);
-			}
-		}
-		return ret;
-	}
-	
+
 	private static double dist(double[] a, double[] b) {
 		double dist = 0;
 		for (int i = 0; i < a.length; i++) {
@@ -295,7 +303,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 
 	@Override
 	public String toStringTree() {
-		StringBuilder s = new StringBuilder();
+		StringBuilderLn s = new StringBuilderLn();
 		for (int i = 0; i < N; i++) {
 			s.append(Arrays.toString(phc[i]) + " v=" + values[i]);
 		}

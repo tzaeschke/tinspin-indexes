@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 import org.tinspin.index.*;
 import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
 import org.tinspin.index.util.BoxIteratorWrapper;
+import org.tinspin.index.util.StringBuilderLn;
 
 /**
  * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
@@ -35,21 +36,14 @@ import org.tinspin.index.util.BoxIteratorWrapper;
 public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	private static final int MAX_DEPTH = 50;
-	
-	private static final String NL = System.lineSeparator();
-
 	public static final boolean DEBUG = false;
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
-	
 	private final int dims;
 	private final int maxNodeSize;
 	private QRNode<T> root = null;
 	private int size = 0; 
 	
 	private QuadTreeRKD0(int dims, int maxNodeSize) {
-		if (DEBUG) {
-			System.err.println("Warning: DEBUG enabled");
-		}
 		this.dims = dims;
 		this.maxNodeSize = maxNodeSize;
 	}
@@ -136,17 +130,25 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	
 	/**
 	 * Get the value associates with the key.
-	 * @param keyL the lower key to look up
-	 * @param keyU the upper key to look up
+	 * @param min the lower key to look up
+	 * @param max the upper key to look up
 	 * @return the value for the key or 'null' if the key was not found
 	 */
 	@Override
-	public T queryExact(double[] keyL, double[] keyU) {
+	public T queryExact(double[] min, double[] max) {
 		if (root == null) {
 			return null;
 		}
-		BoxEntry<T> e = root.getExact(keyL, keyU, x -> true);
+		BoxEntry<T> e = root.getExact(min, max, x -> true);
 		return e == null ? null : e.value();
+	}
+
+	@Override
+	public boolean contains(double[] min, double[] max) {
+		if (root == null) {
+			return false;
+		}
+		return root.getExact(min, max, x -> true) != null;
 	}
 
 	@Override
@@ -158,7 +160,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
-	public BoxIterator<T> queryRectangle(double[] lower, double[] upper) {
+	public BoxIterator<T> queryExactBox(double[] lower, double[] upper) {
 		if (root == null) {
 			return null;
 		}
@@ -412,116 +414,13 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 		}
 	}
 
-	@Deprecated
-	public List<BoxEntryKnn<T>> knnQuery(double[] center, int k) {
-		if (root == null) {
-    		return Collections.emptyList();
-		}
-        Comparator<BoxEntry<T>> comp =
-        		(BoxEntry<T> e1, BoxEntry<T> e2) -> {
-        			double deltaDist = 
-        					QUtil.distToRectEdge(center, e1) - 
-        					QUtil.distToRectEdge(center, e2);
-        			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
-        		};
-        double distEstimate = distanceEstimate(root, center, k, comp);
-        ArrayList<BoxEntryKnn<T>> candidates = new ArrayList<>();
-    	while (candidates.size() < k) {
-    		candidates.clear();
-			// TODO use other distance function !
-    		rangeSearchKNN(root, center, candidates, k, distEstimate, PointDistance.L2);
-    		distEstimate *= 2;
-    	}
-    	return candidates;
-    }
-
-    @SuppressWarnings("unchecked")
-	private double distanceEstimate(QRNode<T> node, double[] point, int k,
-    		Comparator<BoxEntry<T>> comp) {
-    	//We ignore local values if there are child nodes
-    	if (node.getChildNodes() != null) {
-    		ArrayList<QRNode<T>> nodes = node.getChildNodes(); 
-    		for (int i = 0; i < nodes.size(); i++) {
-    			QRNode<T> sub = nodes.get(i);
-    			if (QUtil.fitsIntoNode(point, sub.getCenter(), sub.getRadius())) {
-    				return distanceEstimate(sub, point, k, comp);
-    			}
-    		}
-    		//okay, this directory node contains the point, but none of the leaves does.
-    		//We just return the size of this node, because all it's leaf nodes should
-    		//contain more than enough candidate in proximity of 'point'.
-    		return node.getRadius() * Math.sqrt(point.length); //TODO scale???
-    	}
-
-    	//TODO do we need this stuff?? Simplify???
-    	//This is a leaf that would contain a good candidate.
-    	int n = node.getEntries().size();
-    	BoxEntry<T>[] data = node.getEntries().toArray(new BoxEntry[n]);
-    	Arrays.sort(data, comp);
-    	int pos = n < k ? n : k;
-    	double dist = QUtil.distToRectEdge(point, data[pos-1]);
-    	if (n < k) {
-    		//scale search dist with dimensions.
-    		dist = dist * Math.pow(k/(double)n, 1/(double)dims);
-    	}
-		if (dist <= 0.0) {
-			return node.getRadius() * 2;
-		}
-		return dist;
-    }
-    
-    private double rangeSearchKNN(QRNode<T> node, double[] center,
-								  ArrayList<BoxEntryKnn<T>> candidates, int k, double maxRange,
-								  PointDistance distFn) {
-		ArrayList<BoxEntry<T>> points = node.getEntries();
-    	if (points != null) {
-    		for (int i = 0; i < points.size(); i++) {
-    			BoxEntry<T> p = points.get(i);
-    			double dist = QUtil.distToRectEdge(center, p);
-    			if (dist < maxRange) {
-    				candidates.add(new BoxEntryKnn<>(p, dist));
-    			}
-    		}
-    		maxRange = adjustRegionKNN(candidates, k, maxRange);
-    	} 
-    	
-   		ArrayList<QRNode<T>> nodes = node.getChildNodes();
-   		if (nodes != null) {
-    		for (int i = 0; i < nodes.size(); i++) {
-    			QRNode<T> sub = nodes.get(i);
-    			if (QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius(), distFn) < maxRange) {
-    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange, distFn);
-    			}
-    		}
-    	}
-    	return maxRange;
-    }
-
-	private static final BEComparator comparator = new BEComparator();
-
-    private double adjustRegionKNN(ArrayList<BoxEntryKnn<T>> candidates, int k, double maxRange) {
-        if (candidates.size() < k) {
-        	//wait for more candidates
-        	return maxRange;
-        }
-
-        //use stored distances instead of recalculating them
-        candidates.sort(comparator);
-        while (candidates.size() > k) {
-        	candidates.remove(candidates.size()-1);
-        }
-        
-        double range = candidates.get(candidates.size()-1).dist();
-        return range;
-	}
-	
     /**
 	 * Returns a printable list of the tree.
 	 * @return the tree as String
 	 */
     @Override
 	public String toStringTree() {
-		StringBuilder sb = new StringBuilder();
+		StringBuilderLn sb = new StringBuilderLn();
 		if (root == null) {
 			sb.append("empty tree");
 		} else {
@@ -531,16 +430,12 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void toStringTree(StringBuilder sb, QRNode<T> node, 
-			int depth, int posInParent) {
+	private void toStringTree(StringBuilderLn sb, QRNode<T> node, int depth, int posInParent) {
 		Iterator<?> it = node.getChildIterator();
-		String prefix = "";
-		for (int i = 0; i < depth; i++) {
-			prefix += ".";
-		}
+		String prefix = ".".repeat(depth);
 		sb.append(prefix + posInParent + " d=" + depth);
 		sb.append(" " + Arrays.toString(node.getCenter()));
-		sb.append("/" + node.getRadius() + NL);
+		sb.appendLn("/" + node.getRadius());
 		prefix += " ";
 		int pos = 0;
 		while (it.hasNext()) {
@@ -551,7 +446,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 			} else {
 				BoxEntry<T> e = (BoxEntry<T>) o;
 				sb.append(prefix + Arrays.toString(e.min()) + Arrays.toString(e.max()));
-				sb.append(" v=" + e.value() + NL);
+				sb.appendLn(" v=" + e.value());
 			}
 			pos++;
 		}

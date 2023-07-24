@@ -69,12 +69,11 @@ public class RTreeQuery1nn<T> {
 	private static class DEComparator implements Comparator<NodeDistT<?>> {
 		@Override
 		public int compare(NodeDistT o1, NodeDistT o2) {
-			double d = o1.dist - o2.dist;
-			return d < 0 ? -1 : d > 0 ? 1 : 0;
+			return Double.compare(o1.dist, o2.dist);
 		}
 	}
 
-	private final DEComparator COMP = new DEComparator();
+	private static final DEComparator COMP = new DEComparator();
 	private final RTree<T> tree;
 	private double[] center;
 	private IteratorStack stack;

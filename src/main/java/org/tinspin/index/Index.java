@@ -58,7 +58,7 @@ public interface Index {
         /**
          * This method resets an iterator. The arguments determin new iterator properties:
          * - For Extent iterators, see e.g. {@link PointMap#iterator()}, both arguments must be `null`.
-         * - For point query iterators, see e.g. {@link PointMultimap#query(double[])}, the first argument
+         * - For point query iterators, see e.g. {@link PointMultimap#queryExactPoint(double[])}, the first argument
          * is the new query point and the second argument must be `null`.
          * - For window queries, see e.g. {@link PointMap#query(double[], double[])}, the arguments are
          * the min/max corners of the new query window.
@@ -193,6 +193,7 @@ public interface Index {
 
         /**
          * @return The lower left corner of the box.
+         * @deprecated Please use min() instead
          */
         @Deprecated // Please use min() instead
         double[] lower() {
@@ -201,6 +202,7 @@ public interface Index {
 
         /**
          * @return The upper right corner of the entry.
+         * @deprecated Please use max() instead
          */
         @Deprecated // Please use max() instead
         double[] upper() {
@@ -263,22 +265,18 @@ public interface Index {
         boolean test(BoxEntry<T> entry, double distance);
     }
 
-    @Deprecated
     class PEComparator implements Comparator<PointEntryKnn<?>> {
 
         @Override
         public int compare(PointEntryKnn<?> o1, PointEntryKnn<?> o2) {
-            double d = o1.dist - o2.dist;
-            return d < 0 ? -1 : d > 0 ? 1 : 0;
+            return Double.compare(o1.dist, o2.dist);
         }
     }
 
-    @Deprecated
     class BEComparator implements Comparator<BoxEntryKnn<?>> {
 	    @Override
 	    public int compare(BoxEntryKnn<?> o1, BoxEntryKnn<?> o2) {
-	        double d = o1.dist() - o2.dist();
-	        return d < 0 ? -1 : (d > 0 ? 1 : 0);
+            return Double.compare(o1.dist, o2.dist);
 	    }
 	}
 }

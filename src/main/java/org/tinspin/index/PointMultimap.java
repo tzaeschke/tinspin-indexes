@@ -81,7 +81,7 @@ public interface PointMultimap<T> extends Index {
      * @param point the point
      * @return an iterator over all entries at the given point
      */
-    PointIterator<T> query(double[] point);
+    PointIterator<T> queryExactPoint(double[] point);
 
     /**
      * @return An iterator over all entries.

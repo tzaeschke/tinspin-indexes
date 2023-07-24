@@ -23,37 +23,46 @@ public interface BoxMap<T> extends Index {
 
 	/**
 	 * Insert a box.
-	 * @param lower minimum corner
-	 * @param upper maximum corner
+	 * @param min minimum corner
+	 * @param max maximum corner
 	 * @param value value
 	 */
-	void insert(double[] lower, double[] upper, T value);
+	void insert(double[] min, double[] max, T value);
 
 	/**
 	 * Remove an entry.
-	 * @param lower minimum corner
-	 * @param upper maximum corner
+	 * @param min minimum corner
+	 * @param max maximum corner
 	 * @return the value of the entry or null if the entry was not found
 	 */
-	T remove(double[] lower, double[] upper);
+	T remove(double[] min, double[] max);
 
 	/**
 	 * Update the position of an entry.
-	 * @param lo1 old min
-	 * @param up1 old max
-	 * @param lo2 new min
-	 * @param up2 new max
+	 * @param minOld old min
+	 * @param maxOld old max
+	 * @param minNew new min
+	 * @param maxNew new max
 	 * @return the value, or null if the entries was not found
 	 */
-	T update(double[] lo1, double[] up1, double[] lo2, double[] up2);
+	T update(double[] minOld, double[] maxOld, double[] minNew, double[] maxNew);
 
 	/**
 	 * Lookup an entry, using exact match.
-	 * @param lower minimum corner
-	 * @param upper maximum corner
+	 *
+	 * @param min minimum corner
+	 * @param max maximum corner
+	 * @return `true` if an entry was found, otherwise `false`.
+	 */
+	boolean contains(double[] min, double[] max);
+
+	/**
+	 * Lookup an entry, using exact match.
+	 * @param min minimum corner
+	 * @param max maximum corner
 	 * @return the value of the entry or null if the entry was not found
 	 */
-	T queryExact(double[] lower, double[] upper);
+	T queryExact(double[] min, double[] max);
 	
 	/**
 	 * @return An iterator over all entries.

@@ -136,7 +136,7 @@ public class KDTreeTest {
 		}
 //	    System.out.println(tree.toStringTree());
 		for (double[] key : point_list) {
-			if (!tree.containsExact(key)) {
+			if (!tree.contains(key)) {
 				throw new IllegalStateException(Arrays.toString(key));
 			}
 		}
@@ -156,7 +156,7 @@ public class KDTreeTest {
 		for (double[] key : point_list) {
 //			System.out.println(tree.toStringTree());
 //			System.out.println("Removing: " + Arrays.toString(key));
-			if (!tree.containsExact(key)) {
+			if (!tree.contains(key)) {
 				throw new IllegalStateException("containsExact() failed: " + Arrays.toString(key));
 			}
 			double[] answer = tree.remove(key); 

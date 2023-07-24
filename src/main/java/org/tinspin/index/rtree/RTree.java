@@ -29,14 +29,11 @@ import org.tinspin.index.util.StringBuilderLn;
  * R*Tree implementation based on the paper from
  * Beckmann, N.; Kriegel, H. P.; Schneider, R.; Seeger, B. (1990). 
  * "The R*-tree: an efficient and robust access method for points and rectangles".
- * 
+ * <p>
  * Revised R*Tree (for DBMS, see conclusion?) -- RR*Tree
  * "A Revised R*-tree in Comparison with Related Index Structures"
  * Norbert Beckmann; Bernhard Seeger
- * 
- * 
- * Interesting comparison:
- * http://www.boost.org/doc/libs/1_58_0/libs/geometry/doc/html/geometry/spatial_indexes/introduction.html
+ *
  * @author ztilmann
  *
  * @param <T> Value type.
@@ -49,21 +46,19 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	static final int NODE_MIN_DIR = 2;//11;  //2 <= min <= max/2
 	static final int NODE_MIN_DATA = 2;//10;  //2 <= min <= max/2
 	public static final boolean DEBUG = false;
-	
 	private final int dims;
 	private int size = 0;
 	//number of levels
 	private int depth;
 	private RTreeNode<T> root;
 	private int nNodes = 0;
-
 	private long nDist1NN = 0;
 	private long nDistKNN = 0;
 	
 	static RTreeLogic logic = new RStarTreeLogic();
 	
 	/**
-	 * Create an RTree. By default it is an R*tree.
+	 * Create an RTree. By default, it is an R*tree.
 	 * @param dims dimensionality
 	 */
 	protected RTree(int dims) {
@@ -282,6 +277,11 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
+	public boolean contains(double[] min, double[] max) {
+		return findNodeEntry(min, max, (entry, node, posInNode) -> true) != null;
+	}
+
+	@Override
 	public boolean contains(double[] min, double[] max, T value) {
 		return findNodeEntry(min, max, (entry, node, posInNode) -> Objects.equals(value, entry.value())) != null;
 	}
@@ -417,7 +417,6 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	 */
 	@Override
 	public T queryExact(double[] min, double[] max) {
-		//return findNodeEntry(min, max, (entry, node, posInNode) -> true);
 		return findNodeEntry(min, max, (entry, node, posInNode) -> true);
 	}
 	
@@ -437,7 +436,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	 * @see org.tinspin.index.rtree.Index#queryOverlap(double[], double[])
 	 */
 	@Override
-	public RTreeIterator<T> queryRectangle(double[] min, double[] max) {
+	public RTreeIterator<T> queryExactBox(double[] min, double[] max) {
 		return RTreeIterator.createExactMatch(this, min, max);
 	}
 
@@ -508,10 +507,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 	
 	private void toStringTree(StringBuilderLn sb, RTreeNode<T> node, int level) {
-		String pre = "";
-		for (int i = 0; i < depth-level; i++) {
-			pre += " ";
-		}
+		String pre = " ".repeat(depth-level);
 		sb.appendLn(pre + "L=" + level + " " + node.toString() +
 				";P=" + System.identityHashCode(node.getParent()));
 		
@@ -588,23 +584,24 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		if (node instanceof RTreeNodeDir && entries.size() > NODE_MAX_DIR) {
 			throw new IllegalStateException();
 		}
-		
-		if (DEBUG && node instanceof RTreeNodeLeaf) {
-			for (int i = 0; i < entries.size(); i++) {
-				Entry<T> e = entries.get(i);
-				for (int j = i+1; j < entries.size(); j++) {
-					if (Entry.checkOverlap(e.min(), e.max(), entries.get(j))) {
-						System.out.println("Overlap 1: " + e);
-						System.out.println("Overlap 2: " + entries.get(j));
-						System.out.println("Overlap 1 parent : " + 
-								((RTreeNode<T>)e).getParent());
-						System.out.println("Overlap 2 parent : " + 
-								((RTreeNode<T>)entries.get(j)).getParent());
-						throw new IllegalStateException();
-					}
-				}
-			}
-		}
+
+		// For debugging:
+		//		if (node instanceof RTreeNodeLeaf) {
+		//			for (int i = 0; i < entries.size(); i++) {
+		//				Entry<T> e = entries.get(i);
+		//				for (int j = i+1; j < entries.size(); j++) {
+		//					if (Entry.checkOverlap(e.min(), e.max(), entries.get(j))) {
+		//						System.out.println("Overlap 1: " + e);
+		//						System.out.println("Overlap 2: " + entries.get(j));
+		//						System.out.println("Overlap 1 parent : " +
+		//								((RTreeNode<T>)e).getParent());
+		//						System.out.println("Overlap 2 parent : " +
+		//								((RTreeNode<T>)entries.get(j)).getParent());
+		//						throw new IllegalStateException();
+		//					}
+		//				}
+		//			}
+		//		}
 	}
 
 	@Override
@@ -628,6 +625,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	public String toString() {
 		return "RTreeZ;" + logic.getClass().getSimpleName() +
 				";size=" + size + ";nNodes=" + nNodes +
+				";DEBUG=" + DEBUG +
 				";dir_m/M=" + NODE_MIN_DIR + "/" + NODE_MAX_DIR +
 				";data_m/M=" + NODE_MIN_DATA + "/" + NODE_MAX_DATA;
 	}

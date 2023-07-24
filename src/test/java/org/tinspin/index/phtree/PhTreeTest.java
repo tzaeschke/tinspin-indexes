@@ -94,14 +94,14 @@ public class PhTreeTest {
 		for (int i = 0; i < lower.length; i++) {
 			int n1 = 0;
 			ArrayList<BoxEntry<Integer>> set1 = new ArrayList<>();
-			QueryIterator<BoxEntry<Integer>> it1 = tree1.queryIntersect(lower[i], upper[i]);
+			BoxIterator<Integer> it1 = tree1.queryIntersect(lower[i], upper[i]);
 			while (it1.hasNext()) {
 				set1.add(it1.next());
 				n1++;
 			}
 			int n2 = 0;
 			ArrayList<BoxEntry<Integer>> set2 = new ArrayList<>();
-			QueryIterator<BoxEntry<Integer>> it2 = tree2.queryIntersect(lower[i], upper[i]);
+			BoxIterator<Integer> it2 = tree2.queryIntersect(lower[i], upper[i]);
 			while (it2.hasNext()) {
 				set2.add(it2.next());
 				n2++;

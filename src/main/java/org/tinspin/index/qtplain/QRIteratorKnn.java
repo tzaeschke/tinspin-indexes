@@ -60,7 +60,7 @@ public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
         queueV.clear();
 
         queueN.push(new NodeDistT(0, root));
-        FindNextElement();
+        findNextElement();
         return this;
     }
 
@@ -75,7 +75,7 @@ public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
             throw new NoSuchElementException();
         }
         BoxEntryKnn<T> ret = current;
-        FindNextElement();
+        findNextElement();
         return ret;
     }
 
@@ -83,7 +83,7 @@ public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
         return currentDistance;
     }
 
-    private void FindNextElement() {
+    private void findNextElement() {
         while (remaining > 0 && !(queueN.isEmpty() && queueV.isEmpty())) {
             boolean useV = !queueV.isEmpty();
             if (useV && !queueN.isEmpty()) {

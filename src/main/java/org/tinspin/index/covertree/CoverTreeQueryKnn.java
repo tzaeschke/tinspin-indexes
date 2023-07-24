@@ -43,8 +43,7 @@ public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 	private PointDistance dist;
 	private final ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
 	private final ArrayList<PointEntryKnn<Object>> pool = new ArrayList<>();
-	private final PriorityQueue<PointEntryKnn<Object>> queue =
-			new PriorityQueue<>((o1, o2) -> (int)(o1.dist() - o2.dist()));
+	private final PriorityQueue<PointEntryKnn<Object>> queue = new PriorityQueue<>(new PEComparator());
 	
 	
 	public CoverTreeQueryKnn(CoverTree<T> tree, double[] center, int k, 

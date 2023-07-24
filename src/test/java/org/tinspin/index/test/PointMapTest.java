@@ -20,59 +20,42 @@ package org.tinspin.index.test;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.tinspin.index.*;
+import org.tinspin.index.PointMap;
 import org.tinspin.index.array.PointArray;
+import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.kdtree.KDTree;
-import org.tinspin.index.phtree.PHTreeMMP;
+import org.tinspin.index.phtree.PHTreeP;
 import org.tinspin.index.qthypercube.QuadTreeKD;
 import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.rtree.RTree;
-import org.tinspin.index.test.util.TestInstances;
-import org.tinspin.index.util.PointMultimapWrapper;
+import org.tinspin.index.util.PointMapWrapper;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
-import static org.tinspin.index.Index.*;
-import static org.tinspin.index.test.util.TestInstances.*;
+import static org.tinspin.index.Index.PointIterator;
+import static org.tinspin.index.Index.PointIteratorKnn;
+import static org.tinspin.index.test.util.TestInstances.IDX;
 
 @RunWith(Parameterized.class)
-public class PointMultimapTest extends AbstractWrapperTest {
+public class PointMapTest extends AbstractWrapperTest {
 
-    private static final int N_DUP = 4;
     private static final int BOUND = 100;
     private static final int LARGE = 50_000;
     private static final int MEDIUM = 5_000;
 
-    private final TestInstances.IDX candidate;
-    public PointMultimapTest(TestInstances.IDX candCls) {
-        this.candidate = candCls;
-    }
+    private final IDX candidate;
 
-    private ArrayList<Entry> createInt(long seed, int n, int dim) {
-        ArrayList<Entry> data = new ArrayList<>(n);
-        Random R = new Random(seed);
-        for (int i = 0; i < n; i += N_DUP) {
-            Entry e = new Entry(dim, i);
-            data.add(e);
-            Arrays.setAll(e.p, (x) -> R.nextInt(BOUND));
-            for (int i2 = 1; i2 < N_DUP; ++i2) {
-                Entry e2 = new Entry(dim, i + i2);
-                data.add(e2);
-                System.arraycopy(e.p, 0, e2.p, 0, e.p.length);
-            }
-        }
-        return data;
+    public PointMapTest(IDX candCls) {
+        this.candidate = candCls;
     }
 
     @Parameterized.Parameters
     public static Iterable<Object[]> candidates() {
         ArrayList<Object[]> l = new ArrayList<>();
         // l.add(new Object[]{IDX.ARRAY});
-	    // l.add(new Object[]{IDX.COVER});
+        // l.add(new Object[]{IDX.COVER});
         l.add(new Object[]{IDX.KDTREE});
         l.add(new Object[]{IDX.PHTREE_MM});
         l.add(new Object[]{IDX.QUAD_HC});
@@ -80,15 +63,19 @@ public class PointMultimapTest extends AbstractWrapperTest {
         l.add(new Object[]{IDX.QUAD_PLAIN});
         l.add(new Object[]{IDX.RSTAR});
         l.add(new Object[]{IDX.STR});
-		// l.add(new Object[]{IDX.CRITBIT});
+        // l.add(new Object[]{IDX.CRITBIT});
         return l;
     }
 
-    @Test
-    public void smokeTestDupl() {
-        double[][] points = {{2, 3}, {2, 3}, {2, 3}, {2, 3}, {2, 3}, {2, 3}};
-        int i = 0;
-        smokeTest(Arrays.stream(points).flatMap(doubles -> Stream.of(new Entry(doubles, i))).collect(Collectors.toList()));
+    private ArrayList<Entry> createInt(long seed, int n, int dim) {
+        ArrayList<Entry> data = new ArrayList<>(n);
+        Random R = new Random(seed);
+        for (int i = 0; i < n; i++) {
+            Entry e = new Entry(dim, i);
+            data.add(e);
+            Arrays.setAll(e.p, (x) -> R.nextDouble() * BOUND);
+        }
+        return data;
     }
 
     @Test
@@ -110,7 +97,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             List<Entry> data = createInt(0, 1000, 3);
             int nAll = 0;
             for (Entry e : data) {
-                int n = nAll++ / N_DUP;
+                int n = nAll++;
                 e.p[0] = n % 3;
                 e.p[1] = n++;
                 e.p[2] = n % 5;
@@ -142,21 +129,22 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
     private void smokeTest(List<Entry> data) {
         int dim = data.get(0).p.length;
-        PointMultimap<Entry> tree = createTree(data.size(), dim);
+        PointMap<Entry> tree = createTree(data.size(), dim);
 
         for (Entry e : data) {
             tree.insert(e.p, e);
         }
-	    // System.out.println(tree.toStringTree());
+        // System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            PointIterator<Entry> it = tree.queryExactPoint(e.p);
-            assertTrue("query(point) failed: " + e, it.hasNext());
-            assertArrayEquals(e.p, it.next().value().p, 0.0000);
+            assertTrue("contains(point) failed: " + e, tree.contains(e.p));
+            Entry e2 = tree.queryExact(e.p);
+            assertNotNull("queryExact(point) failed: " + e, e2);
+            assertArrayEquals(e.p, e2.p, 0.0000);
         }
 
         for (Entry e : data) {
             // System.out.println("kNN query: " + e);
-            PointIteratorKnn<Entry> iter = tree.queryKnn(e.p, N_DUP);
+            PointIteratorKnn<Entry> iter = tree.queryKnn(e.p, 1);
             assertTrue("kNNquery() failed: " + e, iter.hasNext());
             Entry answer = iter.next().value();
             assertArrayEquals("Expected " + e + " but got " + answer, answer.p, e.p, 0.0001);
@@ -166,22 +154,20 @@ public class PointMultimapTest extends AbstractWrapperTest {
             // System.out.println("query: " + Arrays.toString(e.p));
             PointIterator<Entry> iter = tree.query(e.p, e.p);
             assertTrue("query() failed: " + e, iter.hasNext());
-            for (int i = 0; i < N_DUP; ++i) {
-                // System.out.println("  found: " + i + " " + e);
-                assertTrue("Expected next for i=" + i + " / " + e, iter.hasNext());
-                Entry answer = iter.next().value();
-                assertArrayEquals("Expected " + e + " but got " + answer, answer.p, e.p, 0.0001);
-            }
         }
 
         for (Entry e : data) {
             //			System.out.println(tree.toStringTree());
             //			System.out.println("Removing: " + Arrays.toString(key));
-            PointIterator<Entry> it = tree.queryExactPoint(e.p);
-            assertTrue("queryExact() failed: " + e, it.hasNext());
-            PointEntry<Entry> e2 = it.next();
-            assertArrayEquals(e.p, e2.value().p, 0);
-            assertTrue(tree.remove(e.p, e));
+            assertTrue("contains(point) failed: " + e, tree.contains(e.p));
+            Entry e2 = tree.queryExact(e.p);
+            assertNotNull("queryExact(point) failed: " + e, e2);
+            assertArrayEquals(e.p, e2.p, 0.0000);
+            assertNotNull(tree.remove(e.p));
+
+            assertFalse("contains(point) failed: " + e, tree.contains(e.p));
+            assertNull("queryExact(point) failed: " + e, tree.queryExact(e.p));
+            assertNull(tree.remove(e.p));
         }
     }
 
@@ -190,7 +176,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        PointMultimap<Entry> tree = createTree(data.size(), dim);
+        PointMap<Entry> tree = createTree(data.size(), dim);
 
         for (Entry e : data) {
             tree.insert(e.p, e);
@@ -200,9 +186,9 @@ public class PointMultimapTest extends AbstractWrapperTest {
             Entry e = data.get(i);
             double[] pOld = e.p.clone();
             double[] pNew = e.p.clone();
-            Arrays.setAll(pNew, value -> (value + r.nextInt(BOUND / 10)));
-            assertTrue(tree.update(pOld, pNew, e));
-            assertFalse(tree.update(pOld, pNew, e));
+            Arrays.setAll(pNew, value -> (value + r.nextDouble() * BOUND / 10));
+            assertNotNull(tree.update(pOld, pNew));
+            assertNull(tree.update(pOld, pNew));
             // Update entry
             System.arraycopy(pNew, 0, e.p, 0, dim);
             assertFalse(containsExact(tree, pOld, e.id));
@@ -215,14 +201,9 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
     }
 
-    private boolean containsExact(PointMultimap<Entry> tree, double[] p, int id) {
-        PointIterator<Entry> it = tree.queryExactPoint(p);
-        while (it.hasNext()) {
-            if (it.next().value().id == id) {
-                return true;
-            }
-        }
-        return false;
+    private boolean containsExact(PointMap<Entry> tree, double[] p, int id) {
+        Entry e = tree.queryExact(p);
+        return e != null && e.id == id;
     }
 
     @Test
@@ -230,7 +211,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
-        PointMultimap<Entry> tree = createTree(data.size(), dim);
+        PointMap<Entry> tree = createTree(data.size(), dim);
 
         Collections.shuffle(data, r);
 
@@ -239,86 +220,56 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 
         // remove 1st half
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
-            assertTrue(tree.remove(e.p, e));
+            assertNotNull(tree.remove(e.p));
+            assertNull(tree.remove(e.p));
             assertFalse(containsExact(tree, e.p, e.id));
+            assertFalse(tree.contains(e.p));
         }
 
         // check
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
             assertFalse(containsExact(tree, e.p, e.id));
         }
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
             assertTrue(containsExact(tree, e.p, e.id));
         }
 
         // remove 2nd half
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
-            assertTrue(tree.remove(e.p, e));
+            assertNotNull(tree.remove(e.p));
+            assertNull(tree.remove(e.p));
             assertFalse(containsExact(tree, e.p, e.id));
+            assertFalse(tree.contains(e.p));
         }
 
         assertEquals(0, tree.size());
     }
 
-    @Test
-    public void testRemoveIf() {
-        Random r = new Random(0);
-        int dim = 3;
-        ArrayList<Entry> data = createInt(0, 1000, 3);
-        PointMultimap<Entry> tree = createTree(data.size(), dim);
-
-        Collections.shuffle(data, r);
-
-        for (Entry e : data) {
-            tree.insert(e.p, e);
-        }
-
-        // remove 1st half
-        for (int i = 0; i < data.size()/2; ++i) {
-            Entry e = data.get(i);
-            assertTrue(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
-            assertFalse(containsExact(tree, e.p, e.id));
-            assertFalse(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
-        }
-
-        // check
-        for (int i = 0; i < data.size()/2; ++i) {
-            Entry e = data.get(i);
-            assertFalse(containsExact(tree, e.p, e.id));
-        }
-        for (int i = data.size()/2; i < data.size(); ++i) {
-            Entry e = data.get(i);
-            assertTrue(containsExact(tree, e.p, e.id));
-        }
-
-        // remove 2nd half
-        for (int i = data.size()/2; i < data.size(); ++i) {
-            Entry e = data.get(i);
-            assertTrue(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
-            assertFalse(containsExact(tree, e.p, e.id));
-            assertFalse(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
-        }
-
-        assertEquals(0, tree.size());
-    }
-
-    private <T> PointMultimap<T> createTree(int size, int dims) {
+    private <T> PointMap<T> createTree(int size, int dims) {
         switch (candidate) {
-            case ARRAY: return new PointArray<>(dims, size);
-//            //case CRITBIT: return new PointArray<>(dims, size);
-            case KDTREE: return KDTree.create(dims);
-            case PHTREE_MM: return PHTreeMMP.create(dims);
-            case QUAD_HC: return QuadTreeKD.create(dims);
-            case QUAD_HC2: return QuadTreeKD2.create(dims);
-            case QUAD_PLAIN: return QuadTreeKD0.create(dims);
+            case ARRAY:
+                return new PointArray<>(dims, size);
+            //case CRITBIT: return new PointArray<>(dims, size);
+            case KDTREE:
+                return KDTree.create(dims);
+            case PHTREE_MM:
+                return PHTreeP.create(dims);
+            case QUAD_HC:
+                return QuadTreeKD.create(dims);
+            case QUAD_HC2:
+                return QuadTreeKD2.create(dims);
+            case QUAD_PLAIN:
+                return QuadTreeKD0.create(dims);
             case RSTAR:
-            case STR: return PointMultimapWrapper.create(RTree.createRStar(dims));
- //           case COVER: return CoverTree.create(dims);
+            case STR:
+                return PointMapWrapper.create(RTree.createRStar(dims));
+            case COVER:
+                return CoverTree.create(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());
         }

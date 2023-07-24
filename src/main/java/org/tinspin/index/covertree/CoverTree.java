@@ -882,7 +882,7 @@ public class CoverTree<T> implements PointMap<T> {
 		return Math.pow(BASE, level);
 	}
 
-	public boolean containsExact(double[] key) {
+	public boolean contains(double[] key) {
 		return queryExact(key) != null;
 	}
 

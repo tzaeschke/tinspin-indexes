@@ -21,16 +21,17 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.util.StringBuilderLn;
 
 /**
  * This is a MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
  * (if desired) automatic guessing of root rectangle. 
- * 
+ * <p>
  * For navigation during insert/delete/update/queries, it uses 
  * hypercube navigation as described by 
  * T. Zaeschke and M. Norrie, "Efficient Z-Ordered Traversal of Hypercube Indexes, 
  * BTW proceedings, 2017.
- * 
+ * <p>
  * This version of the quadtree stores for each node only the center point and the
  * distance (radius) to the edges.
  * This reduces space requirements but increases problems with numerical precision.
@@ -46,11 +47,7 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 	public static boolean ENABLE_HCI_1 = true;
 	/** Enable basic HCI navigation with Algo #2 inc(), for example for window queries. */
 	public static boolean ENABLE_HCI_2 = true;
-	
 	private static final int MAX_DEPTH = 50;
-	
-	private static final String NL = System.lineSeparator();
-
 	public static final boolean DEBUG = false;
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
 	private static final double INITIAL_RADIUS = Double.MAX_VALUE;
@@ -132,7 +129,7 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 	 * @param key the key to check
 	 * @return true iff the key exists
 	 */
-	public boolean containsExact(double[] key) {
+	public boolean contains(double[] key) {
 		if (root == null) {
 			return false;
 		}
@@ -169,16 +166,10 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 	@Override
 	public T remove(double[] key) {
 		if (root == null) {
-			if (DEBUG) {
-				System.err.println("Failed remove 1: " + Arrays.toString(key));
-			}
 			return null;
 		}
 		PointEntry<T> e = root.remove(null, key, maxNodeSize, x -> true);
 		if (e == null) {
-			if (DEBUG) {
-				System.err.println("Failed remove 2: " + Arrays.toString(key));
-			}
 			return null;
 		}
 		size--;
@@ -311,9 +302,9 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 	/**
 	 * @param point the point
 	 * @return an iterator over all entries at the given coordinate.
-	 * @see PointMultimap#query(double[])
+	 * @see PointMultimap#queryExactPoint(double[])
 	 */
-	public PointIterator<T> query(double[] point) {
+	public PointIterator<T> queryExactPoint(double[] point) {
 		return query(point, point);
 	}
 
@@ -351,117 +342,16 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 	 */
 	@Override
 	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance dist) {
-		return new QIteratorKnn<>(root, k, center, dist, e -> true);
+		return new QIteratorKnn<>(root, k, center, dist, (e, d) -> true);
 	}
 
-	@Deprecated
-	public List<PointEntryKnn<T>> knnQuery(double[] center, int k) {
-		return knnQuery(center, k, PointDistance.L2);
-	}
-
-	@Deprecated
-	public List<PointEntryKnn<T>> knnQuery(double[] center, int k, PointDistance distFn) {
-		if (root == null) {
-    		return Collections.emptyList();
-		}
-        Comparator<PointEntry<T>> comp =
-        		(PointEntry<T> point1, PointEntry<T> point2) -> {
-        			double deltaDist = 
-        					QUtil.distance(center, point1.point()) - 
-        					QUtil.distance(center, point2.point());
-        			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
-        		};
-        double distEstimate = distanceEstimate(root, center, k, comp, distFn);
-    	ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
-    	while (candidates.size() < k) {
-    		candidates.clear();
-    		rangeSearchKNN(root, center, candidates, k, distEstimate, distFn);
-    		distEstimate *= 2;
-    	}
-    	return candidates;
-    }
-
-    @SuppressWarnings("unchecked")
-	private double distanceEstimate(QNode<T> node, double[] point, int k,
-    		Comparator<PointEntry<T>> comp, PointDistance distFn) {
-    	if (node.isLeaf()) {
-    		//This is a leaf that would contain the point.
-    		int n = node.getEntries().size();
-    		PointEntry<T>[] data = node.getEntries().toArray(new PointEntry[n]);
-    		Arrays.sort(data, comp);
-    		int pos = n < k ? n : k;
-    		double dist = distFn.dist(point, data[pos-1].point());
-    		if (n < k) {
-    			//scale search dist with dimensions.
-    			dist = dist * Math.pow(k/(double)n, 1/(double)dims);
-    		}
-    		if (dist <= 0.0) {
-    			return node.getRadius();
-    		}
-    		return dist;
-    	} else {
-    		QNode<T>[] nodes = node.getChildNodes(); 
-    		for (int i = 0; i < nodes.length; i++) {
-    			if (nodes[i] != null && QUtil.fitsIntoNode(point, nodes[i].getCenter(), nodes[i].getRadius())) {
-    				return distanceEstimate(nodes[i], point, k, comp, distFn);
-    			}
-    		}
-    		//okay, this directory node contains the point, but none of the leaves does.
-    		//We just return the size of this node, because all it's leaf nodes should
-    		//contain more than enough candidate in proximity of 'point'.
-    		return node.getRadius() * Math.sqrt(point.length);
-    	}
-    }
-    
-    private double rangeSearchKNN(QNode<T> node, double[] center,
-                                  ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange, PointDistance distFn) {
-		if (node.isLeaf()) {
-    		ArrayList<PointEntry<T>> points = node.getEntries();
-    		for (int i = 0; i < points.size(); i++) {
-    			PointEntry<T> p = points.get(i);
-   				double dist = distFn.dist(center, p.point());
-   				if (dist < maxRange) {
-    				candidates.add(new PointEntryKnn<>(p, dist));
-  				}
-    		}
-    		maxRange = adjustRegionKNN(candidates, k, maxRange);
-    	} else {
-    		QNode<T>[] nodes = node.getChildNodes(); 
-    		for (int i = 0; i < nodes.length; i++) {
-    			QNode<T> sub = nodes[i];
-    			if (sub != null && 
-    					QUtil.distToRectNode(center, sub.getCenter(), sub.getRadius(), distFn) < maxRange) {
-    				maxRange = rangeSearchKNN(sub, center, candidates, k, maxRange, distFn);
-    				//we set maxRange simply to the latest returned value.
-    			}
-    		}
-    	}
-    	return maxRange;
-    }
-
-    private double adjustRegionKNN(ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange) {
-        if (candidates.size() < k) {
-        	//wait for more candidates
-        	return maxRange;
-        }
-
-        // use stored distances instead of recalculating them
-        candidates.sort((o1, o2) -> (int)(o1.dist() - o2.dist()));
-        while (candidates.size() > k) {
-        	candidates.remove(candidates.size()-1);
-        }
-        
-        double range = candidates.get(candidates.size()-1).dist();
-        return range;
-	}
-	
 	/**
 	 * Returns a printable list of the tree.
 	 * @return the tree as String
 	 */
 	@Override
 	public String toStringTree() {
-		StringBuilder sb = new StringBuilder();
+		StringBuilderLn sb = new StringBuilderLn();
 		if (root == null) {
 			sb.append("empty tree");
 		} else {
@@ -470,22 +360,17 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 		return sb.toString();
 	}
 	
-	private void toStringTree(StringBuilder sb, QNode<T> node, 
-			int depth, int posInParent) {
-		String prefix = "";
-		for (int i = 0; i < depth; i++) {
-			prefix += ".";
-		}
+	private void toStringTree(StringBuilderLn sb, QNode<T> node, int depth, int posInParent) {
+		String prefix = ".".repeat(depth);
 		sb.append(prefix + posInParent + " d=" + depth);
 		sb.append(" " + Arrays.toString(node.getCenter()));
-		sb.append("/" + node.getRadius() + NL);
+		sb.appendLn("/" + node.getRadius());
 		prefix += " ";
-		int pos = 0;
 		if (node.getChildNodes() != null) {
 			for (int i = 0; i < node.getChildNodes().length; i++) {
 				QNode<T> sub = node.getChildNodes()[i];
 				if (sub != null) {
-					toStringTree(sb, sub, depth+1, pos);
+					toStringTree(sb, sub, depth+1, i);
 				}
 			}
 		}
@@ -493,9 +378,8 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 			for (int i = 0; i < node.getEntries().size(); i++) {
 				PointEntry<T> e = node.getEntries().get(i);
 				sb.append(prefix + Arrays.toString(e.point()));
-				sb.append(" v=" + e.value() + NL);
+				sb.appendLn(" v=" + e.value());
 			}
-			pos++;
 		}
 	}
 	

@@ -1,7 +1,9 @@
-API
-===
-- KD-tree remove stored dist function
-- remove (most) knnQuery implementations
+Performance and Other
+=====================
+- Fix TODOs in RTree!!!
+- Consider replacing all PriorityQueue with Min(Max)Heaps
+- qt2: what is going on with subs vs values in QNode? Why can subs contain values?
+- RTree: compare finNodeEntry vs findNodeEntries -> benchmark and decide
 - QueryIterator nextReuse()
 - MinMaxHeap: leave entries in array -> reuse/pool
 - MinHeap: n-ary heap
@@ -10,16 +12,6 @@ API
 - Copyright update
 - Reformat everything??
 
-TODO TInSpin: common wrapper base class for all TinSpin indexes
-
-Other
-=====
-- RTree, compare 1NN with kNN query iterator, 1NN seems outdated.
-- Fix TODOs in RTree
-- quadtrees: implement/benchmark KnnHS
-- RTree implement improved KnnHS with minMaxHeap
-- qt2: what is going on with subs vs values in QNode? Why can subs contain values?
-- RTree: compare finNodeEntry vs findNodeEntries -> benchmark and decide
 
 CritBit
 =======
