@@ -32,6 +32,7 @@ TinSpin indexes are also available via maven:
 **NOTE: The next release 2.0.0 will have a major API rewrite**.
 
 See [CHANGELOG](CHANGELOG.md) for details.
+ - **Unreleased:** **2.0.0** **Major API rewrite.**
  - 1.8.0 Full multimap support; many fixes; rewrote all kNN searches; Java 11.  
  - 1.7.1 Dependency on latest PH-Tree
  - 1.7.0 CoverTree and improved index statistics
@@ -42,10 +43,10 @@ See [CHANGELOG](CHANGELOG.md) for details.
 
 ## Performance
 Some hints to improve performance:
-- Use the `reset` method of iterators to avoid creating complex iterator objects -> should reduce garbage collection load.  
+- Use the `reset()` method of iterators to reuse them instead of creating (complex) iterator objects for each query. This should reduce garbage collection load.  
 - For kD-trees, try disabling defensive copy via `IndexConfig`. "Defensive copying" creates a copy of all `double[]` 
-  when inserted into the tree. Avoiding this copy may slightly improve performance and garbage collection but risks 
-  tree inconsistencies when modifying the key externally. Other indexes may also become inconsistent, 
+  when inserted into the tree. Avoiding this copy may slightly improve performance and garbage collection but makes the tree more 
+  vulnerable to inconsistencies when modifying the key externally. Other indexes may also become inconsistent, 
   but it is more severe for kD-tree because they use keys as positions for nodes.  
 
 

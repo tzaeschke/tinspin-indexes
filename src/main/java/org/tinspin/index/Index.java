@@ -1,8 +1,8 @@
 /*
  * Copyright 2016-2017 Tilmann Zaeschke
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -45,115 +45,128 @@ public interface Index {
 	Stats getStats();
 
 	int getNodeCount();
-	
+
 	int getDepth();
-	
+
 	/**
-	 * 
-	 * @return a full string output of the tree structure with all entries 
+	 *
+	 * @return a full string output of the tree structure with all entries
 	 */
 	String toStringTree();
 
-	class PointEntry<T> {
+    interface QueryIterator<T> extends Iterator<T> {
+        /**
+         * This method resets an iterator. The arguments determin new iterator properties:
+         * - For Extent iterators, see e.g. {@link PointMap#iterator()}, both arguments must be `null`.
+         * - For point query iterators, see e.g. {@link PointMultimap#query(double[])}, the first argument
+         * is the new query point and the second argument must be `null`.
+         * - For window queries, see e.g. {@link PointMap#query(double[], double[])}, the arguments are
+         * the min/max corners of the new query window.
+         *
+         * @param point1 point or `null`
+         * @param point2 point or `null`
+         * @return this iterator after reset.
+         */
+        QueryIterator<T> reset(double[] point1, double[] point2);
+    }
 
-		private double[] point;
-		private T value;
+    interface PointIterator<T> extends QueryIterator<PointEntry<T>> {
+    }
 
-		public PointEntry(double[] point, T value) {
-			this.point = point;
-			this.value = value;
-		}
+    interface BoxIterator<T> extends QueryIterator<BoxEntry<T>> {
+    }
 
-		/**
-		 * @return The coordinates of the entry.
-		 */
-		public double[] point() {
-			return point;
-		}
+    interface QueryIteratorKnn<T> extends Iterator<T> {
+        QueryIteratorKnn<T> reset(double[] center, int k);
+    }
 
-		/**
-		 * @return The value associated with the rectangle or point.
-		 */
-		public T value() {
-			return value;
-		}
+    interface PointIteratorKnn<T> extends QueryIteratorKnn<PointEntryDist<T>> {
+    }
 
-		@Override
-		public String toString() {
-			return Arrays.toString(point) + ";v=" + value;
-		}
+    interface BoxIteratorKnn<T> extends QueryIteratorKnn<BoxEntryDist<T>> {
+    }
 
-		public void setPoint(double[] point) {
-			this.point = point;
-		}
+    class PointEntry<T> {
 
-		protected void set(double[] point, T value) {
-			this.point = point;
-			this.value = value;
-		}
-	}
+        private double[] point;
+        private T value;
 
-	class PointEntryDist<T> extends PointEntry<T> {
+        public PointEntry(double[] point, T value) {
+            this.point = point;
+            this.value = value;
+        }
 
-		private double dist;
+        /**
+         * @return The coordinates of the entry.
+         */
+        public double[] point() {
+            return point;
+        }
 
-		public PointEntryDist(double[] point, T value, double dist) {
-			super(point, value);
-			this.dist = dist;
-		}
+        /**
+         * @return The value associated with the rectangle or point.
+         */
+        public T value() {
+            return value;
+        }
 
-		public PointEntryDist(PointEntry<T> entry, double dist) {
-			super(entry.point(), entry.value());
-			this.dist = dist;
-		}
+        @Override
+        public String toString() {
+            return Arrays.toString(point) + ";v=" + value;
+        }
 
-		/**
-		 * An entry with distance property. This is, for example, used
-		 * as a return value for nearest neighbour queries.
-		 * @return the distance
-		 */
-		public double dist() {
-			return dist;
-		}
+        public void setPoint(double[] point) {
+            this.point = point;
+        }
 
-		public void set(double[] point, T value, double dist) {
-			super.set(point, value);
-			this.dist = dist;
-		}
+        protected void set(double[] point, T value) {
+            this.point = point;
+            this.value = value;
+        }
+    }
 
-		public void set(PointEntry<T> entry, double dist) {
-			super.set(entry.point(), entry.value);
-			this.dist = dist;
-		}
-	}
+    class PointEntryDist<T> extends PointEntry<T> {
 
-	//Comparator<PointEntryDist<T>> PEComparator = (o1, o2) -> (int)(o1.dist() - o2.dist());
-	class PEComparator<T> implements Comparator<PointEntryDist<T>> {
+        private double dist;
 
-		@Override
-		public int compare(PointEntryDist<T> o1, PointEntryDist<T> o2) {
-			double d = o1.dist - o2.dist;
-			return d < 0 ? -1 : d > 0 ? 1 : 0;
-		}
-	}
+        public PointEntryDist(double[] point, T value, double dist) {
+            super(point, value);
+            this.dist = dist;
+        }
 
-	interface QueryIterator<T> extends Iterator<T> {
-		QueryIterator<T> reset(double[] min, double[] max);
-	}
+        public PointEntryDist(PointEntry<T> entry, double dist) {
+            super(entry.point(), entry.value());
+            this.dist = dist;
+        }
 
-	interface PointIterator<T> extends QueryIterator<PointEntry<T>> {
-	}
+        /**
+         * An entry with distance property. This is, for example, used
+         * as a return value for nearest neighbour queries.
+         *
+         * @return the distance
+         */
+        public double dist() {
+            return dist;
+        }
 
-	interface BoxIterator<T> extends QueryIterator<BoxEntry<T>> {
-	}
+        public void set(double[] point, T value, double dist) {
+            super.set(point, value);
+            this.dist = dist;
+        }
 
-	interface QueryIteratorKnn<T> extends Iterator<T> {
-		QueryIteratorKnn<T> reset(double[] center, int k);
-	}
+        public void set(PointEntry<T> entry, double dist) {
+            super.set(entry.point(), entry.value);
+            this.dist = dist;
+        }
+    }
 
-	interface PointIteratorKnn<T> extends QueryIteratorKnn<PointEntryDist<T>> {
-	}
+    @Deprecated
+    class PEComparator<T> implements Comparator<PointEntryDist<T>> {
 
-	interface BoxIteratorKnn<T> extends QueryIteratorKnn<BoxEntryDist<T>> {
-	}
+        @Override
+        public int compare(PointEntryDist<T> o1, PointEntryDist<T> o2) {
+            double d = o1.dist - o2.dist;
+            return d < 0 ? -1 : d > 0 ? 1 : 0;
+        }
+    }
 }
