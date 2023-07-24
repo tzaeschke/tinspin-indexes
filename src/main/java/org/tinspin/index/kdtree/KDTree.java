@@ -360,8 +360,11 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 			return null;
 		}
 		T value = remove(oldKey);
-		insert(newKey, value);
-		return value;
+		if (value != null) {
+			insert(newKey, value);
+			return value;
+		}
+		return null;
 	}
 
 	/**

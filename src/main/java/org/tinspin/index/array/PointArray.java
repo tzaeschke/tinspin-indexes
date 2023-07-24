@@ -142,7 +142,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 		}
 
 		@Override
-		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
+		public PointIterator<T> reset(double[] min, double[] max) {
 			ArrayList<PointEntry<T>> results = new ArrayList<>(); 
 			for (int i = 0; i < N; i++) { 
 				if (leq(phc[i], max) && geq(phc[i], min)) {

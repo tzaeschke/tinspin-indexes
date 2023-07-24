@@ -65,7 +65,7 @@ public class PointMapWrapper<T> implements PointMap<T> {
 		}
 
 		@Override
-		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
+		public PointIterator<T> reset(double[] min, double[] max) {
 			it.reset(min, max);
 			return this;
 		}

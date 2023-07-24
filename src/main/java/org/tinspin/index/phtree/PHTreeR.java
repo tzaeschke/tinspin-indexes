@@ -133,7 +133,7 @@ public class PHTreeR<T> implements BoxMap<T> {
 		}
 
 		@Override
-		public QueryIterator<BoxEntry<T>> reset(double[] min, double[] max) {
+		public BoxIterator<T> reset(double[] min, double[] max) {
 			if (min != null || max != null) {
 				throw new UnsupportedOperationException("min/max must be `null`");
 			}
@@ -163,7 +163,7 @@ public class PHTreeR<T> implements BoxMap<T> {
 		}
 
 		@Override
-		public QueryIterator<BoxEntry<T>> reset(double[] min, double[] max) {
+		public BoxIterator<T> reset(double[] min, double[] max) {
 			iter.reset(min, max);
 			return this;
 		}

@@ -114,9 +114,9 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	@Override
 	public T queryExact(double[] lower, double[] upper) {
-		for (int j = 0; j < N; j++) {
-			if (eq(phc[j*2], lower) && eq(phc[j*2+1], upper)) {
-				return values[j].value();
+		for (int i = 0; i < N; i++) {
+			if (phc[i*2] != null && eq(phc[i*2], lower) && eq(phc[i*2+1], upper)) {
+				return values[i].value();
 			}
 		}
 		return null;
@@ -125,7 +125,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 	@Override
 	public boolean contains(double[] lower, double[] upper, T value) {
 		for (int i = 0; i < N; i++) {
-			if (eq(phc[i*2], lower) && eq(phc[i*2+1], upper) && Objects.equals(value, values[i].value())) {
+			if (phc[i*2] != null && eq(phc[i*2], lower) && eq(phc[i*2+1], upper) && Objects.equals(value, values[i].value())) {
 				return true;
 			}
 		}

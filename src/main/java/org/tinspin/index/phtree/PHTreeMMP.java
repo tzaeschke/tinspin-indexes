@@ -192,7 +192,7 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
         }
 
         @Override
-        public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
+        public PointIterator<T> reset(double[] min, double[] max) {
             iter.reset(min, max);
             return this;
         }
