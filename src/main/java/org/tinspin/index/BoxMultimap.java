@@ -21,17 +21,17 @@ import java.util.Iterator;
 import java.util.function.Predicate;
 
 /**
- * A common interface for spatial indexes (multimaps) that use rectangles as keys.
+ * A common interface for spatial indexes (multimaps) that use boxes as keys.
  * This interface requires indexes to be multimaps which mean a given keys
  * can exist multiple times and is not overwritten when a new entry with the same
  * key is added.
  *
- * @param <T> Type of the value associated with the rectangles key.
+ * @param <T> Type of the value associated with the boxes key.
  */
 public interface BoxMultimap<T> extends Index {
 
     /**
-     * Insert a rectangle.
+     * Insert a box.
      *
      * @param lower minimum corner
      * @param upper maximum corner
@@ -86,7 +86,7 @@ public interface BoxMultimap<T> extends Index {
      *
      * @param lower minimum corner
      * @param upper maximum corner
-     * @return an iterator over all entries at with the exact given rectangle
+     * @return an iterator over all entries with the exact given box shape
      */
     BoxIterator<T> queryRectangle(double[] lower, double[] upper);
 
@@ -98,7 +98,7 @@ public interface BoxMultimap<T> extends Index {
     /**
      * @param min Lower left corner of the query window
      * @param max Upper right corner of the query window
-     * @return All rectangles that intersect with the query rectangle.
+     * @return All boxes that intersect with the query rectangle.
      */
     BoxIterator<T> queryIntersect(double[] min, double[] max);
 
@@ -116,8 +116,8 @@ public interface BoxMultimap<T> extends Index {
 
     /**
      * Finds the nearest neighbor.
-     * This uses Euclidean 'edge distance', i.e. the distance to the edge of rectangle.
-     * Distance is 0 is the rectangle overlaps with the search point.
+     * This uses Euclidean 'edge distance', i.e. the distance to the edge of a box.
+     * Distance is 0 if the box overlaps with the search point.
      * Other distance types can only be specified directly on the index implementations.
      *
      * @param center center point
@@ -128,7 +128,7 @@ public interface BoxMultimap<T> extends Index {
 
     /**
      * Finds the nearest neighbor.
-     * This uses a custom distance function for distances to rectangles.
+     * This uses a custom distance function for distances to boxes.
      *
      * @param center center point
      * @param k      number of neighbors

@@ -22,7 +22,7 @@ import java.util.Iterator;
 public interface BoxMap<T> extends Index {
 
 	/**
-	 * Insert a rectangle.
+	 * Insert a box.
 	 * @param lower minimum corner
 	 * @param upper maximum corner
 	 * @param value value
@@ -63,7 +63,7 @@ public interface BoxMap<T> extends Index {
 	/**
 	 * @param min Lower left corner of the query window
 	 * @param max Upper right corner of the query window
-	 * @return All rectangles that intersect with the query rectangle.
+	 * @return All boxes that intersect with the query rectangle.
 	 */
 	BoxIterator<T> queryIntersect(double[] min, double[] max);
 
@@ -80,8 +80,8 @@ public interface BoxMap<T> extends Index {
 
 	/**
 	 * Finds the nearest neighbor. 
-	 * This uses Euclidean 'edge distance', i.e. the distance to the edge of rectangle.
-	 * Distance is 0 is the rectangle overlaps with the search point.
+	 * This uses Euclidean 'edge distance', i.e. the distance to the edge of a box.
+	 * Distance is 0 if the box overlaps with the search point.
 	 * Other distance types can only be specified directly on the index implementations. 
 	 * @param center center point
 	 * @param k number of neighbors

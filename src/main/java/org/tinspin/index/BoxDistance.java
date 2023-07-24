@@ -39,8 +39,8 @@ public interface BoxDistance {
 	 * If your entry is actually a sphere, a car, an human or a cat, you may need this.
 	 * 
 	 * @param center a point
-	 * @param entry a rectangle
-	 * @return distance between point and rectangle
+	 * @param entry a box
+	 * @return distance between point and box
 	 */
 	default double dist(double[] center, Index.BoxEntry<?> entry) {
 		return dist(center, entry.min(), entry.max());
@@ -69,10 +69,10 @@ public interface BoxDistance {
 			for (int i = 0; i < lower.length; i++) {
 				double d = 0;
 				if (min[i] > upper[i]) {
-					// "right" side of our rectangle
+					// "right" side of our box
 					d = min[i] - upper[i];
 				} else if (max[i] < lower[i]) {
-					// "left" side of our rectangle
+					// "left" side of our box
 					d = lower[i] - max[i];
 				} // else intersecting
 				dist += d * d;

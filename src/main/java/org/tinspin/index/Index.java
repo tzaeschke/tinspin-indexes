@@ -104,7 +104,7 @@ public interface Index {
         }
 
         /**
-         * @return The value associated with the rectangle or point.
+         * @return The value associated with the box or point.
          */
         public T value() {
             return value;
@@ -208,7 +208,7 @@ public interface Index {
         }
 
         /**
-         * @return The value associated with the rectangle or point.
+         * @return The value associated with the box or point.
          */
         public T value() {
             return val;
