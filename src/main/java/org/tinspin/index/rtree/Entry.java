@@ -18,43 +18,18 @@ package org.tinspin.index.rtree;
 
 import java.util.Arrays;
 
-import org.tinspin.index.RectangleEntry;
+import static org.tinspin.index.Index.*;
 
-public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
-	protected double[] min;
-	protected double[] max;
-	private T val;
-	
+public class Entry<T> extends BoxEntry<T> {
+
 	public Entry(double[] min, double[] max, T val) {
-		this.min = min;
-		this.max = max;
-		this.val = val;
+		super(min, max, val);
 	}
 
-	@Override
-	public double[] lower() {
-		return min;
-	}
-
-	@Override
-	public double[] upper() {
-		return max;
-	}
-
-	@Override
-	public T value() {
-		return val;
-	}
-	
-	@Override
-	public int compareTo(Entry<T> o) {
-		return Double.compare(min[0], o.min[0]);
-	}
-	
 	double calcOverlap(Entry<T> e) {
 		double area = 1;
-		for (int i = 0; i < min.length; i++) {
-			double d = min(max[i], e.max[i]) - max(min[i], e.min[i]);
+		for (int i = 0; i < min().length; i++) {
+			double d = Math.min(max()[i], e.max()[i]) - Math.max(min()[i], e.min()[i]);
 			if (d <= 0) {
 				return 0;
 			}
@@ -71,8 +46,8 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 	 * @return Whether min2/max2 is included in the current entry.
 	 */
 	public boolean checkInclusion(double[] min2, double[] max2) {
-		for (int i = 0; i < min.length; i++) {
-			if (min[i] > min2[i] || max[i] < max2[i]) {
+		for (int i = 0; i < min().length; i++) {
+			if (min()[i] > min2[i] || max()[i] < max2[i]) {
 				return false;
 			}
 		}
@@ -80,8 +55,8 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 	}
 
 	public boolean checkExactMatch(double[] min2, double[] max2) {
-		for (int i = 0; i < min.length; i++) {
-			if (min[i] != min2[i] || max[i] != max2[i]) {
+		for (int i = 0; i < min().length; i++) {
+			if (min()[i] != min2[i] || max()[i] != max2[i]) {
 				return false;
 			}
 		}
@@ -90,30 +65,22 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 
 	public double calcArea() {
 		double area = 1;
-		for (int i = 0; i < min.length; i++) {
-			double d = max[i] - min[i];
+		for (int i = 0; i < min().length; i++) {
+			double d = max()[i] - min()[i];
 			area *= d;
 		}
 		return area;
 	}
 
 	public void setToCover(Entry<T> e1, Entry<T> e2) {
-		for (int i = 0; i < min.length; i++) {
-			min[i] = min(e1.min[i], e2.min[i]);
-			max[i] = max(e1.max[i], e2.max[i]);
+		for (int i = 0; i < min().length; i++) {
+			min()[i] = Math.min(e1.min()[i], e2.min()[i]);
+			max()[i] = Math.max(e1.max()[i], e2.max()[i]);
 		}
-	}
-	
-	static double min(double d1, double d2) {
-		return d1 < d2 ? d1 : d2;
-	}
-	
-	static double max(double d1, double d2) {
-		return d1 > d2 ? d1 : d2;
 	}
 
 	public static double calcVolume(Entry<?> e) {
-		return calcVolume(e.min, e.max);
+		return calcVolume(e.min(), e.max());
 	}
 
 	public static double calcVolume(double[] min, double[] max) {
@@ -126,12 +93,12 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 
 	public static void calcBoundingBox(Entry<?>[] entries, int start, int end, 
 			double[] minOut, double[] maxOut) {
-		System.arraycopy(entries[start].min, 0, minOut, 0, minOut.length);
-		System.arraycopy(entries[start].max, 0, maxOut, 0, maxOut.length);
+		System.arraycopy(entries[start].min(), 0, minOut, 0, minOut.length);
+		System.arraycopy(entries[start].max(), 0, maxOut, 0, maxOut.length);
 		for (int i = start+1; i < end; i++) {
 			for (int d = 0; d < minOut.length; d++) {
-				minOut[d] = min(minOut[d], entries[i].min[d]);
-				maxOut[d] = max(maxOut[d], entries[i].max[d]);
+				minOut[d] = Math.min(minOut[d], entries[i].min()[d]);
+				maxOut[d] = Math.max(maxOut[d], entries[i].max()[d]);
 			}
 		}
 	}
@@ -139,7 +106,7 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 	public static double calcOverlap(double[] min1, double[] max1, double[] min2, double[] max2) {
 		double area = 1;
 		for (int i = 0; i < min1.length; i++) {
-			double d = min(max1[i], max2[i]) - max(min1[i], min2[i]);
+			double d = Math.min(max1[i], max2[i]) - Math.max(min1[i], min2[i]);
 			if (d <= 0) {
 				return 0;
 			}
@@ -150,7 +117,7 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 	
 	public static boolean checkOverlap(double[] min, double[] max, Entry<?> e) {
 		for (int i = 0; i < min.length; i++) {
-			if (min[i] > e.max[i] || max[i] < e.min[i]) {
+			if (min[i] > e.max()[i] || max[i] < e.min()[i]) {
 				return false;
 			}
 		}
@@ -184,9 +151,9 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 		for (int i = start; i < end; i++) {
 			double v = 1;
 			for (int d = 0; d < minOut.length; d++) {
-				minOut[d] = min(minOut[d], entries[i].min[d]);
-				maxOut[d] = max(maxOut[d], entries[i].max[d]);
-				v *= entries[i].max[d]-entries[i].min[d];
+				minOut[d] = Math.min(minOut[d], entries[i].min()[d]);
+				maxOut[d] = Math.max(maxOut[d], entries[i].max()[d]);
+				v *= entries[i].max()[d]-entries[i].min()[d];
 			}
 			volumeSum += v;
 		}
@@ -204,10 +171,10 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 	}
 
 	public static double calcCenterDistance(Entry<?> e1, Entry<?> e2) {
-		double[] min1 = e1.min;
-		double[] max1 = e1.max;
-		double[] min2 = e2.min;
-		double[] max2 = e2.max;
+		double[] min1 = e1.min();
+		double[] max1 = e1.max();
+		double[] min2 = e2.min();
+		double[] max2 = e2.max();
 		double dist = 0;
 		for (int i = 0; i < min1.length; i++) {
 			double d = (min1[i]+max1[i])-(min2[i]+max2[i]);
@@ -219,21 +186,13 @@ public class Entry<T> implements RectangleEntry<T>, Comparable<Entry<T>> {
 	
 	@Override
 	public String toString() {
-		double[] len = new double[min.length];
-		Arrays.setAll(len, (i)->(max[i]-min[i]));
-		return Arrays.toString(min) + "/" + Arrays.toString(max) + ";len=" + 
-		Arrays.toString(len) + ";v=" + val;
+		double[] len = new double[min().length];
+		Arrays.setAll(len, i -> (max()[i]-min()[i]));
+		return Arrays.toString(min()) + "/" + Arrays.toString(max()) + ";len=" +
+		Arrays.toString(len) + ";v=" + value();
 	}
 
 	protected void set(Entry<T> e) {
-		min = e.min;
-		max = e.max;
-		val = e.val;
-	}
-
-	public void set(double[] lower, double[] upper, T val) {
-		this.min = lower;
-		this.max = upper;
-		this.val = val;
+		super.set(e.min(), e.max(), e.value());
 	}
 }

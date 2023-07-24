@@ -21,45 +21,47 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.PriorityQueue;
 
-import org.tinspin.index.RectangleDistanceFunction;
-import org.tinspin.index.RectangleEntryDist;
+import org.tinspin.index.BoxDistance;
 
-class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
+import static org.tinspin.index.Index.*;
+
+class RTreeMixedQuery<T> implements Iterator<BoxEntryKnn<T>> {
 	
-	private static class RTreeNodeWrapper<T> implements RectangleEntryDist<T>, Comparable<RTreeNodeWrapper<T>> {
+	private static class RTreeNodeWrapper<T> extends BoxEntryKnn<T> implements Comparable<RTreeNodeWrapper<T>> {
 
 		Entry<T> node;
-		double distance;
+//		double distance;
 
 		RTreeNodeWrapper(Entry<T> node, double distance) {
+			super(node.min(), node.max(), node.value(), distance);
 			this.node = node;
-			this.distance = distance;
+			// this.distance = distance;
 		}
 
 		@Override
-		public double[] lower() {
-			return node.min;
+		public double[] min() {
+			return node.min();
 		}
 
-		@Override
-		public double[] upper() {
-			return node.max;
-		}
-
-		@Override
-		public T value() {
-			return node.value();
-		}
-
-		@Override
-		public double dist() {
-			return distance;
-		}
+//		@Override
+//		public double[] max() {
+//			return node.max();
+//		}
+//
+//		@Override
+//		public T value() {
+//			return node.value();
+//		}
+//
+//		@Override
+//		public double dist() {
+//			return distance;
+//		}
 
 		@Override
 		public String toString() {
-			return "RTreeNodeWrapper [lower()=" + Arrays.toString(lower()) + 
-					", upper()=" + Arrays.toString(upper())
+			return "RTreeNodeWrapper [lower()=" + Arrays.toString(max()) +
+					", upper()=" + Arrays.toString(min())
 					+ ", value()=" + value() + ", dist()=" + dist() + "]";
 		}
 
@@ -94,7 +96,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 		 */
 		@Override
 		public int compareTo(RTreeNodeWrapper<T> o) {
-			return Double.compare(distance, o.dist());
+			return Double.compare(dist(), o.dist());
 		}
 
 	}
@@ -119,8 +121,8 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 
 	private final RTree<T> tree;
 	private final double[] center;
-	private final RectangleDistanceFunction dist;
-	private final RectangleDistanceFunction closestDist;
+	private final BoxDistance dist;
+	private final BoxDistance closestDist;
 	private final PriorityQueue<RTreeNodeWrapper<T>> queue = new PriorityQueue<>();
 	private final Filter filter;
 	private RTreeEntryWrapper<T> next;
@@ -135,8 +137,8 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 	private int remove_pointerLoss;
 	private int remove_hit;
 
-	public RTreeMixedQuery(RTree<T> tree, double[] center, Filter filter, 
-			RectangleDistanceFunction dist, RectangleDistanceFunction closestDist) {
+	public RTreeMixedQuery(RTree<T> tree, double[] center, Filter filter,
+						   BoxDistance dist, BoxDistance closestDist) {
 		this.tree = tree;
 		this.center = center;
 		this.closestDist = closestDist;
@@ -151,11 +153,11 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 	}
 
 	private RTreeNodeWrapper<T> insert(RTreeNode<T> node) {
-		if (!filter.intersects(node.min, node.max)) {
+		if (!filter.intersects(node.min(), node.max())) {
 			return null;
 		}
 		RTreeNodeWrapper<T> wrapped = 
-				new RTreeNodeWrapper<>(node, closestDist.dist(center, node.min, node.max));
+				new RTreeNodeWrapper<>(node, closestDist.dist(center, node.min(), node.max()));
 		queue.add(wrapped);
 		return wrapped;
 	}
@@ -164,7 +166,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 		RTreeEntryWrapper<T> nextElement = null;
 		while (nextElement == null && !queue.isEmpty()) {
 			RTreeNodeWrapper<T> top = queue.poll();
-			Entry<T> ent = top.node;
+			BoxEntry<T> ent = top.node;
 			if (ent instanceof RTreeNodeDir) {
 				processNode((RTreeNodeDir<T>) ent);
 			} else if (ent instanceof RTreeNodeLeaf) {
@@ -178,10 +180,10 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 				/*
 				 * Filter out duplicates (due to remove() calls)
 				 */
-				if (nextElement.distance > distanceOfLastReturnedNode) {
-					distanceOfLastReturnedNode = nextElement.distance;
+				if (nextElement.dist() > distanceOfLastReturnedNode) {
+					distanceOfLastReturnedNode = nextElement.dist();
 					nodesAlreadyReturnedWithSameDist.clear();
-				} else if (nextElement.distance < distanceOfLastReturnedNode) {
+				} else if (nextElement.dist() < distanceOfLastReturnedNode) {
 					// loop
 					nextElement = null;
 					continue;
@@ -224,7 +226,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 		}
 		assert parent.getParent() == null || isTreeNode(parent);
 		assert !(ent instanceof RTreeNode);
-		double distance = dist.dist(center, ent.min, ent.max);
+		double distance = dist.dist(center, ent.min(), ent.max());
 
 		if (distance < distanceOfLastReturnedNode) {
 			return;
@@ -248,7 +250,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 	}
 
 	@Override
-	public RectangleEntryDist<T> next() {
+	public BoxEntryKnn<T> next() {
 		if (!hasNext()) {
 			throw new IllegalStateException();
 		}
@@ -271,7 +273,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 	
 	@SuppressWarnings("unused")
 	public void remove(RTreeEntryWrapper<T> e) {
-		Entry<T> toDelete = e.node;
+		BoxEntry<T> toDelete = e.node;
 		int pos = e.idx;
 		RTreeNodeLeaf<T> parent = e.parent;
 		if (parent.getEntries().size() <= pos || toDelete != parent.getEntries().get(pos)) {
@@ -280,7 +282,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 		if (pos == -1 || parent.getParent() == null) {
 			assert remove_pointerLoss++ > 0 || true : "Counting enabled by assert";
 			// lost pointer, need to look it up from the beginning
-			if (tree.remove(e.lower(), e.upper()) == null) {
+			if (tree.remove(e.min(), e.max()) == null) {
 				throw new IllegalStateException("Node not found");
 			}
 		} else {
@@ -343,7 +345,7 @@ class RTreeMixedQuery<T> implements Iterator<RectangleEntryDist<T>> {
 			RTreeNodeWrapper<T> e = iterator.next();
 			Entry<T> node = e.node;
 			if (node instanceof RTreeNode) {
-				double actualDist = closestDist.dist(center, node.min, node.max);
+				double actualDist = closestDist.dist(center, node.min(), node.max());
 				if (e.dist() > actualDist) {
 					/* Distance is now shorter due to restructuring of the tree. 
 					 * We have to process this to keep correct ordering.

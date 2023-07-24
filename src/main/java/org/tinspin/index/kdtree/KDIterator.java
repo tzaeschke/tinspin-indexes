@@ -3,25 +3,26 @@ package org.tinspin.index.kdtree;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.QueryIterator;
+import static org.tinspin.index.Index.*;
 
 /**
  * Resetable query iterator.
  *
  * @param <T> Value type
  */
-public class KDIterator<T> implements QueryIterator<PointEntry<T>> {
+public class KDIterator<T> implements PointIterator<T> {
 
 	private static class IteratorPos<T> {
 		private Node<T> node;
 		private int depth;
-		private boolean doLeft, doKey, doRight;
+		private boolean doLeft;
+		private boolean doKey;
+		private boolean doRight;
 
 		void set(Node<T> node, double[] min, double[] max, int depth, int dims) {
 			this.node = node;
 			this.depth = depth;
-			double[] key = node.getKey();
+			double[] key = node.point();
 			int pos = depth % dims;
 			doLeft = min[pos] <= key[pos];
 			doRight = max[pos] >= key[pos];
@@ -41,22 +42,20 @@ public class KDIterator<T> implements QueryIterator<PointEntry<T>> {
 			return size == 0;
 		}
 
-		IteratorPos<T> prepareAndPush(Node<T> node, double[] min, double[] max, int depth, int dims) {
+		void prepareAndPush(Node<T> node, double[] min, double[] max, int depth, int dims) {
 			if (size == stack.size()) {
 				stack.add(new IteratorPos<>());
 			}
 			IteratorPos<T> ni = stack.get(size++);
-			
 			ni.set(node, min, max, depth, dims);
-			return ni;
 		}
 
 		IteratorPos<T> peek() {
 			return stack.get(size-1);
 		}
 
-		IteratorPos<T> pop() {
-			return stack.get(--size);
+		void pop() {
+			--size;
 		}
 
 		public void clear() {
@@ -65,7 +64,7 @@ public class KDIterator<T> implements QueryIterator<PointEntry<T>> {
 	}
 
 	private final KDTree<T> tree;
-	private IteratorStack stack;
+	private final IteratorStack stack;
 	private Node<T> next = null;
 	private double[] min;
 	private double[] max;
@@ -87,7 +86,7 @@ public class KDIterator<T> implements QueryIterator<PointEntry<T>> {
 			}
 			if (itPos.doKey) {
 				itPos.doKey = false;
-				if (KDTree.isEnclosed(node.getKey(), min, max)) {
+				if (KDTree.isEnclosed(node.point(), min, max)) {
 					next = node;
 					return;
 				}
@@ -120,11 +119,13 @@ public class KDIterator<T> implements QueryIterator<PointEntry<T>> {
 	/**
 	 * Reset the iterator. This iterator can be reused in order to reduce load on the
 	 * garbage collector.
+	 *
 	 * @param min lower left corner of query
 	 * @param max upper right corner of query
+	 * @return this.
 	 */
 	@Override
-	public void reset(double[] min, double[] max) {
+	public PointIterator<T> reset(double[] min, double[] max) {
 		stack.clear();
 		this.min = min;
 		this.max = max;
@@ -133,5 +134,6 @@ public class KDIterator<T> implements QueryIterator<PointEntry<T>> {
 			stack.prepareAndPush(tree.getRoot(), min, max, 0, tree.getDims());
 			findNext();
 		}
+		return this;
 	}
 }

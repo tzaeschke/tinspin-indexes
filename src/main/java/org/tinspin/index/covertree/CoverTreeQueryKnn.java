@@ -17,18 +17,17 @@
 package org.tinspin.index.covertree;
 
 import java.util.ArrayList;
-import java.util.PriorityQueue;
-import java.util.Comparator;
 import java.util.Iterator;
+import java.util.PriorityQueue;
 
-import org.tinspin.index.PointDistanceFunction;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.PointDistance;
+
+import static org.tinspin.index.Index.*;
 
 
 /**
  * kNN search.
- * 
+ * <p>
  * Implementation after Hjaltason and Samet.
  * G. R. Hjaltason and H. Samet., "Distance browsing in spatial databases.", ACM TODS 24(2):265--318. 1999
  * 
@@ -36,22 +35,22 @@ import org.tinspin.index.QueryIteratorKNN;
  *
  * @param <T> Type
  */
-public class CoverTreeQueryKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 	
-	private final Comparator<PointDist<?>> COMP = PointDist.COMPARATOR;
 	private final CoverTree<T> tree;
 	private double[] center;
-	private Iterator<PointDist<T>> iter;
-	private PointDistanceFunction dist;
-	private final ArrayList<PointDist<T>> candidates = new ArrayList<>();
-	private final ArrayList<PointDist<Object>> pool = new ArrayList<>();
-	private final PriorityQueue<PointDist<Object>> queue = new PriorityQueue<>(COMP);
+	private Iterator<PointEntryKnn<T>> iter;
+	private PointDistance dist;
+	private final ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
+	private final ArrayList<PointEntryKnn<Object>> pool = new ArrayList<>();
+	private final PriorityQueue<PointEntryKnn<Object>> queue =
+			new PriorityQueue<>((o1, o2) -> (int)(o1.dist() - o2.dist()));
 	
 	
 	public CoverTreeQueryKnn(CoverTree<T> tree, double[] center, int k, 
-			PointDistanceFunction dist) {
+			PointDistance dist) {
 		this.tree = tree;
-		reset(center, k, dist == null ? PointDistanceFunction.L2 : dist);
+		reset(center, k, dist == null ? PointDistance.L2 : dist);
 	}
 
 	
@@ -62,11 +61,11 @@ public class CoverTreeQueryKnn<T> implements QueryIteratorKNN<PointEntryDist<T>>
 	}
 	
 	
-	public void reset(double[] center, int k, PointDistanceFunction dist) {
+	public void reset(double[] center, int k, PointDistance dist) {
 		if (dist != null) {
 			this.dist = dist;
 		}
-		if (this.dist != PointDistanceFunction.L2) {
+		if (this.dist != PointDistance.L2) {
 			System.err.println("This distance iterator only works for L2 distance");
 		}
 		this.center = center;
@@ -96,11 +95,11 @@ public class CoverTreeQueryKnn<T> implements QueryIteratorKNN<PointEntryDist<T>>
 		addToQueue(tree.getRoot());
 
 		while (!queue.isEmpty()) {
-			PointDist<Object> candidate = queue.poll();
+			PointEntryKnn<Object> candidate = queue.poll();
 			Object o = candidate.value();
 			if (!(o instanceof Node)) {
 				//data entry
-				candidates.add((PointDist<T>) candidate);
+				candidates.add((PointEntryKnn<T>) candidate);
 				if (candidates.size() >= k) {
 					return;
 				}
@@ -130,13 +129,13 @@ public class CoverTreeQueryKnn<T> implements QueryIteratorKNN<PointEntryDist<T>>
 	 * @param data vector
 	 * @param val Value, can be Node<T> or T
 	 * @param dist distance
-	 * @return PointDist<Object>
+	 * @return PointEntryDist<Object>
 	 */
-	private PointDist<Object> createEntry(double[] data, Object val, double dist) {
+	private PointEntryKnn<Object> createEntry(double[] data, Object val, double dist) {
 		if (pool.isEmpty()) {
-			return new PointDist<>(data, val, dist);
+			return new PointEntryKnn<>(data, val, dist);
 		}
-		PointDist<Object> e = pool.remove(pool.size() - 1);
+		PointEntryKnn<Object> e = pool.remove(pool.size() - 1);
 		e.set(data, val, dist);
 		return e;
 	}
@@ -148,7 +147,7 @@ public class CoverTreeQueryKnn<T> implements QueryIteratorKNN<PointEntryDist<T>>
 
 	
 	@Override
-	public PointDist<T> next() {
+	public PointEntryKnn<T> next() {
 		return iter.next();
 	}
 }

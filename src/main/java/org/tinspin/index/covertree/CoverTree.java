@@ -21,22 +21,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.tinspin.index.PointDistanceFunction;
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.PointIndex;
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.PointDistance;
+import org.tinspin.index.PointMap;
 import org.tinspin.index.Stats;
 
 
 /**
  * A 'faster' CoverTree implementation based on the paper:
- * 
+ * <p>
  * "Faster Cover Trees", Mike Izbicki, Christian R. Shelton,
  * Proceedings of the 32nd International Conference on Machine Learning,
  * Lille, France, 2015. 
- * 
+ * <p>
  * Changes over original algorithms:
  *  - findNearestNeighbour compares
  *  	if (d(y, x) greater (d(_x_, q.point()) - q.maxdist(this)))
@@ -56,7 +52,7 @@ import org.tinspin.index.Stats;
  *      The sorting appears unnecessary because we anyway have to check all children,
  *      and finding the closest one is trivially possible without sorting.
  *  - Some optimizations for kNN which are not discussed in the paper
- *  
+ *  <p>
  * Other:
  * - We also implemented the kNN algorithm by Hjaltason and Samet,
  *   but it about 2x as long as our own algorithm in all scenarios we tested.
@@ -66,7 +62,7 @@ import org.tinspin.index.Stats;
  *     
  * @author Tilmann Zäschke
  */
-public class CoverTree<T> implements PointIndex<T> {
+public class CoverTree<T> implements PointMap<T> {
 
 	private final int dims;
 	private int nEntries;
@@ -79,9 +75,8 @@ public class CoverTree<T> implements PointIndex<T> {
 	
 	private final double BASE;
 	private final double LOG_BASE;
-	
-	private final PointDistanceFunction dist;
-
+	private final PointDistance dist;
+	private static final PEComparator comparator = new PEComparator();
 	private long nDistCalc = 0;
 	private long nDist1NN = 0;
 	private long nDistKNN = 0;
@@ -91,27 +86,27 @@ public class CoverTree<T> implements PointIndex<T> {
 		return Math.log(n) / LOG_BASE;
 	}
 	
-	private CoverTree(int nDims, double base, PointDistanceFunction dist) {
+	private CoverTree(int nDims, double base, PointDistance dist) {
 		this.dims = nDims;
 		this.BASE = base;
 		this.LOG_BASE = Math.log(BASE);
-		this.dist = dist != null ? dist : PointDistanceFunction.L2;
+		this.dist = dist != null ? dist : PointDistance.L2;
 	}
 		
-	public static <T> Point<T> create(double[] point, T value) {
-		return new Point<>(point, value);
+	public static <T> PointEntry<T> create(double[] point, T value) {
+		return new PointEntry<>(point, value);
 	}
 
 	public static <T> CoverTree<T> create(int nDims) {
-		return new CoverTree<>(nDims, DEFAULT_BASE, PointDistanceFunction.L2);
+		return new CoverTree<>(nDims, DEFAULT_BASE, PointDistance.L2);
 	}
 	
-	public static <T> CoverTree<T> create(int nDims, double base, PointDistanceFunction dist) {
+	public static <T> CoverTree<T> create(int nDims, double base, PointDistance dist) {
 		return new CoverTree<>(nDims, base, dist);
 	}
 	
-	public static <T> CoverTree<T> create(Point<T>[] data, double base, 
-			PointDistanceFunction distFn) {
+	public static <T> CoverTree<T> create(PointEntry<T>[] data, double base,
+			PointDistance distFn) {
 		if (data == null || data.length == 0) {
 			throw new IllegalStateException("Bulk load with empty data no possible.");
 		}
@@ -122,15 +117,15 @@ public class CoverTree<T> implements PointIndex<T> {
 			return tree;
 		}
 		
-		//The point of bulkload is (currently) only to initialize the tree with a 
+		//The point of bulk load is (currently) only to initialize the tree with a
 		//suitable 'level' and 'root', which should avoid any problems with having 
-		//to pull up leaves to replace the root. Bulkloading thus allows a BASE < 2.0 .
+		//to pull up leaves to replace the root. Bulk loading thus allows a BASE < 2.0 .
 		
-		Point<T> newRoot = data[0];
-		Point<T> mostDistantPoint = data[1];
+		PointEntry<T> newRoot = data[0];
+		PointEntry<T> mostDistantPoint = data[1];
 		double largestDistance = tree.d(newRoot, mostDistantPoint); 
 		for (int i = 2; i < data.length; i++) {
-			Point<T> x = data[i];
+			PointEntry<T> x = data[i];
 			double dist = tree.d(newRoot, x);
 			if (dist > largestDistance) {
 				largestDistance = dist;
@@ -139,7 +134,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		}
 		
 		int requiredLevel = (int) (tree.log13(largestDistance) + 1);
-		tree.root = new Node<T>(data[0], requiredLevel);
+		tree.root = new Node<>(data[0], requiredLevel);
 		//TODO insert farthest point as second point?
 		
 		for (int i = 1; i < data.length; i++) {
@@ -232,7 +227,7 @@ public class CoverTree<T> implements PointIndex<T> {
 	@Override
 	public void insert(double[] key, T value) {
 		//System.out.println("Inserting(" + nEntries + "): " + Arrays.toString(key));
-		Node<T> x = new Node<>(new Point<>(key, value), -1);
+		Node<T> x = new Node<>(new PointEntry<>(key, value), -1);
 		if (root == null) {
 			root = x.initLevel(0);
 			nEntries++;
@@ -686,11 +681,11 @@ public class CoverTree<T> implements PointIndex<T> {
 		if (root == null) {
 			return null;
 		}
-		Point<T> result = queryExact(root, point);
+		PointEntry<T> result = queryExact(root, point);
 		return result == null ? null : result.value();
 	}
 	
-	private Point<T> queryExact(Node<T> p, double[] x) {
+	private PointEntry<T> queryExact(Node<T> p, double[] x) {
 		if (Arrays.equals(p.point().point(), x)) {
 			return p.point();
 		}
@@ -702,7 +697,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		ArrayList<Node<T>> children = p.getChildren();
 		for (int i = 0; i < children.size(); i++) {
 			Node<T> q = children.get(i);
-			Point<T> result = queryExact(q, x);
+			PointEntry<T> result = queryExact(q, x);
 			if (result != null) {
 				return result;
 			}
@@ -711,34 +706,34 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public QueryIterator<? extends PointEntry<T>> iterator() {
+	public PointIterator<T> iterator() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
+	public PointIterator<T> query(double[] min, double[] max) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
 	}
 	
 	@Override
-	public PointEntryDist<T> query1NN(double[] center) {
+	public PointEntryKnn<T> query1nn(double[] center) {
 		if (root == null) {
 			return null;
 		}
 		//TODO avoid all these object creations
-		Point<T> x = new Point<>(center, null);
+		PointEntry<T> x = new PointEntry<>(center, null);
 		double distPX = d(root.point(), center);
 		nDist1NN++;
-		PointDist<T> y = new PointDist<>(root.point().point(), root.point().value(), distPX);
+		PointEntryKnn<T> y = new PointEntryKnn<>(root.point().point(), root.point().value(), distPX);
 		findNearestNeighbor(root, x, y, distPX);
 		return y;
 	}
 
-	private void findNearestNeighbor(Node<T> p, Point<T> x, final PointDist<T> y, 
+	private void findNearestNeighbor(Node<T> p, PointEntry<T> x, final PointEntryKnn<T> y,
 			double distPX) {
 //		Algorithm 1 Find nearest neighbor
 //		function findNearestNeighbor(cover tree p, query
@@ -777,15 +772,15 @@ public class CoverTree<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
 		return new KNNIterator<>(this).reset(center, k);
 		//The kNN search above is consistently 2x faster so we use it instead of
 		//the Hjaltason/Samet algorithm below.
 		//return new CoverTreeQueryKnn<>(this, center, k, dist);
 	}
 
-	private void findNearestNeighbor(Node<T> p, double[] x, 
-			int k, ArrayList<PointDist<T>> candidates, double distPX) {
+	private void findNearestNeighbor(Node<T> p, double[] x,
+									 int k, ArrayList<PointEntryKnn<T>> candidates, double distPX) {
 //		Algorithm 1 Find nearest neighbor
 //		function findNearestNeighbor(cover tree p, query
 //		point x, nearest neighbor so far y)
@@ -795,14 +790,14 @@ public class CoverTree<T> implements PointIndex<T> {
 //		4: if d(y;x) > d(y;q)-maxdist(q) then
 //		5: y findNearestNeighbor(q;x;y)
 //		6: return y
-		Point<T> nn = p.point();
+		PointEntry<T> nn = p.point();
 		if (candidates.size() < k) {
-			candidates.add(new PointDist<>(nn.point(), nn.value(), distPX));
-			candidates.sort(PointDist.COMPARATOR);
+			candidates.add(new PointEntryKnn<>(nn.point(), nn.value(), distPX));
+			candidates.sort(comparator);
 		} else if (distPX < candidates.get(k-1).dist()) {
 			candidates.remove(k-1);
-			candidates.add(new PointDist<>(nn.point(), nn.value(), distPX));
-			candidates.sort(PointDist.COMPARATOR);
+			candidates.add(new PointEntryKnn<>(nn.point(), nn.value(), distPX));
+			candidates.sort(comparator);
 		}
 
 		if (p.hasChildren()) {
@@ -832,11 +827,11 @@ public class CoverTree<T> implements PointIndex<T> {
 		}
 	}
 
-	private static class KNNIterator<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+	private static class KNNIterator<T> implements PointIteratorKnn<T> {
 
 		private final CoverTree<T> tree;
-		private final ArrayList<PointDist<T>> result = new ArrayList<>();
-		private Iterator<PointDist<T>> iter;
+		private final ArrayList<PointEntryKnn<T>> result = new ArrayList<>();
+		private Iterator<PointEntryKnn<T>> iter;
 		
 		public KNNIterator(CoverTree<T> tree) {
 			this.tree = tree;
@@ -848,12 +843,12 @@ public class CoverTree<T> implements PointIndex<T> {
 		}
 
 		@Override
-		public PointEntryDist<T> next() {
+		public PointEntryKnn<T> next() {
 			return iter.next();
 		}
 
 		@Override
-		public QueryIteratorKNN<PointEntryDist<T>> reset(double[] center, int k) {
+		public PointIteratorKnn<T> reset(double[] center, int k) {
 			result.clear();
 			if (tree.root != null) {
 				double distPX = tree.d(tree.root.point(), center);
@@ -865,7 +860,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		}	
 	}
 	
-	double d(Point<?> x, Point<?> y) {
+	double d(PointEntry<?> x, PointEntry<?> y) {
 		return d(x, y.point());
 	}
 
@@ -873,7 +868,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		return d(x.point(), y.point().point());
 	}
 
-	private double d(Point<?> x, double[] p2) {
+	private double d(PointEntry<?> x, double[] p2) {
 		nDistCalc++;
 		return dist.dist(x.point(), p2);
 	}
@@ -987,7 +982,7 @@ public class CoverTree<T> implements PointIndex<T> {
 		return this.getClass().getSimpleName() + 
 				";BASE=" + BASE +  
 				";NEAREST_ANCESTOR=" + NEAREST_ANCESTOR + 
-				";DistFn=" + PointDistanceFunction.getName(dist);
+				";DistFn=" + PointDistance.getName(dist);
 	}
 
 }

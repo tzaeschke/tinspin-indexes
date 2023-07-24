@@ -19,28 +19,31 @@ import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
 import org.tinspin.index.test.util.TestInstances.IDX;
+import org.tinspin.index.util.PointMultimapWrapper;
 
 import java.util.Arrays;
 
-public class PointIndexMMCandidate extends Candidate {
+import static org.tinspin.index.Index.*;
 
-	private final PointIndexMM<Integer> idx;
+public class PointMultimapCandidate extends Candidate {
+
+	private final PointMultimap<Integer> idx;
 	private final int dims;
 	private final int N;
 	private double[] data;
-	private QueryIterator<PointEntry<Integer>> it;
-	private QueryIteratorKNN<PointEntryDist<Integer>> itKnn;
+	private PointIterator<Integer> it;
+	private PointIteratorKnn<Integer> itKnn;
 	private final boolean bulkloadSTR;
 	private final IndexHandle index;
 
-	public static PointIndexMMCandidate create(TestStats ts) {
+	public static PointMultimapCandidate create(TestStats ts) {
 		IDX idx = (IDX) ts.INDEX;
 		int dims = ts.cfgNDims;
 		int size = ts.cfgNEntries;
-		return new PointIndexMMCandidate(create(idx, dims, size), ts);
+		return new PointMultimapCandidate(create(idx, dims, size), ts);
 	}
 
-	private static <T> PointIndexMM<T> create(IDX idx, int dims, int size) {
+	private static <T> PointMultimap<T> create(IDX idx, int dims, int size) {
 		switch (idx) {
 			case ARRAY: return new PointArray<>(dims, size);
 			//case CRITBIT: return new PointArray<>(dims, size);
@@ -50,7 +53,7 @@ public class PointIndexMMCandidate extends Candidate {
 			case QUAD_HC2: return QuadTreeKD2.create(dims);
 			case QUAD_PLAIN: return QuadTreeKD0.create(dims);
 			case RSTAR:
-			case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
+			case STR: return PointMultimapWrapper.create(RTree.createRStar(dims));
 			//case COVER: return CoverTree.create(dims);
 			default:
 				throw new UnsupportedOperationException(idx.name());
@@ -62,10 +65,10 @@ public class PointIndexMMCandidate extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public PointIndexMMCandidate(PointIndexMM<?> pi, TestStats ts) {
+	public PointMultimapCandidate(PointMultimap<?> pi, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
-		idx = (PointIndexMM<Integer>) pi;
+		idx = (PointMultimap<Integer>) pi;
 		this.index = ts.INDEX;
 		this.bulkloadSTR = IDX.STR == this.index;
 	}
@@ -83,7 +86,7 @@ public class PointIndexMMCandidate extends Candidate {
 				pos += dims;
 				entries[i] = new Entry<>(buf, buf, i);
 			}
-			PointIndexMMWrapper<Integer> rt = (PointIndexMMWrapper<Integer>) idx;
+			PointMultimapWrapper<Integer> rt = (PointMultimapWrapper<Integer>) idx;
 			rt.load(entries);
 		} else {
 			for (int i = 0; i < N; i++) {
@@ -153,10 +156,10 @@ public class PointIndexMMCandidate extends Candidate {
 	@Override
 	public double knnQuery(int k, double[] center) {
 		if (k == 1) {
-			return idx.query1NN(center).dist();
+			return idx.query1nn(center).dist();
 		}
 		if (itKnn == null) {
-			itKnn = idx.queryKNN(center, k);
+			itKnn = idx.queryKnn(center, k);
 		} else {
 			itKnn.reset(center, k);
 		}
@@ -188,7 +191,7 @@ public class PointIndexMMCandidate extends Candidate {
 	 * 
 	 * @return The internally used index structure
 	 */
-	public Index<Integer> getNative() {
+	public Index getNative() {
 		return idx;
 	}
 

@@ -19,16 +19,17 @@ package org.tinspin.index.covertree;
 
 import java.util.ArrayList;
 
+import static org.tinspin.index.Index.*;
 
 public class Node<T> {
 
-	private Point<T> p;
+	private PointEntry<T> p;
 	private ArrayList<Node<T>> children;
 	private int level;
 	private double distToParent;
 	private double maxDist = -1;
 	
-	Node(Point<T> p, int level) {
+	Node(PointEntry<T> p, int level) {
 		this.p = p;
 		this.level = level;
 	}
@@ -39,7 +40,7 @@ public class Node<T> {
 		return this;
 	}
 
-	Point<T> point() {
+	PointEntry<T> point() {
 		return p;
 	}
 	

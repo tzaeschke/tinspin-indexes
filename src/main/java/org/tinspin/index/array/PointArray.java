@@ -11,16 +11,17 @@ import java.util.function.Predicate;
 
 import org.tinspin.index.*;
 
-public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
+public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	
 	private final double[][] phc;
 	private final int dims;
 	private int N;
 	private PointEntry<T>[] values;
-	private int insPos = 0; 
-	
+	private int insPos = 0;
+	private static final PEComparator comparator = new PEComparator();
+
 	/**
-	 * Setup of an simple array data structure (no indexing).
+	 * Setup of a simple array data structure (no indexing).
 	 * 
 	 * @param dims dimensions
 	 * @param size size
@@ -38,7 +39,7 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 	@Override
 	public void insert(double[] key, T value) {
 		System.arraycopy(key, 0, phc[insPos], 0, dims);
-		values[insPos] = new KnnEntry<>(key, value, -1);
+		values[insPos] = new PointEntryKnn<>(key, value, -1);
 		insPos++;
 	}
 
@@ -53,7 +54,7 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> query(double[] point) {
+	public PointIterator<T> query(double[] point) {
 		return null;
 	}
 
@@ -110,11 +111,12 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public PointEntryDist<T> query1NN(double[] center) {
-		return PointIndex.super.query1NN(center); // TODO ????? Why do we need this?
+	public PointEntryKnn<T> query1nn(double[] center) {
+		PointIteratorKnn<T> it = queryKnn(center, 1);
+		return it.hasNext() ? it.next() : null;
 	}
 
-	private class AQueryIterator implements QueryIterator<PointEntry<T>> {
+	private class AQueryIterator implements PointIterator<T> {
 
     	private Iterator<PointEntry<T>> it;
     	
@@ -133,7 +135,7 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
+		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
 			ArrayList<PointEntry<T>> results = new ArrayList<>(); 
 			for (int i = 0; i < N; i++) { 
 				if (leq(phc[i], max) && geq(phc[i], min)) {
@@ -141,32 +143,33 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 				}
 			}
 			it = results.iterator();
+			return this;
 		}
     }
     
 	@Override
-	public QueryIterator<PointEntry<T>> iterator() {
+	public PointIterator<T> iterator() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
 	}
 
 	@Override
-	public AQueryIteratorKNN queryKNN(double[] center, int k) {
-		return new AQueryIteratorKNN(center, k);
+	public AQueryIteratorKnn queryKnn(double[] center, int k) {
+		return new AQueryIteratorKnn(center, k);
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
 		return null;
 	}
 
 
-	private class AQueryIteratorKNN implements QueryIteratorKNN<PointEntryDist<T>> {
+	private class AQueryIteratorKnn implements PointIteratorKnn<T> {
 
-    	private Iterator<PointEntryDist<T>> it;
+    	private Iterator<PointEntryKnn<T>> it;
     	
-		public AQueryIteratorKNN(double[] center, int k) {
+		public AQueryIteratorKnn(double[] center, int k) {
 			reset(center, k);
 		}
 
@@ -176,31 +179,31 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 		}
 
 		@Override
-		public PointEntryDist<T> next() {
+		public PointEntryKnn<T> next() {
 			return it.next();
 		}
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
-		public AQueryIteratorKNN reset(double[] center, int k) {
+		public AQueryIteratorKnn reset(double[] center, int k) {
 			it = ((List)knnQuery(center, k)).iterator();
 			return this;
 		}
     }
     
 
-	private ArrayList<KnnEntry<T>> knnQuery(double[] center, int k) {
-		ArrayList<KnnEntry<T>> ret = new ArrayList<>(k);
+	private ArrayList<PointEntryKnn<T>> knnQuery(double[] center, int k) {
+		ArrayList<PointEntryKnn<T>> ret = new ArrayList<>(k);
 		for (int i = 0; i < phc.length; i++) {
 			double[] p = phc[i];
 			double dist = dist(center, p);
 			if (ret.size() < k) {
-				ret.add(new KnnEntry<>(p, values[i].value(), dist));
-				ret.sort(COMP);
-			} else if (ret.get(k-1).dist > dist) {
+				ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
+				ret.sort(comparator);
+			} else if (ret.get(k-1).dist() > dist) {
 				ret.remove(k-1);
-				ret.add(new KnnEntry<>(p, values[i].value(), dist));
-				ret.sort(COMP);
+				ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
+				ret.sort(comparator);
 			}
 		}
 		return ret;
@@ -215,41 +218,6 @@ public class PointArray<T> implements PointIndex<T>, PointIndexMM<T> {
 		return Math.sqrt(dist);
 	}
 
-	private final Comparator<KnnEntry<T>> COMP = KnnEntry::compareTo;
-	
-	private static class KnnEntry<T> implements Comparable<KnnEntry<T>>, PointEntryDist<T> {
-		private final double[] p;
-		private final double dist;
-		private final T val;
-		KnnEntry(double[] p, T val, double dist) {
-			this.p = p;
-			this.val = val;
-			this.dist = dist;
-		}
-		@Override
-		public int compareTo(KnnEntry<T> o) {
-			double d = dist-o.dist;
-			return d < 0 ? -1 : d > 0 ? 1 : 0;
-		}
-		
-		@Override
-		public String toString() {
-			return "d=" + dist + ":" + Arrays.toString(p);
-		}
-		@Override
-		public double[] point() {
-			return p;
-		}
-		@Override
-		public T value() {
-			return val;
-		}
-		@Override
-		public double dist() {
-			return dist;
-		}
-	}
-	
 	@Override
 	public T update(double[] oldPoint, double[] newPoint) {
 		for (int i = 0; i < N; i++) { 

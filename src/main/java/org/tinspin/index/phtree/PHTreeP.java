@@ -16,11 +16,7 @@
  */
 package org.tinspin.index.phtree;
 
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.PointIndex;
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
+import org.tinspin.index.PointMap;
 import org.tinspin.index.Stats;
 
 import ch.ethz.globis.phtree.PhTreeF;
@@ -30,7 +26,7 @@ import ch.ethz.globis.phtree.PhTreeF.PhIteratorF;
 import ch.ethz.globis.phtree.PhTreeF.PhKnnQueryF;
 import ch.ethz.globis.phtree.PhTreeF.PhQueryF;
 
-public class PHTreeP<T> implements PointIndex<T> {
+public class PHTreeP<T> implements PointMap<T> {
 
 	private final PhTreeF<T> tree;
 	
@@ -98,26 +94,26 @@ public class PHTreeP<T> implements PointIndex<T> {
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
+	public PointIterator<T> query(double[] min, double[] max) {
 		return new QueryIteratorPH<>(tree.query(min, max));
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> iterator() {
-		return new IteratorPH<>(tree.queryExtent());
+	public PointIterator<T> iterator() {
+		return new ExtentWrapper();
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
 		return new QueryIteratorKnnPH<>(tree.nearestNeighbour(k, center));
 	}
 
-	private static class IteratorPH<T> implements QueryIterator<PointEntry<T>> {
+	private class ExtentWrapper implements PointIterator<T> {
 
-		private final PhIteratorF<T> iter;
+		private PhIteratorF<T> iter;
 		
-		private IteratorPH(PhIteratorF<T> iter) {
-			this.iter = iter;
+		private ExtentWrapper() {
+			reset(null, null);
 		}
 		
 		@Override
@@ -129,18 +125,20 @@ public class PHTreeP<T> implements PointIndex<T> {
 		public PointEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryF<T> e = iter.nextEntryReuse();
-			return new EntryP<>(e.getKey().clone(), e.getValue());
+			return new PointEntry<>(e.getKey().clone(), e.getValue());
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
-			//TODO
-			throw new UnsupportedOperationException();
+		public PointIterator<T> reset(double[] min, double[] max) {
+			if (min != null || max != null) {
+				throw new UnsupportedOperationException("min/max must be `null`");
+			}
+			iter = tree.queryExtent();
+			return this;
 		}
-		
 	}
 	
-	private static class QueryIteratorPH<T> implements QueryIterator<PointEntry<T>> {
+	private static class QueryIteratorPH<T> implements PointIterator<T> {
 
 		private final PhQueryF<T> iter;
 		
@@ -157,17 +155,18 @@ public class PHTreeP<T> implements PointIndex<T> {
 		public PointEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryF<T> e = iter.nextEntryReuse();
-			return new EntryP<>(e.getKey().clone(), e.getValue());
+			return new PointEntry<>(e.getKey().clone(), e.getValue());
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
+		public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
 			iter.reset(min, max);
+			return this;
 		}
 		
 	}
 	
-	private static class QueryIteratorKnnPH<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+	private static class QueryIteratorKnnPH<T> implements PointIteratorKnn<T> {
 
 		private final PhKnnQueryF<T> iter;
 		
@@ -181,10 +180,10 @@ public class PHTreeP<T> implements PointIndex<T> {
 		}
 
 		@Override
-		public PointEntryDist<T> next() {
+		public PointEntryKnn<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryDistF<T> e = iter.nextEntryReuse();
-			return new DistEntryP<>(e.getKey().clone(), e.getValue(), e.dist());
+			return new PointEntryKnn<>(e.getKey().clone(), e.getValue(), e.dist());
 		}
 
 		@Override

@@ -41,7 +41,7 @@ import org.tinspin.index.util.StringBuilderLn;
  *
  * @param <T> Value type.
  */
-public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
+public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	static final int NODE_MAX_DIR = 10;//56; //PAPER: M=56 for 1KB pages
 	static final int NODE_MAX_DATA = 10;//50; //PAPER: M=50 for 1KB pages
@@ -173,7 +173,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		// -> done inside split/reinsert
 	}
 	
-	private RTreeNode<T> overflowTreatment(RTreeNode<T> node, 
+	private RTreeNode<T> overflowTreatment(RTreeNode<T> node,
 			Entry<T> e, boolean[] blockedLevels, int desiredInsertionLevel) {
 		//OT1
 		if (node != root && !blockedLevels[desiredInsertionLevel]) {
@@ -239,7 +239,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 * @return `true` iff an entry was found and removed
 	 */
 	@Override
-	public boolean removeIf(double[] min, double[] max, Predicate<RectangleEntry<T>> condition) {
+	public boolean removeIf(double[] min, double[] max, Predicate<BoxEntry<T>> condition) {
 		Predicate<Entry<T>> pred = e -> e.checkExactMatch(min, max) && condition.test(e);
 		return findNodes(min, max, root, node -> deleteFromNode(node, pred));
 	}
@@ -453,27 +453,27 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 * @see org.tinspin.index.rtree.Index#query1N
 	 */
 	@Override
-	public RectangleEntryDist<T> query1NN(double[] center) {
-		return new RTreeQuery1NN<>(this).reset(center, RectangleDistanceFunction.EDGE);
+	public BoxEntryKnn<T> query1nn(double[] center) {
+		return new RTreeQuery1nn<>(this).reset(center, BoxDistance.EDGE);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.tinspin.index.rtree.Index#queryKNN(double[], int, org.tinspin.index.rtree.RectangleDistanceFunction)
 	 */
 	@Override
-	public RTreeQueryKnn2<T> queryKNN(double[] center, int k) {
-		return queryKNN(center, k, RectangleDistanceFunction.EDGE);
+	public RTreeQueryKnn2<T> queryKnn(double[] center, int k) {
+		return queryKnn(center, k, BoxDistance.EDGE);
 	}
 
 	@Override
-	public RTreeQueryKnn2<T> queryKNN(double[] center, int k, RectangleDistanceFunction dist) {
+	public RTreeQueryKnn2<T> queryKnn(double[] center, int k, BoxDistance dist) {
 		//return new RTreeQueryKnn<>(this, center, k, dist);
-		return new RTreeQueryKnn2<>(this, k, center, dist, e -> true);
+		return new RTreeQueryKnn2<>(this, k, center, dist, (e, d) -> true);
 	}
 
-	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(
-			double[] center, RectangleDistanceFunction dist,
-			RectangleDistanceFunction closestDist, double[] minBound, double[] maxBound) {
+	public Iterable<BoxEntryKnn<T>> queryRangedNearestNeighbor(
+			double[] center, BoxDistance dist,
+			BoxDistance closestDist, double[] minBound, double[] maxBound) {
 		return queryRangedNearestNeighbor(center, dist, closestDist, 
 				new Filter.RectangleIntersectFilter(minBound, maxBound));
 	}
@@ -494,8 +494,8 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 	 *                     (example: {@code new Filter.RectangleIntersectFilter(min, max)})
 	 * @return             An Iterable which lazily calculates the nearest neighbors. 
 	 */
-	public Iterable<RectangleEntryDist<T>> queryRangedNearestNeighbor(double[] center, RectangleDistanceFunction dist,
-			RectangleDistanceFunction closestDist, Filter filter) {
+	public Iterable<BoxEntryKnn<T>> queryRangedNearestNeighbor(double[] center, BoxDistance dist,
+															   BoxDistance closestDist, Filter filter) {
 		RTree<T> self = this;
 		return () -> new RTreeMixedQuery<>(self, center, filter, dist, closestDist);
 	}
@@ -566,7 +566,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 		ArrayList<Entry<T>> entries = node.getEntries();
 		for (int i = 0; i < entries.size(); i++) {
 			Entry<T> e = entries.get(i);
-			if (!node.checkInclusion(e.min, e.max)) {
+			if (!node.checkInclusion(e.min(), e.max())) {
 				throw new IllegalStateException();
 			}
 			if (e instanceof RTreeNode) {
@@ -593,7 +593,7 @@ public class RTree<T> implements RectangleIndex<T>, RectangleIndexMM<T> {
 			for (int i = 0; i < entries.size(); i++) {
 				Entry<T> e = entries.get(i);
 				for (int j = i+1; j < entries.size(); j++) {
-					if (Entry.checkOverlap(e.lower(), e.upper(), entries.get(j))) {
+					if (Entry.checkOverlap(e.min(), e.max(), entries.get(j))) {
 						System.out.println("Overlap 1: " + e);
 						System.out.println("Overlap 2: " + entries.get(j));
 						System.out.println("Overlap 1 parent : " + 

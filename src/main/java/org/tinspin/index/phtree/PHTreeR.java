@@ -16,11 +16,7 @@
  */
 package org.tinspin.index.phtree;
 
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.RectangleEntry;
-import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.BoxMap;
 
 import ch.ethz.globis.phtree.PhTreeSolidF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhEntryDistSF;
@@ -29,7 +25,7 @@ import ch.ethz.globis.phtree.PhTreeSolidF.PhIteratorSF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhKnnQuerySF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhQuerySF;
 
-public class PHTreeR<T> implements RectangleIndex<T> {
+public class PHTreeR<T> implements BoxMap<T> {
 
 	private final PhTreeSolidF<T> tree;
 	
@@ -97,26 +93,26 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 	}
 
 	@Override
-	public QueryIterator<RectangleEntry<T>> iterator() {
-		return new IteratorPH<>(tree.iterator());
+	public BoxIterator<T> iterator() {
+		return new ExtentWrapper();
 	}
 
 	@Override
-	public QueryIterator<RectangleEntry<T>> queryIntersect(double[] min, double[] max) {
+	public BoxIterator<T> queryIntersect(double[] min, double[] max) {
 		return new QueryIteratorPH<>(tree.queryIntersect(min, max));
 	}
 
 	@Override
-	public QueryIteratorKNN<RectangleEntryDist<T>> queryKNN(double[] center, int k) {
+	public BoxIteratorKnn<T> queryKnn(double[] center, int k) {
 		return new QueryIteratorKnnPH<>(tree.nearestNeighbour(k, null, center));
 	}
 
-	private static class IteratorPH<T> implements QueryIterator<RectangleEntry<T>> {
+	private class ExtentWrapper implements BoxIterator<T> {
 
-		private final PhIteratorSF<T> iter;
+		private PhIteratorSF<T> iter;
 		
-		private IteratorPH(PhIteratorSF<T> iter) {
-			this.iter = iter;
+		private ExtentWrapper() {
+			reset(null, null);
 		}
 		
 		@Override
@@ -125,21 +121,23 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 		}
 
 		@Override
-		public RectangleEntry<T> next() {
+		public BoxEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntrySF<T> e = iter.nextEntryReuse();
-			return new EntryR<>(e.lower().clone(), e.upper().clone(), e.value());
+			return new BoxEntry<>(e.lower().clone(), e.upper().clone(), e.value());
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
-			//TODO
-			throw new UnsupportedOperationException();
+		public QueryIterator<BoxEntry<T>> reset(double[] min, double[] max) {
+			if (min != null || max != null) {
+				throw new UnsupportedOperationException("min/max must be `null`");
+			}
+			iter = tree.iterator();
+			return this;
 		}
-		
 	}
 	
-	private static class QueryIteratorPH<T> implements QueryIterator<RectangleEntry<T>> {
+	private static class QueryIteratorPH<T> implements BoxIterator<T> {
 
 		private final PhQuerySF<T> iter;
 		
@@ -153,20 +151,20 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 		}
 
 		@Override
-		public RectangleEntry<T> next() {
+		public BoxEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntrySF<T> e = iter.nextEntryReuse();
-			return new EntryR<>(e.lower().clone(), e.upper().clone(), e.value());
+			return new BoxEntry<>(e.lower().clone(), e.upper().clone(), e.value());
 		}
 
 		@Override
-		public void reset(double[] min, double[] max) {
+		public QueryIterator<BoxEntry<T>> reset(double[] min, double[] max) {
 			iter.reset(min, max);
+			return this;
 		}
-		
 	}
 	
-	private static class QueryIteratorKnnPH<T> implements QueryIteratorKNN<RectangleEntryDist<T>> {
+	private static class QueryIteratorKnnPH<T> implements BoxIteratorKnn<T> {
 
 		private final PhKnnQuerySF<T> iter;
 		
@@ -180,10 +178,10 @@ public class PHTreeR<T> implements RectangleIndex<T> {
 		}
 
 		@Override
-		public RectangleEntryDist<T> next() {
+		public BoxEntryKnn<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryDistSF<T> e = iter.nextEntryReuse();
-			return new DistEntryR<>(e.lower().clone(), e.upper().clone(), e.value(), e.dist());
+			return new BoxEntryKnn<>(e.lower().clone(), e.upper().clone(), e.value(), e.dist());
 		}
 
 		@Override

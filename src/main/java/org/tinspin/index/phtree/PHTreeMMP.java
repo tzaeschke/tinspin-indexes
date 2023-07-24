@@ -33,7 +33,7 @@ import java.util.function.Predicate;
  *
  * @param <T> The value type associated with each entry.
  */
-public class PHTreeMMP<T> implements PointIndexMM<T> {
+public class PHTreeMMP<T> implements PointMultimap<T> {
 
     private final PhTreeMultiMapF2<T> tree;
 
@@ -93,7 +93,7 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
     @Override
     public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
         for (T t : tree.get(point)) {
-            if (condition.test(new EntryP<>(point, t))) {
+            if (condition.test(new PointEntry<>(point, t))) {
                 return tree.remove(point, t);
             }
         }
@@ -116,36 +116,36 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
     }
 
     @Override
-    public QueryIterator<PointEntry<T>> query(double[] key) {
-        return new IteratorPlain<>(key, tree.get(key).iterator());
+    public PointIterator<T> query(double[] key) {
+        return new IteratorPlain(key);
     }
 
     @Override
-    public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
+    public PointIterator<T> query(double[] min, double[] max) {
         return new IteratorWQ<>(tree.query(min, max));
     }
 
     @Override
-    public QueryIterator<PointEntry<T>> iterator() {
-        return new IteratorExtent<>(tree.queryExtent());
+    public PointIterator<T> iterator() {
+        return new ExtentWrapper();
     }
 
     @Override
-    public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
+    public PointIteratorKnn<T> queryKnn(double[] center, int k) {
         return new IteratorKnn<>(tree.nearestNeighbour(k, center));
     }
 
     @Override
-    public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
-        return null;
+    public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
+        throw new UnsupportedOperationException();
     }
 
-    private static class IteratorExtent<T> implements QueryIterator<PointEntry<T>> {
+    private class ExtentWrapper implements PointIterator<T> {
 
-        private final PhIteratorF<T> iter;
+        private PhIteratorF<T> iter;
 
-        private IteratorExtent(PhIteratorF<T> iter) {
-            this.iter = iter;
+        private ExtentWrapper() {
+            reset(null, null);
         }
 
         @Override
@@ -157,18 +157,21 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
         public PointEntry<T> next() {
             //This reuses the entry object, but we have to clone the arrays...
             PhEntryF<T> e = iter.nextEntryReuse();
-            return new EntryP<>(e.getKey().clone(), e.getValue());
+            return new PointEntry<>(e.getKey().clone(), e.getValue());
         }
 
         @Override
-        public void reset(double[] min, double[] max) {
-            //TODO
-            throw new UnsupportedOperationException();
+        public PointIterator<T> reset(double[] min, double[] max) {
+            if (min != null || max != null) {
+                throw new UnsupportedOperationException("min/max must be `null`");
+            }
+            iter = tree.queryExtent();
+            return this;
         }
 
     }
 
-    private static class IteratorWQ<T> implements QueryIterator<PointEntry<T>> {
+    private static class IteratorWQ<T> implements PointIterator<T> {
 
         private final PhQueryF<T> iter;
 
@@ -185,24 +188,24 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
         public PointEntry<T> next() {
             //This reuses the entry object, but we have to clone the arrays...
             PhEntryF<T> e = iter.nextEntryReuse();
-            return new EntryP<>(e.getKey().clone(), e.getValue());
+            return new PointEntry<>(e.getKey().clone(), e.getValue());
         }
 
         @Override
-        public void reset(double[] min, double[] max) {
+        public QueryIterator<PointEntry<T>> reset(double[] min, double[] max) {
             iter.reset(min, max);
+            return this;
         }
 
     }
 
-    private static class IteratorPlain<T> implements QueryIterator<PointEntry<T>> {
+    private class IteratorPlain implements PointIterator<T> {
 
-        private final Iterator<T> iter;
-        private final double[] key;
+        private Iterator<T> iter;
+        private double[] key;
 
-        private IteratorPlain(double[] key, Iterator<T> iter) {
-            this.iter = iter;
-            this.key = key;
+        private IteratorPlain(double[] key) {
+            reset(key, null);
         }
 
         @Override
@@ -212,16 +215,21 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
 
         @Override
         public PointEntry<T> next() {
-            return new EntryP<>(key, iter.next());
+            return new PointEntry<>(key, iter.next());
         }
 
         @Override
-        public void reset(double[] min, double[] max) {
-            throw new UnsupportedOperationException();
+        public PointIterator<T> reset(double[] point, double[] mustBeNull) {
+            if (mustBeNull != null) {
+                throw new UnsupportedOperationException("second argument must be `null`");
+            }
+            iter = tree.get(point).iterator();
+            key = point;
+            return this;
         }
     }
 
-    private static class IteratorKnn<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+    private static class IteratorKnn<T> implements PointIteratorKnn<T> {
 
         private final PhKnnQueryF<T> iter;
 
@@ -235,10 +243,10 @@ public class PHTreeMMP<T> implements PointIndexMM<T> {
         }
 
         @Override
-        public PointEntryDist<T> next() {
+        public PointEntryKnn<T> next() {
             //This reuses the entry object, but we have to clone the arrays...
             PhEntryDistF<T> e = iter.nextEntryReuse();
-            return new DistEntryP<>(e.getKey().clone(), e.getValue(), e.dist());
+            return new PointEntryKnn<>(e.getKey().clone(), e.getValue(), e.dist());
         }
 
         @Override

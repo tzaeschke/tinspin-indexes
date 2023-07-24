@@ -26,14 +26,14 @@ import java.util.Random;
 
 import ch.ethz.globis.tinspin.TestStats;
 import org.junit.Test;
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.RectangleEntry;
-import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.BoxMap;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.test.util.JmxTools;
-import org.tinspin.index.test.util.TestRectangle;
-import org.tinspin.index.test.util.TestRectangleCube;
+import org.tinspin.index.test.util.TestBox;
+import org.tinspin.index.test.util.TestBoxCube;
 import org.tinspin.index.test.util.TestInstances.TST;
+
+import static org.tinspin.index.Index.*;
 
 public class PhTreeTest {
 
@@ -46,7 +46,7 @@ public class PhTreeTest {
 	public void testR() {
 		Random R = new Random(0);
 		TestStats ts = new TestStats(TST.CUBE_R, null, N, DIM, param1);
-		TestRectangle test = new TestRectangleCube(R, ts);
+		TestBox test = new TestBoxCube(R, ts);
 		double[] data = test.generate();
 
 		RectArray<Integer> tree1 = new RectArray<Integer>(DIM, N);
@@ -60,7 +60,7 @@ public class PhTreeTest {
 	}
 	
 	
-	private void load(RectangleIndex<Integer> tree, double[] data) {
+	private void load(BoxMap<Integer> tree, double[] data) {
 		int pos = 0;
 		for (int n = 0; n < N; n++) {
 			double[] lo = new double[DIM];
@@ -73,7 +73,7 @@ public class PhTreeTest {
 		}
 	}
 	
-	private void repeatQuery(TestRectangle test, RectangleIndex<Integer> tree1, RectangleIndex<Integer> tree2, int repeat) {
+	private void repeatQuery(TestBox test, BoxMap<Integer> tree1, BoxMap<Integer> tree2, int repeat) {
 		int dims = DIM;
 		//log("N=" + N);
 		log("querying index ... repeat = " + repeat);
@@ -89,19 +89,19 @@ public class PhTreeTest {
 				(t2-t1)*1000*1000/(double)n + " ns/q/r  (n=" + n + ")");
 	}
 	
-	private int repeatQueries(RectangleIndex<Integer> tree1, RectangleIndex<Integer> tree2, double[][] lower, double[][] upper) {
+	private int repeatQueries(BoxMap<Integer> tree1, BoxMap<Integer> tree2, double[][] lower, double[][] upper) {
 		int n=0;
 		for (int i = 0; i < lower.length; i++) {
 			int n1 = 0;
-			ArrayList<RectangleEntry<Integer>> set1 = new ArrayList<>();
-			QueryIterator<RectangleEntry<Integer>> it1 = tree1.queryIntersect(lower[i], upper[i]);
+			ArrayList<BoxEntry<Integer>> set1 = new ArrayList<>();
+			QueryIterator<BoxEntry<Integer>> it1 = tree1.queryIntersect(lower[i], upper[i]);
 			while (it1.hasNext()) {
 				set1.add(it1.next());
 				n1++;
 			}
 			int n2 = 0;
-			ArrayList<RectangleEntry<Integer>> set2 = new ArrayList<>();
-			QueryIterator<RectangleEntry<Integer>> it2 = tree2.queryIntersect(lower[i], upper[i]);
+			ArrayList<BoxEntry<Integer>> set2 = new ArrayList<>();
+			QueryIterator<BoxEntry<Integer>> it2 = tree2.queryIntersect(lower[i], upper[i]);
 			while (it2.hasNext()) {
 				set2.add(it2.next());
 				n2++;
@@ -112,10 +112,10 @@ public class PhTreeTest {
 				set1.sort(COMP);
 				set2.sort(COMP);
 				for (int j = 0; j < set1.size(); j++) {
-					RectangleEntry<Integer> e1 = set1.get(j);
-					RectangleEntry<Integer> e2 = set2.get(j);
-					if (!Arrays.equals(e1.lower(), e2.lower()) || 
-							!Arrays.equals(e1.upper(), e2.upper())) {
+					BoxEntry<Integer> e1 = set1.get(j);
+					BoxEntry<Integer> e2 = set2.get(j);
+					if (!Arrays.equals(e1.min(), e2.min()) ||
+							!Arrays.equals(e1.max(), e2.max())) {
 						log("j=" + j + " mismatch: " + e1 + " -/- " + e2);
 					}
 				}
@@ -129,16 +129,16 @@ public class PhTreeTest {
 		return n;
 	}
 	
-	private static final class RectComp implements Comparator<RectangleEntry<?>> {
+	private static final class RectComp implements Comparator<BoxEntry<?>> {
 
 		@Override
-		public int compare(RectangleEntry<?> o1, RectangleEntry<?> o2) {
+		public int compare(BoxEntry<?> o1, BoxEntry<?> o2) {
 			for (int d = 0; d < DIM; d++) {
-				double diff = o1.lower()[d] - o2.lower()[d];
+				double diff = o1.min()[d] - o2.min()[d];
 				if (diff != 0) {
 					return diff < 0 ? -1 : 1;
 				}
-				diff = o1.upper()[d] - o2.upper()[d];
+				diff = o1.max()[d] - o2.max()[d];
 				if (diff != 0) {
 					return diff < 0 ? -1 : 1;
 				}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tilmann Zaeschke
+ * Copyright 2016-2023 Tilmann Zaeschke
  * 
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import org.tinspin.index.RectangleDistanceFunction;
+import org.tinspin.index.BoxDistance;
+
+import static org.tinspin.index.Index.*;
 
 /**
  * 1-NN search with EDGE distance and presorting of entries.
@@ -29,7 +31,7 @@ import org.tinspin.index.RectangleDistanceFunction;
  *
  * @param <T> Value type.
  */
-public class RTreeQuery1NN<T> {
+public class RTreeQuery1nn<T> {
 	
 	private class IteratorStack {
 		private final IterPos<T>[] stack;
@@ -47,28 +49,27 @@ public class RTreeQuery1NN<T> {
 			return size == 0;
 		}
 
-		IterPos<T> prepareAndPush(RTreeNode<T> node, double minDist) {
+		void prepareAndPush(RTreeNode<T> node, double minDist) {
 			IterPos<T> ni = stack[size++];
 			ni.init(node);
 			if (ni.node instanceof RTreeNodeDir) {
 				sortEntries(ni, minDist);
 			}
-			return ni;
 		}
 
 		IterPos<T> peek() {
 			return stack[size-1];
 		}
 
-		IterPos<T> pop() {
-			return stack[--size];
+		void pop() {
+			--size;
 		}
 	}
 
-	private static class DEComparator implements Comparator<DistEntry<?>> {
+	private static class DEComparator implements Comparator<NodeDistT<?>> {
 		@Override
-		public int compare(DistEntry<?> o1, DistEntry<?> o2) {
-			double d = o1.dist() - o2.dist();
+		public int compare(NodeDistT o1, NodeDistT o2) {
+			double d = o1.dist - o2.dist;
 			return d < 0 ? -1 : d > 0 ? 1 : 0;
 		}
 	}
@@ -77,19 +78,19 @@ public class RTreeQuery1NN<T> {
 	private final RTree<T> tree;
 	private double[] center;
 	private IteratorStack stack;
-	private RectangleDistanceFunction dist;
+	private BoxDistance dist;
 	
 	private static class IterPos<T> {
-		final DistEntry<RTreeNode<T>>[] subNodes;
+		final NodeDistT<T>[] subNodes;
 		RTreeNode<T> node;
 		int pos;
 		int maxPos;
 		
 		@SuppressWarnings("unchecked")
 		public IterPos(int nSubNodes) {
-			subNodes = new DistEntry[nSubNodes];
+			subNodes = new NodeDistT[nSubNodes];
 			for (int i = 0; i < nSubNodes; i++) {
-				subNodes[i] = new DistEntry<>(null,  null,  null, Double.POSITIVE_INFINITY);
+				subNodes[i] = new NodeDistT<>(Double.POSITIVE_INFINITY, null);
 			}
 		}
 		
@@ -99,12 +100,12 @@ public class RTreeQuery1NN<T> {
 		}
 	}
 	
-	public RTreeQuery1NN(RTree<T> tree) {
+	public RTreeQuery1nn(RTree<T> tree) {
 		this.stack = new IteratorStack(tree.getDepth(), RTree.NODE_MAX_DIR);
 		this.tree = tree;
 	}
 
-	public DistEntry<T> reset(double[] center, RectangleDistanceFunction dist) {
+	public BoxEntryKnn<T> reset(double[] center, BoxDistance dist) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth(), RTree.NODE_MAX_DIR);
 		} else {
@@ -115,9 +116,9 @@ public class RTreeQuery1NN<T> {
 		}
 		//set default if none is given
 		if (this.dist == null) {
-			this.dist = RectangleDistanceFunction.EDGE;
+			this.dist = BoxDistance.EDGE;
 		}
-		if (this.dist != RectangleDistanceFunction.EDGE) {
+		if (this.dist != BoxDistance.EDGE) {
 			System.err.println("This distance iterator only works for EDGE distance");
 		}
 		this.center = center;
@@ -129,28 +130,28 @@ public class RTreeQuery1NN<T> {
 		return findCandidate();
 	}
 	
-	private DistEntry<T> findCandidate() {
-		DistEntry<T> candidate  = new DistEntry<>(null, null, null, Double.POSITIVE_INFINITY);
+	private BoxEntryKnn<T> findCandidate() {
+		BoxEntryKnn<T> candidate  = new BoxEntryKnn<>(null, null, null, Double.POSITIVE_INFINITY);
 		double currentDist = Double.MAX_VALUE;
 		nextSub:
 		while (!stack.isEmpty()) {
 			IterPos<T> ip = stack.peek();
 			if (ip.node instanceof RTreeNodeDir) {
 				while (ip.pos < ip.maxPos && 
-						ip.subNodes[ip.pos].dist() < currentDist) {
-					stack.prepareAndPush(ip.subNodes[ip.pos].value(), currentDist);
+						ip.subNodes[ip.pos].dist < currentDist) {
+					stack.prepareAndPush(ip.subNodes[ip.pos].node, currentDist);
 					ip.pos++;
 					continue nextSub;
 				}
 			} else {
-				ArrayList<Entry<T>> entries = ip.node.getEntries(); 
+				ArrayList<Entry<T>> entries = ip.node.getEntries();
 				while (ip.pos < entries.size()) {
 					Entry<T> e = entries.get(ip.pos);
 					ip.pos++;
 					//this works only for EDGE distance !!!
-					double d = dist(center, e.min, e.max);
+					double d = dist(center, e.min(), e.max());
 					if (candidate.dist() > d) {
-						candidate.set(e, d);
+						candidate.set(e.min(), e.max(), e.value(), d);
 						currentDist = d; 
 					}
 				}
@@ -168,7 +169,7 @@ public class RTreeQuery1NN<T> {
 //			RTreeNode<T> e = subNodes.get(i);
 //			double d = dist.dist(center, e.min, e.max);
 //			if (d < minDist) {
-//				ret[pos++].set(e.lower(), e.upper(), e, d);
+//				ret[pos++].set(e.min(), e.max(), e, d);
 //			}
 //		}
 //		for (int i = pos; i < iPos.maxPos; i++ ) {
@@ -185,14 +186,14 @@ public class RTreeQuery1NN<T> {
 	 */
 	protected void sortEntries(IterPos<T> iPos, double minDist) {
 		ArrayList<RTreeNode<T>> subNodes = ((RTreeNodeDir<T>)iPos.node).getChildren();
-		DistEntry<RTreeNode<T>>[] ret = iPos.subNodes;
+		NodeDistT<T>[] ret = iPos.subNodes;
 		int pos = 0;
 		for (int i = 0; i < subNodes.size(); i++) {
 			RTreeNode<T> e = subNodes.get(i);
-			double d = dist(center, e.min, e.max);
+			double d = dist(center, e.min(), e.max());
 			//Strategy #1/#3
 			if (d < minDist) {
-				ret[pos++].set(e.lower(), e.upper(), e, d);
+				ret[pos++].set(e, d);
 				//Strategy #2
 				//minDist = d;
 			}
@@ -202,7 +203,7 @@ public class RTreeQuery1NN<T> {
 
 		//prune with dist again
 		for (int i = 0; i < pos; i++) {
-			if (ret[i].dist() > minDist) {
+			if (ret[i].dist > minDist) {
 				//discard the rest
 				pos = i;
 				break;
@@ -217,4 +218,18 @@ public class RTreeQuery1NN<T> {
 		return dist.dist(center, min, max);
 	}
 
+	private static class NodeDistT<T> {
+		double dist;
+		RTreeNode<T> node;
+
+		public NodeDistT(double dist, RTreeNode<T> node) {
+			this.dist = dist;
+			this.node = node;
+		}
+
+		public void set(RTreeNode<T> node, double dist) {
+			this.node = node;
+			this.dist = dist;
+		}
+	}
 }

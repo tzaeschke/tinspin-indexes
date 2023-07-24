@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
-import org.tinspin.index.PointEntryDist;
-import org.tinspin.index.QueryIteratorKNN;
+
+import static org.tinspin.index.Index.*;
 
 public class KDTreeTest {
 
@@ -143,7 +143,7 @@ public class KDTreeTest {
 
 		for (double[] key : point_list) {
 //			System.out.println("kNN query: " + Arrays.toString(key));
-			QueryIteratorKNN<PointEntryDist<double[]>> iter = tree.queryKNN(key, 1);
+			PointIteratorKnn<double[]> iter = tree.queryKnn(key, 1);
 			if (!iter.hasNext()) {
 				throw new IllegalStateException("kNN() failed: " + Arrays.toString(key));
 			}

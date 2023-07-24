@@ -31,7 +31,7 @@ import org.tinspin.index.util.StringBuilderLn;
  *
  * @param <T> Value type
  */
-public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
+public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 
 	public static final boolean DEBUG = false;
 
@@ -65,15 +65,15 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	private Node<T> root;
 
-	private final PointDistanceFunction distOld;
+	private final PointDistance distOld;
 
 	@Deprecated
-	private KDTree(int dims, PointDistanceFunction dist) {
+	private KDTree(int dims, PointDistance dist) {
 		if (DEBUG) {
 			System.err.println("Warning: DEBUG enabled");
 		}
 		this.dims = dims;
-		this.distOld = dist != null ? dist : PointDistanceFunction.L2;
+		this.distOld = dist != null ? dist : PointDistance.L2;
 		this.defensiveKeyCopy = true;
 	}
 
@@ -86,8 +86,8 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 		this.defensiveKeyCopy = defensiveKeyCopy;
 	}
 
-	private PointDistanceFunction dist() {
-		return distOld != null ? distOld : PointDistanceFunction.L2;
+	private PointDistance dist() {
+		return distOld != null ? distOld : PointDistance.L2;
 	}
 
 	public static <T> KDTree<T> create(int dims) {
@@ -95,7 +95,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Deprecated // Distance function should be set while querying. TODO remove
-	public static <T> KDTree<T> create(int dims, PointDistanceFunction dist) {
+	public static <T> KDTree<T> create(int dims, PointDistance dist) {
 		return new KDTree<>(dims, dist);
 	}
 
@@ -151,7 +151,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	@Override
 	public T queryExact(double[] key) {
 		Node<T> e = findNodeExact(key, new RemoveResult<>(), entry -> true);
-		return e == null ? null : e.getValue();
+		return e == null ? null : e.value();
 	}
 
 	private Node<T> findNodeExact(double[] key, RemoveResult<T> resultDepth, Predicate<PointEntry<T>> filter) {
@@ -166,7 +166,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	private Node<T> findNodeExactFast(double[] key, Node<T> parent, RemoveResult<T> resultDepth, Predicate<PointEntry<T>> filter) {
 		Node<T> n = root;
 		do {
-			double[] nodeKey = n.getKey();
+			double[] nodeKey = n.point();
 			double nodeX = nodeKey[n.getDim()];
 			double keyX = key[n.getDim()];
 			if (keyX == nodeX && Arrays.equals(key, nodeKey) && filter.test(n)) {
@@ -182,7 +182,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
 	private Node<T> findNodeExactSlow(double[] key, Node<T> n, Node<T> parent, RemoveResult<T> resultDepth, Predicate<PointEntry<T>> filter) {
 		do {
-			double[] nodeKey = n.getKey();
+			double[] nodeKey = n.point();
 			double nodeX = nodeKey[n.getDim()];
 			double keyX = key[n.getDim()];
 			if (keyX == nodeX) {
@@ -248,7 +248,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 
 		//remove
 		modCount++;
-		T value = eToRemove.getValue();
+		T value = eToRemove.value();
 		if (eToRemove == root && size == 1) {
 			root = null;
 			size = 0;
@@ -281,7 +281,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 				removeResult.best = Double.NEGATIVE_INFINITY;
 				removeMaxLeaf(eToRemove.getLo(), eToRemove, pos, removeResult);
 			}
-			eToRemove.setKeyValue(removeResult.node.getKey(), removeResult.node.getValue());
+			eToRemove.set(removeResult.node.point(), removeResult.node.value());
 			eToRemove = removeResult.node;
 		} 
 		//leaf node
@@ -313,16 +313,16 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 			// -> left!=null means the left child is at least as small as the current node
 			if (node.getLo() != null) {
 				removeMinLeaf(node.getLo(), node, pos, result);
-			} else if (node.getKey()[pos] <= result.best) {
+			} else if (node.point()[pos] <= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
-				result.best = node.getKey()[pos];
+				result.best = node.point()[pos];
 				result.pos = node.getDim();
 			}
 		} else {
 			//split in any other dimension.
 			//First, check local key. 
-			double localX = node.getKey()[pos];
+			double localX = node.point()[pos];
 			if (localX <= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
@@ -344,18 +344,18 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 			//We strictly look for leaf nodes with left==null
 			if (node.getHi() != null) {
 				removeMaxLeaf(node.getHi(), node, pos, result);
-			} else if (node.getKey()[pos] >= result.best) {
+			} else if (node.point()[pos] >= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
-				result.best = node.getKey()[pos];
+				result.best = node.point()[pos];
 				result.pos = node.getDim();
-				// TODO remove,
-				invariantBroken |= result.best == node.getKey()[pos];
+				// TODO remove
+				invariantBroken |= result.best == node.point()[pos];
 			}
 		} else {
 			//split in any other dimension.
 			//First, check local key. 
-			double localX = node.getKey()[pos];
+			double localX = node.point()[pos];
 			if (localX >= result.best) {
 				result.node = node;
 				result.nodeParent = parent;
@@ -459,23 +459,23 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * @param center The point for which the nearest neighbors are requested
 	 * @return Nearest neighbor
 	 */
-	public KDEntryDist<T> nnQuery(double[] center) {
+	public PointEntryKnn<T> nnQuery(double[] center) {
 		if (root == null) {
     		return null;
 		}
-    	KDEntryDist<T> candidate = new KDEntryDist<>(null, Double.POSITIVE_INFINITY);
+    	PointEntryKnn<T> candidate = new PointEntryKnn<>(null, Double.POSITIVE_INFINITY);
    		rangeSearch1NN(root, center, candidate, Double.POSITIVE_INFINITY, dist());
     	return candidate;
     }
 
-    private double rangeSearch1NN(Node<T> node, double[] center, 
-    		KDEntryDist<T> candidate, double maxRange, PointDistanceFunction fn) {
+    private double rangeSearch1NN(Node<T> node, double[] center,
+                                  PointEntryKnn<T> candidate, double maxRange, PointDistance fn) {
     	int pos = node.getDim();
-    	if (node.getLo() != null && (center[pos] < node.getKey()[pos] || node.getHi() == null)) {
+    	if (node.getLo() != null && (center[pos] < node.point()[pos] || node.getHi() == null)) {
         	//go down
     		maxRange = rangeSearch1NN(node.getLo(), center, candidate, maxRange, fn);
         	//refine result
-    		if (center[pos] + maxRange >= node.getKey()[pos]) {
+    		if (center[pos] + maxRange >= node.point()[pos]) {
     			maxRange = addCandidate(node, center, candidate, maxRange, fn);
         		if (node.getHi() != null) {
         			maxRange = rangeSearch1NN(node.getHi(), center, candidate, maxRange, fn);
@@ -485,7 +485,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
         	//go down
     		maxRange = rangeSearch1NN(node.getHi(), center, candidate, maxRange, fn);
         	//refine result
-    		if (center[pos] <= node.getKey()[pos] + maxRange) {
+    		if (center[pos] <= node.point()[pos] + maxRange) {
     			maxRange = addCandidate(node, center, candidate, maxRange, fn);
         		if (node.getLo() != null) {
         			maxRange = rangeSearch1NN(node.getLo(), center, candidate, maxRange, fn);
@@ -498,10 +498,10 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     	return maxRange;
     }
         
-    private double addCandidate(Node<T> node, double[] center, 
-    		final KDEntryDist<T> candidate, double maxRange, PointDistanceFunction fn) {
+    private double addCandidate(Node<T> node, double[] center,
+                                final PointEntryKnn<T> candidate, double maxRange, PointDistance fn) {
     	nDist1NN++;
-    	double dist = fn.dist(center, node.getKey());
+    	double dist = fn.dist(center, node.point());
     	if (dist >= maxRange) {
     		//don't add if too far away
     		//don't add if we already have an equally good result
@@ -511,27 +511,27 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     	return dist;
     }
 
-	public List<KDEntryDist<T>> knnQuery(double[] center, int k) {
+	public List<PointEntryKnn<T>> knnQuery(double[] center, int k) {
 		return knnQuery(center, k, dist());
 	}
 
-	public List<KDEntryDist<T>> knnQuery(double[] center, int k, PointDistanceFunction distFn) {
+	public List<PointEntryKnn<T>> knnQuery(double[] center, int k, PointDistance distFn) {
 		if (root == null) {
 			return Collections.emptyList();
 		}
-		ArrayList<KDEntryDist<T>> candidates = new ArrayList<>(k);
+		ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>(k);
 		rangeSearchKNN(root, center, candidates, k, Double.POSITIVE_INFINITY, distFn);
 		return candidates;
 	}
 
 	private double rangeSearchKNN(Node<T> node, double[] center,
-    		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange, PointDistanceFunction distFn) {
+                                  ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange, PointDistance distFn) {
     	int pos = node.getDim();
-    	if (node.getLo() != null && (center[pos] < node.getKey()[pos] || node.getHi() == null)) {
+    	if (node.getLo() != null && (center[pos] < node.point()[pos] || node.getHi() == null)) {
         	//go down
     		maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, maxRange, distFn);
         	//refine result
-    		if (center[pos] + maxRange >= node.getKey()[pos]) {
+    		if (center[pos] + maxRange >= node.point()[pos]) {
     			maxRange = addCandidate(node, center, candidates, k, maxRange, distFn);
         		if (node.getHi() != null) {
         			maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, maxRange, distFn);
@@ -541,7 +541,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
         	//go down
     		maxRange = rangeSearchKNN(node.getHi(), center, candidates, k, maxRange, distFn);
         	//refine result
-    		if (center[pos] <= node.getKey()[pos] + maxRange) {
+    		if (center[pos] <= node.point()[pos] + maxRange) {
     			maxRange = addCandidate(node, center, candidates, k, maxRange, distFn);
         		if (node.getLo() != null) {
         			maxRange = rangeSearchKNN(node.getLo(), center, candidates, k, maxRange, distFn);
@@ -555,18 +555,18 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     }
     
 	
-    private static final Comparator<KDEntryDist<?>> compKnn =  
-    		(KDEntryDist<?> point1, KDEntryDist<?> point2) -> {
+    private static final Comparator<PointEntryKnn<?>> compKnn =
+    		(PointEntryKnn<?> point1, PointEntryKnn<?> point2) -> {
     			double deltaDist = point1.dist() - point2.dist();
     			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
     		};
 
     
-    private double addCandidate(Node<T> node, double[] center, 
-    		ArrayList<KDEntryDist<T>> candidates, int k, double maxRange, PointDistanceFunction distFn) {
+    private double addCandidate(Node<T> node, double[] center,
+                                ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange, PointDistance distFn) {
     	nDistKNN++;
     	//add ?
-    	double dist = distFn.dist(center, node.getKey());
+    	double dist = distFn.dist(center, node.point());
     	if (dist > maxRange) {
     		//don't add if too far away
     		return maxRange;
@@ -575,12 +575,12 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     		//don't add if we already have enough equally good results.
     		return maxRange;
     	}
-		KDEntryDist<T> cand;
+		PointEntryKnn<T> cand;
     	if (candidates.size() >= k) {
     		cand = candidates.remove(k - 1);
     		cand.set(node, dist);
     	} else {
-    		cand = new KDEntryDist<>(node, dist);
+    		cand = new PointEntryKnn<>(node, dist);
     	}
     	int insertionPos = Collections.binarySearch(candidates, cand, compKnn);
     	insertionPos = insertionPos >= 0 ? insertionPos : -(insertionPos+1);
@@ -589,13 +589,13 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
     }
     
 	
-    private static class KDQueryIteratorKNN<T> implements QueryIteratorKNN<PointEntryDist<T>> {
+    private static class KDQueryIteratorKnn<T> implements PointIteratorKnn<T> {
 
-    	private Iterator<? extends PointEntryDist<T>> it;
+    	private Iterator<PointEntryKnn<T>> it;
     	private final KDTree<T> tree;
-		private final PointDistanceFunction distFn;
+		private final PointDistance distFn;
 
-		public KDQueryIteratorKNN(KDTree<T> tree, double[] center, int k, PointDistanceFunction distFn) {
+		public KDQueryIteratorKnn(KDTree<T> tree, double[] center, int k, PointDistance distFn) {
 			this.tree = tree;
 			this.distFn = distFn;
 			reset(center, k);
@@ -607,12 +607,12 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 		}
 
 		@Override
-		public PointEntryDist<T> next() {
+		public PointEntryKnn<T> next() {
 			return it.next();
 		}
 
 		@Override
-		public KDQueryIteratorKNN<T> reset(double[] center, int k) {
+		public KDQueryIteratorKnn<T> reset(double[] center, int k) {
 			it = tree.knnQuery(center, k, distFn).iterator();
 			return this;
 		}
@@ -657,7 +657,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	public String toString() {
 		return "KDTree;size=" + size + 
 				";DEBUG=" + DEBUG + 
-				";center=" + (root==null ? "null" : Arrays.toString(root.getKey()));
+				";center=" + (root==null ? "null" : Arrays.toString(root.point()));
 	}
 	
 	@Override
@@ -684,7 +684,7 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> iterator() {
+	public PointIterator<T> iterator() {
 		if (root == null) {
 			return query(new double[dims], new double[dims]);
 		}
@@ -694,24 +694,24 @@ public class KDTree<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public PointEntryDist<T> query1NN(double[] center) {
-		return queryKNN(center, 1).next();
+	public PointEntryKnn<T> query1nn(double[] center) {
+		return queryKnn(center, 1).next();
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
 		if (size < 1_000_000) {
-			return new KDQueryIteratorKNN<>(this, center, k, dist());
+			return new KDQueryIteratorKnn<>(this, center, k, dist());
 		}
 		return new KDIteratorKnn<>(root, k, center, dist(), e -> true);
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
 		// For small trees, the old iterator is about 3x fatser.
 		// For 1M it is about even, for 10M the new HS-iterator is about 2x faster.
 		if (size < 1_000_000) {
-			return new KDQueryIteratorKNN<>(this, center, k, distFn);
+			return new KDQueryIteratorKnn<>(this, center, k, distFn);
 		}
 		return new KDIteratorKnn<>(root, k, center, distFn, e -> true);
 	}

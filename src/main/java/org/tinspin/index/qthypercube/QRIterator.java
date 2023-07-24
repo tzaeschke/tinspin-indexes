@@ -20,19 +20,18 @@ package org.tinspin.index.qthypercube;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.RectangleEntry;
+import static org.tinspin.index.Index.*;
 
 /**
  * Resetable query iterator.
  *
  * @param <T> Value type.
  */
-public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
+public class QRIterator<T> implements BoxIterator<T> {
 
 	private final QuadTreeRKD<T> tree;
-	private IteratorStack stack;
-	private QREntry<T> next = null;
+	private final IteratorStack stack;
+	private BoxEntry<T> next = null;
 	private double[] min;
 	private double[] max;
 	
@@ -58,8 +57,8 @@ public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 				}
 			}
 			while (se.posE < se.lenE) {
-				QREntry<T> e = se.vals.get((int) se.posE++);
-				if (QUtil.overlap(min, max, e.lower(), e.upper())) {
+				BoxEntry<T> e = se.vals.get(se.posE++);
+				if (QUtil.overlap(min, max, e.min(), e.max())) {
 					next = e;
 					return;
 				}
@@ -75,11 +74,11 @@ public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 	}
 
 	@Override
-	public QREntry<T> next() {
+	public BoxEntry<T> next() {
 		if (!hasNext()) {
 			throw new NoSuchElementException();
 		}
-		QREntry<T> ret = next;
+		BoxEntry<T> ret = next;
 		findNext();
 		return ret;
 	}
@@ -87,11 +86,13 @@ public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 	/**
 	 * Reset the iterator. This iterator can be reused in order to reduce load on the
 	 * garbage collector.
+	 *
 	 * @param min lower left corner of query
 	 * @param max upper right corner of query
+	 * @return this.
 	 */
 	@Override
-	public void reset(double[] min, double[] max) {
+	public BoxIterator<T> reset(double[] min, double[] max) {
 		stack.clear();
 		this.min = min;
 		this.max = max;
@@ -100,6 +101,7 @@ public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			stack.prepareAndPush(tree.getRoot(), min, max);
 			findNext();
 		}
+		return this;
 	}
 	
 	private class IteratorStack {
@@ -128,8 +130,8 @@ public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			return stack.get(size-1);
 		}
 
-		StackEntry<T> pop() {
-			return stack.get(--size);
+		void pop() {
+			--size;
 		}
 
 		public void clear() {
@@ -143,7 +145,7 @@ public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 		long m0;
 		long m1;
 		QRNode<T>[] subs;
-		ArrayList<QREntry<T>> vals;
+		ArrayList<BoxEntry<T>> vals;
 		int lenE;
 		int lenSub;
 		
@@ -193,5 +195,4 @@ public class QRIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			//return (r <= v) ? -1 : r;
 		}
 	}
-
 }

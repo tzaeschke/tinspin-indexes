@@ -9,17 +9,13 @@ package org.tinspin.index.test.util;
 import static org.junit.Assert.assertNotNull;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 
 
-import ch.ethz.globis.tinspin.IndexHandle;
 import ch.ethz.globis.tinspin.data.AbstractTest;
 import ch.ethz.globis.tinspin.wrappers.Candidate;
 import ch.ethz.globis.tinspin.TestStats;
-import org.tinspin.index.array.PointArray;
-import org.tinspin.index.array.RectArray;
 import org.tinspin.index.test.util.TestInstances.IDX;
 import org.tinspin.index.test.util.TestInstances.TST;
 
@@ -224,15 +220,15 @@ public class TestRunner {
 
 		if (ts.isRangeData) {
 			if (ts.isMultimap) {
-				tree = RectangleIndexMMCandidate.create(ts);
+				tree = BoxMultimapCandidate.create(ts);
 			} else {
-				tree = RectangleIndexCandidate.create(ts);
+				tree = BoxMapCandidate.create(ts);
 			}
 		} else {
 			if (ts.isMultimap) {
-				tree = PointIndexMMCandidate.create(ts);
+				tree = PointMultimapCandidate.create(ts);
 			} else {
-				tree = PointIndexCandidate.create(ts);
+				tree = PointMapCandidate.create(ts);
 			}
 		}
 

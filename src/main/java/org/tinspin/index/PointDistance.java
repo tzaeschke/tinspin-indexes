@@ -18,12 +18,12 @@
 package org.tinspin.index;
 
 @FunctionalInterface
-public interface PointDistanceFunction {
+public interface PointDistance {
 
 	/** L1/Manhattan/taxi distance. */
-	public static PointDistanceFunction L1 = PointDistanceFunction::l1;
+	PointDistance L1 = PointDistance::l1;
 	/** L2/Euclidean distance. */
-	public static PointDistanceFunction L2 = PointDistanceFunction::l2;
+	PointDistance L2 = PointDistance::l2;
 
 	double dist(double[] p1, double[] p2);
 
@@ -33,7 +33,7 @@ public interface PointDistanceFunction {
 	 * @param entry another point
 	 * @return distance between the points
 	 */
-	default double dist(double[] p1, PointEntry<?> entry) {
+	default double dist(double[] p1, Index.PointEntry<?> entry) {
 		return dist(p1, entry.point());
 	}
 
@@ -44,7 +44,7 @@ public interface PointDistanceFunction {
 	 * @param p2 point 2
 	 * @return distance
 	 */
-	public static double l1(double[] p1, double[] p2) {
+	static double l1(double[] p1, double[] p2) {
 		double dist = 0;
 		for (int i = 0; i < p1.length; i++) {
 			double d = Math.abs(p1[i] - p2[i]);
@@ -59,7 +59,7 @@ public interface PointDistanceFunction {
 	 * @param p2 point 2
 	 * @return distance
 	 */
-	public static double l2(double[] p1, double[] p2) {
+	static double l2(double[] p1, double[] p2) {
 		double dist = 0;
 		for (int i = 0; i < p1.length; i++) {
 			double d = p1[i] - p2[i];
@@ -68,7 +68,7 @@ public interface PointDistanceFunction {
 		return Math.sqrt(dist);
 	}
 
-	public static String getName(PointDistanceFunction fn) {
+	static String getName(PointDistance fn) {
 		//'nice' hack, eh?
 		if (fn == L1) {
 			return "L1";
@@ -77,5 +77,4 @@ public interface PointDistanceFunction {
 		}
 		return "unknown";
 	}
-	
 }

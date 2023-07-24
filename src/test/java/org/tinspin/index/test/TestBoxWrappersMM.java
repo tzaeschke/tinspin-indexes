@@ -19,7 +19,7 @@ import org.tinspin.index.test.util.TestRunner;
 import java.util.ArrayList;
 
 @RunWith(Parameterized.class)
-public class TestRectangleWrappersMM extends AbstractWrapperTest {
+public class TestBoxWrappersMM extends AbstractWrapperTest {
 
 	private static final int N_DUPL = 4;
 	private final IDX candidate;
@@ -27,7 +27,7 @@ public class TestRectangleWrappersMM extends AbstractWrapperTest {
 	private static TestStats expectedCube = null;
 	private static TestStats expectedCluster = null;
 
-	public TestRectangleWrappersMM(IDX candCls) {
+	public TestBoxWrappersMM(IDX candCls) {
 		this.candidate = candCls;
 	}
 

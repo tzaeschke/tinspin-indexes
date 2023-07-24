@@ -1,14 +1,14 @@
 API
 ===
-- Rename Indexes to PointMap/PointMultimap BoxMax/BoxMultimap; deprecate PointIndex
-- Remove Comparators in entries!
-- Unify (Dist)Entries
 - KD-tree remove stored dist function
-- QueryIterator should be of type <T> instead of PointEntryDIst<T>  (It should still return PED!)
+- remove (most) knnQuery implementations
 - QueryIterator nextReuse()
 - MinMaxHeap: leave entries in array -> reuse/pool
 - MinHeap: n-ary heap
 - kNN filter should take PointEntryDist i.o PointEntry
+- Avoid or at least reuse ArrayList in AQueryIterator
+- Copyright update
+- Reformat everything??
 
 TODO TInSpin: common wrapper base class for all TinSpin indexes
 

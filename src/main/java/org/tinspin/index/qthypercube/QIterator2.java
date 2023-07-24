@@ -20,15 +20,14 @@ package org.tinspin.index.qthypercube;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.tinspin.index.PointEntry;
-import org.tinspin.index.QueryIterator;
+import static org.tinspin.index.Index.*;
 
 /**
  * Resettable query iterator.
  *
  * @param <T> Value type
  */
-public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
+public class QIterator2<T> implements PointIterator<T> {
 
 	private class IteratorStack {
 		private final ArrayList<StackEntry<T>> stack;
@@ -56,8 +55,8 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 			return stack.get(size-1);
 		}
 
-		StackEntry<T> pop() {
-			return stack.get(--size);
+		void pop() {
+			--size;
 		}
 
 		public void clear() {
@@ -66,8 +65,8 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 	}
 
 	private final QuadTreeKD<T> tree;
-	private IteratorStack stack;
-	private QEntry<T> next = null;
+	private final IteratorStack stack;
+	private PointEntry<T> next = null;
 	private double[] min;
 	private double[] max;
 	
@@ -76,8 +75,8 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 		long m0;
 		long m1;
 		QNode<T>[] subs;
-		ArrayList<QEntry<T>> vals;
-		public int len;
+		ArrayList<PointEntry<T>> vals;
+		int len;
 		
 		void set(QNode<T> node, double[] min, double[] max) {
 			this.vals = node.getEntries();
@@ -140,7 +139,7 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 			StackEntry<T> se = stack.peek();
 			while (se.pos < se.len) {
 				if (se.isLeaf()) {
-					QEntry<T> e = se.vals.get((int) se.pos++);
+					PointEntry<T> e = se.vals.get((int) se.pos++);
 					if (QUtil.isPointEnclosed(e.point(), min, max)) {
 						next = e;
 						return;
@@ -171,11 +170,11 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 	}
 
 	@Override
-	public QEntry<T> next() {
+	public PointEntry<T> next() {
 		if (!hasNext()) {
 			throw new NoSuchElementException();
 		}
-		QEntry<T> ret = next;
+		PointEntry<T> ret = next;
 		findNext();
 		return ret;
 	}
@@ -183,11 +182,13 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 	/**
 	 * Reset the iterator. This iterator can be reused in order to reduce load on the
 	 * garbage collector.
+	 *
 	 * @param min lower left corner of query
 	 * @param max upper right corner of query
+	 * @return this.
 	 */
 	@Override
-	public void reset(double[] min, double[] max) {
+	public PointIterator<T> reset(double[] min, double[] max) {
 		stack.clear();
 		this.min = min;
 		this.max = max;
@@ -196,5 +197,6 @@ public class QIterator2<T> implements QueryIterator<PointEntry<T>> {
 			stack.prepareAndPush(tree.getRoot(), min, max);
 			findNext();
 		}
+		return this;
 	}
 }

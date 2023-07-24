@@ -61,12 +61,12 @@ public class TestInstances {
 		USE_PARAM_CLASS(null, null);
 
 		private final String candidateClassNamePoint;
-		private final String candidateClassNameRectangle;
+		private final String candidateClassNameBox;
 
 		IDX(String candidateClassNamePoint, 
-				String candidateClassNameRectangle) {
+				String candidateClassNameBox) {
 			this.candidateClassNamePoint = candidateClassNamePoint;
-			this.candidateClassNameRectangle = candidateClassNameRectangle;
+			this.candidateClassNameBox = candidateClassNameBox;
 		}
 
 		@Override
@@ -76,7 +76,7 @@ public class TestInstances {
 
 		@Override
 		public String getCandidateClassNameRectangle() {
-			return candidateClassNameRectangle;
+			return candidateClassNameBox;
 		}
 	}
 
@@ -84,8 +84,8 @@ public class TestInstances {
 		CUBE_P(		TestPointCube.class, 	false),
 		CLUSTER_P(	TestPointCluster.class, false),
 
-		CUBE_R(		TestRectangleCube.class, true),
-		CLUSTER_R(	TestRectangleCluster.class, true),
+		CUBE_R(		TestBoxCube.class, true),
+		CLUSTER_R(	TestBoxCluster.class, true),
 		CUSTOM( 	"", false);
 
 		private final String className;

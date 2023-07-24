@@ -21,10 +21,9 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.RectangleEntry;
+import static org.tinspin.index.Index.*;
 
-public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
+public class RTreeIterator<T> implements BoxIterator<T> {
 	
 	private class IteratorStack {
 		private final IterPos<T>[] stack;
@@ -39,7 +38,7 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			return size == 0;
 		}
 
-		IterPos<T> prepareAndPush(RTreeNode<T> node) {
+		void prepareAndPush(RTreeNode<T> node) {
 			IterPos<T> ni = stack[size++];
 			if (ni == null)  {
 				ni = new IterPos<>();
@@ -47,15 +46,14 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 			}
 			
 			ni.init(node);
-			return ni;
 		}
 
 		IterPos<T> peek() {
 			return stack[size-1];
 		}
 
-		IterPos<T> pop() {
-			return stack[--size];
+		void pop() {
+			--size;
 		}
 	}
 
@@ -65,7 +63,7 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 	private IteratorStack stack;
 	private boolean hasNext = true;
 	private Entry<T> next;
-	private Predicate<Entry<T>> filter;
+	private final Predicate<Entry<T>> filter;
 	
 	private static class IterPos<T> {
 		private RTreeNode<T> node;
@@ -87,7 +85,7 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 
 	public static <T> RTreeIterator<T> createExactMatch(RTree<T> tree, double[] min, double[] max) {
 		return new RTreeIterator<>(tree, min, max, e -> e instanceof RTreeNode ? Entry.checkOverlap(min, max, e) :
-				Arrays.equals(min, e.min) && Arrays.equals(max, e.max));
+				Arrays.equals(min, e.min()) && Arrays.equals(max, e.max()));
 	}
 
 	private RTreeIterator(RTree<T> tree, double[] min, double[] max, Predicate<Entry<T>> filter) {
@@ -98,7 +96,7 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 	}
 
 	@Override
-	public void reset(double[] min, double[] max) {
+	public BoxIterator<T> reset(double[] min, double[] max) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth());
 		} else {
@@ -110,10 +108,11 @@ public class RTreeIterator<T> implements QueryIterator<RectangleEntry<T>> {
 		
 		if (!Entry.checkOverlap(min, max, tree.getRoot())) {
 			hasNext = false;
-			return;
+			return null;
 		}
 		this.stack.prepareAndPush(tree.getRoot());
 		findNext();
+		return this;
 	}
 	
 	private void findNext() {

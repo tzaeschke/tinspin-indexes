@@ -20,8 +20,9 @@ package org.tinspin.index.qthypercube2;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
-import org.tinspin.index.PointEntry;
 import org.tinspin.index.qthypercube2.QuadTreeKD2.QStats;
+
+import static org.tinspin.index.Index.*;
 
 /**
  * Node class for the quadtree.
@@ -35,7 +36,7 @@ public class QNode<T> {
 	private double[] center;
 	private double radius;
 	// null indicates that we have sub-node i.o. values
-	private QEntry<T>[] values;
+	private PointEntry<T>[] values;
 	private Object[] subs;
 	private int nValues = 0;
 	private boolean isLeaf;
@@ -44,7 +45,7 @@ public class QNode<T> {
 	QNode(double[] center, double radius) {
 		this.center = center;
 		this.radius = radius;
-		this.values = new QEntry[2];
+		this.values = new PointEntry[2];
 		this.isLeaf = true;
 	}
 
@@ -58,7 +59,7 @@ public class QNode<T> {
 	}
 
 	@SuppressWarnings("unused")
-	QNode<T> tryPut(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
+	QNode<T> tryPut(PointEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
 		if (QuadTreeKD2.DEBUG && !QUtil.fitsIntoNode(e.point(), center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
@@ -81,13 +82,13 @@ public class QNode<T> {
 		}
 		
 		//split
-		QEntry<T>[] vals = values;
+		PointEntry<T>[] vals = values;
 		int nVal = nValues;
 		clearValues();
 		subs = new Object[1 << center.length];
 		isLeaf = false;
 		for (int i = 0; i < nVal; i++) {
-			QEntry<T> e2 = vals[i]; 
+			PointEntry<T> e2 = vals[i];
 			QNode<T> sub = getOrCreateSub(e2, maxNodeSize, enforceLeaf);
 			while (sub != null) {
 				//This may recurse if all entries fall 
@@ -98,25 +99,25 @@ public class QNode<T> {
 		return getOrCreateSub(e, maxNodeSize, enforceLeaf);
 	}
 
-	private boolean areAllPointsIdentical(QEntry<T> e) {
+	private boolean areAllPointsIdentical(PointEntry<T> e) {
 		//This discovers situation where a node overflows, but splitting won't help because all points are identical
 		for (int i = 0; i < nValues; i++) {
-			if (!e.isExact(values[i])) {
+			if (!QUtil.isPointEqual(e.point(), values[i].point())) {
 				return false;
 			}
 		}
 		return true;
 	}
 	
-	QEntry<T>[] getValues() {
+	PointEntry<T>[] getValues() {
 		return values;
 	}
 	
-	private void addValue(QEntry<T> e, int maxNodeSize) {
+	private void addValue(PointEntry<T> e, int maxNodeSize) {
 		//Allow overflow over max node size (for example for lots of identical values in node)
 		int maxLen = nValues >= maxNodeSize ? nValues * 2 : maxNodeSize;
 		if (nValues >= getValues().length) {
-			values = Arrays.copyOf(getValues(), nValues * 3 > maxLen ? maxLen : nValues * 3); 
+			values = Arrays.copyOf(getValues(), Math.min(nValues * 3, maxLen));
 		}
 		getValues()[nValues++] = e;
 	}
@@ -138,7 +139,7 @@ public class QNode<T> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private QNode<T> getOrCreateSub(QEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
+	private QNode<T> getOrCreateSub(PointEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
 		int pos = calcSubPosition(e.point());
 		Object n = subs[pos];
 		
@@ -152,7 +153,7 @@ public class QNode<T> {
 			return null;
 		}
 
-		QEntry<T> e2 = (QEntry<T>) n;
+		PointEntry<T> e2 = (PointEntry<T>) n;
 		nValues--;
 		QNode<T> sub = createSubForEntry(pos);
 		subs[pos] = sub;
@@ -196,14 +197,14 @@ public class QNode<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	QEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize, Predicate<PointEntry<T>> pred) {
+	PointEntry<T> remove(QNode<T> parent, double[] key, int maxNodeSize, Predicate<PointEntry<T>> pred) {
 		if (!isLeaf()) {
 			int pos = calcSubPosition(key);
 			Object o = subs[pos];
 			if (o instanceof QNode) {
 				return ((QNode<T>)o).remove(this, key, maxNodeSize, pred);
-			} else if (o instanceof QEntry) {
-				QEntry<T> e = (QEntry<T>) o;
+			} else if (o instanceof PointEntry) {
+				PointEntry<T> e = (PointEntry<T>) o;
 				if (removeSub(parent, key, pos, e, maxNodeSize, pred)) {
 					return e;
 				}
@@ -212,7 +213,7 @@ public class QNode<T> {
 		}
 		
 		for (int i = 0; i < nValues; i++) {
-			QEntry<T> e = values[i];
+			PointEntry<T> e = values[i];
 			if (removeSub(parent, key, i, e, maxNodeSize, pred)) {
 				return e;
 			}
@@ -221,11 +222,11 @@ public class QNode<T> {
 	}
 
 	private boolean removeSub(
-			QNode<T> parent, double[] key, int pos, QEntry<T> e, int maxNodeSize, Predicate<PointEntry<T>> pred) {
+			QNode<T> parent, double[] key, int pos, PointEntry<T> e, int maxNodeSize, Predicate<PointEntry<T>> pred) {
 		if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 			removeValue(pos);
 			//TODO provide threshold for re-insert
-			//i.e. do not always merge.
+			// i.e. do not always merge.
 			if (parent != null) {
 				parent.checkAndMergeLeafNodes(maxNodeSize);
 			}
@@ -235,7 +236,7 @@ public class QNode<T> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	QEntry<T> update(QNode<T> parent, double[] keyOld, double[] keyNew, int maxNodeSize,
+	PointEntry<T> update(QNode<T> parent, double[] keyOld, double[] keyNew, int maxNodeSize,
 			boolean[] requiresReinsert, int currentDepth, int maxDepth, Predicate<PointEntry<T>> pred) {
 		if (!isLeaf()) {
 			int pos = calcSubPosition(keyOld);
@@ -245,7 +246,7 @@ public class QNode<T> {
 			}
 			if (e instanceof QNode) {
 				QNode<T> sub = (QNode<T>) e;
-				QEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
+				PointEntry<T> ret = sub.update(this, keyOld, keyNew, maxNodeSize, requiresReinsert,
 						currentDepth+1, maxDepth, pred);
 				if (ret != null && requiresReinsert[0] && 
 						QUtil.fitsIntoNode(ret.point(), center, radius/QUtil.EPS_MUL)) {
@@ -258,12 +259,12 @@ public class QNode<T> {
 				return ret;
 			}
 			// Entry
-			QEntry<T> qe = (QEntry<T>) e;
+			PointEntry<T> qe = (PointEntry<T>) e;
 			if (QUtil.isPointEqual(qe.point(), keyOld) && pred.test(qe)) {
 				removeValue(pos);
-				qe.setKey(keyNew);
+				qe.setPoint(keyNew);
 				if (QUtil.fitsIntoNode(keyNew, center, radius/QUtil.EPS_MUL)) {
-					// reinsert locally;
+					// reinsert locally
 					QNode<T> r = this;
 					while (r != null) {
 						r = r.tryPut(qe, maxNodeSize, currentDepth++ > maxDepth);
@@ -281,10 +282,10 @@ public class QNode<T> {
 		}
 		
 		for (int i = 0; i < nValues; i++) {
-			QEntry<T> e = getValues()[i];
+			PointEntry<T> e = getValues()[i];
 			if (QUtil.isPointEqual(e.point(), keyOld) && pred.test(e)) {
 				removeValue(i);
-				e.setKey(keyNew);
+				e.setPoint(keyNew);
 				updateSub(keyNew, e, parent, maxNodeSize, requiresReinsert);
 				return e;
 			}
@@ -293,7 +294,7 @@ public class QNode<T> {
 		return null;
 	}
 
-	private void updateSub(double[] keyNew, QEntry<T> e, QNode<T> parent, int maxNodeSize, boolean[] requiresReinsert) {
+	private void updateSub(double[] keyNew, PointEntry<T> e, QNode<T> parent, int maxNodeSize, boolean[] requiresReinsert) {
 		if (QUtil.fitsIntoNode(keyNew, center, radius/QUtil.EPS_MUL)) {
 			// reinsert locally
 			addValue(e, maxNodeSize);
@@ -330,7 +331,7 @@ public class QNode<T> {
 		}
 		
 		//okay, let's merge
-		values = new QEntry[nTotal];
+		values = new PointEntry[nTotal];
 		nValues = 0;
 		for (int i = 0; i < subs.length; i++) {
 			Object e = subs[i];
@@ -339,8 +340,8 @@ public class QNode<T> {
 				for (int j = 0; j < sub.nValues; j++) {
 					values[nValues++] = sub.values[j];
 				}
-			} else if (e instanceof QEntry) {
-				values[nValues++] = (QEntry<T>) e;
+			} else if (e instanceof PointEntry) {
+				values[nValues++] = (PointEntry<T>) e;
 			}
 		}
 		subs = null;
@@ -356,14 +357,14 @@ public class QNode<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	QEntry<T> getExact(double[] key, Predicate<PointEntry<T>> pred) {
+	PointEntry<T> getExact(double[] key, Predicate<PointEntry<T>> pred) {
 		if (!isLeaf()) {
 			int pos = calcSubPosition(key);
 			Object sub = subs[pos];
 			if (sub instanceof QNode) {
 				return ((QNode<T>)sub).getExact(key, pred);
 			} else  if (sub != null) {
-				QEntry<T> e = (QEntry<T>) sub;
+				PointEntry<T> e = (PointEntry<T>) sub;
 				if (QUtil.isPointEqual(e.point(), key)) {
 					return e;
 				}
@@ -372,7 +373,7 @@ public class QNode<T> {
 		}
 		
 		for (int i = 0; i < nValues; i++) {
-			QEntry<T> e = values[i];
+			PointEntry<T> e = values[i];
 			if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 				return e;
 			}
@@ -421,7 +422,7 @@ public class QNode<T> {
 			s.nEntries += nValues;
 			s.histoValues[nValues]++;
 			for (int i = 0; i < nValues; i++) {
-				QEntry<T> e = values[i];
+				PointEntry<T> e = values[i];
 				checkEntry(e);
 			}
 			if (subs != null) {
@@ -450,7 +451,7 @@ public class QNode<T> {
 
 	@SuppressWarnings("unchecked")
 	private void checkEntry(Object o) {
-		QEntry<T> e = (QEntry<T>) o;
+		PointEntry<T> e = (PointEntry<T>) o;
 		if (!QUtil.fitsIntoNode(e.point(), center, radius*QUtil.EPS_MUL)) {
 			System.out.println("Node: " + radius + " " + Arrays.toString(center));
 			System.out.println("Child: " + Arrays.toString(e.point()));

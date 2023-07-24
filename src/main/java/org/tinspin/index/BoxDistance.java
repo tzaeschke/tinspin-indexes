@@ -18,10 +18,10 @@
 package org.tinspin.index;
 
 @FunctionalInterface
-public interface RectangleDistanceFunction {
+public interface BoxDistance {
 
-	RectangleDistanceFunction CENTER = RectangleDistanceFunction::centerDistance;
-	RectangleDistanceFunction EDGE = RectangleDistanceFunction::edgeDistance;
+	BoxDistance CENTER = BoxDistance::centerDistance;
+	BoxDistance EDGE = BoxDistance::edgeDistance;
 
 	/**
 	 * @param point A point
@@ -35,26 +35,26 @@ public interface RectangleDistanceFunction {
 	 * Some algorithm use this method on the entries containing user supplied values.
 	 * This can be overridden if the min/max coordinates only represent the 
 	 * bounding-box of the object.
-	 * 
+	 * <p>
 	 * If your entry is actually a sphere, a car, an human or a cat, you may need this.
 	 * 
 	 * @param center a point
-	 * @param entry a rectangle
-	 * @return distance between point and rectangle
+	 * @param entry a box
+	 * @return distance between point and box
 	 */
-	default double dist(double[] center, RectangleEntry<?> entry) {
-		return dist(center, entry.lower(), entry.upper());
+	default double dist(double[] center, Index.BoxEntry<?> entry) {
+		return dist(center, entry.min(), entry.max());
 	}
 
 	/**
 	 * This class calculates the distance to a rectangular shaped object.
-	 * 
+	 * <p>
 	 * This class completely ignores the center given as parameter to the interface.
 	 * 
 	 * TODO: maybe we could get rid of the center parameter altogether and always let 
 	 *       the RectangleDistanceFunction hold it's reference points?
 	 */
-	public static class RectangleDist implements RectangleDistanceFunction {
+	class RectangleDist implements BoxDistance {
 		private final double[] lower;
 		private final double[] upper;
 
@@ -69,10 +69,10 @@ public interface RectangleDistanceFunction {
 			for (int i = 0; i < lower.length; i++) {
 				double d = 0;
 				if (min[i] > upper[i]) {
-					// "right" side of our rectangle
+					// "right" side of our box
 					d = min[i] - upper[i];
 				} else if (max[i] < lower[i]) {
-					// "left" side of our rectangle
+					// "left" side of our box
 					d = lower[i] - max[i];
 				} // else intersecting
 				dist += d * d;
@@ -85,11 +85,11 @@ public interface RectangleDistanceFunction {
 	 * Special wrapper class which takes the inverse or the given function.
 	 * Can be used to get the farthest neighbors using the nearest neighbor algorithm.
 	 */
-	public static class FarthestNeighbor implements RectangleDistanceFunction {
+	class FarthestNeighbor implements BoxDistance {
 		private static final double EPSILON = 2 * Double.MIN_VALUE;
-		private final RectangleDistanceFunction dist;
+		private final BoxDistance dist;
 
-		public FarthestNeighbor(RectangleDistanceFunction dist) {
+		public FarthestNeighbor(BoxDistance dist) {
 			this.dist = dist;
 		}
 
@@ -104,7 +104,7 @@ public interface RectangleDistanceFunction {
 		}
 
 		@Override
-		public double dist(double[] center, RectangleEntry<?> entry) {
+		public double dist(double[] center, Index.BoxEntry<?> entry) {
 			double d = dist.dist(center, entry);
 			if (d < EPSILON) {
 				return Double.POSITIVE_INFINITY;
@@ -137,8 +137,8 @@ public interface RectangleDistanceFunction {
 	}
 
 	class EdgeDistance {
-		final PointDistanceFunction distFn;
-		public EdgeDistance(PointDistanceFunction distFn) {
+		final PointDistance distFn;
+		public EdgeDistance(PointDistance distFn) {
 			this.distFn = distFn;
 		}
 
@@ -155,6 +155,5 @@ public interface RectangleDistanceFunction {
 			}
 			return distFn.dist(dist, center);
 		}
-
 	}
 }

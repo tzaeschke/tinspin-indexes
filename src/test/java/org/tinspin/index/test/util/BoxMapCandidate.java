@@ -11,36 +11,33 @@ import java.util.Arrays;
 import ch.ethz.globis.tinspin.TestStats;
 import ch.ethz.globis.tinspin.wrappers.Candidate;
 import org.tinspin.index.Index;
-import org.tinspin.index.QueryIterator;
-import org.tinspin.index.QueryIteratorKNN;
-import org.tinspin.index.RectangleEntry;
-import org.tinspin.index.RectangleEntryDist;
-import org.tinspin.index.RectangleIndex;
+import org.tinspin.index.BoxMap;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.phtree.PHTreeR;
 import org.tinspin.index.qthypercube.QuadTreeRKD;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
-import org.tinspin.index.test.util.TestInstances.IDX;
+
+import static org.tinspin.index.Index.*;
 
 
-public class RectangleIndexCandidate extends Candidate {
+public class BoxMapCandidate extends Candidate {
 	
-	private final RectangleIndex<Object> idx;
+	private final BoxMap<Object> idx;
 	private final int dims;
 	private final int N;
 	private double[] data;
 	private static final Object O = new Object();
-	private QueryIterator<RectangleEntry<Object>> query = null;
-	private QueryIteratorKNN<RectangleEntryDist<Object>> queryKnn = null;
+	private BoxIterator<Object> query = null;
+	private BoxIteratorKnn<Object> queryKnn = null;
 	private final boolean bulkloadSTR;
 
-	public static RectangleIndexCandidate create(TestStats ts) {
-		return new RectangleIndexCandidate(createIndex(ts), ts);
+	public static BoxMapCandidate create(TestStats ts) {
+		return new BoxMapCandidate(createIndex(ts), ts);
 	}
 
-	private static <T> RectangleIndex<T> createIndex(TestStats s) {
+	private static <T> BoxMap<T> createIndex(TestStats s) {
 		int dims = s.cfgNDims;
 		int size = s.cfgNEntries;
 		switch ((TestInstances.IDX)s.INDEX) {
@@ -60,10 +57,10 @@ public class RectangleIndexCandidate extends Candidate {
 	 * @param ts test stats
 	 */
 	@SuppressWarnings("unchecked")
-	public RectangleIndexCandidate(RectangleIndex<?> ri, TestStats ts) {
+	public BoxMapCandidate(BoxMap<?> ri, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
-		this.idx = (RectangleIndex<Object>) ri;
+		this.idx = (BoxMap<Object>) ri;
 		this.bulkloadSTR = ts.INDEX.equals(TestInstances.IDX.STR);
 	}
 	
@@ -105,7 +102,7 @@ public class RectangleIndexCandidate extends Candidate {
 	}
 
 	@Override
-	public int pointQuery(Object qA) {
+	public int pointQuery(Object qA, int[] ids) {
 		int n = 0;
 		double[][] dA = (double[][]) qA; 
 		for (int i = 0; i < dA.length; i+=2) {
@@ -163,17 +160,17 @@ public class RectangleIndexCandidate extends Candidate {
 	@Override
 	public double knnQuery(int k, double[] center) {
 		if (k == 1) {
-			return idx.query1NN(center).dist();
+			return idx.query1nn(center).dist();
 		}
 		if (queryKnn == null) {
-			queryKnn = idx.queryKNN(center, k);
+			queryKnn = idx.queryKnn(center, k);
 		} else {
 			queryKnn.reset(center, k);
 		}
 		double ret = 0;
 		int i = 0;
 		while (queryKnn.hasNext() && i < k) {
-			RectangleEntryDist<Object> e = queryKnn.next();
+			BoxEntryKnn<Object> e = queryKnn.next();
 			ret += e.dist();
 			i++;
 		}
@@ -193,7 +190,7 @@ public class RectangleIndexCandidate extends Candidate {
 		data = null;
 	}
 
-	public Index<Object> getNative() {
+	public Index getNative() {
 		return idx;
 	}
 
@@ -204,7 +201,7 @@ public class RectangleIndexCandidate extends Candidate {
 	}
 	
 	@Override
-	public int update(double[][] updateTable) {
+	public int update(double[][] updateTable, int[] ids) {
 		int n = 0;
 		for (int i = 0; i < updateTable.length; ) {
 			double[] lo1 = updateTable[i++];

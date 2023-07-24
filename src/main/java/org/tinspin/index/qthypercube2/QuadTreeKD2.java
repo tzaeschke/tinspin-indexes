@@ -49,7 +49,7 @@ import org.tinspin.index.util.StringBuilderLn;
  *
  * @param <T> Value type.
  */
-public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
+public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 
 	/** Enable basic HCI navigation with Algo #1 isInI(), for example for window queries. */
 	public static boolean ENABLE_HCI_1 = true;
@@ -110,7 +110,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	@Override
 	public void insert(double[] key, T value) {
 		size++;
-		QEntry<T> e = new QEntry<>(key, value);
+		PointEntry<T> e = new PointEntry<>(key, value);
 		if (root == null) {
 			// We calculate a better radius when adding a second point.
 			root = new QNode<>(key.clone(), INITIAL_RADIUS);
@@ -132,7 +132,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 			return;
 		}
 		if (root.getRadius() == INITIAL_RADIUS) {
-			double dist = PointDistanceFunction.L2.dist(key, root.getCenter());
+			double dist = PointDistance.L2.dist(key, root.getCenter());
 			if (dist > 0) {
 				root.adjustRadius(2 * dist);
 			} else if (root.getValueCount() >= maxNodeSize - 1) {
@@ -164,7 +164,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 		if (root == null) {
 			return null;
 		}
-		QEntry<T> e = root.getExact(key, entry -> true);
+		PointEntry<T> e = root.getExact(key, entry -> true);
 		return e == null ? null : e.value();
 	}
 
@@ -190,7 +190,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 			}
 			return null;
 		}
-		QEntry<T> e = root.remove(null, key, maxNodeSize, x -> true);
+		PointEntry<T> e = root.remove(null, key, maxNodeSize, x -> true);
 		if (e == null) {
 			if (DEBUG) {
 				System.err.println("Failed remove 2: " + Arrays.toString(key));
@@ -211,7 +211,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 		if (root == null) {
 			return false;
 		}
-		QEntry<T> e = root.remove(null, key, maxNodeSize, condition);
+		PointEntry<T> e = root.remove(null, key, maxNodeSize, condition);
 		if (e == null) {
 			return false;
 		}
@@ -254,7 +254,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 			return null;
 		}
 		boolean[] requiresReinsert = new boolean[]{false};
-		QEntry<T> e = root.update(null, oldKey, newKey, maxNodeSize, requiresReinsert,
+		PointEntry<T> e = root.update(null, oldKey, newKey, maxNodeSize, requiresReinsert,
 				0, MAX_DEPTH, condition);
 		if (e == null) {
 			//not found
@@ -277,7 +277,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * @param e Entry to cover.
 	 */
 	@SuppressWarnings("unused")
-	private void ensureCoverage(QEntry<T> e) {
+	private void ensureCoverage(PointEntry<T> e) {
 		double[] p = e.point();
 		while(!QUtil.fitsIntoNode(e.point(), root.getCenter(), root.getRadius())) {
 			double[] center = root.getCenter();
@@ -327,9 +327,9 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	/**
 	 * @param point the point
 	 * @return an iterator over all entries at the given coordinate.
-	 * @see PointIndexMM#query(double[])
+	 * @see PointMultimap#query(double[])
 	 */
-	public QueryIterator<PointEntry<T>> query(double[] point) {
+	public PointIterator<T> query(double[] point) {
 		return query(point, point);
 	}
 
@@ -340,7 +340,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * @return all entries in the rectangle
 	 */
 	@Override
-	public QueryIterator<PointEntry<T>> query(double[] min, double[] max) {
+	public PointIterator<T> query(double[] min, double[] max) {
 		if (ENABLE_HCI_2) {
 			return new QIterator2<>(this, min, max);
 		} else if (ENABLE_HCI_1) {
@@ -353,8 +353,8 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public PointEntryDist<T> query1NN(double[] center) {
-		return PointIndex.super.query1NN(center);
+	public PointEntryKnn<T> query1nn(double[] center) {
+		return PointMap.super.query1nn(center);
 	}
 
 	/**
@@ -363,36 +363,36 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	 * @param k        number of neighbors
 	 * @param distFn   the point distance function to be used
 	 * @return Iterator over query result
-	 * @see PointIndexMM#queryKNN(double[], int, PointDistanceFunction)
+	 * @see PointMultimap#queryKnn(double[], int, PointDistance)
 	 */
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k, PointDistanceFunction distFn) {
+	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
 		return new QIteratorKnn<>(root, k, center, distFn, e -> true);
 	}
 
 	@Deprecated
-	public List<QEntryDist<T>> knnQuery(double[] center, int k) {
+	public List<PointEntryKnn<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
 			return Collections.emptyList();
 		}
-		ArrayList<QEntryDist<T>> candidates = new ArrayList<>();
-		rangeSearchKNN(root, center, candidates, k, Double.MAX_VALUE, PointDistanceFunction.L2);
+		ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
+		rangeSearchKNN(root, center, candidates, k, Double.MAX_VALUE, PointDistance.L2);
 		return candidates;
 	}
 
 	@Deprecated
-	public List<QEntryDist<T>> knnQuery(double[] center, int k, PointDistanceFunction distFn) {
+	public List<PointEntryKnn<T>> knnQuery(double[] center, int k, PointDistance distFn) {
 		if (root == null) {
 			return Collections.emptyList();
 		}
-		ArrayList<QEntryDist<T>> candidates = new ArrayList<>();
+		ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
 		rangeSearchKNN(root, center, candidates, k, Double.MAX_VALUE, distFn);
 		return candidates;
 	}
 
 	@SuppressWarnings("unchecked")
-	private double rangeSearchKNN(QNode<T> node, double[] center, 
-    		ArrayList<QEntryDist<T>> candidates, int k, double maxRange, PointDistanceFunction distFn) {
+	private double rangeSearchKNN(QNode<T> node, double[] center,
+                                  ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange, PointDistance distFn) {
     	int posHC = node.calcSubPosition(center);
     	Object[] entries = node.getEntries();
     	Object alreadyVisited = null;
@@ -413,8 +413,8 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
     			QNode<T> n = (QNode<T>) e;
     			double dist = QUtil.distToRectNode(center, n.getCenter(), n.getRadius(), distFn);
     			addToBuffer(n, dist, maxRange, buffer);
-    		} else if (e instanceof QEntry) {
-    			QEntry<T> p = (QEntry<T>) e;
+    		} else if (e instanceof PointEntry) {
+    			PointEntry<T> p = (PointEntry<T>) e;
    				double dist = distFn.dist(center, p.point());
     			addToBuffer(p, dist, maxRange, buffer);
     		}
@@ -430,9 +430,9 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
     		Object o = t.o;
     		if (o instanceof QNode && o != alreadyVisited) {
     			maxRange = rangeSearchKNN((QNode<T>)o, center, candidates, k, maxRange, distFn);
-    		} else if (o instanceof QEntry) {
-    			QEntry<T> p = (QEntry<T>) o;
-   				candidates.add(new QEntryDist<>(p, t.dist));
+    		} else if (o instanceof PointEntry) {
+    			PointEntry<T> p = (PointEntry<T>) o;
+   				candidates.add(new PointEntryKnn<>(p, t.dist));
    	    		maxRange = adjustRegionKNN(candidates, k, maxRange);
     		}
     	}
@@ -445,14 +445,14 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 		}
 	}
 
-	private double adjustRegionKNN(ArrayList<QEntryDist<T>> candidates, int k, double maxRange) {
+	private double adjustRegionKNN(ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange) {
         if (candidates.size() < k) {
         	//wait for more candidates
         	return maxRange;
         }
 
-        //use stored distances instead of recalculating them
-        candidates.sort(QEntryDist.COMP);
+        // use stored distances instead of recalculating them
+        candidates.sort((o1, o2) -> (int)(o1.dist() - o2.dist()));
         while (candidates.size() > k) {
         	candidates.remove(candidates.size()-1);
         }
@@ -508,7 +508,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 				QNode<T> sub = (QNode<T>) o;
 				toStringTree(sb, sub, depth+1, i);
 			} else if (o != null) {
-				QEntry<T> e = (QEntry<T>) o;
+				PointEntry<T> e = (PointEntry<T>) o;
 				sb.append(prefix).append(Arrays.toString(e.point()));
 				sb.append(" v=").append(e.value()).appendLn();
 			}
@@ -570,7 +570,7 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public QueryIterator<PointEntry<T>> iterator() {
+	public PointIterator<T> iterator() {
 		if (root == null) {
 			return query(new double[dims], new double[dims]);
 		}
@@ -580,8 +580,8 @@ public class QuadTreeKD2<T> implements PointIndex<T>, PointIndexMM<T> {
 	}
 
 	@Override
-	public QueryIteratorKNN<PointEntryDist<T>> queryKNN(double[] center, int k) {
-		return queryKNN(center, k, PointDistanceFunction.L2);
+	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
+		return queryKnn(center, k, PointDistance.L2);
 	}
 
 	@Override

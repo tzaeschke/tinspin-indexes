@@ -15,7 +15,7 @@
  */
 package org.tinspin.index.rtree;
 
-import org.tinspin.index.RectangleEntry;
+import static org.tinspin.index.Index.*;
 
 public interface Filter {
 
@@ -46,8 +46,8 @@ public interface Filter {
 	 * @param  entry  An entry with an existing value()
 	 * @return        True if this entry is part of the result set
 	 */
-	default boolean matches(RectangleEntry<?> entry) {
-		return intersects(entry.lower(), entry.upper());
+	default boolean matches(BoxEntry<?> entry) {
+		return intersects(entry.min(), entry.max());
 	}
 
 	/**
@@ -94,7 +94,7 @@ public interface Filter {
 		}
 
 		@Override
-		public boolean matches(RectangleEntry<?> entry) {
+		public boolean matches(BoxEntry<?> entry) {
 			return filter1.matches(entry) || filter2.matches(entry);
 		}
 

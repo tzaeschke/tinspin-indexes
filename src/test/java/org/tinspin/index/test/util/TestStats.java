@@ -23,6 +23,8 @@ import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.util.PointMapWrapper;
+import org.tinspin.index.util.PointMultimapWrapper;
 
 public class TestStats implements Serializable, Cloneable {
 
@@ -51,7 +53,7 @@ public class TestStats implements Serializable, Cloneable {
 		COVER
 	}
 
-	static <T> PointIndex<T> createPI(INDEX idx, int dims, int size) {
+	static <T> PointMap<T> createPI(INDEX idx, int dims, int size) {
 		switch (idx) {
 			case ARRAY: return new PointArray<>(dims, size);
 			//case CRITBIT: return new PointArray<>(dims, size);
@@ -61,14 +63,14 @@ public class TestStats implements Serializable, Cloneable {
 			case QUAD_HC2: return QuadTreeKD2.create(dims);
 			case QUAD_PLAIN: return QuadTreeKD0.create(dims);
 			case RSTAR:
-			case STR: return PointIndexWrapper.create(RTree.createRStar(dims));
+			case STR: return PointMapWrapper.create(RTree.createRStar(dims));
 			case COVER: return CoverTree.create(dims);
 			default:
 				throw new UnsupportedOperationException();
 		}
 	}
 
-	static <T> PointIndexMM<T> createPIMM(INDEX idx, int dims, int size) {
+	static <T> PointMultimap<T> createPIMM(INDEX idx, int dims, int size) {
 		switch (idx) {
 			//case ARRAY: return new PointArray<>(dims, size);
 			//case CRITBIT: return new PointArray<>(dims, size);
@@ -78,14 +80,14 @@ public class TestStats implements Serializable, Cloneable {
 			case QUAD_HC2: return QuadTreeKD2.create(dims);
 			case QUAD_PLAIN: return QuadTreeKD0.create(dims);
 			case RSTAR:
-			case STR: return PointIndexMMWrapper.create(RTree.createRStar(dims));
+			case STR: return PointMultimapWrapper.create(RTree.createRStar(dims));
 			//case COVER: return CoverTree.create(dims);
 			default:
 				throw new UnsupportedOperationException();
 		}
 	}
 
-	static <T> RectangleIndex<T> createRI(INDEX idx, int dims, int size) {
+	static <T> BoxMap<T> createRI(INDEX idx, int dims, int size) {
 		switch (idx) {
 		case ARRAY: return new RectArray<>(dims, size);
 		//case CRITBIT: return new PointArray<>(dims, size);

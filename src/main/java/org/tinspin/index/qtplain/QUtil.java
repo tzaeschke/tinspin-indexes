@@ -17,7 +17,9 @@
  */
 package org.tinspin.index.qtplain;
 
-import org.tinspin.index.PointDistanceFunction;
+import org.tinspin.index.PointDistance;
+
+import static org.tinspin.index.Index.*;
 
 class QUtil {
 
@@ -62,10 +64,14 @@ class QUtil {
 		return isPointEqual(p1L, p2L) && isPointEqual(p1U, p2U);
 	}
 
-	public static <T> boolean isRectEqual(QREntry<T> e, double[] keyL, double[] keyU) {
-		return isRectEqual(e.lower(), e.upper(), keyL, keyU);
+	public static boolean isRectEqual(BoxEntry<?> e, double[] keyL, double[] keyU) {
+		return isRectEqual(e.min(), e.max(), keyL, keyU);
 	}
-	
+
+	public static boolean isRectEqual(BoxEntry<?> e, BoxEntry<?> e2) {
+		return isRectEqual(e.min(), e.max(), e2.min(), e2.max());
+	}
+
 	public static boolean overlap(double[] min, double[] max, double[] min2, double[] max2) {
 		for (int d = 0; d < min.length; d++) {
 			if (max[d] < min2[d] || min[d] > max2[d]) {
@@ -156,8 +162,8 @@ class QUtil {
 	 * @param e rectangle
 	 * @return distance to edge point
 	 */
-	public static double distToRectEdge(double[] p, QREntry<?> e) {
-		return distToRectEdge(p, e.lower(), e.upper());
+	public static double distToRectEdge(double[] p, BoxEntry<?> e) {
+		return distToRectEdge(p, e.min(), e.max());
 	}
 	
 	/**
@@ -167,7 +173,7 @@ class QUtil {
 	 * @param nodeRadius radius of the node
 	 * @return distance to edge of the node or 0 if the point is inside the node
 	 */
-	static double distToRectNode(double[] point, double[] nodeCenter, double nodeRadius, PointDistanceFunction distFn) {
+	static double distToRectNode(double[] point, double[] nodeCenter, double nodeRadius, PointDistance distFn) {
 		double[] dist = new double[point.length];
 		for (int i = 0; i < point.length; i++) {
 			double d = point[i];
@@ -192,6 +198,6 @@ class QUtil {
 			}
 			dist[i] = d;
 		}
-		return PointDistanceFunction.L2.dist(point, dist);
+		return PointDistance.L2.dist(point, dist);
 	}
 }
