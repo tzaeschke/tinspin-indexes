@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - New API: [#20](https://github.com/tzaeschke/tinspin-indexes/pull/20)
-  - Moved a lot of smaller classes & interfaces into `Index` which should be a lot cleaner and simplifies imports.
+  - Moved a lot of smaller classes & interfaces into `Index` which should be a lot cleaner and simplifies imports to a single `import static org.tinspin.index.Index.*;`.
+  - `...Entry` interfaces have been removed and replaced with a common implementation.
   - Renamed `Rectangle` to `Box` to make it shorter
   - Renamed (most) `...Index` to `...Map` and `...IndexMM` to `...Multimap` to make it clearer
   - Simplified return type of `...Index.iterator`.
