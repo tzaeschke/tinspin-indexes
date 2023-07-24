@@ -30,7 +30,8 @@ import java.util.Set;
 
 import org.junit.Test;
 import org.tinspin.index.BoxDistance;
-import org.tinspin.index.BoxEntryDist;
+
+import static org.tinspin.index.Index.*;
 
 public class RTreeMixedQueryTest {
 	
@@ -57,7 +58,7 @@ public class RTreeMixedQueryTest {
 			tree.insert(position, "#" + i);
 		}
 
-		Iterable<BoxEntryDist<String>> q = tree.queryRangedNearestNeighbor(
+		Iterable<BoxEntryKnn<String>> q = tree.queryRangedNearestNeighbor(
 				createAndFill( 1 ), 
 				BoxDistance.CENTER, BoxDistance.EDGE,
 				createAndFill( 0.5 ), createAndFill( 1 ));
@@ -67,8 +68,8 @@ public class RTreeMixedQueryTest {
 		int maxQueueSize = 0;
 		int nElements = 0;
 		Set<String> duplicateCheck = new HashSet<>();
-		for (Iterator<BoxEntryDist<String>> iterator = q.iterator(); iterator.hasNext();) {
-			BoxEntryDist<String> e = iterator.next();
+		for (Iterator<BoxEntryKnn<String>> iterator = q.iterator(); iterator.hasNext();) {
+			BoxEntryKnn<String> e = iterator.next();
 			//System.out.println(nElements + " " + iterator + " " + e);
 
 			assertTrue(e.value() + " @" + nElements, duplicateCheck.add(e.value()));
@@ -96,12 +97,12 @@ public class RTreeMixedQueryTest {
 		double[] center = createAndFill( 1 );
 
 		{
-			Iterable<BoxEntryDist<String>> q = tree.queryRangedNearestNeighbor(
+			Iterable<BoxEntryKnn<String>> q = tree.queryRangedNearestNeighbor(
 					center, BoxDistance.EDGE,
 					BoxDistance.EDGE, Filter.ALL);
 			RTreeQueryKnn2<String> res = tree.queryKnn(center, k, BoxDistance.EDGE);
 			// test that we get the same results
-			Iterator<BoxEntryDist<String>> iterator = q.iterator();
+			Iterator<BoxEntryKnn<String>> iterator = q.iterator();
 			int i=0;
 			for (; iterator.hasNext();) {
 				assertTrue("I="+i, res.hasNext());
@@ -120,7 +121,7 @@ public class RTreeMixedQueryTest {
 			int cnt = 0;
 			for(;res.hasNext();) {
 				cnt++;
-				DistEntry<String> e = res.next();
+				BoxEntryKnn<String> e = res.next();
 				assertNotNull(e);
 			}
 			assertEquals(k, cnt);
@@ -129,7 +130,7 @@ public class RTreeMixedQueryTest {
 		fillProcessorCache();
 
 		long timeMixed = timeOf(() -> {
-			Iterable<BoxEntryDist<String>> q = tree.queryRangedNearestNeighbor(
+			Iterable<BoxEntryKnn<String>> q = tree.queryRangedNearestNeighbor(
 					center, BoxDistance.EDGE,
 					BoxDistance.EDGE, Filter.ALL);
 			int cnt = 0;
@@ -142,12 +143,12 @@ public class RTreeMixedQueryTest {
 				 * 
 				 * It seems as if executing the query multiple times is better than caching the results...
 				 */
-				List<BoxEntryDist<String>> arr = new ArrayList<>();
+				List<BoxEntryKnn<String>> arr = new ArrayList<>();
 				q.forEach(arr::add);
 				q = arr;
 			}
-			for (Iterator<BoxEntryDist<String>> iterator = q.iterator(); iterator.hasNext();) {
-				BoxEntryDist<String> e = iterator.next();
+			for (Iterator<BoxEntryKnn<String>> iterator = q.iterator(); iterator.hasNext();) {
+				BoxEntryKnn<String> e = iterator.next();
 				assertNotNull(e);
 				cnt++;
 				if (cnt >= k)

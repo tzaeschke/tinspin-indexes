@@ -18,7 +18,6 @@ package org.tinspin.index.rtree;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
-import java.util.Comparator;
 import java.util.Iterator;
 
 import org.tinspin.index.BoxDistance;
@@ -27,7 +26,7 @@ import static org.tinspin.index.Index.*;
 
 /**
  * kNN search with EDGE distance and presorting of entries.
- * 
+ * <p>
  * Implementation after Hjaltason and Samet (with some deviations: no MinDist or MaxDist used).
  * G. R. Hjaltason and H. Samet., "Distance browsing in spatial databases.", ACM TODS 24(2):265--318. 1999
  * 
@@ -37,22 +36,14 @@ import static org.tinspin.index.Index.*;
  */
 public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
 	
-	private static class DEComparator implements Comparator<DistEntry<?>> {
-		@Override
-		public int compare(DistEntry<?> o1, DistEntry<?> o2) {
-			double d = o1.dist() - o2.dist();
-			return d < 0 ? -1 : d > 0 ? 1 : 0;
-		}
-	}
-
-	private final DEComparator COMP = new DEComparator();
+	private static final BEComparator COMP = new BEComparator();
 	private final RTree<T> tree;
 	private double[] center;
-	private Iterator<DistEntry<T>> iter;
+	private Iterator<BoxEntryKnn<T>> iter;
 	private BoxDistance dist;
-	private final ArrayList<DistEntry<T>> candidates = new ArrayList<>();
-	private final ArrayList<DistEntry<Object>> pool = new ArrayList<>();
-	private final PriorityQueue<DistEntry<Object>> queue = new PriorityQueue<>(COMP);
+	private final ArrayList<BoxEntryKnn<T>> candidates = new ArrayList<>();
+	private final ArrayList<BoxEntryKnn<Object>> pool = new ArrayList<>();
+	private final PriorityQueue<BoxEntryKnn<Object>> queue = new PriorityQueue<>(COMP);
 	
 	
 	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, BoxDistance dist) {
@@ -98,15 +89,15 @@ public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
 	private void search(int k) {
 		//Initialize queue
 		RTreeNode<T> eRoot = tree.getRoot();
-		double dRoot = dist(center, eRoot.min, eRoot.max);
-		queue.add(createEntry(eRoot.lower(), eRoot.upper(), eRoot, dRoot));
+		double dRoot = dist(center, eRoot.min(), eRoot.max());
+		queue.add(createEntry(eRoot.min(), eRoot.max(), eRoot, dRoot));
 
 		while (!queue.isEmpty()) {
-			DistEntry<Object> candidate = queue.poll();
+			BoxEntryKnn<Object> candidate = queue.poll();
 			Object o = candidate.value();
 			if (!(o instanceof RTreeNode)) {
 				//data entry
-				candidates.add((DistEntry<T>) candidate);
+				candidates.add((BoxEntryKnn<T>) candidate);
 				if (candidates.size() >= k) {
 					return;
 				}
@@ -115,8 +106,8 @@ public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
 				ArrayList<Entry<T>> entries = ((RTreeNodeLeaf<T>)o).getEntries();
 				for (int i = 0; i < entries.size(); i++) {
 					Entry<T> e2 = entries.get(i);
-					double d = dist(center, e2.min, e2.max);
-					queue.add(createEntry(e2.lower(), e2.upper(), e2.value(), d));
+					double d = dist(center, e2.min(), e2.max());
+					queue.add(createEntry(e2.min(), e2.max(), e2.value(), d));
 				}
 				pool.add(candidate);
 			} else {
@@ -124,19 +115,19 @@ public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
 				ArrayList<RTreeNode<T>> entries = ((RTreeNodeDir<T>)o).getChildren();
 				for (int i = 0; i < entries.size(); i++) {
 					RTreeNode<T> e2 = entries.get(i);
-					double d = dist(center, e2.min, e2.max);
-					queue.add(createEntry(e2.lower(), e2.upper(), e2, d));
+					double d = dist(center, e2.min(), e2.max());
+					queue.add(createEntry(e2.min(), e2.max(), e2, d));
 				}
 				pool.add(candidate);
 			}				
 		}
 	}
 	
-	private DistEntry<Object> createEntry(double[] min, double[] max, Object val, double dist) {
+	private BoxEntryKnn<Object> createEntry(double[] min, double[] max, Object val, double dist) {
 		if (pool.isEmpty()) {
-			return new DistEntry<>(min, max, val, dist);
+			return new BoxEntryKnn<>(min, max, val, dist);
 		}
-		DistEntry<Object> e = pool.remove(pool.size() - 1);
+		BoxEntryKnn<Object> e = pool.remove(pool.size() - 1);
 		e.set(min, max, val, dist);
 		return e;
 	}
@@ -148,7 +139,7 @@ public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
 
 	
 	@Override
-	public DistEntry<T> next() {
+	public BoxEntryKnn<T> next() {
 		return iter.next();
 	}
 	

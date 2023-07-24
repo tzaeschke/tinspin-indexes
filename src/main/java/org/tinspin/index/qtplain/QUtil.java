@@ -19,6 +19,8 @@ package org.tinspin.index.qtplain;
 
 import org.tinspin.index.PointDistance;
 
+import static org.tinspin.index.Index.*;
+
 class QUtil {
 
 	static final double EPS_MUL = 1.000000001;
@@ -62,10 +64,14 @@ class QUtil {
 		return isPointEqual(p1L, p2L) && isPointEqual(p1U, p2U);
 	}
 
-	public static <T> boolean isRectEqual(QREntry<T> e, double[] keyL, double[] keyU) {
-		return isRectEqual(e.lower(), e.upper(), keyL, keyU);
+	public static boolean isRectEqual(BoxEntry<?> e, double[] keyL, double[] keyU) {
+		return isRectEqual(e.min(), e.max(), keyL, keyU);
 	}
-	
+
+	public static boolean isRectEqual(BoxEntry<?> e, BoxEntry<?> e2) {
+		return isRectEqual(e.min(), e.max(), e2.min(), e2.max());
+	}
+
 	public static boolean overlap(double[] min, double[] max, double[] min2, double[] max2) {
 		for (int d = 0; d < min.length; d++) {
 			if (max[d] < min2[d] || min[d] > max2[d]) {
@@ -156,8 +162,8 @@ class QUtil {
 	 * @param e rectangle
 	 * @return distance to edge point
 	 */
-	public static double distToRectEdge(double[] p, QREntry<?> e) {
-		return distToRectEdge(p, e.lower(), e.upper());
+	public static double distToRectEdge(double[] p, BoxEntry<?> e) {
+		return distToRectEdge(p, e.min(), e.max());
 	}
 	
 	/**

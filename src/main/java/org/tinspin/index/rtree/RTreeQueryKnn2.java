@@ -31,9 +31,9 @@ public class RTreeQueryKnn2<T> implements BoxIteratorKnn<T> {
     private final BoxDistance distFn;
     private final BoxFilterKnn<T> filterFn;
     MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
-    MinMaxHeap<DistEntry<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
+    MinMaxHeap<BoxEntryKnn<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
-    private DistEntry<T> current;
+    private BoxEntryKnn<T> current;
     private int remaining;
     private double[] center;
     private double currentDistance;
@@ -59,7 +59,7 @@ public class RTreeQueryKnn2<T> implements BoxIteratorKnn<T> {
         queueV.clear();
 
         queueN.push(new NodeDistT(0, tree.getRoot()));
-        FindNextElement();
+        findNextElement();
         return this;
     }
 
@@ -69,12 +69,12 @@ public class RTreeQueryKnn2<T> implements BoxIteratorKnn<T> {
     }
 
     @Override
-    public DistEntry<T> next() {
+    public BoxEntryKnn<T> next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        DistEntry<T> ret = current;
-        FindNextElement();
+        BoxEntryKnn<T> ret = current;
+        findNextElement();
         return ret;
     }
 
@@ -82,7 +82,7 @@ public class RTreeQueryKnn2<T> implements BoxIteratorKnn<T> {
         return currentDistance;
     }
 
-    private void FindNextElement() {
+    private void findNextElement() {
         while (remaining > 0 && !(queueN.isEmpty() && queueV.isEmpty())) {
             boolean useV = !queueV.isEmpty();
             if (useV && !queueN.isEmpty()) {
@@ -90,7 +90,7 @@ public class RTreeQueryKnn2<T> implements BoxIteratorKnn<T> {
             }
             if (useV) {
                 // data entry
-                DistEntry<T> result = queueV.peekMin();
+                BoxEntryKnn<T> result = queueV.peekMin();
                 queueV.popMin();
                 --remaining;
                 this.current = result;
@@ -114,7 +114,7 @@ public class RTreeQueryKnn2<T> implements BoxIteratorKnn<T> {
                         if (filterFn.test(entry, d)) {
                             // Using '<=' allows dealing with infinite distances.
                             if (d <= maxNodeDist) {
-                                queueV.push(new DistEntry<>(entry.min, entry.max, entry.value(), d));
+                                queueV.push(new BoxEntryKnn<>(entry.min(), entry.max(), entry.value(), d));
                                 if (queueV.size() >= remaining) {
                                     if (queueV.size() > remaining) {
                                         queueV.popMax();

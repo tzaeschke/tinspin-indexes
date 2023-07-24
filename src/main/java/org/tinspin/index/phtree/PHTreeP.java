@@ -180,10 +180,10 @@ public class PHTreeP<T> implements PointMap<T> {
 		}
 
 		@Override
-		public PointEntryDist<T> next() {
+		public PointEntryKnn<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryDistF<T> e = iter.nextEntryReuse();
-			return new PointEntryDist<>(e.getKey().clone(), e.getValue(), e.dist());
+			return new PointEntryKnn<>(e.getKey().clone(), e.getValue(), e.dist());
 		}
 
 		@Override

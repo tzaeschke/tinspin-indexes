@@ -32,9 +32,9 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
     private final PointDistance distFn;
     private final Predicate<PointEntry<T>> filterFn;
     MinHeap<NodeDist<T>> queueN = MinHeap.create((t1, t2) -> t1.closestDist < t2.closestDist);
-    MinMaxHeap<PointEntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
+    MinMaxHeap<PointEntryKnn<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
-    private PointEntryDist<T> current;
+    private PointEntryKnn<T> current;
     private int remaining;
     private double[] center;
     private double currentDistance;
@@ -72,11 +72,11 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
     }
 
     @Override
-    public PointEntryDist<T> next() {
+    public PointEntryKnn<T> next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        PointEntryDist<T> ret = current;
+        PointEntryKnn<T> ret = current;
         findNextElement();
         return ret;
     }
@@ -93,7 +93,7 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
             }
             if (useV) {
                 // data entry
-                PointEntryDist<T> result = queueV.peekMin();
+                PointEntryKnn<T> result = queueV.peekMin();
                 queueV.popMin();
                 --remaining;
                 this.current = result;
@@ -115,7 +115,7 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
                     // Using '<=' allows dealing with infinite distances.
                     if (d <= maxNodeDist) {
                         // TODO we could just set d and push "top"
-                        queueV.push(new PointEntryDist<>(node, d));
+                        queueV.push(new PointEntryKnn<>(node, d));
                         if (queueV.size() >= remaining) {
                             if (queueV.size() > remaining) {
                                 queueV.popMax();

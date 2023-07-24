@@ -18,13 +18,10 @@
 package org.tinspin.index.qthypercube;
 
 import org.tinspin.index.BoxDistance;
-import org.tinspin.index.BoxEntry;
-import org.tinspin.index.BoxEntryDist;
 import org.tinspin.index.util.MinHeap;
 import org.tinspin.index.util.MinMaxHeap;
 
 import java.util.NoSuchElementException;
-import java.util.function.Predicate;
 
 import static org.tinspin.index.Index.*;
 import static org.tinspin.index.qthypercube.QUtil.distToRectNodeEDGE;
@@ -35,9 +32,9 @@ public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
     private final BoxDistance distFn;
     private final BoxFilterKnn<T> filterFn;
     MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
-    MinMaxHeap<QREntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
+    MinMaxHeap<BoxEntryKnn<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
-    private BoxEntryDist<T> current;
+    private BoxEntryKnn<T> current;
     private int remaining;
     private double[] center;
     private double currentDistance;
@@ -73,11 +70,11 @@ public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
     }
 
     @Override
-    public BoxEntryDist<T> next() {
+    public BoxEntryKnn<T> next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        BoxEntryDist<T> ret = current;
+        BoxEntryKnn<T> ret = current;
         FindNextElement();
         return ret;
     }
@@ -94,7 +91,7 @@ public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
             }
             if (useV) {
                 // data entry
-                BoxEntryDist<T> result = queueV.peekMin(); // TODO
+                BoxEntryKnn<T> result = queueV.peekMin();
                 queueV.popMin();
                 --remaining;
                 this.current = result;
@@ -113,12 +110,12 @@ public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
                 }
 
                 if (node.hasValues()) {
-                    for (QREntry<T> entry : node.getEntries()) {
+                    for (BoxEntry<T> entry : node.getEntries()) {
                         double d = distFn.dist(center, entry);
                         if (filterFn.test(entry, d)) {
                             // Using '<=' allows dealing with infinite distances.
                             if (d <= maxNodeDist) {
-                                queueV.push(new QREntryDist<>(entry, d));
+                                queueV.push(new BoxEntryKnn<>(entry, d));
                                 if (queueV.size() >= remaining) {
                                     if (queueV.size() > remaining) {
                                         queueV.popMax();

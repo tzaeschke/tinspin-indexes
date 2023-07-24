@@ -76,7 +76,7 @@ public class CoverTree<T> implements PointMap<T> {
 	private final double BASE;
 	private final double LOG_BASE;
 	private final PointDistance dist;
-	private final PEComparator<T> comparator = new PEComparator<>();
+	private static final PEComparator comparator = new PEComparator();
 	private long nDistCalc = 0;
 	private long nDist1NN = 0;
 	private long nDistKNN = 0;
@@ -720,7 +720,7 @@ public class CoverTree<T> implements PointMap<T> {
 	}
 	
 	@Override
-	public PointEntryDist<T> query1nn(double[] center) {
+	public PointEntryKnn<T> query1nn(double[] center) {
 		if (root == null) {
 			return null;
 		}
@@ -728,12 +728,12 @@ public class CoverTree<T> implements PointMap<T> {
 		PointEntry<T> x = new PointEntry<>(center, null);
 		double distPX = d(root.point(), center);
 		nDist1NN++;
-		PointEntryDist<T> y = new PointEntryDist<>(root.point().point(), root.point().value(), distPX);
+		PointEntryKnn<T> y = new PointEntryKnn<>(root.point().point(), root.point().value(), distPX);
 		findNearestNeighbor(root, x, y, distPX);
 		return y;
 	}
 
-	private void findNearestNeighbor(Node<T> p, PointEntry<T> x, final PointEntryDist<T> y,
+	private void findNearestNeighbor(Node<T> p, PointEntry<T> x, final PointEntryKnn<T> y,
 			double distPX) {
 //		Algorithm 1 Find nearest neighbor
 //		function findNearestNeighbor(cover tree p, query
@@ -779,8 +779,8 @@ public class CoverTree<T> implements PointMap<T> {
 		//return new CoverTreeQueryKnn<>(this, center, k, dist);
 	}
 
-	private void findNearestNeighbor(Node<T> p, double[] x, 
-			int k, ArrayList<PointEntryDist<T>> candidates, double distPX) {
+	private void findNearestNeighbor(Node<T> p, double[] x,
+									 int k, ArrayList<PointEntryKnn<T>> candidates, double distPX) {
 //		Algorithm 1 Find nearest neighbor
 //		function findNearestNeighbor(cover tree p, query
 //		point x, nearest neighbor so far y)
@@ -792,11 +792,11 @@ public class CoverTree<T> implements PointMap<T> {
 //		6: return y
 		PointEntry<T> nn = p.point();
 		if (candidates.size() < k) {
-			candidates.add(new PointEntryDist<>(nn.point(), nn.value(), distPX));
+			candidates.add(new PointEntryKnn<>(nn.point(), nn.value(), distPX));
 			candidates.sort(comparator);
 		} else if (distPX < candidates.get(k-1).dist()) {
 			candidates.remove(k-1);
-			candidates.add(new PointEntryDist<>(nn.point(), nn.value(), distPX));
+			candidates.add(new PointEntryKnn<>(nn.point(), nn.value(), distPX));
 			candidates.sort(comparator);
 		}
 
@@ -830,8 +830,8 @@ public class CoverTree<T> implements PointMap<T> {
 	private static class KNNIterator<T> implements PointIteratorKnn<T> {
 
 		private final CoverTree<T> tree;
-		private final ArrayList<PointEntryDist<T>> result = new ArrayList<>();
-		private Iterator<PointEntryDist<T>> iter;
+		private final ArrayList<PointEntryKnn<T>> result = new ArrayList<>();
+		private Iterator<PointEntryKnn<T>> iter;
 		
 		public KNNIterator(CoverTree<T> tree) {
 			this.tree = tree;
@@ -843,7 +843,7 @@ public class CoverTree<T> implements PointMap<T> {
 		}
 
 		@Override
-		public PointEntryDist<T> next() {
+		public PointEntryKnn<T> next() {
 			return iter.next();
 		}
 

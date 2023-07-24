@@ -16,8 +16,6 @@
  */
 package org.tinspin.index.phtree;
 
-import org.tinspin.index.BoxEntry;
-import org.tinspin.index.BoxEntryDist;
 import org.tinspin.index.BoxMap;
 
 import ch.ethz.globis.phtree.PhTreeSolidF;
@@ -126,7 +124,7 @@ public class PHTreeR<T> implements BoxMap<T> {
 		public BoxEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntrySF<T> e = iter.nextEntryReuse();
-			return new EntryR<>(e.lower().clone(), e.upper().clone(), e.value());
+			return new BoxEntry<>(e.lower().clone(), e.upper().clone(), e.value());
 		}
 
 		@Override
@@ -156,7 +154,7 @@ public class PHTreeR<T> implements BoxMap<T> {
 		public BoxEntry<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntrySF<T> e = iter.nextEntryReuse();
-			return new EntryR<>(e.lower().clone(), e.upper().clone(), e.value());
+			return new BoxEntry<>(e.lower().clone(), e.upper().clone(), e.value());
 		}
 
 		@Override
@@ -180,10 +178,10 @@ public class PHTreeR<T> implements BoxMap<T> {
 		}
 
 		@Override
-		public BoxEntryDist<T> next() {
+		public BoxEntryKnn<T> next() {
 			//This reuses the entry object, but we have to clone the arrays...
 			PhEntryDistSF<T> e = iter.nextEntryReuse();
-			return new DistEntryR<>(e.lower().clone(), e.upper().clone(), e.value(), e.dist());
+			return new BoxEntryKnn<>(e.lower().clone(), e.upper().clone(), e.value(), e.dist());
 		}
 
 		@Override

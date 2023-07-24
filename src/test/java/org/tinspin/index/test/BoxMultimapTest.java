@@ -161,7 +161,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
             assertTrue("kNNquery() failed: " + e, iter.hasNext());
             int nFound = 0;
             while (iter.hasNext()) {
-                BoxEntryDist<Entry> eDist = iter.next();
+                BoxEntryKnn<Entry> eDist = iter.next();
                 nFound += eDist.dist() == 0 ? 1 : 0;
             }
             assertEquals(N_DUP, nFound);

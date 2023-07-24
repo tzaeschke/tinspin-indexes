@@ -26,7 +26,6 @@ import java.util.Random;
 
 import ch.ethz.globis.tinspin.TestStats;
 import org.junit.Test;
-import org.tinspin.index.BoxEntry;
 import org.tinspin.index.BoxMap;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.test.util.JmxTools;
@@ -115,8 +114,8 @@ public class PhTreeTest {
 				for (int j = 0; j < set1.size(); j++) {
 					BoxEntry<Integer> e1 = set1.get(j);
 					BoxEntry<Integer> e2 = set2.get(j);
-					if (!Arrays.equals(e1.lower(), e2.lower()) || 
-							!Arrays.equals(e1.upper(), e2.upper())) {
+					if (!Arrays.equals(e1.min(), e2.min()) ||
+							!Arrays.equals(e1.max(), e2.max())) {
 						log("j=" + j + " mismatch: " + e1 + " -/- " + e2);
 					}
 				}
@@ -135,11 +134,11 @@ public class PhTreeTest {
 		@Override
 		public int compare(BoxEntry<?> o1, BoxEntry<?> o2) {
 			for (int d = 0; d < DIM; d++) {
-				double diff = o1.lower()[d] - o2.lower()[d];
+				double diff = o1.min()[d] - o2.min()[d];
 				if (diff != 0) {
 					return diff < 0 ? -1 : 1;
 				}
-				diff = o1.upper()[d] - o2.upper()[d];
+				diff = o1.max()[d] - o2.max()[d];
 				if (diff != 0) {
 					return diff < 0 ? -1 : 1;
 				}

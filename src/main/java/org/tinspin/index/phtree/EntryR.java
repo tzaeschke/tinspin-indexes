@@ -16,47 +16,47 @@
  */
 package org.tinspin.index.phtree;
 
-import java.util.Arrays;
-
-import org.tinspin.index.BoxEntry;
-
-public class EntryR<T> implements BoxEntry<T> {
-	protected double[] min;
-	protected double[] max;
-	private T val;
-	
-	public EntryR(double[] min, double[] max, T val) {
-		this.min = min;
-		this.max = max;
-		this.val = val;
-	}
-
-	@Override
-	public double[] lower() {
-		return min;
-	}
-
-	@Override
-	public double[] upper() {
-		return max;
-	}
-
-	@Override
-	public T value() {
-		return val;
-	}
-	
-	@Override
-	public String toString() {
-		double[] len = new double[min.length];
-		Arrays.setAll(len, (i)->(max[i]-min[i]));
-		return Arrays.toString(min) + "/" + Arrays.toString(max) + ";len=" + 
-		Arrays.toString(len) + ";v=" + val;
-	}
-
-	public void set(double[] lower, double[] upper, T val) {
-		this.min = lower;
-		this.max = upper;
-		this.val = val;
-	}
-}
+//import java.util.Arrays;
+//
+//import org.tinspin.index.BoxEntry;
+//
+//public class EntryR<T> implements BoxEntry<T> {
+//	protected double[] min;
+//	protected double[] max;
+//	private T val;
+//
+//	public EntryR(double[] min, double[] max, T val) {
+//		this.min = min;
+//		this.max = max;
+//		this.val = val;
+//	}
+//
+//	@Override
+//	public double[] lower() {
+//		return min;
+//	}
+//
+//	@Override
+//	public double[] upper() {
+//		return max;
+//	}
+//
+//	@Override
+//	public T value() {
+//		return val;
+//	}
+//
+//	@Override
+//	public String toString() {
+//		double[] len = new double[min.length];
+//		Arrays.setAll(len, (i)->(max[i]-min[i]));
+//		return Arrays.toString(min) + "/" + Arrays.toString(max) + ";len=" +
+//		Arrays.toString(len) + ";v=" + val;
+//	}
+//
+//	public void set(double[] lower, double[] upper, T val) {
+//		this.min = lower;
+//		this.max = upper;
+//		this.val = val;
+//	}
+//}

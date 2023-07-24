@@ -393,7 +393,7 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 	}
 
 	@Override
-	public PointEntryDist<T> query1nn(double[] center) {
+	public PointEntryKnn<T> query1nn(double[] center) {
 		return new QIteratorKnn<>(this.root, 1, center, PointDistance.L2, e -> true).next();
 	}
 
@@ -411,12 +411,12 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 	}
 
 	@Deprecated
-	public List<PointEntryDist<T>> knnQuery(double[] center, int k) {
+	public List<PointEntryKnn<T>> knnQuery(double[] center, int k) {
 		return knnQuery(center, k, PointDistance.L2);
 	}
 
 	@Deprecated
-	public List<PointEntryDist<T>> knnQuery(double[] center, int k, PointDistance distFn) {
+	public List<PointEntryKnn<T>> knnQuery(double[] center, int k, PointDistance distFn) {
 		if (root == null) {
     		return Collections.emptyList();
 		}
@@ -428,7 +428,7 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
         			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
         		};
         double distEstimate = distanceEstimate(root, center, k, comp, distFn);
-    	ArrayList<PointEntryDist<T>> candidates = new ArrayList<>();
+    	ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
     	while (candidates.size() < k) {
     		candidates.clear();
     		rangeSearchKNN(root, center, candidates, k, distEstimate, distFn);
@@ -470,15 +470,15 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
     	}
     }
     
-    private double rangeSearchKNN(QNode<T> node, double[] center, 
-    		ArrayList<PointEntryDist<T>> candidates, int k, double maxRange, PointDistance distFn) {
+    private double rangeSearchKNN(QNode<T> node, double[] center,
+								  ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange, PointDistance distFn) {
 		if (node.isLeaf()) {
     		ArrayList<PointEntry<T>> points = node.getEntries();
     		for (int i = 0; i < points.size(); i++) {
     			PointEntry<T> p = points.get(i);
    				double dist = distFn.dist(center, p.point());
    				if (dist < maxRange) {
-    				candidates.add(new PointEntryDist<>(p, dist));
+    				candidates.add(new PointEntryKnn<>(p, dist));
   				}
     		}
     		maxRange = adjustRegionKNN(candidates, k, maxRange);
@@ -496,7 +496,7 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
     	return maxRange;
     }
 
-    private double adjustRegionKNN(ArrayList<PointEntryDist<T>> candidates, int k, double maxRange) {
+    private double adjustRegionKNN(ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange) {
         if (candidates.size() < k) {
         	//wait for more candidates
         	return maxRange;

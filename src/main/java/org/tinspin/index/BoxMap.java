@@ -73,8 +73,8 @@ public interface BoxMap<T> extends Index {
 	 * @param center center point
 	 * @return the nearest neighbor
 	 */
-	default BoxEntryDist<T> query1nn(double[] center) {
-		Iterator<BoxEntryDist<T>> it = queryKnn(center, 1);
+	default BoxEntryKnn<T> query1nn(double[] center) {
+		Iterator<BoxEntryKnn<T>> it = queryKnn(center, 1);
 		return it.hasNext() ? it.next() : null;
 	}
 

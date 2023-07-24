@@ -169,7 +169,7 @@ public class BoxMultimapCandidate extends Candidate {
 		double ret = 0;
 		int i = 0;
 		while (queryKnn.hasNext() && i < k) {
-			BoxEntryDist<Integer> e = queryKnn.next();
+			BoxEntryKnn<Integer> e = queryKnn.next();
 			ret += e.dist();
 			i++;
 		}

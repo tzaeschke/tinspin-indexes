@@ -85,7 +85,7 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 
 	public static <T> RTreeIterator<T> createExactMatch(RTree<T> tree, double[] min, double[] max) {
 		return new RTreeIterator<>(tree, min, max, e -> e instanceof RTreeNode ? Entry.checkOverlap(min, max, e) :
-				Arrays.equals(min, e.min) && Arrays.equals(max, e.max));
+				Arrays.equals(min, e.min()) && Arrays.equals(max, e.max()));
 	}
 
 	private RTreeIterator(RTree<T> tree, double[] min, double[] max, Predicate<Entry<T>> filter) {

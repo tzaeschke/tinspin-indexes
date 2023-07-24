@@ -39,11 +39,11 @@ public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 	
 	private final CoverTree<T> tree;
 	private double[] center;
-	private Iterator<PointEntryDist<T>> iter;
+	private Iterator<PointEntryKnn<T>> iter;
 	private PointDistance dist;
-	private final ArrayList<PointEntryDist<T>> candidates = new ArrayList<>();
-	private final ArrayList<PointEntryDist<Object>> pool = new ArrayList<>();
-	private final PriorityQueue<PointEntryDist<Object>> queue =
+	private final ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
+	private final ArrayList<PointEntryKnn<Object>> pool = new ArrayList<>();
+	private final PriorityQueue<PointEntryKnn<Object>> queue =
 			new PriorityQueue<>((o1, o2) -> (int)(o1.dist() - o2.dist()));
 	
 	
@@ -95,11 +95,11 @@ public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 		addToQueue(tree.getRoot());
 
 		while (!queue.isEmpty()) {
-			PointEntryDist<Object> candidate = queue.poll();
+			PointEntryKnn<Object> candidate = queue.poll();
 			Object o = candidate.value();
 			if (!(o instanceof Node)) {
 				//data entry
-				candidates.add((PointEntryDist<T>) candidate);
+				candidates.add((PointEntryKnn<T>) candidate);
 				if (candidates.size() >= k) {
 					return;
 				}
@@ -131,11 +131,11 @@ public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 	 * @param dist distance
 	 * @return PointEntryDist<Object>
 	 */
-	private PointEntryDist<Object> createEntry(double[] data, Object val, double dist) {
+	private PointEntryKnn<Object> createEntry(double[] data, Object val, double dist) {
 		if (pool.isEmpty()) {
-			return new PointEntryDist<>(data, val, dist);
+			return new PointEntryKnn<>(data, val, dist);
 		}
-		PointEntryDist<Object> e = pool.remove(pool.size() - 1);
+		PointEntryKnn<Object> e = pool.remove(pool.size() - 1);
 		e.set(data, val, dist);
 		return e;
 	}
@@ -147,7 +147,7 @@ public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 
 	
 	@Override
-	public PointEntryDist<T> next() {
+	public PointEntryKnn<T> next() {
 		return iter.next();
 	}
 }

@@ -11,7 +11,6 @@ import java.util.Arrays;
 import ch.ethz.globis.tinspin.TestStats;
 import ch.ethz.globis.tinspin.wrappers.Candidate;
 import org.tinspin.index.Index;
-import org.tinspin.index.BoxEntryDist;
 import org.tinspin.index.BoxMap;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.phtree.PHTreeR;
@@ -171,7 +170,7 @@ public class BoxMapCandidate extends Candidate {
 		double ret = 0;
 		int i = 0;
 		while (queryKnn.hasNext() && i < k) {
-			BoxEntryDist<Object> e = queryKnn.next();
+			BoxEntryKnn<Object> e = queryKnn.next();
 			ret += e.dist();
 			i++;
 		}

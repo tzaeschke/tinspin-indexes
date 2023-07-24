@@ -16,44 +16,44 @@
  */
 package org.tinspin.index.rtree;
 
-import org.tinspin.index.BoxEntryDist;
-
-public class DistEntry<T> extends Entry<T> implements BoxEntryDist<T> {
-	
-	private double dist;
-	
-	/**
-	 * Create a new entry with distance
-	 * @param min min
-	 * @param max max
-	 * @param val value
-	 * @param dist distance
-	 */
-	public DistEntry(double[] min, double[] max, T val, double dist) {
-		super(min, max, val);
-		this.dist = dist;
-	}
-	
-	/**
-	 * @return the distance
-	 */
-	@Override
-	public double dist() {
-		return dist;
-	}
-	
-	@Override
-	public String toString() {
-		return super.toString() + ";dist=" + dist;
-	}
-
-	protected void set(Entry<T> e, double distance) {
-		super.set(e);
-		this.dist = distance;
-	}
-
-	public void set(double[] lower, double[] upper, T val, double distance) {
-		super.set(lower, upper, val);
-		this.dist = distance;
-	}
-}
+//import org.tinspin.index.BoxEntryKnn;
+//
+//public class DistEntry<T> extends Entry<T> implements BoxEntryKnn<T> {
+//
+//	private double dist;
+//
+//	/**
+//	 * Create a new entry with distance
+//	 * @param min min
+//	 * @param max max
+//	 * @param val value
+//	 * @param dist distance
+//	 */
+//	public DistEntry(double[] min, double[] max, T val, double dist) {
+//		super(min, max, val);
+//		this.dist = dist;
+//	}
+//
+//	/**
+//	 * @return the distance
+//	 */
+//	@Override
+//	public double dist() {
+//		return dist;
+//	}
+//
+//	@Override
+//	public String toString() {
+//		return super.toString() + ";dist=" + dist;
+//	}
+//
+//	protected void set(Entry<T> e, double distance) {
+//		super.set(e);
+//		this.dist = distance;
+//	}
+//
+//	public void set(double[] lower, double[] upper, T val, double distance) {
+//		super.set(lower, upper, val);
+//		this.dist = distance;
+//	}
+//}

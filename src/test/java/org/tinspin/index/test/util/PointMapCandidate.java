@@ -33,7 +33,7 @@ public class PointMapCandidate extends Candidate {
 	private final int N;
 	private double[] data;
 	private QueryIterator<PointEntry<double[]>> it;
-	private QueryIteratorKnn<PointEntryDist<double[]>> itKnn;
+	private QueryIteratorKnn<PointEntryKnn<double[]>> itKnn;
 	private final boolean bulkloadSTR;
 	private final IndexHandle index;
 

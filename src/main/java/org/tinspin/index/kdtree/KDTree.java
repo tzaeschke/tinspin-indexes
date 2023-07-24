@@ -459,17 +459,17 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 	 * @param center The point for which the nearest neighbors are requested
 	 * @return Nearest neighbor
 	 */
-	public PointEntryDist<T> nnQuery(double[] center) {
+	public PointEntryKnn<T> nnQuery(double[] center) {
 		if (root == null) {
     		return null;
 		}
-    	PointEntryDist<T> candidate = new PointEntryDist<>(null, Double.POSITIVE_INFINITY);
+    	PointEntryKnn<T> candidate = new PointEntryKnn<>(null, Double.POSITIVE_INFINITY);
    		rangeSearch1NN(root, center, candidate, Double.POSITIVE_INFINITY, dist());
     	return candidate;
     }
 
-    private double rangeSearch1NN(Node<T> node, double[] center, 
-    		PointEntryDist<T> candidate, double maxRange, PointDistance fn) {
+    private double rangeSearch1NN(Node<T> node, double[] center,
+                                  PointEntryKnn<T> candidate, double maxRange, PointDistance fn) {
     	int pos = node.getDim();
     	if (node.getLo() != null && (center[pos] < node.point()[pos] || node.getHi() == null)) {
         	//go down
@@ -498,8 +498,8 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
     	return maxRange;
     }
         
-    private double addCandidate(Node<T> node, double[] center, 
-    		final PointEntryDist<T> candidate, double maxRange, PointDistance fn) {
+    private double addCandidate(Node<T> node, double[] center,
+                                final PointEntryKnn<T> candidate, double maxRange, PointDistance fn) {
     	nDist1NN++;
     	double dist = fn.dist(center, node.point());
     	if (dist >= maxRange) {
@@ -511,21 +511,21 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
     	return dist;
     }
 
-	public List<PointEntryDist<T>> knnQuery(double[] center, int k) {
+	public List<PointEntryKnn<T>> knnQuery(double[] center, int k) {
 		return knnQuery(center, k, dist());
 	}
 
-	public List<PointEntryDist<T>> knnQuery(double[] center, int k, PointDistance distFn) {
+	public List<PointEntryKnn<T>> knnQuery(double[] center, int k, PointDistance distFn) {
 		if (root == null) {
 			return Collections.emptyList();
 		}
-		ArrayList<PointEntryDist<T>> candidates = new ArrayList<>(k);
+		ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>(k);
 		rangeSearchKNN(root, center, candidates, k, Double.POSITIVE_INFINITY, distFn);
 		return candidates;
 	}
 
 	private double rangeSearchKNN(Node<T> node, double[] center,
-    		ArrayList<PointEntryDist<T>> candidates, int k, double maxRange, PointDistance distFn) {
+                                  ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange, PointDistance distFn) {
     	int pos = node.getDim();
     	if (node.getLo() != null && (center[pos] < node.point()[pos] || node.getHi() == null)) {
         	//go down
@@ -555,15 +555,15 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
     }
     
 	
-    private static final Comparator<PointEntryDist<?>> compKnn =
-    		(PointEntryDist<?> point1, PointEntryDist<?> point2) -> {
+    private static final Comparator<PointEntryKnn<?>> compKnn =
+    		(PointEntryKnn<?> point1, PointEntryKnn<?> point2) -> {
     			double deltaDist = point1.dist() - point2.dist();
     			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
     		};
 
     
-    private double addCandidate(Node<T> node, double[] center, 
-    		ArrayList<PointEntryDist<T>> candidates, int k, double maxRange, PointDistance distFn) {
+    private double addCandidate(Node<T> node, double[] center,
+                                ArrayList<PointEntryKnn<T>> candidates, int k, double maxRange, PointDistance distFn) {
     	nDistKNN++;
     	//add ?
     	double dist = distFn.dist(center, node.point());
@@ -575,12 +575,12 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
     		//don't add if we already have enough equally good results.
     		return maxRange;
     	}
-		PointEntryDist<T> cand;
+		PointEntryKnn<T> cand;
     	if (candidates.size() >= k) {
     		cand = candidates.remove(k - 1);
     		cand.set(node, dist);
     	} else {
-    		cand = new PointEntryDist<>(node, dist);
+    		cand = new PointEntryKnn<>(node, dist);
     	}
     	int insertionPos = Collections.binarySearch(candidates, cand, compKnn);
     	insertionPos = insertionPos >= 0 ? insertionPos : -(insertionPos+1);
@@ -591,7 +591,7 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 	
     private static class KDQueryIteratorKnn<T> implements PointIteratorKnn<T> {
 
-    	private Iterator<PointEntryDist<T>> it;
+    	private Iterator<PointEntryKnn<T>> it;
     	private final KDTree<T> tree;
 		private final PointDistance distFn;
 
@@ -607,7 +607,7 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 		}
 
 		@Override
-		public PointEntryDist<T> next() {
+		public PointEntryKnn<T> next() {
 			return it.next();
 		}
 
@@ -694,7 +694,7 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 	}
 
 	@Override
-	public PointEntryDist<T> query1nn(double[] center) {
+	public PointEntryKnn<T> query1nn(double[] center) {
 		return queryKnn(center, 1).next();
 	}
 

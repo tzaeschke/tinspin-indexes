@@ -56,10 +56,10 @@ class RTreeNodeLeaf<T> extends RTreeNode<T> {
 	
 	@Override
 	public String toString() {
-		double[] len = new double[min.length];
-		Arrays.setAll(len, (i)->(max[i]-min[i]));
+		double[] len = new double[min().length];
+		Arrays.setAll(len, i -> (max()[i]-min()[i]));
 		return "NodeData;n=" + entries.size() + 
-				";min/max=" + Arrays.toString(lower()) + "/" + Arrays.toString(upper()) +
+				";min/max=" + Arrays.toString(min()) + "/" + Arrays.toString(max()) +
 				";lengths=" + Arrays.toString(len) +
 				";id=" + System.identityHashCode(this);
 	}

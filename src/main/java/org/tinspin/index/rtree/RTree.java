@@ -173,7 +173,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		// -> done inside split/reinsert
 	}
 	
-	private RTreeNode<T> overflowTreatment(RTreeNode<T> node, 
+	private RTreeNode<T> overflowTreatment(RTreeNode<T> node,
 			Entry<T> e, boolean[] blockedLevels, int desiredInsertionLevel) {
 		//OT1
 		if (node != root && !blockedLevels[desiredInsertionLevel]) {
@@ -453,7 +453,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	 * @see org.tinspin.index.rtree.Index#query1N
 	 */
 	@Override
-	public BoxEntryDist<T> query1nn(double[] center) {
+	public BoxEntryKnn<T> query1nn(double[] center) {
 		return new RTreeQuery1nn<>(this).reset(center, BoxDistance.EDGE);
 	}
 	
@@ -468,10 +468,10 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	@Override
 	public RTreeQueryKnn2<T> queryKnn(double[] center, int k, BoxDistance dist) {
 		//return new RTreeQueryKnn<>(this, center, k, dist);
-		return new RTreeQueryKnn2<>(this, k, center, dist, e -> true);
+		return new RTreeQueryKnn2<>(this, k, center, dist, (e, d) -> true);
 	}
 
-	public Iterable<BoxEntryDist<T>> queryRangedNearestNeighbor(
+	public Iterable<BoxEntryKnn<T>> queryRangedNearestNeighbor(
 			double[] center, BoxDistance dist,
 			BoxDistance closestDist, double[] minBound, double[] maxBound) {
 		return queryRangedNearestNeighbor(center, dist, closestDist, 
@@ -494,8 +494,8 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	 *                     (example: {@code new Filter.RectangleIntersectFilter(min, max)})
 	 * @return             An Iterable which lazily calculates the nearest neighbors. 
 	 */
-	public Iterable<BoxEntryDist<T>> queryRangedNearestNeighbor(double[] center, BoxDistance dist,
-																BoxDistance closestDist, Filter filter) {
+	public Iterable<BoxEntryKnn<T>> queryRangedNearestNeighbor(double[] center, BoxDistance dist,
+															   BoxDistance closestDist, Filter filter) {
 		RTree<T> self = this;
 		return () -> new RTreeMixedQuery<>(self, center, filter, dist, closestDist);
 	}
@@ -566,7 +566,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		ArrayList<Entry<T>> entries = node.getEntries();
 		for (int i = 0; i < entries.size(); i++) {
 			Entry<T> e = entries.get(i);
-			if (!node.checkInclusion(e.min, e.max)) {
+			if (!node.checkInclusion(e.min(), e.max())) {
 				throw new IllegalStateException();
 			}
 			if (e instanceof RTreeNode) {
@@ -593,7 +593,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 			for (int i = 0; i < entries.size(); i++) {
 				Entry<T> e = entries.get(i);
 				for (int j = i+1; j < entries.size(); j++) {
-					if (Entry.checkOverlap(e.lower(), e.upper(), entries.get(j))) {
+					if (Entry.checkOverlap(e.min(), e.max(), entries.get(j))) {
 						System.out.println("Overlap 1: " + e);
 						System.out.println("Overlap 2: " + entries.get(j));
 						System.out.println("Overlap 1 parent : " + 

@@ -273,7 +273,7 @@ public class CoverTreeTest {
 
 		for (double[] key : point_list) {
 //			System.out.println("1NN query: " + Arrays.toString(key));
-			PointEntryDist<double[]> p = tree.query1nn(key);
+			PointEntryKnn<double[]> p = tree.query1nn(key);
 			if (p == null) {
 				throw new IllegalStateException("1NN() failed: " + Arrays.toString(key));
 			}

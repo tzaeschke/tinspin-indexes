@@ -19,17 +19,19 @@ package org.tinspin.index.rtree;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static org.tinspin.index.Index.*;
+
 abstract class RTreeNode<T> extends Entry<T> {
 
 	private RTreeNodeDir<T> parent;
 
-	public RTreeNode(int dim) {
+	RTreeNode(int dim) {
 		super(new double[dim], new double[dim], null);
 	}
 
-	public abstract void addEntry(Entry<T> e);
+	abstract void addEntry(Entry<T> e);
 
-	public abstract ArrayList<Entry<T>> getEntries();
+	abstract ArrayList<Entry<T>> getEntries();
 
 	/**
 	 * Calculates the overlap of this node with 'othernode' if this node would be 
@@ -38,11 +40,11 @@ abstract class RTreeNode<T> extends Entry<T> {
 	 * @param otherNode
 	 * @return overlap of enlarged nodes.
 	 */
-	public double calcOverlapEnlarged(Entry<T> enlargement, RTreeNode<T> otherNode) {
+	double calcOverlapEnlarged(Entry<T> enlargement, RTreeNode<T> otherNode) {
 		double area = 1;
-		for (int i = 0; i < min.length; i++) {
-			double d = min(max(max[i], enlargement.max[i]), otherNode.max[i]) 
-					- max(min(min[i], enlargement.min[i]), otherNode.min[i]);
+		for (int i = 0; i < min().length; i++) {
+			double d = Math.min(Math.max(max()[i], enlargement.max()[i]), otherNode.max()[i])
+					- Math.max(Math.min(min()[i], enlargement.min()[i]), otherNode.min()[i]);
 			if (d <= 0) {
 				return 0;
 			}
@@ -53,9 +55,9 @@ abstract class RTreeNode<T> extends Entry<T> {
 
 	public double calcAreaEnlarged(Entry<T> e) {
 		double area = 1;
-		for (int i = 0; i < min.length; i++) {
-			double d = max(max[i], e.max[i]) 
-					- min(min[i], e.min[i]);
+		for (int i = 0; i < min().length; i++) {
+			double d = Math.max(max()[i], e.max()[i])
+					- Math.min(min()[i], e.min()[i]);
 			area *= d;
 		}
 		return area;
@@ -63,9 +65,9 @@ abstract class RTreeNode<T> extends Entry<T> {
 
 
 	protected void setMBB(Entry<T> e) {
-		for (int i = 0; i < min.length; i++) {
-			min[i] = e.min[i];
-			max[i] = e.max[i];
+		for (int i = 0; i < min().length; i++) {
+			min()[i] = e.min()[i];
+			max()[i] = e.max()[i];
 		}
 	}
 
@@ -75,12 +77,12 @@ abstract class RTreeNode<T> extends Entry<T> {
 	 * @param e new entry
 	 */
 	protected void extendMBB(Entry<T> e) {
-		for (int i = 0; i < min.length; i++) {
-			if (min[i] > e.min[i]) {
-				min[i] = e.min[i];
+		for (int i = 0; i < min().length; i++) {
+			if (min()[i] > e.min()[i]) {
+				min()[i] = e.min()[i];
 			}
-			if (max[i] < e.max[i]) {
-				max[i] = e.max[i];
+			if (max()[i] < e.max()[i]) {
+				max()[i] = e.max()[i];
 			}
 		}
 	}
@@ -91,27 +93,27 @@ abstract class RTreeNode<T> extends Entry<T> {
 	 * @return 'true' iff the MBB has changed
 	 */
 	public boolean recalcMBB() {
-		double[] minOld = min.clone();
-		double[] maxOld = max.clone();
+		double[] minOld = min().clone();
+		double[] maxOld = max().clone();
 		resetMBB();
 		ArrayList<Entry<T>> entries = getEntries();
 		for (int i = 0; i < entries.size(); i++) {
-			Entry<T> e = entries.get(i);
-			for (int d = 0; d < min.length; d++) {
-				if (min[d] > e.min[d]) {
-					min[d] = e.min[d];
+			BoxEntry<T> e = entries.get(i);
+			for (int d = 0; d < min().length; d++) {
+				if (min()[d] > e.min()[d]) {
+					min()[d] = e.min()[d];
 				}
-				if (max[d] < e.max[d]) {
-					max[d] = e.max[d];
+				if (max()[d] < e.max()[d]) {
+					max()[d] = e.max()[d];
 				}
 			}
 		}
-		return !Arrays.equals(min, minOld) || !Arrays.equals(max, maxOld);
+		return !Arrays.equals(min(), minOld) || !Arrays.equals(max(), maxOld);
 	}
 
 	protected void resetMBB() {
-		Arrays.fill(min, Double.POSITIVE_INFINITY);
-		Arrays.fill(max, Double.NEGATIVE_INFINITY);
+		Arrays.fill(min(), Double.POSITIVE_INFINITY);
+		Arrays.fill(max(), Double.NEGATIVE_INFINITY);
 	}
 
 	public abstract void clear();

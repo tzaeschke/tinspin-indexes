@@ -16,44 +16,44 @@
  * limitations under the License.
  */
 package org.tinspin.index.qthypercube;
-
-import java.util.Comparator;
-
-import org.tinspin.index.BoxEntryDist;
-
-public class QREntryDist<T> extends QREntry<T> implements BoxEntryDist<T> {
-	private double distance;
-	
-	public QREntryDist(QREntry<T> e, double dist) {
-		super(e.lower(), e.upper(), e.value());
-		this.distance = dist;
-	}
-	
-	@Override
-	public double dist() {
-		return distance;
-	}
-	
-	public static final PointEntryComparator COMP = new PointEntryComparator();
-	
-	static class PointEntryComparator implements Comparator<QREntryDist<?>> {
-
-	    /**
-	    * Compares the two specified MBRs according to
-	    * the sorting dimension and the sorting co-ordinate for the dimension
-	     * of this Comparator.
-	    *
-	    * @param o1 the first SpatialPoint
-	    * @param o2 the second SpatialPoint
-	    * @return a negative integer, zero, or a positive integer as the
-	    *         first argument is less than, equal to, or greater than the
-	    *         second.
-	    */
-	    @Override
-	    public int compare(QREntryDist<?> o1, QREntryDist<?> o2) {
-	        double d = o1.dist() - o2.dist();
-	        return d < 0 ? -1 : (d > 0 ? 1 : 0);
-	    }
-	}
-
-}
+//
+//import java.util.Comparator;
+//
+//import org.tinspin.index.BoxEntryKnn;
+//
+//public class BoxEntryKnn<T> extends BoxEntry<T> implements BoxEntryKnn<T> {
+//	private double distance;
+//
+//	public BoxEntryKnn(BoxEntry<T> e, double dist) {
+//		super(e.min(), e.max(), e.value());
+//		this.distance = dist;
+//	}
+//
+//	@Override
+//	public double dist() {
+//		return distance;
+//	}
+//
+//	public static final PointEntryComparator COMP = new PointEntryComparator();
+//
+//	static class PointEntryComparator implements Comparator<BoxEntryKnn<?>> {
+//
+//	    /**
+//	    * Compares the two specified MBRs according to
+//	    * the sorting dimension and the sorting co-ordinate for the dimension
+//	     * of this Comparator.
+//	    *
+//	    * @param o1 the first SpatialPoint
+//	    * @param o2 the second SpatialPoint
+//	    * @return a negative integer, zero, or a positive integer as the
+//	    *         first argument is less than, equal to, or greater than the
+//	    *         second.
+//	    */
+//	    @Override
+//	    public int compare(BoxEntryKnn<?> o1, BoxEntryKnn<?> o2) {
+//	        double d = o1.dist() - o2.dist();
+//	        return d < 0 ? -1 : (d > 0 ? 1 : 0);
+//	    }
+//	}
+//
+//}

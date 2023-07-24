@@ -35,20 +35,20 @@ public interface BoxDistance {
 	 * Some algorithm use this method on the entries containing user supplied values.
 	 * This can be overridden if the min/max coordinates only represent the 
 	 * bounding-box of the object.
-	 * 
+	 * <p>
 	 * If your entry is actually a sphere, a car, an human or a cat, you may need this.
 	 * 
 	 * @param center a point
 	 * @param entry a rectangle
 	 * @return distance between point and rectangle
 	 */
-	default double dist(double[] center, BoxEntry<?> entry) {
-		return dist(center, entry.lower(), entry.upper());
+	default double dist(double[] center, Index.BoxEntry<?> entry) {
+		return dist(center, entry.min(), entry.max());
 	}
 
 	/**
 	 * This class calculates the distance to a rectangular shaped object.
-	 * 
+	 * <p>
 	 * This class completely ignores the center given as parameter to the interface.
 	 * 
 	 * TODO: maybe we could get rid of the center parameter altogether and always let 
@@ -104,7 +104,7 @@ public interface BoxDistance {
 		}
 
 		@Override
-		public double dist(double[] center, BoxEntry<?> entry) {
+		public double dist(double[] center, Index.BoxEntry<?> entry) {
 			double d = dist.dist(center, entry);
 			if (d < EPSILON) {
 				return Double.POSITIVE_INFINITY;

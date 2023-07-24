@@ -15,7 +15,7 @@
  */
 package org.tinspin.index.rtree;
 
-import org.tinspin.index.BoxEntry;
+import static org.tinspin.index.Index.*;
 
 public interface Filter {
 
@@ -47,7 +47,7 @@ public interface Filter {
 	 * @return        True if this entry is part of the result set
 	 */
 	default boolean matches(BoxEntry<?> entry) {
-		return intersects(entry.lower(), entry.upper());
+		return intersects(entry.min(), entry.max());
 	}
 
 	/**

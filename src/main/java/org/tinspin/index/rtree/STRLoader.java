@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import static org.tinspin.index.Index.*;
+
 public class STRLoader<T> {
 
 	private int nNodes = 0;
@@ -45,7 +47,7 @@ public class STRLoader<T> {
 
 	@SuppressWarnings("unchecked")
 	public void load(Entry<T>[] entries) {
-		int dims = entries[0].lower().length;
+		int dims = entries[0].min().length;
 		int N = entries.length;
 		int M = RTree.NODE_MAX_DATA;
 		CenterComp comp = new CenterComp();
@@ -116,13 +118,13 @@ public class STRLoader<T> {
 		ArrayList<Entry<T>> el = node.getEntries();
 		int nEntries = 0;
 		int nNodes = 0;
-		int dim = el.get(0).min.length;
+		int dim = el.get(0).min().length;
 		double[] mbbMin = new double[dim];
 		double[] mbbMax = new double[dim];
 		Arrays.fill(mbbMin, Double.POSITIVE_INFINITY);
 		Arrays.fill(mbbMax, Double.NEGATIVE_INFINITY);
 		for (int i = 0; i < el.size(); i++) {
-			Entry<T> e = el.get(i);
+			BoxEntry<T> e = el.get(i);
 			//if (!(e instanceof RTreeNode)) {
 			//	rects.add(e.min);
 			//	rects.add(e.max);
@@ -130,17 +132,17 @@ public class STRLoader<T> {
 			
 			//System.out.println("Entry: " + e);
 			//check MBB is big enough
-			if (!Entry.calcIncludes(node.lower(), node.upper(), e.lower(), e.upper())) {
+			if (!Entry.calcIncludes(node.min(), node.max(), e.min(), e.max())) {
 				throw new IllegalStateException();
 			}
 			
 			//check MBB is not too big
 			for (int d = 0; d < dim; d++) {
-				if (e.min[d] < mbbMin[d]) {
-					mbbMin[d] = e.min[d];
+				if (e.min()[d] < mbbMin[d]) {
+					mbbMin[d] = e.min()[d];
 				}
-				if (e.max[d] > mbbMax[d]) {
-					mbbMax[d] = e.max[d];
+				if (e.max()[d] > mbbMax[d]) {
+					mbbMax[d] = e.max()[d];
 				}
 			}
 			
@@ -183,14 +185,14 @@ public class STRLoader<T> {
 //				}
 //			}			
 		}
-		if (!Arrays.equals(mbbMin, node.min) || 
-				!Arrays.equals(mbbMax, node.max)) {
+		if (!Arrays.equals(mbbMin, node.min()) ||
+				!Arrays.equals(mbbMax, node.max())) {
 			throw new IllegalStateException();
 		}
 		return nEntries;
 	}
 	
-	private void sortChunks(Entry<T>[] entries, int dims, int M, CenterComp comp) {
+	private void sortChunks(BoxEntry<T>[] entries, int dims, int M, CenterComp comp) {
 		comp.setDim(0);
 		Arrays.sort(entries, comp);
 		int nToSplit = entries.length;
@@ -211,7 +213,7 @@ public class STRLoader<T> {
 		}
 	}
 
-	private class CenterComp implements Comparator<Entry<T>> {
+	private class CenterComp implements Comparator<BoxEntry<T>> {
 		int dim = -1;
 		
 		void setDim(int dim) {
@@ -219,9 +221,9 @@ public class STRLoader<T> {
 		}
 		
 		@Override
-		public int compare(Entry<T> o1, Entry<T> o2) {
-			double c1 = o1.upper()[dim] + o1.lower()[dim]; // *0.5
-			double c2 = o2.upper()[dim] + o2.lower()[dim]; // *0.5
+		public int compare(BoxEntry<T> o1, BoxEntry<T> o2) {
+			double c1 = o1.max()[dim] + o1.min()[dim]; // *0.5
+			double c2 = o2.max()[dim] + o2.min()[dim]; // *0.5
 			return c1 < c2 ? -1 : c1 > c2 ? 1 : 0;
 		}
 	}

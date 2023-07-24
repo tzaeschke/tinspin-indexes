@@ -33,9 +33,9 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
     private final PointDistance distFn;
     private final Predicate<PointEntry<T>> filterFn;
     MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
-    MinMaxHeap<PointEntryDist<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
+    MinMaxHeap<PointEntryKnn<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
     double maxNodeDist = Double.POSITIVE_INFINITY;
-    private PointEntryDist<T> current;
+    private PointEntryKnn<T> current;
     private int remaining;
     private double[] center;
     private double currentDistance;
@@ -71,11 +71,11 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
     }
 
     @Override
-    public PointEntryDist<T> next() {
+    public PointEntryKnn<T> next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        PointEntryDist<T> ret = current;
+        PointEntryKnn<T> ret = current;
         FindNextElement();
         return ret;
     }
@@ -92,7 +92,7 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
             }
             if (useV) {
                 // data entry
-                PointEntryDist<T> result = queueV.peekMin();
+                PointEntryKnn<T> result = queueV.peekMin();
                 queueV.popMin();
                 --remaining;
                 this.current = result;
@@ -116,7 +116,7 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
                             double d = distFn.dist(center, entry.point());
                             // Using '<=' allows dealing with infinite distances.
                             if (d <= maxNodeDist) {
-                                queueV.push(new PointEntryDist<>(entry, d));
+                                queueV.push(new PointEntryKnn<>(entry, d));
                                 if (queueV.size() >= remaining) {
                                     if (queueV.size() > remaining) {
                                         queueV.popMax();

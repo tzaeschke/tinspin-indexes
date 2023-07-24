@@ -18,7 +18,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	private int N;
 	private PointEntry<T>[] values;
 	private int insPos = 0;
-	private final PEComparator<T> comparator = new PEComparator<>();
+	private static final PEComparator comparator = new PEComparator();
 
 	/**
 	 * Setup of a simple array data structure (no indexing).
@@ -39,7 +39,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	@Override
 	public void insert(double[] key, T value) {
 		System.arraycopy(key, 0, phc[insPos], 0, dims);
-		values[insPos] = new PointEntryDist<>(key, value, -1);
+		values[insPos] = new PointEntryKnn<>(key, value, -1);
 		insPos++;
 	}
 
@@ -111,7 +111,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	}
 
 	@Override
-	public PointEntryDist<T> query1nn(double[] center) {
+	public PointEntryKnn<T> query1nn(double[] center) {
 		PointIteratorKnn<T> it = queryKnn(center, 1);
 		return it.hasNext() ? it.next() : null;
 	}
@@ -167,7 +167,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 
 	private class AQueryIteratorKnn implements PointIteratorKnn<T> {
 
-    	private Iterator<PointEntryDist<T>> it;
+    	private Iterator<PointEntryKnn<T>> it;
     	
 		public AQueryIteratorKnn(double[] center, int k) {
 			reset(center, k);
@@ -179,7 +179,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 		}
 
 		@Override
-		public PointEntryDist<T> next() {
+		public PointEntryKnn<T> next() {
 			return it.next();
 		}
 
@@ -192,17 +192,17 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
     }
     
 
-	private ArrayList<PointEntryDist<T>> knnQuery(double[] center, int k) {
-		ArrayList<PointEntryDist<T>> ret = new ArrayList<>(k);
+	private ArrayList<PointEntryKnn<T>> knnQuery(double[] center, int k) {
+		ArrayList<PointEntryKnn<T>> ret = new ArrayList<>(k);
 		for (int i = 0; i < phc.length; i++) {
 			double[] p = phc[i];
 			double dist = dist(center, p);
 			if (ret.size() < k) {
-				ret.add(new PointEntryDist<>(p, values[i].value(), dist));
+				ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
 				ret.sort(comparator);
 			} else if (ret.get(k-1).dist() > dist) {
 				ret.remove(k-1);
-				ret.add(new PointEntryDist<>(p, values[i].value(), dist));
+				ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
 				ret.sort(comparator);
 			}
 		}

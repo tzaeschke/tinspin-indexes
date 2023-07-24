@@ -61,7 +61,7 @@ public class PointMapWrapper<T> implements PointMap<T> {
 		@Override
 		public PointEntry<T> next() {
 			BoxEntry<T> e = it.next();
-			return new PointEntry<>(e.lower(), e.value());
+			return new PointEntry<>(e.min(), e.value());
 		}
 
 		@Override
@@ -72,9 +72,9 @@ public class PointMapWrapper<T> implements PointMap<T> {
 	}
 	
 	@Override
-	public PointEntryDist<T> query1nn(double[] center) {
-		BoxEntryDist<T> r = ind.query1nn(center);
-		return new PointEntryDist<>(r.lower(), r.value(), r.dist());
+	public PointEntryKnn<T> query1nn(double[] center) {
+		BoxEntryKnn<T> r = ind.query1nn(center);
+		return new PointEntryKnn<>(r.min(), r.value(), r.dist());
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -97,9 +97,9 @@ public class PointMapWrapper<T> implements PointMap<T> {
 		}
 
 		@Override
-		public PointEntryDist<T> next() {
-			BoxEntryDist<T> e = it.next();
-			return new PointEntryDist<>(e.lower(), e.value(), e.dist());
+		public PointEntryKnn<T> next() {
+			BoxEntryKnn<T> e = it.next();
+			return new PointEntryKnn<>(e.min(), e.value(), e.dist());
 		}
 
 		@Override

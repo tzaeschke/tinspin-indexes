@@ -16,34 +16,34 @@
  */
 package org.tinspin.index.phtree;
 
-import org.tinspin.index.BoxEntryDist;
-
-public class DistEntryR<T> extends EntryR<T> implements BoxEntryDist<T> {
-	
-	private double dist;
-	
-	/**
-	 * Create a new entry with distance
-	 * @param min min
-	 * @param max max
-	 * @param val value
-	 * @param dist distance
-	 */
-	public DistEntryR(double[] min, double[] max, T val, double dist) {
-		super(min, max, val);
-		this.dist = dist;
-	}
-	
-	/**
-	 * @return the distance
-	 */
-	@Override
-	public double dist() {
-		return dist;
-	}
-	
-	@Override
-	public String toString() {
-		return super.toString() + ";dist=" + dist;
-	}
-}
+//import org.tinspin.index.BoxEntryKnn;
+//
+//public class DistEntryR<T> extends EntryR<T> implements BoxEntryKnn<T> {
+//
+//	private double dist;
+//
+//	/**
+//	 * Create a new entry with distance
+//	 * @param min min
+//	 * @param max max
+//	 * @param val value
+//	 * @param dist distance
+//	 */
+//	public DistEntryR(double[] min, double[] max, T val, double dist) {
+//		super(min, max, val);
+//		this.dist = dist;
+//	}
+//
+//	/**
+//	 * @return the distance
+//	 */
+//	@Override
+//	public double dist() {
+//		return dist;
+//	}
+//
+//	@Override
+//	public String toString() {
+//		return super.toString() + ";dist=" + dist;
+//	}
+//}

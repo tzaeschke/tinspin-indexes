@@ -77,7 +77,7 @@ public interface PointMap<T> extends Index {
 	 * @param center center point
 	 * @return the nearest neighbor
 	 */
-	default PointEntryDist<T> query1nn(double[] center) {
+	default PointEntryKnn<T> query1nn(double[] center) {
 		PointIteratorKnn<T> it = queryKnn(center, 1);
 		return it.hasNext() ? it.next() : null;
 	}

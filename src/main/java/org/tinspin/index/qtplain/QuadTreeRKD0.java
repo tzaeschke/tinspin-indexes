@@ -95,7 +95,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	@Override
 	public void insert(double[] keyL, double[] keyU, T value) {
 		size++;
-		QREntry<T> e = new QREntry<>(keyL, keyU, value);
+		BoxEntry<T> e = new BoxEntry<>(keyL, keyU, value);
 		if (root == null) {
 			initializeRoot(keyL, keyU);
 		}
@@ -145,7 +145,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 		if (root == null) {
 			return null;
 		}
-		QREntry<T> e = root.getExact(keyL, keyU, x -> true);
+		BoxEntry<T> e = root.getExact(keyL, keyU, x -> true);
 		return e == null ? null : e.value();
 	}
 
@@ -185,7 +185,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 		if (root == null) {
 			return null;
 		}
-		QREntry<T> e = root.remove(null, keyL, keyU, maxNodeSize, x -> true);
+		BoxEntry<T> e = root.remove(null, keyL, keyU, maxNodeSize, x -> true);
 		if (e == null) {
 			return null;
 		}
@@ -203,7 +203,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 		if (root == null) {
 			return false;
 		}
-		QREntry<T> e = root.remove(null, lower, upper, maxNodeSize, condition);
+		BoxEntry<T> e = root.remove(null, lower, upper, maxNodeSize, condition);
 		if (e == null) {
 			return false;
 		}
@@ -217,7 +217,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 			return false;
 		}
 		boolean[] requiresReinsert = new boolean[]{false};
-		QREntry<T> e = root.update(null, oldKeyL, oldKeyU, newKeyL, newKeyU,
+		BoxEntry<T> e = root.update(null, oldKeyL, oldKeyU, newKeyL, newKeyU,
 				maxNodeSize, requiresReinsert, 0, MAX_DEPTH, t -> Objects.equals(value, t));
 		if (e == null) {
 			return false;
@@ -248,7 +248,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 			return null;
 		}
 		boolean[] requiresReinsert = new boolean[]{false};
-		QREntry<T> e = root.update(null, oldKeyL, oldKeyU, newKeyL, newKeyU, 
+		BoxEntry<T> e = root.update(null, oldKeyL, oldKeyU, newKeyL, newKeyU,
 				maxNodeSize, requiresReinsert, 0, MAX_DEPTH, t -> true);
 		if (e == null) {
 			//not found
@@ -271,9 +271,9 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	 * @param e Entry to cover.
 	 */
 	@SuppressWarnings("unused")
-	private void ensureCoverage(QREntry<T> e) {
-		double[] pLow = e.lower();
-		while (!QUtil.fitsIntoNode(e.lower(), e.upper(), root.getCenter(), root.getRadius())) {
+	private void ensureCoverage(BoxEntry<T> e) {
+		double[] pLow = e.min();
+		while (!QUtil.fitsIntoNode(e.min(), e.max(), root.getCenter(), root.getRadius())) {
 			double[] center = root.getCenter();
 			double radius = root.getRadius();
 			double[] center2 = new double[center.length];
@@ -289,8 +289,8 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 				}
 			}
 			if (QuadTreeRKD0.DEBUG && !QUtil.isNodeEnclosed(center, radius, center2, radius2)) {
-				throw new IllegalStateException("e=" + Arrays.toString(e.lower()) + 
-						"/" + Arrays.toString(e.upper()) + 
+				throw new IllegalStateException("e=" + Arrays.toString(e.min()) +
+						"/" + Arrays.toString(e.max()) +
 						" center/radius=" + Arrays.toString(center) + "/" + radius);
 			}
 			root = new QRNode<>(center2, radius2, root);
@@ -327,7 +327,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
-	public BoxEntryDist<T> query1nn(double[] center) {
+	public BoxEntryKnn<T> query1nn(double[] center) {
 		return queryKnn(center, 1).next();
 	}
 
@@ -340,7 +340,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 
 		private final QuadTreeRKD0<T> tree;
 		private final ArrayDeque<Iterator<?>> stack;
-		private QREntry<T> next = null;
+		private BoxEntry<T> next = null;
 		private double[] min;
 		private double[] max;
 		
@@ -364,8 +364,8 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 						}
 						continue;
 					}
-					QREntry<T> e = (QREntry<T>) o;
-					if (QUtil.overlap(min, max, e.lower(), e.upper())) {
+					BoxEntry<T> e = (BoxEntry<T>) o;
+					if (QUtil.overlap(min, max, e.min(), e.max())) {
 						next = e;
 						return;
 					}
@@ -381,11 +381,11 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 		}
 
 		@Override
-		public QREntry<T> next() {
+		public BoxEntry<T> next() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
 			}
-			QREntry<T> ret = next;
+			BoxEntry<T> ret = next;
 			findNext();
 			return ret;
 		}
@@ -413,19 +413,19 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Deprecated
-	public List<QREntryDist<T>> knnQuery(double[] center, int k) {
+	public List<BoxEntryKnn<T>> knnQuery(double[] center, int k) {
 		if (root == null) {
     		return Collections.emptyList();
 		}
-        Comparator<QREntry<T>> comp =  
-        		(QREntry<T> e1, QREntry<T> e2) -> {
+        Comparator<BoxEntry<T>> comp =
+        		(BoxEntry<T> e1, BoxEntry<T> e2) -> {
         			double deltaDist = 
         					QUtil.distToRectEdge(center, e1) - 
         					QUtil.distToRectEdge(center, e2);
         			return deltaDist < 0 ? -1 : (deltaDist > 0 ? 1 : 0);
         		};
         double distEstimate = distanceEstimate(root, center, k, comp);
-        ArrayList<QREntryDist<T>> candidates = new ArrayList<>();
+        ArrayList<BoxEntryKnn<T>> candidates = new ArrayList<>();
     	while (candidates.size() < k) {
     		candidates.clear();
 			// TODO use other distance function !
@@ -437,7 +437,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 
     @SuppressWarnings("unchecked")
 	private double distanceEstimate(QRNode<T> node, double[] point, int k,
-    		Comparator<QREntry<T>> comp) {
+    		Comparator<BoxEntry<T>> comp) {
     	//We ignore local values if there are child nodes
     	if (node.getChildNodes() != null) {
     		ArrayList<QRNode<T>> nodes = node.getChildNodes(); 
@@ -456,7 +456,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
     	//TODO do we need this stuff?? Simplify???
     	//This is a leaf that would contain a good candidate.
     	int n = node.getEntries().size();
-    	QREntry<T>[] data = node.getEntries().toArray(new QREntry[n]);
+    	BoxEntry<T>[] data = node.getEntries().toArray(new BoxEntry[n]);
     	Arrays.sort(data, comp);
     	int pos = n < k ? n : k;
     	double dist = QUtil.distToRectEdge(point, data[pos-1]);
@@ -471,15 +471,15 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
     }
     
     private double rangeSearchKNN(QRNode<T> node, double[] center,
-								  ArrayList<QREntryDist<T>> candidates, int k, double maxRange,
+								  ArrayList<BoxEntryKnn<T>> candidates, int k, double maxRange,
 								  PointDistance distFn) {
-		ArrayList<QREntry<T>> points = node.getEntries();
+		ArrayList<BoxEntry<T>> points = node.getEntries();
     	if (points != null) {
     		for (int i = 0; i < points.size(); i++) {
-    			QREntry<T> p = points.get(i);
+    			BoxEntry<T> p = points.get(i);
     			double dist = QUtil.distToRectEdge(center, p);
     			if (dist < maxRange) {
-    				candidates.add(new QREntryDist<>(p, dist));
+    				candidates.add(new BoxEntryKnn<>(p, dist));
     			}
     		}
     		maxRange = adjustRegionKNN(candidates, k, maxRange);
@@ -497,14 +497,16 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
     	return maxRange;
     }
 
-    private double adjustRegionKNN(ArrayList<QREntryDist<T>> candidates, int k, double maxRange) {
+	private static final BEComparator comparator = new BEComparator();
+
+    private double adjustRegionKNN(ArrayList<BoxEntryKnn<T>> candidates, int k, double maxRange) {
         if (candidates.size() < k) {
         	//wait for more candidates
         	return maxRange;
         }
 
         //use stored distances instead of recalculating them
-        candidates.sort(QREntryDist.COMP);
+        candidates.sort(comparator);
         while (candidates.size() > k) {
         	candidates.remove(candidates.size()-1);
         }
@@ -547,8 +549,8 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 				QRNode<T> sub = (QRNode<T>) o;
 				toStringTree(sb, sub, depth+1, pos);
 			} else {
-				QREntry<T> e = (QREntry<T>) o;
-				sb.append(prefix + Arrays.toString(e.lower()) + Arrays.toString(e.upper()));
+				BoxEntry<T> e = (BoxEntry<T>) o;
+				sb.append(prefix + Arrays.toString(e.min()) + Arrays.toString(e.max()));
 				sb.append(" v=" + e.value() + NL);
 			}
 			pos++;

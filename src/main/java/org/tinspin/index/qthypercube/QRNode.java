@@ -21,8 +21,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
-import org.tinspin.index.BoxEntry;
 import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
+
+import static org.tinspin.index.Index.*;
 
 /**
  * Node class for the quadtree.
@@ -37,7 +38,7 @@ public class QRNode<T> {
 	private final double[] center;
 	private final double radius;
 	//null indicates that we have sub-nopde i.o. values
-	private ArrayList<QREntry<T>> values;
+	private ArrayList<BoxEntry<T>> values;
 	private QRNode<T>[] subs;
 	
 	QRNode(double[] center, double radius) {
@@ -56,14 +57,14 @@ public class QRNode<T> {
 	}
 
 	@SuppressWarnings({ "unchecked", "unused" })
-	QRNode<T> tryPut(QREntry<T> e, int maxNodeSize, boolean enforceLeaf) {
-		if (QuadTreeKD.DEBUG && !QUtil.fitsIntoNode(e.lower(), e.upper(), center, radius)) {
+	QRNode<T> tryPut(BoxEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
+		if (QuadTreeKD.DEBUG && !QUtil.fitsIntoNode(e.min(), e.max(), center, radius)) {
 			throw new IllegalStateException("e=" + e + 
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
 		
 		//traverse subs?
-		int pos = calcSubPositionR(e.lower(), e.upper());
+		int pos = calcSubPositionR(e.min(), e.max());
 		if (subs != null && pos != OVERLAP_WITH_CENTER) {
 			return getOrCreateSubR(pos);
 		}
@@ -80,19 +81,19 @@ public class QRNode<T> {
 			values = new ArrayList<>();
 		}
 		if (values.size() < maxNodeSize || enforceLeaf || 
-				e.isExact(values.get(0)) || subs != null) {
+				QUtil.isRectEqual(e, values.get(0)) || subs != null) {
 			values.add(e);
 			return null;
 		}
 		
 		//split
-		ArrayList<QREntry<T>> vals = values;
+		ArrayList<BoxEntry<T>> vals = values;
 		vals.add(e);
 		values = null;
 		subs = new QRNode[1 << center.length];
 		for (int i = 0; i < vals.size(); i++) {
-			QREntry<T> e2 = vals.get(i); 
-			int pos2 = calcSubPositionR(e2.lower(), e2.upper());
+			BoxEntry<T> e2 = vals.get(i);
+			int pos2 = calcSubPositionR(e2.min(), e2.max());
 			if (pos2 == OVERLAP_WITH_CENTER) {
 				if (values == null) {
 					values = new ArrayList<>();
@@ -158,7 +159,7 @@ public class QRNode<T> {
 		return subNodePos;
 	}
 
-	QREntry<T> remove(QRNode<T> parent, double[] keyL, double[] keyU, int maxNodeSize, Predicate<BoxEntry<T>> pred) {
+	BoxEntry<T> remove(QRNode<T> parent, double[] keyL, double[] keyU, int maxNodeSize, Predicate<BoxEntry<T>> pred) {
 		if (subs != null) {
 			int pos = calcSubPositionR(keyL, keyU);
 			if (pos != OVERLAP_WITH_CENTER) {
@@ -175,7 +176,7 @@ public class QRNode<T> {
 			return null;
 		}
 		for (int i = 0; i < values.size(); i++) {
-			QREntry<T> e = values.get(i);
+			BoxEntry<T> e = values.get(i);
 			if (QUtil.isRectEqual(e, keyL, keyU) && pred.test(e)) {
 				values.remove(i);
 				//TODO provide threshold for re-insert
@@ -190,7 +191,7 @@ public class QRNode<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	QREntry<T> update(QRNode<T> parent, double[] keyOldL, double[] keyOldU, 
+	BoxEntry<T> update(QRNode<T> parent, double[] keyOldL, double[] keyOldU,
 			double[] keyNewL, double[] keyNewU, int maxNodeSize,
 			boolean[] requiresReinsert, int currentDepth, int maxDepth, Predicate<T> pred) {
 		if (subs != null) {
@@ -200,10 +201,10 @@ public class QRNode<T> {
 				if (sub == null) {
 					return null;
 				}
-				QREntry<T> ret = sub.update(this, keyOldL, keyOldU, keyNewL, keyNewU, 
+				BoxEntry<T> ret = sub.update(this, keyOldL, keyOldU, keyNewL, keyNewU,
 						maxNodeSize, requiresReinsert, currentDepth+1, maxDepth, pred);
 				if (ret != null && requiresReinsert[0] && 
-						QUtil.fitsIntoNode(ret.lower(), ret.upper(), center, radius)) {
+						QUtil.fitsIntoNode(ret.min(), ret.max(), center, radius)) {
 					requiresReinsert[0] = false;
 					QRNode<T> r = this;
 					while (r != null) {
@@ -219,10 +220,10 @@ public class QRNode<T> {
 			return null;
 		}
 		for (int i = 0; i < values.size(); i++) {
-			QREntry<T> e = values.get(i);
+			BoxEntry<T> e = values.get(i);
 			if (QUtil.isRectEqual(e, keyOldL, keyOldU) && pred.test(e.value())) {
 				values.remove(i);
-				e.setKey(keyNewL, keyNewU);
+				e.set(keyNewL, keyNewU);
 				//Divide by EPS to ensure that we do not reinsert to low
 				if (QUtil.fitsIntoNode(keyNewL, keyNewU, center, radius)) {
 					requiresReinsert[0] = false;
@@ -301,7 +302,7 @@ public class QRNode<T> {
 		return radius;
 	}
 
-	QREntry<T> getExact(double[] keyL, double[] keyU, Predicate<BoxEntry<T>> condition) {
+	BoxEntry<T> getExact(double[] keyL, double[] keyU, Predicate<BoxEntry<T>> condition) {
 		if (subs != null) {
 			int pos = calcSubPositionR(keyL, keyU);
 			if (pos != OVERLAP_WITH_CENTER) {
@@ -318,7 +319,7 @@ public class QRNode<T> {
 		}
 		
 		for (int i = 0; i < values.size(); i++) {
-			QREntry<T> e = values.get(i);
+			BoxEntry<T> e = values.get(i);
 			if (QUtil.isRectEqual(e, keyL, keyU) && condition.test(e)) {
 				return e;
 			}
@@ -326,7 +327,7 @@ public class QRNode<T> {
 		return null;
 	}
 
-	ArrayList<QREntry<T>> getEntries() {
+	ArrayList<BoxEntry<T>> getEntries() {
 		return values;
 	}
 
@@ -350,8 +351,8 @@ public class QRNode<T> {
 		}
 		if (values != null) {
 			for (int i = 0; i < values.size(); i++) {
-				QREntry<T> e = values.get(i);
-				if (!QUtil.fitsIntoNode(e.lower(), e.upper(), center, radius*QUtil.EPS_MUL)) {
+				BoxEntry<T> e = values.get(i);
+				if (!QUtil.fitsIntoNode(e.min(), e.max(), center, radius*QUtil.EPS_MUL)) {
 					throw new IllegalStateException();
 				}
 				//TODO check that they overlap with the centerpoint or that subs==null

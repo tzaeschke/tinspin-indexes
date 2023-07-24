@@ -102,8 +102,8 @@ public interface PointMultimap<T> extends Index {
      * @param center center point
      * @return the nearest neighbor
      */
-    default PointEntryDist<T> query1nn(double[] center) {
-        Iterator<PointEntryDist<T>> it = queryKnn(center, 1);
+    default PointEntryKnn<T> query1nn(double[] center) {
+        Iterator<PointEntryKnn<T>> it = queryKnn(center, 1);
         return it.hasNext() ? it.next() : null;
     }
 

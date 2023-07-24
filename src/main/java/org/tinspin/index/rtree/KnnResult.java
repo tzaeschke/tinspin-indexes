@@ -16,87 +16,88 @@
  */
 package org.tinspin.index.rtree;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-public class KnnResult<T> implements Iterable<DistEntry<T>> {
-
-	private int capacity;
-	private DistEntry<T>[] entries;
-	private int size;
-	private double maxDist;
-	
-	@SuppressWarnings("unchecked")
-	public KnnResult(int capacity) {
-		this.capacity = capacity;
-		this.entries = new DistEntry[capacity];
-		this.maxDist = Double.MAX_VALUE;
-	}
-	
-	public double add(Entry<T> e, double distance) {
-		DistEntry<T> de;
-		if (size < capacity) {
-			de = new DistEntry<T>(e.min, e.max, e.value(), distance);
-			entries[size++] = de;
-		} else {
-			de = entries[size-1];
-			if (distance >= de.dist()) {
-				//nothing to add
-				return maxDist;
-			}
-			de.set(e, distance);
-		}
-		
-		//TODO use binary search for capacity>10
-		
-		//move 'de' to correct position
-		int pos = size-1;
-		while (pos >= 1 && entries[pos-1].dist() > distance) {
-			entries[pos] = entries[pos-1];
-			pos--;
-		}
-		entries[pos] = de;
-		if (size == capacity) {
-			maxDist = entries[size-1].dist();
-		}
-		return maxDist;
-	}
-
-	@Override
-	public Iterator<DistEntry<T>> iterator() {
-		return new KnnResultIterator();
-	}
-	
-	private class KnnResultIterator implements Iterator<DistEntry<T>> {
-
-		int pos = 0;
-		
-		@Override
-		public boolean hasNext() {
-			return pos < size;
-		}
-
-		@Override
-		public DistEntry<T> next() {
-			if (!hasNext()) {
-				throw new NoSuchElementException();
-			}
-			return entries[pos++];
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	public void clear(int k) {
-		if (k > entries.length) {
-			entries = new DistEntry[k];
-		} else {
-			for (int i = 0; i < size; i++) {
-				entries[i] = null;
-			}
-		}
-		capacity = k;
-		size = 0;
-		maxDist = Double.MAX_VALUE;
-	}
-	
-}
+//import java.util.Iterator;
+//import java.util.NoSuchElementException;
+//
+//import static org.tinspin.index.Index.*;
+//
+//public class KnnResult<T> implements Iterable<BoxEntryKnn<T>> {
+//
+//	private int capacity;
+//	private BoxEntryKnn<T>[] entries;
+//	private int size;
+//	private double maxDist;
+//
+//	@SuppressWarnings("unchecked")
+//	public KnnResult(int capacity) {
+//		this.capacity = capacity;
+//		this.entries = new BoxEntryKnn[capacity];
+//		this.maxDist = Double.MAX_VALUE;
+//	}
+//
+//	public double add(Entry<T> e, double distance) {
+//		BoxEntryKnn<T> de;
+//		if (size < capacity) {
+//			de = new BoxEntryKnn<>(e.min(), e.max(), e.value(), distance);
+//			entries[size++] = de;
+//		} else {
+//			de = entries[size-1];
+//			if (distance >= de.dist()) {
+//				//nothing to add
+//				return maxDist;
+//			}
+//			de.set(e, distance);
+//		}
+//
+//		//TODO use binary search for capacity>10
+//
+//		//move 'de' to correct position
+//		int pos = size-1;
+//		while (pos >= 1 && entries[pos-1].dist() > distance) {
+//			entries[pos] = entries[pos-1];
+//			pos--;
+//		}
+//		entries[pos] = de;
+//		if (size == capacity) {
+//			maxDist = entries[size-1].dist();
+//		}
+//		return maxDist;
+//	}
+//
+//	@Override
+//	public Iterator<BoxEntryKnn<T>> iterator() {
+//		return new KnnResultIterator();
+//	}
+//
+//	private class KnnResultIterator implements Iterator<DistEntry<T>> {
+//
+//		int pos = 0;
+//
+//		@Override
+//		public boolean hasNext() {
+//			return pos < size;
+//		}
+//
+//		@Override
+//		public DistEntry<T> next() {
+//			if (!hasNext()) {
+//				throw new NoSuchElementException();
+//			}
+//			return entries[pos++];
+//		}
+//	}
+//
+//	@SuppressWarnings("unchecked")
+//	public void clear(int k) {
+//		if (k > entries.length) {
+//			entries = new BoxEntryKnn[k];
+//		} else {
+//			for (int i = 0; i < size; i++) {
+//				entries[i] = null;
+//			}
+//		}
+//		capacity = k;
+//		size = 0;
+//		maxDist = Double.MAX_VALUE;
+//	}
+//}

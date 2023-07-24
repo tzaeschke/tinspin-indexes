@@ -31,7 +31,7 @@ public class QRIterator<T> implements BoxIterator<T> {
 
 	private final QuadTreeRKD<T> tree;
 	private final IteratorStack stack;
-	private QREntry<T> next = null;
+	private BoxEntry<T> next = null;
 	private double[] min;
 	private double[] max;
 	
@@ -57,8 +57,8 @@ public class QRIterator<T> implements BoxIterator<T> {
 				}
 			}
 			while (se.posE < se.lenE) {
-				QREntry<T> e = se.vals.get(se.posE++);
-				if (QUtil.overlap(min, max, e.lower(), e.upper())) {
+				BoxEntry<T> e = se.vals.get(se.posE++);
+				if (QUtil.overlap(min, max, e.min(), e.max())) {
 					next = e;
 					return;
 				}
@@ -74,11 +74,11 @@ public class QRIterator<T> implements BoxIterator<T> {
 	}
 
 	@Override
-	public QREntry<T> next() {
+	public BoxEntry<T> next() {
 		if (!hasNext()) {
 			throw new NoSuchElementException();
 		}
-		QREntry<T> ret = next;
+		BoxEntry<T> ret = next;
 		findNext();
 		return ret;
 	}
@@ -145,7 +145,7 @@ public class QRIterator<T> implements BoxIterator<T> {
 		long m0;
 		long m1;
 		QRNode<T>[] subs;
-		ArrayList<QREntry<T>> vals;
+		ArrayList<BoxEntry<T>> vals;
 		int lenE;
 		int lenSub;
 		

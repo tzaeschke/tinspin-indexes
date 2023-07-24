@@ -22,44 +22,46 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 import org.tinspin.index.BoxDistance;
-import org.tinspin.index.BoxEntryDist;
 
-class RTreeMixedQuery2<T> implements Iterator<BoxEntryDist<T>> {
+import static org.tinspin.index.Index.*;
+
+class RTreeMixedQuery2<T> implements Iterator<BoxEntryKnn<T>> {
 	
-	private static class RTreeNodeWrapper<T> implements BoxEntryDist<T>, Comparable<RTreeNodeWrapper<T>> {
+	private static class RTreeNodeWrapper<T> extends BoxEntryKnn<T> implements Comparable<RTreeNodeWrapper<T>> {
 
 		Entry<T> node;
-		double distance;
+//		double distance;
 
 		RTreeNodeWrapper(Entry<T> node, double distance) {
+			super(node.min(), node.max(), node.value(), distance);
 			this.node = node;
-			this.distance = distance;
+//			this.distance = distance;
 		}
 
-		@Override
-		public double[] lower() {
-			return node.min;
-		}
-
-		@Override
-		public double[] upper() {
-			return node.max;
-		}
-
-		@Override
-		public T value() {
-			return node.value();
-		}
-
-		@Override
-		public double dist() {
-			return distance;
-		}
+//		@Override
+//		public double[] min() {
+//			return node.min();
+//		}
+//
+//		@Override
+//		public double[] max() {
+//			return node.max();
+//		}
+//
+//		@Override
+//		public T value() {
+//			return node.value();
+//		}
+//
+//		@Override
+//		public double dist() {
+//			return distance;
+//		}
 
 		@Override
 		public String toString() {
-			return "RTreeNodeWrapper [lower()=" + Arrays.toString(lower()) + 
-					", upper()=" + Arrays.toString(upper())
+			return "RTreeNodeWrapper [lower()=" + Arrays.toString(min()) +
+					", upper()=" + Arrays.toString(max())
 					+ ", value()=" + value() + ", dist()=" + dist() + "]";
 		}
 
@@ -94,7 +96,7 @@ class RTreeMixedQuery2<T> implements Iterator<BoxEntryDist<T>> {
 		 */
 		@Override
 		public int compareTo(RTreeNodeWrapper<T> o) {
-			return Double.compare(distance, o.dist());
+			return Double.compare(dist(), o.dist());
 		}
 
 	}
@@ -134,8 +136,8 @@ class RTreeMixedQuery2<T> implements Iterator<BoxEntryDist<T>> {
 	}
 
 	private void insert(RTreeNode<T> node) {
-		if (filter.intersects(node.min, node.max)) {
-			RTreeNodeWrapper<T> wrapped = new RTreeNodeWrapper<>(node, closestDist.dist(center, node.min, node.max));
+		if (filter.intersects(node.min(), node.max())) {
+			RTreeNodeWrapper<T> wrapped = new RTreeNodeWrapper<>(node, closestDist.dist(center, node.min(), node.max()));
 			queue.add(wrapped);
 		}
 	}
@@ -158,10 +160,10 @@ class RTreeMixedQuery2<T> implements Iterator<BoxEntryDist<T>> {
 				 * Filter out duplicates (due to remove() calls)
 				 */
 				//TODO what is this good for??
-				if (nextElement.distance > distanceOfLastReturnedNode) {
-					distanceOfLastReturnedNode = nextElement.distance;
+				if (nextElement.dist() > distanceOfLastReturnedNode) {
+					distanceOfLastReturnedNode = nextElement.dist();
 					nodesAlreadyReturnedWithSameDist.clear();
-				} else if (nextElement.distance < distanceOfLastReturnedNode) {
+				} else if (nextElement.dist() < distanceOfLastReturnedNode) {
 					// loop
 					nextElement = null;
 					continue;
@@ -197,7 +199,7 @@ class RTreeMixedQuery2<T> implements Iterator<BoxEntryDist<T>> {
 		if (!filter.matches(ent)) {
 			return;
 		}
-		double distance = dist.dist(center, ent.min, ent.max);
+		double distance = dist.dist(center, ent.min(), ent.max());
 
 		if (distance < distanceOfLastReturnedNode) {
 			return;
@@ -221,7 +223,7 @@ class RTreeMixedQuery2<T> implements Iterator<BoxEntryDist<T>> {
 	}
 
 	@Override
-	public BoxEntryDist<T> next() {
+	public BoxEntryKnn<T> next() {
 		if (!hasNext()) {
 			throw new IllegalStateException();
 		}

@@ -19,48 +19,48 @@ package org.tinspin.index.qtplain;
 
 import java.util.Arrays;
 
-import org.tinspin.index.BoxEntry;
+//import org.tinspin.index.BoxEntry;
 
-public class QREntry<T> implements BoxEntry<T> {
-
-	private double[] pointL;
-	private double[] pointU;
-	private final T value;
-	
-	public QREntry(double[] keyL, double[] keyU, T value) {
-		this.pointL = keyL;
-		this.pointU = keyU;
-		this.value = value;
-	}
-	
-	@Override
-	public double[] lower() {
-		return pointL;
-	}
-	
-	@Override
-	public double[] upper() {
-		return pointU;
-	}
-	
-	@Override
-	public T value() {
-		return value;
-	}
-
-	public boolean isExact(QREntry<T> e) {
-		return QUtil.isPointEqual(pointL, e.lower()) 
-				&& QUtil.isPointEqual(pointU, e.upper());
-	}
-
-	@Override
-	public String toString() {
-		return "p=" + Arrays.toString(pointL) + "/" + Arrays.toString(pointU) + 
-				"  v=" + value + " " + System.identityHashCode(this);
-	}
-
-	public void setKey(double[] newPointL, double[] newPointU) {
-		this.pointL = newPointL;
-		this.pointU = newPointU;
-	}
-}
+//public class BoxEntry<T> implements BoxEntry<T> {
+//
+//	private double[] pointL;
+//	private double[] pointU;
+//	private final T value;
+//
+//	public BoxEntry(double[] keyL, double[] keyU, T value) {
+//		this.pointL = keyL;
+//		this.pointU = keyU;
+//		this.value = value;
+//	}
+//
+//	@Override
+//	public double[] lower() {
+//		return pointL;
+//	}
+//
+//	@Override
+//	public double[] upper() {
+//		return pointU;
+//	}
+//
+//	@Override
+//	public T value() {
+//		return value;
+//	}
+//
+//	public boolean isExact(BoxEntry<T> e) {
+//		return QUtil.isPointEqual(pointL, e.min())
+//				&& QUtil.isPointEqual(pointU, e.max());
+//	}
+//
+//	@Override
+//	public String toString() {
+//		return "p=" + Arrays.toString(pointL) + "/" + Arrays.toString(pointU) +
+//				"  v=" + value + " " + System.identityHashCode(this);
+//	}
+//
+//	public void setKey(double[] newPointL, double[] newPointU) {
+//		this.pointL = newPointL;
+//		this.pointU = newPointU;
+//	}
+//}

@@ -80,10 +80,10 @@ public interface Index {
         QueryIteratorKnn<T> reset(double[] center, int k);
     }
 
-    interface PointIteratorKnn<T> extends QueryIteratorKnn<PointEntryDist<T>> {
+    interface PointIteratorKnn<T> extends QueryIteratorKnn<PointEntryKnn<T>> {
     }
 
-    interface BoxIteratorKnn<T> extends QueryIteratorKnn<BoxEntryDist<T>> {
+    interface BoxIteratorKnn<T> extends QueryIteratorKnn<BoxEntryKnn<T>> {
     }
 
     class PointEntry<T> {
@@ -125,16 +125,16 @@ public interface Index {
         }
     }
 
-    class PointEntryDist<T> extends PointEntry<T> {
+    class PointEntryKnn<T> extends PointEntry<T> {
 
         private double dist;
 
-        public PointEntryDist(double[] point, T value, double dist) {
+        public PointEntryKnn(double[] point, T value, double dist) {
             super(point, value);
             this.dist = dist;
         }
 
-        public PointEntryDist(PointEntry<T> entry, double dist) {
+        public PointEntryKnn(PointEntry<T> entry, double dist) {
             super(entry.point(), entry.value());
             this.dist = dist;
         }
@@ -160,6 +160,99 @@ public interface Index {
         }
     }
 
+    /**
+     * A box entry. Boxes are axis-aligned. They are defined by there minimum and maximum values,
+     * i.e. their "lower left" and "upper right" corners.
+     *
+     * @param <T> Value type
+     */
+    public class BoxEntry<T> {
+        private double[] min;
+        private double[] max;
+        private T val;
+
+        public BoxEntry(double[] min, double[] max, T val) {
+            this.min = min;
+            this.max = max;
+            this.val = val;
+        }
+
+        /**
+         * @return The lower left corner of the box.
+         */
+        public double[] min() {
+            return min;
+        }
+
+        /**
+         * @return The upper right corner of the entry.
+         */
+        public double[] max() {
+            return max;
+        }
+
+        /**
+         * @return The lower left corner of the box.
+         */
+        @Deprecated // Please use min() instead
+        double[] lower() {
+            return min;
+        }
+
+        /**
+         * @return The upper right corner of the entry.
+         */
+        @Deprecated // Please use max() instead
+        double[] upper() {
+            return max;
+        }
+
+        /**
+         * @return The value associated with the rectangle or point.
+         */
+        public T value() {
+            return val;
+        }
+
+        public void set(double[] min, double[] max) {
+            this.min = min;
+            this.max = max;
+        }
+
+        public void set(double[] min, double[] max, T val) {
+            this.set(min, max);
+            this.val = val;
+        }
+    }
+
+    class BoxEntryKnn<T> extends BoxEntry<T> {
+        private double dist;
+
+        public BoxEntryKnn(double[] min, double[] max, T value, double dist) {
+            super(min, max, value);
+            this.dist = dist;
+        }
+
+        public BoxEntryKnn(BoxEntry<T> entry, double dist) {
+            super(entry.min(), entry.max(), entry.value());
+            this.dist = dist;
+        }
+
+        /**
+         * An entry with distance property. This is, for example, used
+         * as a return value for nearest neighbor queries.
+         * @return the distance
+         */
+        public double dist() {
+            return dist;
+        }
+
+        public void set(double[] min, double[] max, T val, double dist) {
+            super.set(min, max, val);
+            this.dist = dist;
+        }
+    }
+
     @FunctionalInterface
     interface PointFilterKnn<T> {
         boolean test(PointEntry<T> entry, double distance);
@@ -171,12 +264,21 @@ public interface Index {
     }
 
     @Deprecated
-    class PEComparator<T> implements Comparator<PointEntryDist<T>> {
+    class PEComparator implements Comparator<PointEntryKnn<?>> {
 
         @Override
-        public int compare(PointEntryDist<T> o1, PointEntryDist<T> o2) {
+        public int compare(PointEntryKnn<?> o1, PointEntryKnn<?> o2) {
             double d = o1.dist - o2.dist;
             return d < 0 ? -1 : d > 0 ? 1 : 0;
         }
     }
+
+    @Deprecated
+    class BEComparator implements Comparator<BoxEntryKnn<?>> {
+	    @Override
+	    public int compare(BoxEntryKnn<?> o1, BoxEntryKnn<?> o2) {
+	        double d = o1.dist() - o2.dist();
+	        return d < 0 ? -1 : (d > 0 ? 1 : 0);
+	    }
+	}
 }

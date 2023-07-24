@@ -42,7 +42,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 	public void insert(double[] lower, double[] upper, T value) {
 		System.arraycopy(lower, 0, phc[insPos*2], 0, dims);
 		System.arraycopy(upper, 0, phc[insPos*2+1], 0, dims);
-		values[insPos] = new KnnEntry<>(lower, upper, value, -1);
+		values[insPos] = new BoxEntryKnn<>(lower, upper, value, -1);
 		insPos++;
 		size++;
 	}
@@ -181,7 +181,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
-	public BoxEntryDist<T> query1nn(double[] center) {
+	public BoxEntryKnn<T> query1nn(double[] center) {
 		return queryKnn(center, 1).next();
 	}
 
@@ -205,7 +205,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	private class AQueryIteratorKnn implements BoxIteratorKnn<T> {
 
-		private Iterator<BoxEntryDist<T>> it;
+		private Iterator<BoxEntryKnn<T>> it;
 
 		public AQueryIteratorKnn(double[] center, int k) {
 			reset(center, k);
@@ -217,7 +217,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 		}
 
 		@Override
-		public BoxEntryDist<T> next() {
+		public BoxEntryKnn<T> next() {
 			return it.next();
 		}
 
@@ -230,18 +230,18 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 
-	private ArrayList<KnnEntry<T>> knnQuery(double[] center, int k) {
-		ArrayList<KnnEntry<T>> ret = new ArrayList<>(k);
+	private ArrayList<BoxEntryKnn<T>> knnQuery(double[] center, int k) {
+		ArrayList<BoxEntryKnn<T>> ret = new ArrayList<>(k);
 		for (int i = 0; i < phc.length/2; i++) {
 			double[] min = phc[i*2];
 			double[] max = phc[i*2+1];
 			double dist = distREdge(center, min, max);
 			if (ret.size() < k) {
-				ret.add(new KnnEntry<>(min, max, values[i].value(), dist));
+				ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
 				ret.sort(COMP);
-			} else if (ret.get(k-1).dist > dist) {
+			} else if (ret.get(k-1).dist() > dist) {
 				ret.remove(k-1);
-				ret.add(new KnnEntry<>(min, max, values[i].value(), dist));
+				ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));
 				ret.sort(COMP);
 			}
 		}
@@ -262,46 +262,46 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 		return Math.sqrt(dist);
 	}
 
-	private final Comparator<KnnEntry<T>> COMP = KnnEntry::compareTo;
+	private static final BEComparator COMP = new BEComparator();
 
-	private static class KnnEntry<T> implements Comparable<KnnEntry<T>>, BoxEntryDist<T> {
-		private final double[] min;
-		private final double[] max;
-		private final T val;
-		private final double dist;
-		KnnEntry(double[] min, double[] max, T val, double dist) {
-			this.min = min;
-			this.max = max;
-			this.val = val;
-			this.dist = dist;
-		}
-		@Override
-		public int compareTo(KnnEntry<T> o) {
-			double d = dist-o.dist;
-			return d < 0 ? -1 : d > 0 ? 1 : 0;
-		}
-
-		@Override
-		public String toString() {
-			return "d=" + dist + ":" + Arrays.toString(min) + "/" + Arrays.toString(max);
-		}
-		@Override
-		public double[] lower() {
-			return min;
-		}
-		@Override
-		public double[] upper() {
-			return max;
-		}
-		@Override
-		public T value() {
-			return val;
-		}
-		@Override
-		public double dist() {
-			return dist;
-		}
-	}
+//	private static class KnnEntry<T> implements Comparable<KnnEntry<T>>, BoxEntryKnn<T> {
+//		private final double[] min;
+//		private final double[] max;
+//		private final T val;
+//		private final double dist;
+//		KnnEntry(double[] min, double[] max, T val, double dist) {
+//			this.min = min;
+//			this.max = max;
+//			this.val = val;
+//			this.dist = dist;
+//		}
+//		@Override
+//		public int compareTo(KnnEntry<T> o) {
+//			double d = dist-o.dist;
+//			return d < 0 ? -1 : d > 0 ? 1 : 0;
+//		}
+//
+//		@Override
+//		public String toString() {
+//			return "d=" + dist + ":" + Arrays.toString(min) + "/" + Arrays.toString(max);
+//		}
+//		@Override
+//		public double[] lower() {
+//			return min;
+//		}
+//		@Override
+//		public double[] upper() {
+//			return max;
+//		}
+//		@Override
+//		public T value() {
+//			return val;
+//		}
+//		@Override
+//		public double dist() {
+//			return dist;
+//		}
+//	}
 
 	@Override
 	public String toString() {
