@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.util.StringBuilderLn;
 
 public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	
@@ -296,7 +297,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 
 	@Override
 	public String toStringTree() {
-		StringBuilder s = new StringBuilder();
+		StringBuilderLn s = new StringBuilderLn();
 		for (int i = 0; i < N; i++) {
 			s.append(Arrays.toString(phc[i]) + " v=" + values[i]);
 		}

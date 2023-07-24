@@ -1,6 +1,7 @@
 Performance and Other
 =====================
 - Fix TODOs in RTree!!!
+- Consider replacing all PriorityQueue with Min(Max)Heaps
 - qt2: what is going on with subs vs values in QNode? Why can subs contain values?
 - RTree: compare finNodeEntry vs findNodeEntries -> benchmark and decide
 - QueryIterator nextReuse()

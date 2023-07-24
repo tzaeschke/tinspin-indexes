@@ -342,7 +342,7 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 	 */
 	@Override
 	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance dist) {
-		return new QIteratorKnn<>(root, k, center, dist, e -> true);
+		return new QIteratorKnn<>(root, k, center, dist, (e, d) -> true);
 	}
 
 	/**

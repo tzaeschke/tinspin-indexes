@@ -390,7 +390,7 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 
 	@Override
 	public PointEntryKnn<T> query1nn(double[] center) {
-		return new QIteratorKnn<>(this.root, 1, center, PointDistance.L2, e -> true).next();
+		return new QIteratorKnn<>(this.root, 1, center, PointDistance.L2, (e, d) -> true).next();
 	}
 
 	/**
@@ -403,7 +403,7 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 	 */
 	@Override
 	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance dist) {
-		return new QIteratorKnn<>(this.root, k, center, dist, e -> true);
+		return new QIteratorKnn<>(this.root, k, center, dist, (e, d) -> true);
 	}
 
 	/**

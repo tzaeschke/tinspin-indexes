@@ -614,20 +614,20 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 
 	@Override
 	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
-		if (size < 1_000_000) {
+		if (size < 1_000_000 && k <= 10) {
 			return new KDQueryIteratorKnn<>(this, center, k, PointDistance.L2);
 		}
-		return new KDIteratorKnn<>(root, k, center, PointDistance.L2, e -> true);
+		return new KDIteratorKnn<>(root, k, center, PointDistance.L2, (e, d) -> true);
 	}
 
 	@Override
 	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
-		// For small trees, the old iterator is about 3x fatser.
+		// For small trees, the old iterator is about 3x faster.
 		// For 1M it is about even, for 10M the new HS-iterator is about 2x faster.
-		if (size < 1_000_000) {
+		if (size < 1_000_000 && k <= 10) {
 			return new KDQueryIteratorKnn<>(this, center, k, distFn);
 		}
-		return new KDIteratorKnn<>(root, k, center, distFn, e -> true);
+		return new KDIteratorKnn<>(root, k, center, distFn, (e, d) -> true);
 	}
 
 	@Override
