@@ -264,45 +264,6 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	private static final BEComparator COMP = new BEComparator();
 
-//	private static class KnnEntry<T> implements Comparable<KnnEntry<T>>, BoxEntryKnn<T> {
-//		private final double[] min;
-//		private final double[] max;
-//		private final T val;
-//		private final double dist;
-//		KnnEntry(double[] min, double[] max, T val, double dist) {
-//			this.min = min;
-//			this.max = max;
-//			this.val = val;
-//			this.dist = dist;
-//		}
-//		@Override
-//		public int compareTo(KnnEntry<T> o) {
-//			double d = dist-o.dist;
-//			return d < 0 ? -1 : d > 0 ? 1 : 0;
-//		}
-//
-//		@Override
-//		public String toString() {
-//			return "d=" + dist + ":" + Arrays.toString(min) + "/" + Arrays.toString(max);
-//		}
-//		@Override
-//		public double[] lower() {
-//			return min;
-//		}
-//		@Override
-//		public double[] upper() {
-//			return max;
-//		}
-//		@Override
-//		public T value() {
-//			return val;
-//		}
-//		@Override
-//		public double dist() {
-//			return dist;
-//		}
-//	}
-
 	@Override
 	public String toString() {
 		return "NaiveArray";

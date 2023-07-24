@@ -21,34 +21,11 @@ import java.util.Arrays;
 import static org.tinspin.index.Index.*;
 
 public class Entry<T> extends BoxEntry<T> {
-//	protected double[] min;
-//	protected double[] max;
-//	private T val;
-//
+
 	public Entry(double[] min, double[] max, T val) {
 		super(min, max, val);
 	}
-//
-//	@Override
-//	public double[] lower() {
-//		return min;
-//	}
-//
-//	@Override
-//	public double[] upper() {
-//		return max;
-//	}
-//
-//	@Override
-//	public T value() {
-//		return val;
-//	}
-//
-//	@Override
-//	public int compareTo(Entry<T> o) {
-//		return Double.compare(min[0], o.min[0]);
-//	}
-	
+
 	double calcOverlap(Entry<T> e) {
 		double area = 1;
 		for (int i = 0; i < min().length; i++) {
@@ -101,14 +78,6 @@ public class Entry<T> extends BoxEntry<T> {
 			max()[i] = Math.max(e1.max()[i], e2.max()[i]);
 		}
 	}
-	
-//	static double min(double d1, double d2) {
-//		return d1 < d2 ? d1 : d2;
-//	}
-//
-//	static double max(double d1, double d2) {
-//		return d1 > d2 ? d1 : d2;
-//	}
 
 	public static double calcVolume(Entry<?> e) {
 		return calcVolume(e.min(), e.max());
@@ -226,10 +195,4 @@ public class Entry<T> extends BoxEntry<T> {
 	protected void set(Entry<T> e) {
 		super.set(e.min(), e.max(), e.value());
 	}
-
-//	public void set(double[] lower, double[] upper, T val) {
-//		this.min = lower;
-//		this.max = upper;
-//		this.val = val;
-//	}
 }
