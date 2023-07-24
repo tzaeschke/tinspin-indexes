@@ -277,6 +277,11 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
+	public boolean contains(double[] min, double[] max) {
+		return findNodeEntry(min, max, (entry, node, posInNode) -> true) != null;
+	}
+
+	@Override
 	public boolean contains(double[] min, double[] max, T value) {
 		return findNodeEntry(min, max, (entry, node, posInNode) -> Objects.equals(value, entry.value())) != null;
 	}

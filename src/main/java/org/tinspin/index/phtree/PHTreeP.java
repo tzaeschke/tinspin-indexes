@@ -89,6 +89,11 @@ public class PHTreeP<T> implements PointMap<T> {
 	}
 
 	@Override
+	public boolean contains(double[] key) {
+		return tree.contains(key);
+	}
+
+	@Override
 	public T queryExact(double[] point) {
 		return tree.get(point);
 	}

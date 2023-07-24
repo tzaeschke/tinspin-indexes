@@ -266,7 +266,7 @@ public class CoverTreeTest {
 		tree.check();
 //	    System.out.println(tree.toStringTree());
 		for (double[] key : point_list) {
-			if (!tree.containsExact(key)) {
+			if (!tree.contains(key)) {
 				throw new IllegalStateException(Arrays.toString(key));
 			}
 		}

@@ -88,6 +88,11 @@ public class PHTreeR<T> implements BoxMap<T> {
 	}
 
 	@Override
+	public boolean contains(double[] min, double[] max) {
+		return tree.contains(min, max);
+	}
+
+	@Override
 	public T queryExact(double[] lower, double[] upper) {
 		return tree.get(lower, upper);
 	}

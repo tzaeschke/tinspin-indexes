@@ -123,7 +123,7 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 	 * @return true iff the key exists
 	 */
 	@Deprecated
-	public boolean containsExact(double[] key) {
+	public boolean contains(double[] key) {
 		if (root == null) {
 			return false;
 		}

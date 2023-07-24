@@ -125,6 +125,11 @@ public class PointMapWrapper<T> implements PointMap<T> {
 	}
 
 	@Override
+	public boolean contains(double[] key) {
+		return ind.queryExact(key, key) != null;
+	}
+
+	@Override
 	public T queryExact(double[] point) {
 		return ind.queryExact(point, point);
 	}

@@ -33,62 +33,62 @@ public interface BoxMultimap<T> extends Index {
     /**
      * Insert a box.
      *
-     * @param lower minimum corner
-     * @param upper maximum corner
+     * @param min minimum corner
+     * @param max maximum corner
      * @param value value
      */
-    void insert(double[] lower, double[] upper, T value);
+    void insert(double[] min, double[] max, T value);
 
     /**
      * Remove *one*n entry with the given value.
      *
-     * @param lower minimum corner
-     * @param upper maximum corner
+     * @param min minimum corner
+     * @param max maximum corner
      * @param value value
      * @return the value of the entry or null if the entry was not found
      */
-    boolean remove(double[] lower, double[] upper, T value);
+    boolean remove(double[] min, double[] max, T value);
 
     /**
      * Remove *one* entry with the given condition.
      *
-     * @param lower     minimum corner
-     * @param upper     maximum corner
+     * @param min     minimum corner
+     * @param max     maximum corner
      * @param condition the condition required for removing an entry
      * @return the value of the entry or null if the entry was not found
      */
-    boolean removeIf(double[] lower, double[] upper, Predicate<BoxEntry<T>> condition);
+    boolean removeIf(double[] min, double[] max, Predicate<BoxEntry<T>> condition);
 
     /**
      * Update the position of an entry.
      *
-     * @param lo1   old min
-     * @param up1   old max
-     * @param lo2   new min
-     * @param up2   new max
+     * @param minOld old min
+     * @param maxOld old max
+     * @param minNew new min
+     * @param maxNew new max
      * @param value only entries with this value are updated
      * @return the value, or null if the entries was not found
      */
-    boolean update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value);
+    boolean update(double[] minOld, double[] maxOld, double[] minNew, double[] maxNew, T value);
 
     /**
      * Lookup an entry, using exact match.
      *
-     * @param lower minimum corner
-     * @param upper maximum corner
+     * @param min minimum corner
+     * @param max maximum corner
      * @param value the value
      * @return `true` if an entry was found, otherwise `false`.
      */
-    boolean contains(double[] lower, double[] upper, T value);
+    boolean contains(double[] min, double[] max, T value);
 
     /**
      * Lookup an entry, using exact match.
      *
-     * @param lower minimum corner
-     * @param upper maximum corner
+     * @param min minimum corner
+     * @param max maximum corner
      * @return an iterator over all entries with the exact given box shape
      */
-    BoxIterator<T> queryRectangle(double[] lower, double[] upper);
+    BoxIterator<T> queryRectangle(double[] min, double[] max);
 
     /**
      * @return An iterator over all entries.

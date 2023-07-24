@@ -108,7 +108,7 @@ public class KDTreeMMTest {
         }
 //	    System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            if (!tree.containsExact(e.p)) {
+            if (!tree.contains(e.p)) {
                 throw new IllegalStateException(Arrays.toString(e.p));
             }
         }
@@ -143,7 +143,7 @@ public class KDTreeMMTest {
         for (Entry e : data) {
 //			System.out.println(tree.toStringTree());
 //			System.out.println("Removing: " + Arrays.toString(key));
-            if (!tree.containsExact(e.p)) {
+            if (!tree.contains(e.p)) {
                 throw new IllegalStateException("containsExact() failed: " + Arrays.toString(e.p));
             }
             Entry answer = tree.remove(e.p);

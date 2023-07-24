@@ -94,6 +94,11 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
+	public boolean contains(double[] min, double[] max) {
+		return queryExact(min, max) != null;
+	}
+
+	@Override
 	public boolean update(double[] lo1, double[] up1, double[] lo2, double[] up2, T value) {
 		for (int i = 0; i < N; i++) {
 			if (eq(phc[i*2], lo1) && eq(phc[(i*2)+1], up1)) {

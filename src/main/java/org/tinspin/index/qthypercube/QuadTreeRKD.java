@@ -138,20 +138,28 @@ public class QuadTreeRKD<T> implements BoxMap<T>, BoxMultimap<T> {
 		}
 		return root.getExact(keyL, keyU, e -> true) != null;
 	}
-	
+
 	/**
 	 * Get the value associates with the key.
-	 * @param keyL the lower key to look up
-	 * @param keyU the upper key to look up
+	 * @param min the lower key to look up
+	 * @param max the upper key to look up
 	 * @return the value for the key or 'null' if the key was not found
 	 */
 	@Override
-	public T queryExact(double[] keyL, double[] keyU) {
+	public T queryExact(double[] min, double[] max) {
 		if (root == null) {
 			return null;
 		}
-		BoxEntry<T> e = root.getExact(keyL, keyU, x -> true);
+		BoxEntry<T> e = root.getExact(min, max, x -> true);
 		return e == null ? null : e.value();
+	}
+
+	@Override
+	public boolean contains(double[] min, double[] max) {
+		if (root == null) {
+			return false;
+		}
+		return root.getExact(min, max, x -> true) != null;
 	}
 
 	@Override
@@ -270,7 +278,7 @@ public class QuadTreeRKD<T> implements BoxMap<T>, BoxMultimap<T> {
 		}
 		return e.value();
 	}
-	
+
 	/**
 	 * Ensure that the tree covers the entry.
 	 * @param e Entry to cover.

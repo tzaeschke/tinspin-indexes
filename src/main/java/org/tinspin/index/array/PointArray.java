@@ -59,6 +59,12 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 		return null;
 	}
 
+
+	@Override
+	public boolean contains(double[] key) {
+		return queryExact(key) != null;
+	}
+
 	@Override
 	public T queryExact(double[] point) {
 		for (int j = 0; j < N; j++) { 

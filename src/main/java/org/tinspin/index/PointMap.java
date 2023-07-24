@@ -54,6 +54,14 @@ public interface PointMap<T> extends Index {
 
 	/**
 	 * Lookup an entry, using exact match.
+	 *
+	 * @param point the point
+	 * @return `true` if an entry was found, otherwise `false`.
+	 */
+	boolean contains(double[] point);
+
+	/**
+	 * Lookup an entry, using exact match.
 	 * @param point the point
 	 * @return the value of the entry or null if the entry was not found
 	 */
@@ -90,5 +98,4 @@ public interface PointMap<T> extends Index {
 	 * @return list of nearest neighbors
 	 */
 	PointIteratorKnn<T> queryKnn(double[] center, int k);
-
 }
