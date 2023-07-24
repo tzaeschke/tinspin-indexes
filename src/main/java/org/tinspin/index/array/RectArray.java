@@ -133,7 +133,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
-	public BoxIterator<T> queryRectangle(double[] lower, double[] upper) {
+	public BoxIterator<T> queryExactBox(double[] lower, double[] upper) {
 		return new BoxIteratorWrapper<>(lower, upper, (low, upp) -> {
 			ArrayList<BoxEntry<T>> result = new ArrayList<>();
 			for (int i = 0; i < N; i++) {

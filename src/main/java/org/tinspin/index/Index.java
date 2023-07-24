@@ -58,7 +58,7 @@ public interface Index {
         /**
          * This method resets an iterator. The arguments determin new iterator properties:
          * - For Extent iterators, see e.g. {@link PointMap#iterator()}, both arguments must be `null`.
-         * - For point query iterators, see e.g. {@link PointMultimap#query(double[])}, the first argument
+         * - For point query iterators, see e.g. {@link PointMultimap#queryExactPoint(double[])}, the first argument
          * is the new query point and the second argument must be `null`.
          * - For window queries, see e.g. {@link PointMap#query(double[], double[])}, the arguments are
          * the min/max corners of the new query window.

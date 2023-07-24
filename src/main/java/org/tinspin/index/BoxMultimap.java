@@ -88,7 +88,7 @@ public interface BoxMultimap<T> extends Index {
      * @param max maximum corner
      * @return an iterator over all entries with the exact given box shape
      */
-    BoxIterator<T> queryRectangle(double[] min, double[] max);
+    BoxIterator<T> queryExactBox(double[] min, double[] max);
 
     /**
      * @return An iterator over all entries.

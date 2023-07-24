@@ -149,7 +149,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 	    // System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            PointIterator<Entry> it = tree.query(e.p);
+            PointIterator<Entry> it = tree.queryExactPoint(e.p);
             assertTrue("query(point) failed: " + e, it.hasNext());
             assertArrayEquals(e.p, it.next().value().p, 0.0000);
         }
@@ -177,7 +177,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             //			System.out.println(tree.toStringTree());
             //			System.out.println("Removing: " + Arrays.toString(key));
-            PointIterator<Entry> it = tree.query(e.p);
+            PointIterator<Entry> it = tree.queryExactPoint(e.p);
             assertTrue("queryExact() failed: " + e, it.hasNext());
             PointEntry<Entry> e2 = it.next();
             assertArrayEquals(e.p, e2.value().p, 0);
@@ -216,7 +216,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
     }
 
     private boolean containsExact(PointMultimap<Entry> tree, double[] p, int id) {
-        PointIterator<Entry> it = tree.query(p);
+        PointIterator<Entry> it = tree.queryExactPoint(p);
         while (it.hasNext()) {
             if (it.next().value().id == id) {
                 return true;

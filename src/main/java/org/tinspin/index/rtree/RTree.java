@@ -436,7 +436,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	 * @see org.tinspin.index.rtree.Index#queryOverlap(double[], double[])
 	 */
 	@Override
-	public RTreeIterator<T> queryRectangle(double[] min, double[] max) {
+	public RTreeIterator<T> queryExactBox(double[] min, double[] max) {
 		return RTreeIterator.createExactMatch(this, min, max);
 	}
 

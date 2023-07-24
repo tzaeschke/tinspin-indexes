@@ -116,7 +116,7 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
     }
 
     @Override
-    public PointIterator<T> query(double[] key) {
+    public PointIterator<T> queryExactPoint(double[] key) {
         return new IteratorPlain(key);
     }
 

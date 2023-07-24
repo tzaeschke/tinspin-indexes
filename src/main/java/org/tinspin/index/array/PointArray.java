@@ -55,7 +55,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	}
 
 	@Override
-	public PointIterator<T> query(double[] point) {
+	public PointIterator<T> queryExactPoint(double[] point) {
 		return null;
 	}
 

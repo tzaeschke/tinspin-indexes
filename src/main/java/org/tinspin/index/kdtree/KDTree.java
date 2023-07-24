@@ -117,7 +117,7 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 	 * @return an iterator over all entries at the given point
 	 */
 	@Override
-	public KDIterator<T> query(double[] point) {
+	public KDIterator<T> queryExactPoint(double[] point) {
 		return query(point, point);
 	}
 

@@ -133,8 +133,8 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 	}
 
 	@Override
-	public PointIterator<T> query(double[] point) {
-		return new PointIter<>(ind.queryRectangle(point, point));
+	public PointIterator<T> queryExactPoint(double[] point) {
+		return new PointIter<>(ind.queryExactBox(point, point));
 	}
 
 	@Override

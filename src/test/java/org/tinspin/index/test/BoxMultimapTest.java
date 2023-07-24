@@ -150,7 +150,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         }
         // System.out.println(tree.toStringTree());
         for (Entry e : data) {
-            BoxIterator<Entry> it = tree.queryRectangle(e.p1, e.p2);
+            BoxIterator<Entry> it = tree.queryExactBox(e.p1, e.p2);
             assertTrue("query(point) failed: " + e, it.hasNext());
             BoxEntry<Entry> next = it.next();
             assertArrayEquals(e.p1, next.value().p1, 0.0000);
@@ -171,7 +171,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
 
         for (Entry e : data) {
             // System.out.println("query: " + Arrays.toString(e.p));
-            BoxIterator<Entry> iter = tree.queryRectangle(e.p1, e.p2);
+            BoxIterator<Entry> iter = tree.queryExactBox(e.p1, e.p2);
             assertTrue("query() failed: " + e, iter.hasNext());
             for (int i = 0; i < N_DUP; ++i) {
                 // System.out.println("  found: " + i + " " + e);
@@ -185,7 +185,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             //			System.out.println(tree.toStringTree());
             //			System.out.println("Removing: " + Arrays.toString(key));
-            BoxIterator<Entry> it = tree.queryRectangle(e.p1, e.p2);
+            BoxIterator<Entry> it = tree.queryExactBox(e.p1, e.p2);
             assertTrue("queryExact() failed: " + e, it.hasNext());
             BoxEntry<Entry> e2 = it.next();
             assertArrayEquals(e.p1, e2.value().p1, 0);
@@ -230,7 +230,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
     }
 
     private boolean containsExact(BoxMultimap<Entry> tree, double[] p1, double[] p2, int id) {
-        BoxIterator<Entry> it = tree.queryRectangle(p1, p2);
+        BoxIterator<Entry> it = tree.queryExactBox(p1, p2);
         while (it.hasNext()) {
             if (it.next().value().id == id) {
                 return true;

@@ -315,9 +315,9 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	/**
 	 * @param point the point
 	 * @return an iterator over all entries at the given coordinate.
-	 * @see PointMultimap#query(double[])
+	 * @see PointMultimap#queryExactPoint(double[])
 	 */
-	public PointIterator<T> query(double[] point) {
+	public PointIterator<T> queryExactPoint(double[] point) {
 		return query(point, point);
 	}
 

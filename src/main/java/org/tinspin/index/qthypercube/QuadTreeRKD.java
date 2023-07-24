@@ -171,7 +171,7 @@ public class QuadTreeRKD<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	@Override
-	public BoxIterator<T> queryRectangle(double[] lower, double[] upper) {
+	public BoxIterator<T> queryExactBox(double[] lower, double[] upper) {
 		if (root == null) {
 			return null;
 		}
