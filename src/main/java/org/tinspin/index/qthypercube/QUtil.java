@@ -126,49 +126,6 @@ class QUtil {
 		return true;
 	}
 
-	@Deprecated // Not really, I guess it's ok for adjustRoot()
-	public static double distance(double[] p1, double[] p2) {
-		double dist = 0;
-		for (int i = 0; i < p1.length; i++) {
-			double d = p1[i]-p2[i];
-			dist += d * d;
-		}
-		return Math.sqrt(dist);
-	}
-
-	/**
-	 * Calculates distance to the edge of rectangle.
-	 * @param point point
-	 * @param rLower rectangle min
-	 * @param rUpper rectangle max
-	 * @return distance to edge
-	 */
-	@Deprecated
-	static double distToRectEdge(double[] point, double[] rLower, double[] rUpper) {
-		double dist = 0;
-		for (int i = 0; i < point.length; i++) {
-			double d = 0;
-			if (point[i] > rUpper[i]) {
-				d = point[i] - rUpper[i];
-			} else if (point[i] < rLower[i]) {
-				d = rLower[i] - point[i];
-			}
-			dist += d*d;
-		}
-		return Math.sqrt(dist);
-	}
-	
-	/**
-	 * Calculates distance to edge of rectangle.
-	 * @param p point
-	 * @param e rectangle
-	 * @return distance to edge point
-	 */
-	@Deprecated
-	public static double distToRectEdge(double[] p, BoxEntry<?> e) {
-		return distToRectEdge(p, e.min(), e.max());
-	}
-	
 	/**
 	 * Calculates distance to the edge of a node.
 	 * @param point the point
