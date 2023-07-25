@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Renamed `...EntryDist` to `EntryKnn` to be more consistent and clearer
   - New query result interface types: `PointIterator<T>`, `BoxIterator<T>`, ` PointIteratorKnn<T>` and `BoxIteratorKnn<T>` which are more concise.
 
+### Added
+- Added codecov Test coverage [#22](https://github.com/tzaeschke/tinspin-indexes/pull/22)
+
 
 ## [1.8.0] - 2023-07-21
 
