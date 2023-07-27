@@ -23,16 +23,14 @@ TinSpin indexes are also available via maven:
 <dependency>
     <groupId>org.tinspin</groupId>
     <artifactId>tinspin-indexes</artifactId>
-    <version>1.8.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
   
 ## Changelog
 
-**NOTE: The next release 2.0.0 will have a major API rewrite**.
-
 See [CHANGELOG](CHANGELOG.md) for details.
- - **Unreleased:** **2.0.0** **Major API rewrite.**
+ - **2.0.0** **Major API rewrite.**
  - 1.8.0 Full multimap support; many fixes; rewrote all kNN searches; Java 11.  
  - 1.7.1 Dependency on latest PH-Tree
  - 1.7.0 CoverTree and improved index statistics
