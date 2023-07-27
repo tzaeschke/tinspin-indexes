@@ -120,7 +120,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added CHANGELOG - [2015-10-11]
 - Pushed to v1.3.3-SNAPSHOT - [2015-10-11]
 
-[Unreleased]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.8.0...HEAD
+[Unreleased]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.0.0...HEAD
+[2.0.0]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.8.0...tinspin-indexes-2.0.0
 [1.8.0]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.7.1...tinspin-indexes-1.8.0
 [1.7.1]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.7.0...tinspin-indexes-1.7.1
 [1.7.0]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.6.1...tinspin-indexes-1.7.0
