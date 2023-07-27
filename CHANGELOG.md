@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-- Nothing
+### Changed
+- Added some tests and removed some dead code. [#23](https://github.com/tzaeschke/tinspin-indexes/pull/23)
 
 ## [2.0.0] - 2023-07-25
 
