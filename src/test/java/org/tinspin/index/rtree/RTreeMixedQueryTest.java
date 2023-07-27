@@ -100,7 +100,7 @@ public class RTreeMixedQueryTest {
 			Iterable<BoxEntryKnn<String>> q = tree.queryRangedNearestNeighbor(
 					center, BoxDistance.EDGE,
 					BoxDistance.EDGE, Filter.ALL);
-			RTreeQueryKnn2<String> res = tree.queryKnn(center, k, BoxDistance.EDGE);
+			RTreeQueryKnn<String> res = tree.queryKnn(center, k, BoxDistance.EDGE);
 			// test that we get the same results
 			Iterator<BoxEntryKnn<String>> iterator = q.iterator();
 			int i=0;
@@ -117,7 +117,7 @@ public class RTreeMixedQueryTest {
 		fillProcessorCache();
 
 		long timeRef = timeOf(() -> {
-			RTreeQueryKnn2<String> res = tree.queryKnn(center, k, BoxDistance.EDGE);
+			RTreeQueryKnn<String> res = tree.queryKnn(center, k, BoxDistance.EDGE);
 			int cnt = 0;
 			for(;res.hasNext();) {
 				cnt++;

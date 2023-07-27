@@ -460,14 +460,13 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	 * @see org.tinspin.index.rtree.Index#queryKNN(double[], int, org.tinspin.index.rtree.RectangleDistanceFunction)
 	 */
 	@Override
-	public RTreeQueryKnn2<T> queryKnn(double[] center, int k) {
+	public RTreeQueryKnn<T> queryKnn(double[] center, int k) {
 		return queryKnn(center, k, BoxDistance.EDGE);
 	}
 
 	@Override
-	public RTreeQueryKnn2<T> queryKnn(double[] center, int k, BoxDistance dist) {
-		//return new RTreeQueryKnn<>(this, center, k, dist);
-		return new RTreeQueryKnn2<>(this, k, center, dist, (e, d) -> true);
+	public RTreeQueryKnn<T> queryKnn(double[] center, int k, BoxDistance dist) {
+		return new RTreeQueryKnn<>(this, k, center, dist, (e, d) -> true);
 	}
 
 	public Iterable<BoxEntryKnn<T>> queryRangedNearestNeighbor(

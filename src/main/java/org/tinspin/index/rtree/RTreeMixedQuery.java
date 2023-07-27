@@ -60,8 +60,8 @@ class RTreeMixedQuery<T> implements Iterator<BoxEntryKnn<T>> {
 
 		@Override
 		public String toString() {
-			return "RTreeNodeWrapper [lower()=" + Arrays.toString(max()) +
-					", upper()=" + Arrays.toString(min())
+			return "RTreeNodeWrapper [lower()=" + Arrays.toString(min()) +
+					", upper()=" + Arrays.toString(max())
 					+ ", value()=" + value() + ", dist()=" + dist() + "]";
 		}
 
