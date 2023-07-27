@@ -30,6 +30,7 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.tinspin.index.Index.BoxEntryKnn;
+import static org.tinspin.index.Index.BoxIterator;
 import static org.tinspin.index.Index.BoxIteratorKnn;
 import static org.tinspin.index.test.util.TestInstances.IDX;
 
@@ -128,6 +129,7 @@ public class BoxMapTest extends AbstractWrapperTest {
     private void smokeTest(List<Entry> data) {
         int dim = data.get(0).p1.length;
         BoxMap<Entry> tree = createTree(data.size(), dim);
+        assertEquals(dim, tree.getDims());
 
         for (Entry e : data) {
             tree.insert(e.p1, e.p2, e);
@@ -152,6 +154,17 @@ public class BoxMapTest extends AbstractWrapperTest {
             assertEquals(0, be.dist(), 0.0);
         }
 
+        if (candidate != IDX.COVER && candidate != IDX.KDTREE && candidate != IDX.QUAD_PLAIN
+                && candidate != IDX.QUAD_HC && candidate != IDX.QUAD_HC2 && candidate != IDX.ARRAY) {
+            int nExtent = 0;
+            BoxIterator<Entry> extent = tree.iterator();
+            while (extent.hasNext()) {
+                extent.next();
+                nExtent++;
+            }
+            assertEquals(data.size(), nExtent);
+        }
+
         for (Entry e : data) {
             // System.out.println("query: " + Arrays.toString(e.p));
             Entry e2 = tree.queryExact(e.p1, e.p2);
@@ -162,8 +175,6 @@ public class BoxMapTest extends AbstractWrapperTest {
         }
 
         for (Entry e : data) {
-            //			System.out.println(tree.toStringTree());
-            //			System.out.println("Removing: " + Arrays.toString(key));
             Entry e2 = tree.queryExact(e.p1, e.p2);
             assertNotNull("queryExact() failed: " + e, e2);
             assertArrayEquals(e.p1, e2.p1, 0);
@@ -262,9 +273,7 @@ public class BoxMapTest extends AbstractWrapperTest {
         switch (candidate) {
             case ARRAY:
                 return new RectArray<>(dims, size);
-//            //case CRITBIT: return new PointArray<>(dims, size);
-            //case KDTREE: return KDTree.create(dims);
-            //case PHTREE_MM: return PHTreeMMP.create(dims);
+            // case PHTREE_MM: return PHTreeMMP.create(dims);
             case QUAD_HC:
                 return QuadTreeRKD.create(dims);
             case QUAD_PLAIN:
@@ -272,7 +281,6 @@ public class BoxMapTest extends AbstractWrapperTest {
             case RSTAR:
             case STR:
                 return RTree.createRStar(dims);
-            //           case COVER: return CoverTree.create(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());
         }

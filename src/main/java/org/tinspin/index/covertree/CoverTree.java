@@ -514,83 +514,83 @@ public class CoverTree<T> implements PointMap<T> {
 		x.addChild(rNew, distRX);
 	}
 	
-	private Node<T> rebalance(Node<T> p, Node<T> x) {
-//  	function rebalance(cover trees p, data point x)
-//  	prerequisites: x can be added as a child of p without violating
-//      the covering or separating invariants
-//		1: create tree x0 with root node x at level level(p)􀀀1 x0
-//		contains no other points
-//		2: p0   p
-//		3: for q 2 children(p) do
-//		4: (q0;moveset; stayset) rebalance (p;q;x)
-//		5: p0   p0 with child q replaced with q0
-//		6: for r 2 moveset do
-//		7: x0  insert(x0; r)
-//		8: return p0 with x0 added as a child
-	
-		//	1: create tree x0 with root node x at level level(p)-1 x0
-		//	contains no other points
-		Node<T> x0 = x.initLevel(p.getLevel() - 1); 
-		//	2: p0   p
-		Node<T> p0 = p;
-		//	3: for q 2 children(p) do
-		if (p.hasChildren()) {
-			ArrayList<Node<T>> children = p.getChildren();
-			ArrayList<Node<T>> moveSet = new ArrayList<>();
-			ArrayList<Node<T>> staySet = new ArrayList<>();
-			for (int i = 0; i < children.size(); i++) {
-				Node<T> q = children.get(i);
-				//	4: (q0;moveset; stayset) rebalance (p;q;x)
-				moveSet.clear();
-				staySet.clear();
-				Node<T> q0 = rebalance(p, q, x, moveSet, staySet);
-				//	5: p0   p0 with child q replaced with q0
-				if (q0 != null) {
-					p0.replaceChild(i, q0);
-				}
-				q0.adjustMaxDist(d(p0, q0));
-				//TODO adjust max?!?!
-				//	6: for r 2 moveset do
-				for (int j = 0; j < moveSet.size(); j++) {
-					//	7: x0  insert(x0; r)
-					//x0 = insert(x0, moveSet.get(j)); //TODO report!
-					x0 = insert2(x0, moveSet.get(j), d(x0, moveSet.get(j)));
-				}
-			}
-		}
-		//	8: return p0 with x0 added as a child
-		p0.addChild(x0, d(p0, x0));
-		return p0;
-	}
+	//	private Node<T> rebalance(Node<T> p, Node<T> x) {
+	//		//  	function rebalance(cover trees p, data point x)
+	//		//  	prerequisites: x can be added as a child of p without violating
+	//		//      the covering or separating invariants
+	//		//		1: create tree x0 with root node x at level level(p)􀀀1 x0
+	//		//		contains no other points
+	//		//		2: p0   p
+	//		//		3: for q 2 children(p) do
+	//		//		4: (q0;moveset; stayset) rebalance (p;q;x)
+	//		//		5: p0   p0 with child q replaced with q0
+	//		//		6: for r 2 moveset do
+	//		//		7: x0  insert(x0; r)
+	//		//		8: return p0 with x0 added as a child
+	//
+	//		//	1: create tree x0 with root node x at level level(p)-1 x0
+	//		//	contains no other points
+	//		Node<T> x0 = x.initLevel(p.getLevel() - 1);
+	//		//	2: p0   p
+	//		Node<T> p0 = p;
+	//		//	3: for q 2 children(p) do
+	//		if (p.hasChildren()) {
+	//			ArrayList<Node<T>> children = p.getChildren();
+	//			ArrayList<Node<T>> moveSet = new ArrayList<>();
+	//			ArrayList<Node<T>> staySet = new ArrayList<>();
+	//			for (int i = 0; i < children.size(); i++) {
+	//				Node<T> q = children.get(i);
+	//				//	4: (q0;moveset; stayset) rebalance (p;q;x)
+	//				moveSet.clear();
+	//				staySet.clear();
+	//				Node<T> q0 = rebalance(p, q, x, moveSet, staySet);
+	//				//	5: p0   p0 with child q replaced with q0
+	//				if (q0 != null) {
+	//					p0.replaceChild(i, q0);
+	//				}
+	//				q0.adjustMaxDist(d(p0, q0));
+	//				//TODO adjust max?!?!
+	//				//	6: for r 2 moveset do
+	//				for (int j = 0; j < moveSet.size(); j++) {
+	//					//	7: x0  insert(x0; r)
+	//					//x0 = insert(x0, moveSet.get(j)); //TODO report!
+	//					x0 = insert2(x0, moveSet.get(j), d(x0, moveSet.get(j)));
+	//				}
+	//			}
+	//		}
+	//		//	8: return p0 with x0 added as a child
+	//		p0.addChild(x0, d(p0, x0));
+	//		return p0;
+	//	}
 	
 	private Node<T> rebalance(Node<T> p, Node<T> q, Node<T> x, 
 			ArrayList<Node<T>> moveSet, ArrayList<Node<T>> staySet) {
-//	function rebalance (cover trees p and q, point x)
-//	prerequisites: p is an ancestor of q
-//	1: if d(p;q) > d(q;x) then
-//	2: moveset; stayset   /0
-//	3: for r 2 descendants(q) do
-//	4: if d(r; p) > d(r;x) then
-//	5: moveset  moveset [frg
-//	6: else
-//	7: stayset  stayset [frg
-//	8: return (null;moveset; stayset)
-//	9: else
-//	10: moveset0; stayset0   /0
-//	11: q0  q
-//	12: for r 2 children(q) do
-//	13: (r0;moveset; stayset) rebalance (p; r;x)
-//	14: moveset0  moveset[moveset0
-//	15: stayset0  stayset[stayset0
-//	16: if r0 = null then
-//	17: q0  q with the subtree r removed
-//	18: else
-//	19: q0  q with the subtree r replaced by r0
-//	20: for r 2 stayset0 do
-//	21: if d(r;q)0  covdist(q)0 then
-//	22: q0  insert(q0; r)
-//	23: stayset0  stayset0􀀀frg
-//	24: return (q0;moveset0; stayset0)
+		//	function rebalance (cover trees p and q, point x)
+		//	prerequisites: p is an ancestor of q
+		//	1: if d(p;q) > d(q;x) then
+		//	2: moveset; stayset   /0
+		//	3: for r 2 descendants(q) do
+		//	4: if d(r; p) > d(r;x) then
+		//	5: moveset  moveset [frg
+		//	6: else
+		//	7: stayset  stayset [frg
+		//	8: return (null;moveset; stayset)
+		//	9: else
+		//	10: moveset0; stayset0   /0
+		//	11: q0  q
+		//	12: for r 2 children(q) do
+		//	13: (r0;moveset; stayset) rebalance (p; r;x)
+		//	14: moveset0  moveset[moveset0
+		//	15: stayset0  stayset[stayset0
+		//	16: if r0 = null then
+		//	17: q0  q with the subtree r removed
+		//	18: else
+		//	19: q0  q with the subtree r replaced by r0
+		//	20: for r 2 stayset0 do
+		//	21: if d(r;q)0  covdist(q)0 then
+		//	22: q0  insert(q0; r)
+		//	23: stayset0  stayset0􀀀frg
+		//	24: return (q0;moveset0; stayset0)
 		
 		// 1: if d(p;q) > d(q;x) then
 		if (d(p, q) > d(q, x)) {

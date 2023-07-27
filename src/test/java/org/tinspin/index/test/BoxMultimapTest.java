@@ -169,6 +169,17 @@ public class BoxMultimapTest extends AbstractWrapperTest {
             assertEquals(N_DUP, nFound);
         }
 
+        if (candidate != IDX.COVER && candidate != IDX.KDTREE && candidate != IDX.QUAD_PLAIN
+                && candidate != IDX.QUAD_HC && candidate != IDX.QUAD_HC2 && candidate != IDX.ARRAY) {
+            int nExtent = 0;
+            BoxIterator<Entry> extent = tree.iterator();
+            while (extent.hasNext()) {
+                extent.next();
+                nExtent++;
+            }
+            assertEquals(data.size(), nExtent);
+        }
+
         for (Entry e : data) {
             // System.out.println("query: " + Arrays.toString(e.p));
             BoxIterator<Entry> iter = tree.queryExactBox(e.p1, e.p2);
@@ -183,8 +194,6 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         }
 
         for (Entry e : data) {
-            //			System.out.println(tree.toStringTree());
-            //			System.out.println("Removing: " + Arrays.toString(key));
             BoxIterator<Entry> it = tree.queryExactBox(e.p1, e.p2);
             assertTrue("queryExact() failed: " + e, it.hasNext());
             BoxEntry<Entry> e2 = it.next();
@@ -325,9 +334,7 @@ public class BoxMultimapTest extends AbstractWrapperTest {
         switch (candidate) {
             case ARRAY:
                 return new RectArray<>(dims, size);
-//            //case CRITBIT: return new PointArray<>(dims, size);
-            //case KDTREE: return KDTree.create(dims);
-            //case PHTREE_MM: return PHTreeMMP.create(dims);
+            // case PHTREE_MM: return PHTreeMMP.create(dims);
             case QUAD_HC:
                 return QuadTreeRKD.create(dims);
             case QUAD_PLAIN:
@@ -335,7 +342,6 @@ public class BoxMultimapTest extends AbstractWrapperTest {
             case RSTAR:
             case STR:
                 return RTree.createRStar(dims);
-            //           case COVER: return CoverTree.create(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());
         }

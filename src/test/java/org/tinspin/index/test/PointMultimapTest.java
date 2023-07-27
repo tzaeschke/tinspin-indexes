@@ -162,6 +162,17 @@ public class PointMultimapTest extends AbstractWrapperTest {
             assertArrayEquals("Expected " + e + " but got " + answer, answer.p, e.p, 0.0001);
         }
 
+        if (candidate != IDX.COVER && candidate != IDX.KDTREE && candidate != IDX.QUAD_PLAIN
+                && candidate != IDX.QUAD_HC && candidate != IDX.QUAD_HC2) {
+            int nExtent = 0;
+            PointIterator<Entry> extent = tree.iterator();
+            while (extent.hasNext()) {
+                extent.next();
+                nExtent++;
+            }
+            assertEquals(data.size(), nExtent);
+        }
+
         for (Entry e : data) {
             // System.out.println("query: " + Arrays.toString(e.p));
             PointIterator<Entry> iter = tree.query(e.p, e.p);
@@ -175,8 +186,6 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 
         for (Entry e : data) {
-            //			System.out.println(tree.toStringTree());
-            //			System.out.println("Removing: " + Arrays.toString(key));
             PointIterator<Entry> it = tree.queryExactPoint(e.p);
             assertTrue("queryExact() failed: " + e, it.hasNext());
             PointEntry<Entry> e2 = it.next();

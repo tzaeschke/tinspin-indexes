@@ -1,7 +1,8 @@
 /*
- * Copyright 2016 Tilmann Zaeschke
- * 
- * 
+ * Copyright 2009-2023 Tilmann Zaeschke. All rights reserved.
+ *
+ * This file is part of TinSpin.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,135 +17,137 @@
  */
 package org.tinspin.index.rtree;
 
-import java.util.ArrayList;
-import java.util.PriorityQueue;
-import java.util.Iterator;
+import org.tinspin.index.*;
+import org.tinspin.index.util.MinHeap;
+import org.tinspin.index.util.MinMaxHeap;
 
-import org.tinspin.index.BoxDistance;
+import java.util.NoSuchElementException;
 
 import static org.tinspin.index.Index.*;
 
-/**
- * kNN search with EDGE distance and presorting of entries.
- * <p>
- * Implementation after Hjaltason and Samet (with some deviations: no MinDist or MaxDist used).
- * G. R. Hjaltason and H. Samet., "Distance browsing in spatial databases.", ACM TODS 24(2):265--318. 1999
- * 
- * @author Tilmann Zäschke
- *
- * @param <T> Type Value type.
- */
 public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
-	
-	private static final BEComparator COMP = new BEComparator();
-	private final RTree<T> tree;
-	private double[] center;
-	private Iterator<BoxEntryKnn<T>> iter;
-	private BoxDistance dist;
-	private final ArrayList<BoxEntryKnn<T>> candidates = new ArrayList<>();
-	private final ArrayList<BoxEntryKnn<Object>> pool = new ArrayList<>();
-	private final PriorityQueue<BoxEntryKnn<Object>> queue = new PriorityQueue<>(COMP);
-	
-	
-	public RTreeQueryKnn(RTree<T> tree, double[] center, int k, BoxDistance dist) {
-		this.tree = tree;
-		reset(center, k, dist == null ? BoxDistance.EDGE : dist);
-	}
 
-	
-	@Override
-	public RTreeQueryKnn<T> reset(double[] center, int k) {
-		reset(center, k, null);
-		return this;
-	}
+    private final RTree<T> tree;
+    private final BoxDistance distFn;
+    private final BoxFilterKnn<T> filterFn;
+    MinHeap<NodeDistT> queueN = MinHeap.create((t1, t2) -> t1.dist < t2.dist);
+    MinMaxHeap<BoxEntryKnn<T>> queueV = MinMaxHeap.create((t1, t2) -> t1.dist() < t2.dist());
+    double maxNodeDist = Double.POSITIVE_INFINITY;
+    private BoxEntryKnn<T> current;
+    private int remaining;
+    private double[] center;
+    private double currentDistance;
 
-	public void reset(double[] center, int k, BoxDistance dist) {
-		if (dist != null) {
-			this.dist = dist;
-		}
-		if (this.dist != BoxDistance.EDGE) {
-			System.err.println("This distance iterator only works for EDGE distance");
-		}
-		this.center = center;
-		
-		//reset
-		pool.addAll(queue);
-		queue.clear();
-		candidates.clear();
-		candidates.ensureCapacity(k);
+    RTreeQueryKnn(RTree<T> tree, int minResults, double[] center, BoxDistance distFn, BoxFilterKnn<T> filterFn) {
+        this.filterFn = filterFn;
+        this.distFn = distFn;
+        this.tree = tree;
+        reset(center, minResults);
+    }
 
-		//handle 0 cases
-		if (k <= 0 || tree.size() == 0) {
-			iter = candidates.iterator();
-			return;
-		}
+    @Override
+    public BoxIteratorKnn<T> reset(double[] center, int minResults) {
+        this.center = center;
+        this.currentDistance = Double.MAX_VALUE;
+        this.remaining = minResults;
+        this.maxNodeDist = Double.POSITIVE_INFINITY;
+        this.current = null;
+        if (minResults <= 0 || tree.getRoot() == null) {
+            return this;
+        }
+        queueN.clear();
+        queueV.clear();
 
-		//search
-		search(k);
-		iter = candidates.iterator();
-	}
-	
-	
-	@SuppressWarnings("unchecked")
-	private void search(int k) {
-		//Initialize queue
-		RTreeNode<T> eRoot = tree.getRoot();
-		double dRoot = dist(center, eRoot.min(), eRoot.max());
-		queue.add(createEntry(eRoot.min(), eRoot.max(), eRoot, dRoot));
+        queueN.push(new NodeDistT(0, tree.getRoot()));
+        findNextElement();
+        return this;
+    }
 
-		while (!queue.isEmpty()) {
-			BoxEntryKnn<Object> candidate = queue.poll();
-			Object o = candidate.value();
-			if (!(o instanceof RTreeNode)) {
-				//data entry
-				candidates.add((BoxEntryKnn<T>) candidate);
-				if (candidates.size() >= k) {
-					return;
-				}
-			} else if (o instanceof RTreeNodeLeaf) {
-				//leaf node
-				ArrayList<Entry<T>> entries = ((RTreeNodeLeaf<T>)o).getEntries();
-				for (int i = 0; i < entries.size(); i++) {
-					Entry<T> e2 = entries.get(i);
-					double d = dist(center, e2.min(), e2.max());
-					queue.add(createEntry(e2.min(), e2.max(), e2.value(), d));
-				}
-				pool.add(candidate);
-			} else {
-				//inner node
-				ArrayList<RTreeNode<T>> entries = ((RTreeNodeDir<T>)o).getChildren();
-				for (int i = 0; i < entries.size(); i++) {
-					RTreeNode<T> e2 = entries.get(i);
-					double d = dist(center, e2.min(), e2.max());
-					queue.add(createEntry(e2.min(), e2.max(), e2, d));
-				}
-				pool.add(candidate);
-			}				
-		}
-	}
-	
-	private BoxEntryKnn<Object> createEntry(double[] min, double[] max, Object val, double dist) {
-		if (pool.isEmpty()) {
-			return new BoxEntryKnn<>(min, max, val, dist);
-		}
-		BoxEntryKnn<Object> e = pool.remove(pool.size() - 1);
-		e.set(min, max, val, dist);
-		return e;
-	}
+    @Override
+    public boolean hasNext() {
+        return current != null;
+    }
 
-	@Override
-	public boolean hasNext() {
-		return iter.hasNext();
-	}
+    @Override
+    public BoxEntryKnn<T> next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        BoxEntryKnn<T> ret = current;
+        findNextElement();
+        return ret;
+    }
 
-	
-	@Override
-	public BoxEntryKnn<T> next() {
-		return iter.next();
-	}
-	
-	private double dist(double[] center, double[] min, double[] max) {
-		tree.incNDistKNN();
-		return dist.dist(center, min, max);
-	}
+    public double distance() {
+        return currentDistance;
+    }
+
+    private void findNextElement() {
+        while (remaining > 0 && !(queueN.isEmpty() && queueV.isEmpty())) {
+            boolean useV = !queueV.isEmpty();
+            if (useV && !queueN.isEmpty()) {
+                useV = queueV.peekMin().dist() <= queueN.peekMin().dist;
+            }
+            if (useV) {
+                // data entry
+                BoxEntryKnn<T> result = queueV.peekMin();
+                queueV.popMin();
+                --remaining;
+                this.current = result;
+                currentDistance = result.dist();
+                return;
+            } else {
+                // inner node
+                NodeDistT top = queueN.peekMin();
+                queueN.popMin();
+                RTreeNode<T> node = top.node;
+                double dNode = top.dist;
+
+                if (dNode > maxNodeDist && queueV.size() >= remaining) {
+                    // ignore this node
+                    continue;
+                }
+
+                if (node instanceof RTreeNodeLeaf) {
+                    for (Entry<T> entry : node.getEntries()) {
+                        double d = distFn.dist(center, entry);
+                        if (filterFn.test(entry, d)) {
+                            // Using '<=' allows dealing with infinite distances.
+                            if (d <= maxNodeDist) {
+                                queueV.push(new BoxEntryKnn<>(entry.min(), entry.max(), entry.value(), d));
+                                if (queueV.size() >= remaining) {
+                                    if (queueV.size() > remaining) {
+                                        queueV.popMax();
+                                    }
+                                    double dMax = queueV.peekMax().dist();
+                                    maxNodeDist = Math.min(maxNodeDist, dMax);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    for (Entry<T> o : node.getEntries()) {
+                        RTreeNode<T> subnode = (RTreeNode<T>) o;
+                        double dist = distFn.dist(center, subnode);
+                        if (dist <= maxNodeDist) {
+                            queueN.push(new NodeDistT(dist, subnode));
+                        }
+                    }
+                }
+            }
+        }
+        current = null;
+        currentDistance = Double.MAX_VALUE;
+    }
+
+    private class NodeDistT {
+        double dist;
+        RTreeNode<T> node;
+
+        public NodeDistT(double dist, RTreeNode<T> node) {
+            this.dist = dist;
+            this.node = node;
+        }
+    }
 }
+

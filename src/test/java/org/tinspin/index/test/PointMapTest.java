@@ -55,7 +55,7 @@ public class PointMapTest extends AbstractWrapperTest {
     public static Iterable<Object[]> candidates() {
         ArrayList<Object[]> l = new ArrayList<>();
         // l.add(new Object[]{IDX.ARRAY});
-        // l.add(new Object[]{IDX.COVER});
+        l.add(new Object[]{IDX.COVER});
         l.add(new Object[]{IDX.KDTREE});
         l.add(new Object[]{IDX.PHTREE_MM});
         l.add(new Object[]{IDX.QUAD_HC});
@@ -150,29 +150,43 @@ public class PointMapTest extends AbstractWrapperTest {
             assertArrayEquals("Expected " + e + " but got " + answer, answer.p, e.p, 0.0001);
         }
 
-        for (Entry e : data) {
-            // System.out.println("query: " + Arrays.toString(e.p));
-            PointIterator<Entry> iter = tree.query(e.p, e.p);
-            assertTrue("query() failed: " + e, iter.hasNext());
+        if (candidate != IDX.COVER && candidate != IDX.KDTREE && candidate != IDX.QUAD_PLAIN
+                && candidate != IDX.QUAD_HC && candidate != IDX.QUAD_HC2) {
+            int nExtent = 0;
+            PointIterator<Entry> extent = tree.iterator();
+            while (extent.hasNext()) {
+                extent.next();
+                nExtent++;
+            }
+            assertEquals(data.size(), nExtent);
         }
 
-        for (Entry e : data) {
-            //			System.out.println(tree.toStringTree());
-            //			System.out.println("Removing: " + Arrays.toString(key));
-            assertTrue("contains(point) failed: " + e, tree.contains(e.p));
-            Entry e2 = tree.queryExact(e.p);
-            assertNotNull("queryExact(point) failed: " + e, e2);
-            assertArrayEquals(e.p, e2.p, 0.0000);
-            assertNotNull(tree.remove(e.p));
+        if (candidate != IDX.COVER) {
+            for (Entry e : data) {
+                // System.out.println("query: " + Arrays.toString(e.p));
+                PointIterator<Entry> iter = tree.query(e.p, e.p);
+                assertTrue("query() failed: " + e, iter.hasNext());
+            }
 
-            assertFalse("contains(point) failed: " + e, tree.contains(e.p));
-            assertNull("queryExact(point) failed: " + e, tree.queryExact(e.p));
-            assertNull(tree.remove(e.p));
+            for (Entry e : data) {
+                assertTrue("contains(point) failed: " + e, tree.contains(e.p));
+                Entry e2 = tree.queryExact(e.p);
+                assertNotNull("queryExact(point) failed: " + e, e2);
+                assertArrayEquals(e.p, e2.p, 0.0000);
+                assertNotNull(tree.remove(e.p));
+
+                assertFalse("contains(point) failed: " + e, tree.contains(e.p));
+                assertNull("queryExact(point) failed: " + e, tree.queryExact(e.p));
+                assertNull(tree.remove(e.p));
+            }
         }
     }
 
     @Test
     public void testUpdate() {
+        if (candidate == IDX.COVER) {
+            return;
+        }
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
@@ -208,6 +222,9 @@ public class PointMapTest extends AbstractWrapperTest {
 
     @Test
     public void testRemove() {
+        if (candidate == IDX.COVER) {
+            return;
+        }
         Random r = new Random(0);
         int dim = 3;
         ArrayList<Entry> data = createInt(0, 1000, 3);
