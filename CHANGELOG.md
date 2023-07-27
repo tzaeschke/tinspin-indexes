@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+- Nothing
+
+## [2.0.0] - 2023-07-25
+
 ### Changed
 - Removed deprecated code, more API fixes and tests [#21](https://github.com/tzaeschke/tinspin-indexes/pull/21)
-- New API: [#20](https://github.com/tzaeschke/tinspin-indexes/pull/20)
+- **New API:** [#20](https://github.com/tzaeschke/tinspin-indexes/pull/20)
   - Moved a lot of smaller classes & interfaces into `Index` which should be a lot cleaner and simplifies imports to a single `import static org.tinspin.index.Index.*;`.
   - `...Entry` interfaces have been removed and replaced with a common implementation.
   - Renamed `Rectangle` to `Box` to make it shorter
