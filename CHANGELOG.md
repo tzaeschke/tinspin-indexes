@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-- Nothing yet
+- Remove erroneour references to GPL 3.0. This library is APL 2.0 only. [#27](https://github.com/tzaeschke/tinspin-indexes/pull/27)
 
 ## [2.0.1] - 2023-08-01
 
