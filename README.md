@@ -23,13 +23,28 @@ TinSpin indexes are also available via maven:
 <dependency>
     <groupId>org.tinspin</groupId>
     <artifactId>tinspin-indexes</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
 </dependency>
 ```
   
+## Overview
+The indexes fall into four categories, depending on whether they use points or (axis-aligned) boxes as keys and whether they are maps or [multimaps](https://en.wikipedia.org/wiki/Multimap). This results in four base types with respective Java interfaces:
+- `PointMap` is supported by `CoverTree`, `KDTree`, `PHTreeP`, `PointArray`, `QuadtreeKD0`, `QuadtreeKD`, `QuadtreeKD2` and `RTree` (via `PointMapWrapper`)
+- `PointMultimap` is supported by `KDTree`, `PHTreeMMP`, `PointArray`, `QuadtreeKD0`, `QuadtreeKD`, `QuadtreeKD2` and `RTree` (via `PointMultimapWrapper`)
+- `BoxMap` is supported by `PHTreeR`, `BoxArray`, `QuadtreeKD0`, `QuadtreeKD` and `RTree`
+- `BoxMultimap` is supported by `BoxArray`, `QuadtreeKD0`, `QuadtreeKD` and `RTree`
+
+**WARNING** *The `Map` implementations are mostly not strict with respect to unique keys. That means they work fine if keys are unique. However, they may not enforce uniqueness (replace entries when the same key is added twice) and instead always add another entry. That means they may effectively act as multimaps.* At the moment, only PH-Tree bases indexes enforce uniqueness and properly overwrite existing keys.
+
+Note:
+ - The `RTree` class can be used for **R*Trees** and **STR-Trees** depending on how it is loaded. Adding entries via `insert(...)` will create a normal R*Tree while adding entries via `load()` creates an STR-Tree.
+ - **R*Trees** and **STR-Trees** and can be turned into a `PointMap` or `PointMultimap` via mappers, e.g. `PointMapWrapper.create(RTree.createRStar(dims))`
+ - `PointArray` and `BoxArray` are simple array based implementations. They scale badly with size, their only use is for verifying correctness of other indexes. 
+
 ## Changelog
 
 See [CHANGELOG](CHANGELOG.md) for details.
+ - 2.0.1 Fixed issue with dependencies in generated pom.
  - **2.0.0** **Major API rewrite.**
  - 1.8.0 Full multimap support; many fixes; rewrote all kNN searches; Java 11.  
  - 1.7.1 Dependency on latest PH-Tree
@@ -55,18 +70,16 @@ A Critical Bit tree for k-dimensional or arbitrary length keys.
 
 Current version: 
 
-v1.4: Added KD-Tree and adapter for PH-Tree
-
-v1.3: Reduced memory consumption
-
-v1.2: Refactoring, API improvements, slight performance improvements
-
-v1.1: Slight performance improvements
-  
-v1.0: Initial release
+ - v1.4: Added KD-Tree and adapter for PH-Tree
+ - v1.3: Reduced memory consumption
+ - v1.2: Refactoring, API improvements, slight performance improvements
+ - v1.1: Slight performance improvements
+ - v1.0: Initial release
 
 This is a Java implementation of a crit-bit tree. 
-A crit-bit tree is a Patricie-Trie for binary data. Patricia-Tries achieve space efficiency by using prefix sharing. 
+A [crit-bit tree](https://cr.yp.to/critbit.html) is a 
+[Patricia-Trie](https://en.wikipedia.org/wiki/Radix_tree#History)
+for binary data. Patricia-Tries achieve space efficiency by using prefix sharing. 
 They are also update efficient because they are 'stable' trees, meaning that any update will affect at most two nodes.
 
 Unlike other crit-bit trees, this tree also supports multi-dimensional data by interleaving the bits of each 
