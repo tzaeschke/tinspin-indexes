@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Changed
+### Fixed
+- Removed maven-shade-plugin as it broke the phtree dependency. [#25](https://github.com/tzaeschke/tinspin-indexes/issues/25)
 - Added some tests and removed some dead code. [#23](https://github.com/tzaeschke/tinspin-indexes/pull/23)
 
 ## [2.0.0] - 2023-07-25
