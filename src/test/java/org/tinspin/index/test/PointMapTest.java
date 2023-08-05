@@ -21,15 +21,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.tinspin.index.PointMap;
-import org.tinspin.index.array.PointArray;
-import org.tinspin.index.covertree.CoverTree;
-import org.tinspin.index.kdtree.KDTree;
-import org.tinspin.index.phtree.PHTreeP;
-import org.tinspin.index.qthypercube.QuadTreeKD;
-import org.tinspin.index.qthypercube2.QuadTreeKD2;
-import org.tinspin.index.qtplain.QuadTreeKD0;
-import org.tinspin.index.rtree.RTree;
-import org.tinspin.index.util.PointMapWrapper;
 
 import java.util.*;
 
@@ -270,23 +261,23 @@ public class PointMapTest extends AbstractWrapperTest {
     private <T> PointMap<T> createTree(int size, int dims) {
         switch (candidate) {
             case ARRAY:
-                return new PointArray<>(dims, size);
+                return PointMap.Factory.createArray(dims, size);
             //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE:
-                return KDTree.create(dims);
+                return PointMap.Factory.createKdTree(dims);
             case PHTREE_MM:
-                return PHTreeP.create(dims);
+                return PointMap.Factory.createPhTree(dims);
             case QUAD_HC:
-                return QuadTreeKD.create(dims);
+                return PointMap.Factory.createQuadtreeHC(dims);
             case QUAD_HC2:
-                return QuadTreeKD2.create(dims);
+                return PointMap.Factory.createQuadtreeHC2(dims);
             case QUAD_PLAIN:
-                return QuadTreeKD0.create(dims);
+                return PointMap.Factory.createQuadtree(dims);
             case RSTAR:
             case STR:
-                return PointMapWrapper.create(RTree.createRStar(dims));
+                return PointMap.Factory.createRStarTree(dims);
             case COVER:
-                return CoverTree.create(dims);
+                return PointMap.Factory.createCoverTree(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());
         }

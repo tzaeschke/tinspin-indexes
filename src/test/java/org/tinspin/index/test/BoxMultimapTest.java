@@ -20,11 +20,7 @@ package org.tinspin.index.test;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.tinspin.index.*;
-import org.tinspin.index.array.RectArray;
-import org.tinspin.index.qthypercube.QuadTreeRKD;
-import org.tinspin.index.qtplain.QuadTreeRKD0;
-import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.BoxMultimap;
 import org.tinspin.index.util.MutableInt;
 
 import java.util.*;
@@ -333,15 +329,15 @@ public class BoxMultimapTest extends AbstractWrapperTest {
     private <T> BoxMultimap<T> createTree(int size, int dims) {
         switch (candidate) {
             case ARRAY:
-                return new RectArray<>(dims, size);
+                return BoxMultimap.Factory.createArray(dims, size);
             // case PHTREE_MM: return PHTreeMMP.create(dims);
             case QUAD_HC:
-                return QuadTreeRKD.create(dims);
+                return BoxMultimap.Factory.createQuadtreeHC(dims);
             case QUAD_PLAIN:
-                return QuadTreeRKD0.create(dims);
+                return BoxMultimap.Factory.createQuadtree(dims);
             case RSTAR:
             case STR:
-                return RTree.createRStar(dims);
+                return BoxMultimap.Factory.createRStarTree(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());
         }

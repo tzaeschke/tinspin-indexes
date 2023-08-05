@@ -17,6 +17,16 @@
  */
 package org.tinspin.index;
 
+import org.tinspin.index.array.PointArray;
+import org.tinspin.index.kdtree.KDTree;
+import org.tinspin.index.phtree.PHTreeMMP;
+import org.tinspin.index.qthypercube.QuadTreeKD;
+import org.tinspin.index.qthypercube2.QuadTreeKD2;
+import org.tinspin.index.qtplain.QuadTreeKD0;
+import org.tinspin.index.rtree.Entry;
+import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.util.PointMultimapWrapper;
+
 import java.util.Iterator;
 import java.util.function.Predicate;
 
@@ -129,4 +139,133 @@ public interface PointMultimap<T> extends Index {
      * @return list of nearest neighbors
      */
     PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn);
+
+
+    interface Factory {
+        /**
+         * Create an array backed PointMap. This is only for testing and rather inefficient for large data sets.
+         *
+         * @param dims Number of dimensions.
+         * @param size Number of entries.
+         * @param <T>  Value type
+         * @return New PointArray
+         */
+        static <T> PointMultimap<T> createArray(int dims, int size) {
+            return new PointArray<>(dims, size);
+        }
+
+        /**
+         * Create a kD-Tree
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New PH-Tree
+         */
+        static <T> PointMultimap<T> createKdTree(int dims) {
+            return KDTree.create(dims);
+        }
+
+        /**
+         * Create a PH-Tree.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New PH-Tree
+         */
+        static <T> PointMultimap<T> createPhTree(int dims) {
+            return PHTreeMMP.create(dims);
+        }
+
+        /**
+         * Create a plain Quadtree.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New Quadtree
+         */
+        static <T> PointMultimap<T> createQuadtree(int dims) {
+            return QuadTreeKD0.create(dims);
+        }
+
+        /**
+         * Create a plain Quadtree.
+         * Center/radius are used to find a good initial root. They do not need to be exact. If possible, they should
+         * span an area that is somewhat larger rather than smaller than the actual data.
+         *
+         * @param dims            Number of dimensions.
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
+         * @param center          Estimated center of all coordinates.
+         * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
+         * @param <T>             Value type
+         * @return New Quadtree
+         */
+        static <T> PointMultimap<T> createQuadtree(int dims, int maxNodeCapacity, double[] center, double radius) {
+            return QuadTreeKD0.create(dims, maxNodeCapacity, center, radius);
+        }
+
+        /**
+         * Create a Quadtree with hypercube navigation.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New QuadtreeHC
+         */
+        static <T> PointMultimap<T> createQuadtreeHC(int dims) {
+            return QuadTreeKD.create(dims);
+        }
+
+        /**
+         * Create a plain Quadtree.
+         * Center/radius are used to find a good initial root. They do not need to be exact. If possible, they should
+         * span an area that is somewhat larger rather than smaller than the actual data.
+         *
+         * @param dims            Number of dimensions.
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
+         * @param center          Estimated center of all coordinates.
+         * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
+         * @param <T>             Value type
+         * @return New QuadtreeHC
+         */
+        static <T> PointMultimap<T> createQuadtreeHC(int dims, int maxNodeCapacity, double[] center, double radius) {
+            return QuadTreeKD.create(dims, maxNodeCapacity, center, radius);
+        }
+
+        /**
+         * Create a Quadtree with hypercube navigation.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New QuadtreeHC2
+         */
+        static <T> PointMultimap<T> createQuadtreeHC2(int dims) {
+            return QuadTreeKD2.create(dims);
+        }
+
+        /**
+         * Create a plain Quadtree.
+         * Center/radius are used to find a good initial root. They do not need to be exact. If possible, they should
+         * span an area that is somewhat larger rather than smaller than the actual data.
+         *
+         * @param dims            Number of dimensions.
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
+         * @param center          Estimated center of all coordinates.
+         * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
+         * @param <T>             Value type
+         * @return New QuadtreeHC2
+         */
+        static <T> PointMultimap<T> createQuadtreeHC2(int dims, int maxNodeCapacity, double[] center, double radius) {
+            return QuadTreeKD2.create(dims, maxNodeCapacity, center, radius);
+        }
+
+        /**
+         * Create an R*Tree. R*Tree can be "turned into" STR-Trees by using {@link RTree#load(Entry[])}.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New R*Tree
+         */
+        static <T> PointMultimap<T> createRStarTree(int dims) {
+            return PointMultimapWrapper.create(RTree.createRStar(dims));
+        }
+    }
 }
