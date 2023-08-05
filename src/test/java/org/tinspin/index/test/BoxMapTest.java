@@ -21,10 +21,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.tinspin.index.BoxMap;
-import org.tinspin.index.array.RectArray;
-import org.tinspin.index.qthypercube.QuadTreeRKD;
-import org.tinspin.index.qtplain.QuadTreeRKD0;
-import org.tinspin.index.rtree.RTree;
 
 import java.util.*;
 
@@ -272,15 +268,15 @@ public class BoxMapTest extends AbstractWrapperTest {
     private <T> BoxMap<T> createTree(int size, int dims) {
         switch (candidate) {
             case ARRAY:
-                return new RectArray<>(dims, size);
+                return BoxMap.Factory.createArray(dims, size);
             // case PHTREE_MM: return PHTreeMMP.create(dims);
             case QUAD_HC:
-                return QuadTreeRKD.create(dims);
+                return BoxMap.Factory.createQuadtreeHC(dims);
             case QUAD_PLAIN:
-                return QuadTreeRKD0.create(dims);
+                return BoxMap.Factory.createQuadtree(dims);
             case RSTAR:
             case STR:
-                return RTree.createRStar(dims);
+                return BoxMap.Factory.createRStarTree(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());
         }

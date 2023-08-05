@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Tilmann Zaeschke
+ * Copyright 2016-2023 Tilmann Zaeschke
  *
  * This file is part of TinSpin.
  *
@@ -17,6 +17,12 @@
  */
 package org.tinspin.index;
 
+import org.tinspin.index.array.RectArray;
+import org.tinspin.index.qthypercube.QuadTreeRKD;
+import org.tinspin.index.qtplain.QuadTreeRKD0;
+import org.tinspin.index.rtree.Entry;
+import org.tinspin.index.rtree.RTree;
+
 import java.util.Iterator;
 import java.util.function.Predicate;
 
@@ -33,8 +39,8 @@ public interface BoxMultimap<T> extends Index {
     /**
      * Insert a box.
      *
-     * @param min minimum corner
-     * @param max maximum corner
+     * @param min   minimum corner
+     * @param max   maximum corner
      * @param value value
      */
     void insert(double[] min, double[] max, T value);
@@ -42,8 +48,8 @@ public interface BoxMultimap<T> extends Index {
     /**
      * Remove *one*n entry with the given value.
      *
-     * @param min minimum corner
-     * @param max maximum corner
+     * @param min   minimum corner
+     * @param max   maximum corner
      * @param value value
      * @return the value of the entry or null if the entry was not found
      */
@@ -52,8 +58,8 @@ public interface BoxMultimap<T> extends Index {
     /**
      * Remove *one* entry with the given condition.
      *
-     * @param min     minimum corner
-     * @param max     maximum corner
+     * @param min       minimum corner
+     * @param max       maximum corner
      * @param condition the condition required for removing an entry
      * @return the value of the entry or null if the entry was not found
      */
@@ -66,7 +72,7 @@ public interface BoxMultimap<T> extends Index {
      * @param maxOld old max
      * @param minNew new min
      * @param maxNew new max
-     * @param value only entries with this value are updated
+     * @param value  only entries with this value are updated
      * @return the value, or null if the entries was not found
      */
     boolean update(double[] minOld, double[] maxOld, double[] minNew, double[] maxNew, T value);
@@ -74,8 +80,8 @@ public interface BoxMultimap<T> extends Index {
     /**
      * Lookup an entry, using exact match.
      *
-     * @param min minimum corner
-     * @param max maximum corner
+     * @param min   minimum corner
+     * @param max   maximum corner
      * @param value the value
      * @return `true` if an entry was found, otherwise `false`.
      */
@@ -136,4 +142,83 @@ public interface BoxMultimap<T> extends Index {
      * @return list of nearest neighbors
      */
     BoxIteratorKnn<T> queryKnn(double[] center, int k, BoxDistance distFn);
+
+    interface Factory {
+        /**
+         * Create an array backed BoxMap. This is only for testing and rather inefficient for large data sets.
+         *
+         * @param dims Number of dimensions.
+         * @param size Number of entries.
+         * @param <T>  Value type
+         * @return New RectArray
+         */
+        static <T> BoxMultimap<T> createArray(int dims, int size) {
+            return new RectArray<>(dims, size);
+        }
+
+        /**
+         * Create a plain Quadtree.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New Quadtree
+         */
+        static <T> BoxMultimap<T> createQuadtree(int dims) {
+            return QuadTreeRKD0.create(dims);
+        }
+
+        /**
+         * Create a plain Quadtree.
+         * Min/max are used to find a good initial root. They do not need to be exact. If possible, min/max should
+         * span an area that is somewhat larger rather than smaller than the actual data.
+         *
+         * @param dims            Number of dimensions.
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
+         * @param min             Estimated minimum of all coordinates.
+         * @param max             Estimated maximum of all coordinates.
+         * @param <T>             Value type
+         * @return New Quadtree
+         */
+        static <T> BoxMultimap<T> createQuadtree(int dims, int maxNodeCapacity, double[] min, double[] max) {
+            return QuadTreeRKD0.create(dims, maxNodeCapacity, min, max);
+        }
+
+        /**
+         * Create a Quadtree with hypercube navigation.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New QuadtreeHC
+         */
+        static <T> BoxMultimap<T> createQuadtreeHC(int dims) {
+            return QuadTreeRKD.create(dims);
+        }
+
+        /**
+         * Create a plain Quadtree.
+         * Min/max are used to find a good initial root. They do not need to be exact. If possible, min/max should
+         * span an area that is somewhat larger rather than smaller than the actual data.
+         *
+         * @param dims            Number of dimensions.
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
+         * @param min             Estimated minimum of all coordinates.
+         * @param max             Estimated maximum of all coordinates.
+         * @param <T>             Value type
+         * @return New QuadtreeHC
+         */
+        static <T> BoxMultimap<T> createQuadtreeHC(int dims, int maxNodeCapacity, double[] min, double[] max) {
+            return QuadTreeRKD.create(dims, maxNodeCapacity, min, max);
+        }
+
+        /**
+         * Create an R*Tree. R*Trees can be "turned into" STR-Trees by using {@link RTree#load(Entry[])}.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New R*Tree
+         */
+        static <T> BoxMultimap<T> createRStarTree(int dims) {
+            return RTree.createRStar(dims);
+        }
+    }
 }

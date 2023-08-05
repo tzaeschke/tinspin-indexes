@@ -20,16 +20,8 @@ package org.tinspin.index.test;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.tinspin.index.*;
-import org.tinspin.index.array.PointArray;
-import org.tinspin.index.kdtree.KDTree;
-import org.tinspin.index.phtree.PHTreeMMP;
-import org.tinspin.index.qthypercube.QuadTreeKD;
-import org.tinspin.index.qthypercube2.QuadTreeKD2;
-import org.tinspin.index.qtplain.QuadTreeKD0;
-import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.PointMultimap;
 import org.tinspin.index.test.util.TestInstances;
-import org.tinspin.index.util.PointMultimapWrapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,7 +29,7 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 import static org.tinspin.index.Index.*;
-import static org.tinspin.index.test.util.TestInstances.*;
+import static org.tinspin.index.test.util.TestInstances.IDX;
 
 @RunWith(Parameterized.class)
 public class PointMultimapTest extends AbstractWrapperTest {
@@ -48,8 +40,25 @@ public class PointMultimapTest extends AbstractWrapperTest {
     private static final int MEDIUM = 5_000;
 
     private final TestInstances.IDX candidate;
+
     public PointMultimapTest(TestInstances.IDX candCls) {
         this.candidate = candCls;
+    }
+
+    @Parameterized.Parameters
+    public static Iterable<Object[]> candidates() {
+        ArrayList<Object[]> l = new ArrayList<>();
+        // l.add(new Object[]{IDX.ARRAY});
+        // l.add(new Object[]{IDX.COVER});
+        l.add(new Object[]{IDX.KDTREE});
+        l.add(new Object[]{IDX.PHTREE_MM});
+        l.add(new Object[]{IDX.QUAD_HC});
+        l.add(new Object[]{IDX.QUAD_HC2});
+        l.add(new Object[]{IDX.QUAD_PLAIN});
+        l.add(new Object[]{IDX.RSTAR});
+        l.add(new Object[]{IDX.STR});
+        // l.add(new Object[]{IDX.CRITBIT});
+        return l;
     }
 
     private ArrayList<Entry> createInt(long seed, int n, int dim) {
@@ -66,22 +75,6 @@ public class PointMultimapTest extends AbstractWrapperTest {
             }
         }
         return data;
-    }
-
-    @Parameterized.Parameters
-    public static Iterable<Object[]> candidates() {
-        ArrayList<Object[]> l = new ArrayList<>();
-        // l.add(new Object[]{IDX.ARRAY});
-	    // l.add(new Object[]{IDX.COVER});
-        l.add(new Object[]{IDX.KDTREE});
-        l.add(new Object[]{IDX.PHTREE_MM});
-        l.add(new Object[]{IDX.QUAD_HC});
-        l.add(new Object[]{IDX.QUAD_HC2});
-        l.add(new Object[]{IDX.QUAD_PLAIN});
-        l.add(new Object[]{IDX.RSTAR});
-        l.add(new Object[]{IDX.STR});
-		// l.add(new Object[]{IDX.CRITBIT});
-        return l;
     }
 
     @Test
@@ -147,7 +140,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             tree.insert(e.p, e);
         }
-	    // System.out.println(tree.toStringTree());
+        // System.out.println(tree.toStringTree());
         for (Entry e : data) {
             PointIterator<Entry> it = tree.queryExactPoint(e.p);
             assertTrue("query(point) failed: " + e, it.hasNext());
@@ -248,24 +241,24 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 
         // remove 1st half
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
             assertTrue(tree.remove(e.p, e));
             assertFalse(containsExact(tree, e.p, e.id));
         }
 
         // check
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
             assertFalse(containsExact(tree, e.p, e.id));
         }
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
             assertTrue(containsExact(tree, e.p, e.id));
         }
 
         // remove 2nd half
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
             assertTrue(tree.remove(e.p, e));
             assertFalse(containsExact(tree, e.p, e.id));
@@ -288,7 +281,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 
         // remove 1st half
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
             assertTrue(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
             assertFalse(containsExact(tree, e.p, e.id));
@@ -296,17 +289,17 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 
         // check
-        for (int i = 0; i < data.size()/2; ++i) {
+        for (int i = 0; i < data.size() / 2; ++i) {
             Entry e = data.get(i);
             assertFalse(containsExact(tree, e.p, e.id));
         }
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
             assertTrue(containsExact(tree, e.p, e.id));
         }
 
         // remove 2nd half
-        for (int i = data.size()/2; i < data.size(); ++i) {
+        for (int i = data.size() / 2; i < data.size(); ++i) {
             Entry e = data.get(i);
             assertTrue(tree.removeIf(e.p, e2 -> e2.value().id == e.id));
             assertFalse(containsExact(tree, e.p, e.id));
@@ -318,16 +311,23 @@ public class PointMultimapTest extends AbstractWrapperTest {
 
     private <T> PointMultimap<T> createTree(int size, int dims) {
         switch (candidate) {
-            case ARRAY: return new PointArray<>(dims, size);
+            case ARRAY:
+                return PointMultimap.Factory.createArray(dims, size);
 //            //case CRITBIT: return new PointArray<>(dims, size);
-            case KDTREE: return KDTree.create(dims);
-            case PHTREE_MM: return PHTreeMMP.create(dims);
-            case QUAD_HC: return QuadTreeKD.create(dims);
-            case QUAD_HC2: return QuadTreeKD2.create(dims);
-            case QUAD_PLAIN: return QuadTreeKD0.create(dims);
+            case KDTREE:
+                return PointMultimap.Factory.createKdTree(dims);
+            case PHTREE_MM:
+                return PointMultimap.Factory.createPhTree(dims);
+            case QUAD_HC:
+                return PointMultimap.Factory.createQuadtreeHC(dims);
+            case QUAD_HC2:
+                return PointMultimap.Factory.createQuadtreeHC2(dims);
+            case QUAD_PLAIN:
+                return PointMultimap.Factory.createQuadtree(dims);
             case RSTAR:
-            case STR: return PointMultimapWrapper.create(RTree.createRStar(dims));
- //           case COVER: return CoverTree.create(dims);
+            case STR:
+                return PointMultimap.Factory.createRStarTree(dims);
+            //           case COVER: return CoverTree.create(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());
         }
