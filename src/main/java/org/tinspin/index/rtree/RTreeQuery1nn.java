@@ -143,9 +143,9 @@ public class RTreeQuery1nn<T> {
 					continue nextSub;
 				}
 			} else {
-				ArrayList<Entry<T>> entries = ip.node.getEntries();
+				ArrayList<RTreeEntry<T>> entries = ip.node.getEntries();
 				while (ip.pos < entries.size()) {
-					Entry<T> e = entries.get(ip.pos);
+					RTreeEntry<T> e = entries.get(ip.pos);
 					ip.pos++;
 					//this works only for EDGE distance !!!
 					double d = dist(center, e.min(), e.max());

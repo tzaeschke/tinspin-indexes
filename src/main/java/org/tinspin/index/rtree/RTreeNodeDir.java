@@ -35,7 +35,7 @@ class RTreeNodeDir<T> extends RTreeNode<T> {
 	}
 
 	@Override
-	public void addEntry(Entry<T> e) {
+	public void addEntry(RTreeEntry<T> e) {
 		RTreeNode<T> node = (RTreeNode<T>) e;
 		children.add(node);
 		node.setParent(this);
@@ -81,7 +81,7 @@ class RTreeNodeDir<T> extends RTreeNode<T> {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public ArrayList<Entry<T>> getEntries() {
+	public ArrayList<RTreeEntry<T>> getEntries() {
 		return (ArrayList)children;
 	}
 

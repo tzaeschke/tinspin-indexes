@@ -21,7 +21,7 @@ import java.util.Arrays;
 
 import static org.tinspin.index.Index.*;
 
-abstract class RTreeNode<T> extends Entry<T> {
+abstract class RTreeNode<T> extends RTreeEntry<T> {
 
 	private RTreeNodeDir<T> parent;
 
@@ -29,9 +29,9 @@ abstract class RTreeNode<T> extends Entry<T> {
 		super(new double[dim], new double[dim], null);
 	}
 
-	abstract void addEntry(Entry<T> e);
+	abstract void addEntry(RTreeEntry<T> e);
 
-	abstract ArrayList<Entry<T>> getEntries();
+	abstract ArrayList<RTreeEntry<T>> getEntries();
 
 	/**
 	 * Calculates the overlap of this node with 'othernode' if this node would be 
@@ -40,7 +40,7 @@ abstract class RTreeNode<T> extends Entry<T> {
 	 * @param otherNode
 	 * @return overlap of enlarged nodes.
 	 */
-	double calcOverlapEnlarged(Entry<T> enlargement, RTreeNode<T> otherNode) {
+	double calcOverlapEnlarged(RTreeEntry<T> enlargement, RTreeNode<T> otherNode) {
 		double area = 1;
 		for (int i = 0; i < min().length; i++) {
 			double d = Math.min(Math.max(max()[i], enlargement.max()[i]), otherNode.max()[i])
@@ -53,7 +53,7 @@ abstract class RTreeNode<T> extends Entry<T> {
 		return area;
 	}
 
-	public double calcAreaEnlarged(Entry<T> e) {
+	public double calcAreaEnlarged(RTreeEntry<T> e) {
 		double area = 1;
 		for (int i = 0; i < min().length; i++) {
 			double d = Math.max(max()[i], e.max()[i])
@@ -64,7 +64,7 @@ abstract class RTreeNode<T> extends Entry<T> {
 	}
 
 
-	protected void setMBB(Entry<T> e) {
+	protected void setMBB(RTreeEntry<T> e) {
 		for (int i = 0; i < min().length; i++) {
 			min()[i] = e.min()[i];
 			max()[i] = e.max()[i];
@@ -76,7 +76,7 @@ abstract class RTreeNode<T> extends Entry<T> {
 	 * Extends the MBB to ensure it covers the new entry.
 	 * @param e new entry
 	 */
-	protected void extendMBB(Entry<T> e) {
+	protected void extendMBB(RTreeEntry<T> e) {
 		for (int i = 0; i < min().length; i++) {
 			if (min()[i] > e.min()[i]) {
 				min()[i] = e.min()[i];
@@ -96,7 +96,7 @@ abstract class RTreeNode<T> extends Entry<T> {
 		double[] minOld = min().clone();
 		double[] maxOld = max().clone();
 		resetMBB();
-		ArrayList<Entry<T>> entries = getEntries();
+		ArrayList<RTreeEntry<T>> entries = getEntries();
 		for (int i = 0; i < entries.size(); i++) {
 			BoxEntry<T> e = entries.get(i);
 			for (int d = 0; d < min().length; d++) {

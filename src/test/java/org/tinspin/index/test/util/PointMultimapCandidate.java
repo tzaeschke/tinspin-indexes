@@ -16,7 +16,7 @@ import org.tinspin.index.phtree.PHTreeMMP;
 import org.tinspin.index.qthypercube.QuadTreeKD;
 import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
-import org.tinspin.index.rtree.Entry;
+import org.tinspin.index.rtree.RTreeEntry;
 import org.tinspin.index.rtree.RTree;
 import org.tinspin.index.test.util.TestInstances.IDX;
 import org.tinspin.index.util.PointMultimapWrapper;
@@ -78,13 +78,13 @@ public class PointMultimapCandidate extends Candidate {
 	public void load(double[] data, int dims) {
 		this.data = data;
 		if (bulkloadSTR) {
-			Entry<Integer>[] entries = new Entry[N];
+			RTreeEntry<Integer>[] entries = new RTreeEntry[N];
 			int pos = 0;
 			for (int i = 0; i < N; i++) {
 				double[] buf = new double[dims];
 				System.arraycopy(data, pos, buf, 0, dims);
 				pos += dims;
-				entries[i] = new Entry<>(buf, buf, i);
+				entries[i] = RTreeEntry.createPoint(buf, i);
 			}
 			PointMultimapWrapper<Integer> rt = (PointMultimapWrapper<Integer>) idx;
 			rt.load(entries);

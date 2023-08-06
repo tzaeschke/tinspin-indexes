@@ -62,8 +62,8 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 	private double[] max;
 	private IteratorStack stack;
 	private boolean hasNext = true;
-	private Entry<T> next;
-	private final Predicate<Entry<T>> filter;
+	private RTreeEntry<T> next;
+	private final Predicate<RTreeEntry<T>> filter;
 	
 	private static class IterPos<T> {
 		private RTreeNode<T> node;
@@ -79,16 +79,16 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 		this.stack = new IteratorStack(tree.getDepth());
 		this.tree = tree;
 		// Default: intersection query
-		this.filter = (Entry<T> entry)-> Entry.checkOverlap(this.min, this.max, entry);
+		this.filter = (RTreeEntry<T> entry)-> RTreeEntry.checkOverlap(this.min, this.max, entry);
 		reset(min, max);
 	}
 
 	public static <T> RTreeIterator<T> createExactMatch(RTree<T> tree, double[] min, double[] max) {
-		return new RTreeIterator<>(tree, min, max, e -> e instanceof RTreeNode ? Entry.checkOverlap(min, max, e) :
+		return new RTreeIterator<>(tree, min, max, e -> e instanceof RTreeNode ? RTreeEntry.checkOverlap(min, max, e) :
 				Arrays.equals(min, e.min()) && Arrays.equals(max, e.max()));
 	}
 
-	private RTreeIterator(RTree<T> tree, double[] min, double[] max, Predicate<Entry<T>> filter) {
+	private RTreeIterator(RTree<T> tree, double[] min, double[] max, Predicate<RTreeEntry<T>> filter) {
 		this.stack = new IteratorStack(tree.getDepth());
 		this.tree = tree;
 		this.filter = filter;
@@ -106,7 +106,7 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 		this.max = max;
 		this.hasNext = true;
 		
-		if (!Entry.checkOverlap(min, max, tree.getRoot())) {
+		if (!RTreeEntry.checkOverlap(min, max, tree.getRoot())) {
 			hasNext = false;
 			return null;
 		}
@@ -119,9 +119,9 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 		nextSub:
 		while (!stack.isEmpty()) {
 			IterPos<T> ip = stack.peek();
-			ArrayList<Entry<T>> entries = ip.node.getEntries(); 
+			ArrayList<RTreeEntry<T>> entries = ip.node.getEntries();
 			while (ip.pos < entries.size()) {
-				Entry<T> e = entries.get(ip.pos);
+				RTreeEntry<T> e = entries.get(ip.pos);
 				ip.pos++;
 				if (filter.test(e)) {
 					if (e instanceof RTreeNode) {
@@ -144,11 +144,11 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 	}
 
 	@Override
-	public Entry<T> next() {
+	public RTreeEntry<T> next() {
 		if (!hasNext()) {
 			throw new NoSuchElementException();
 		}
-		Entry<T> ret = next;
+		RTreeEntry<T> ret = next;
 		findNext();
 		return ret;
 	}

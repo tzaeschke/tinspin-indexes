@@ -18,13 +18,13 @@ package org.tinspin.index.rtree;
 
 public interface RTreeLogic {
 
-	<T> RTreeNode<T> chooseSubTree(RTreeNode<T> root, Entry<T> e, 
+	<T> RTreeNode<T> chooseSubTree(RTreeNode<T> root, RTreeEntry<T> e,
 			int desiredInsertionLevel, int nLevels);
 	
 	<T> boolean hasSpace(RTreeNode<T> root);
 
-	<T> RTreeNode<T> split(RTreeNode<T> node, Entry<T> e);
+	<T> RTreeNode<T> split(RTreeNode<T> node, RTreeEntry<T> e);
 
-	<T> Entry<T>[] reInsert(RTreeNode<T> node, Entry<T> e);
+	<T> RTreeEntry<T>[] reInsert(RTreeNode<T> node, RTreeEntry<T> e);
 
 }

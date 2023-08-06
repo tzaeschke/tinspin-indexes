@@ -18,7 +18,7 @@
 package org.tinspin.index.util;
 
 import org.tinspin.index.*;
-import org.tinspin.index.rtree.Entry;
+import org.tinspin.index.rtree.RTreeEntry;
 import org.tinspin.index.rtree.RTree;
 
 import java.util.function.Predicate;
@@ -177,7 +177,7 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 		return ind.getDepth();
 	}
 
-	public void load(Entry<T>[] entries) {
+	public void load(RTreeEntry<T>[] entries) {
 		if (!(ind instanceof RTree)) {
 			throw new UnsupportedOperationException(
 					"Bulkloading is only supported for RTrees");

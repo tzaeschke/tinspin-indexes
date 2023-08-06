@@ -46,7 +46,7 @@ public class STRLoader<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void load(Entry<T>[] entries) {
+	public void load(RTreeEntry<T>[] entries) {
 		int dims = entries[0].min().length;
 		int N = entries.length;
 		int M = RTree.NODE_MAX_DATA;
@@ -100,7 +100,7 @@ public class STRLoader<T> {
 		return;
 	}
 	
-	private void verify(Entry<T>[] entries) {
+	private void verify(RTreeEntry<T>[] entries) {
 		System.err.println("Verifying bulkload");
 		int n = verifyNode(root, depth-1);
 		if (n != entries.length) {
@@ -115,7 +115,7 @@ public class STRLoader<T> {
 	
 	private int verifyNode(RTreeNode<T> node, int level) {
 		System.out.println("Checking node: " + node);
-		ArrayList<Entry<T>> el = node.getEntries();
+		ArrayList<RTreeEntry<T>> el = node.getEntries();
 		int nEntries = 0;
 		int nNodes = 0;
 		int dim = el.get(0).min().length;
@@ -132,7 +132,7 @@ public class STRLoader<T> {
 			
 			//System.out.println("Entry: " + e);
 			//check MBB is big enough
-			if (!Entry.calcIncludes(node.min(), node.max(), e.min(), e.max())) {
+			if (!RTreeEntry.calcIncludes(node.min(), node.max(), e.min(), e.max())) {
 				throw new IllegalStateException();
 			}
 			

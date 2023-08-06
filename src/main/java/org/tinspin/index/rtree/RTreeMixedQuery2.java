@@ -29,10 +29,10 @@ class RTreeMixedQuery2<T> implements Iterator<BoxEntryKnn<T>> {
 	
 	private static class RTreeNodeWrapper<T> extends BoxEntryKnn<T> implements Comparable<RTreeNodeWrapper<T>> {
 
-		Entry<T> node;
+		RTreeEntry<T> node;
 //		double distance;
 
-		RTreeNodeWrapper(Entry<T> node, double distance) {
+		RTreeNodeWrapper(RTreeEntry<T> node, double distance) {
 			super(node.min(), node.max(), node.value(), distance);
 			this.node = node;
 //			this.distance = distance;
@@ -146,7 +146,7 @@ class RTreeMixedQuery2<T> implements Iterator<BoxEntryKnn<T>> {
 		RTreeNodeWrapper<T> nextElement = null;
 		while (nextElement == null && !queue.isEmpty()) {
 			RTreeNodeWrapper<T> top = queue.poll();
-			Entry<T> ent = top.node;
+			RTreeEntry<T> ent = top.node;
 			if (ent instanceof RTreeNodeDir) {
 				processNode((RTreeNodeDir<T>) ent);
 			} else if (ent instanceof RTreeNodeLeaf) {
@@ -189,13 +189,13 @@ class RTreeMixedQuery2<T> implements Iterator<BoxEntryKnn<T>> {
 	}
 
 	private void processNode(RTreeNodeLeaf<T> node) {
-		ArrayList<Entry<T>> entries = node.getEntries();
+		ArrayList<RTreeEntry<T>> entries = node.getEntries();
 		for (int i = 0; i < entries.size(); i++) {
 			insert(entries.get(i));
 		}
 	}
 
-	private void insert(Entry<T> ent) {
+	private void insert(RTreeEntry<T> ent) {
 		if (!filter.matches(ent)) {
 			return;
 		}

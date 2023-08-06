@@ -29,10 +29,10 @@ class RTreeMixedQuery<T> implements Iterator<BoxEntryKnn<T>> {
 	
 	private static class RTreeNodeWrapper<T> extends BoxEntryKnn<T> implements Comparable<RTreeNodeWrapper<T>> {
 
-		Entry<T> node;
+		RTreeEntry<T> node;
 //		double distance;
 
-		RTreeNodeWrapper(Entry<T> node, double distance) {
+		RTreeNodeWrapper(RTreeEntry<T> node, double distance) {
 			super(node.min(), node.max(), node.value(), distance);
 			this.node = node;
 			// this.distance = distance;
@@ -112,7 +112,7 @@ class RTreeMixedQuery<T> implements Iterator<BoxEntryKnn<T>> {
 		int idx;
 		RTreeNodeLeaf<T> parent;
 
-		RTreeEntryWrapper(Entry<T> node, double distance, int idx, RTreeNodeLeaf<T> parent) {
+		RTreeEntryWrapper(RTreeEntry<T> node, double distance, int idx, RTreeNodeLeaf<T> parent) {
 			super(node, distance);
 			this.idx = idx;
 			this.parent = parent;
@@ -210,17 +210,17 @@ class RTreeMixedQuery<T> implements Iterator<BoxEntryKnn<T>> {
 	}
 
 	private boolean processNode(RTreeNodeLeaf<T> node) {
-		ArrayList<Entry<T>> entries = node.getEntries();
+		ArrayList<RTreeEntry<T>> entries = node.getEntries();
 		assert node.value() == null;
 		for (int i = 0; i < entries.size(); i++) {
-			Entry<T> ent = entries.get(i);
+			RTreeEntry<T> ent = entries.get(i);
 			assert !(ent instanceof RTreeNode);
 			insert(ent, node, i);
 		}
 		return !entries.isEmpty();
 	}
 
-	private void insert(Entry<T> ent, RTreeNodeLeaf<T> parent, int idx) {
+	private void insert(RTreeEntry<T> ent, RTreeNodeLeaf<T> parent, int idx) {
 		if (!filter.matches(ent)) {
 			return;
 		}
@@ -343,7 +343,7 @@ class RTreeMixedQuery<T> implements Iterator<BoxEntryKnn<T>> {
 		ArrayList<RTreeNodeWrapper<T>> toReinsert = new ArrayList<>();
 		for (Iterator<RTreeNodeWrapper<T>> iterator = queue.iterator(); iterator.hasNext();) {
 			RTreeNodeWrapper<T> e = iterator.next();
-			Entry<T> node = e.node;
+			RTreeEntry<T> node = e.node;
 			if (node instanceof RTreeNode) {
 				double actualDist = closestDist.dist(center, node.min(), node.max());
 				if (e.dist() > actualDist) {

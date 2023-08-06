@@ -24,8 +24,8 @@ import org.tinspin.index.phtree.PHTreeP;
 import org.tinspin.index.qthypercube.QuadTreeKD;
 import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
-import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.rtree.RTreeEntry;
 import org.tinspin.index.util.PointMapWrapper;
 
 /**
@@ -141,14 +141,25 @@ public interface PointMap<T> extends Index {
         }
 
         /**
-         * Create a kD-Tree
+         * Create a kD-Tree.
          *
          * @param dims Number of dimensions.
          * @param <T>  Value type
-         * @return New PH-Tree
+         * @return New kD-Tree
          */
         static <T> PointMap<T> createKdTree(int dims) {
             return KDTree.create(dims);
+        }
+
+        /**
+         * Create a kD-Tree.
+         *
+         * @param cfg Index configuration.
+         * @param <T> Value type
+         * @return New kD-Tree
+         */
+        static <T> PointMap<T> createKdTree(IndexConfig cfg) {
+            return KDTree.create(cfg);
         }
 
         /**
@@ -244,7 +255,7 @@ public interface PointMap<T> extends Index {
         }
 
         /**
-         * Create an R*Tree. R*Tree can be "turned into" STR-Trees by using {@link RTree#load(Entry[])}.
+         * Create an R*Tree.
          *
          * @param dims Number of dimensions.
          * @param <T>  Value type
@@ -252,6 +263,20 @@ public interface PointMap<T> extends Index {
          */
         static <T> PointMap<T> createRStarTree(int dims) {
             return PointMapWrapper.create(RTree.createRStar(dims));
+        }
+
+        /**
+         * Create an STR-loaded R*Tree.
+         *
+         * @param dims    Number of dimensions.
+         * @param entries All entries of the tree. Entries can be created with
+         *                {@link RTreeEntry#createPoint(double[], Object)}
+         * @return New STR-loaded R*Tree
+         */
+        static <T> PointMap<T> createAndLoadStrRTree(int dims, RTreeEntry<T>[] entries) {
+            RTree<T> tree = RTree.createRStar(dims);
+            tree.load(entries);
+            return PointMapWrapper.create(tree);
         }
     }
 }
