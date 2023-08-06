@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   [#29](https://github.com/tzaeschke/tinspin-indexes/pull/29)
 
 ### Fixed
+- Test candidates should counsistently use integers as values.
+  [#31](https://github.com/tzaeschke/tinspin-indexes/pull/31)
 - Remove erroneous references to GPL 3.0. This library is APL 2.0 only. 
   [#27](https://github.com/tzaeschke/tinspin-indexes/pull/27), [#28](https://github.com/tzaeschke/tinspin-indexes/pull/28)
 

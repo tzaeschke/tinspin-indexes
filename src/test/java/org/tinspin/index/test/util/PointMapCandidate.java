@@ -28,12 +28,12 @@ import static org.tinspin.index.Index.*;
 
 public class PointMapCandidate extends Candidate {
 	
-	private final PointMap<double[]> idx;
+	private final PointMap<Integer> idx;
 	private final int dims;
 	private final int N;
 	private double[] data;
-	private PointIterator<double[]> it;
-	private PointIteratorKnn<double[]> itKnn;
+	private PointIterator<Integer> it;
+	private PointIteratorKnn<Integer> itKnn;
 	private final boolean bulkloadSTR;
 	private final IndexHandle index;
 
@@ -69,7 +69,7 @@ public class PointMapCandidate extends Candidate {
 	public PointMapCandidate(PointMap<?> pi, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
-		idx = (PointMap<double[]>) pi;
+		idx = (PointMap<Integer>) pi;
 		this.index = ts.INDEX;
 		this.bulkloadSTR = IDX.STR == this.index;
 	}
@@ -79,15 +79,15 @@ public class PointMapCandidate extends Candidate {
 	public void load(double[] data, int dims) {
 		this.data = data;
 		if (bulkloadSTR) {
-			RTreeEntry<double[]>[] entries = new RTreeEntry[N];
+			RTreeEntry<Integer>[] entries = new RTreeEntry[N];
 			int pos = 0;
 			for (int i = 0; i < N; i++) {
 				double[] buf = new double[dims];
 				System.arraycopy(data, pos, buf, 0, dims);
 				pos += dims;
-				entries[i] = RTreeEntry.createPoint(buf, buf);
+				entries[i] = RTreeEntry.createPoint(buf, i);
 			}
-			PointMapWrapper<double[]> rt = (PointMapWrapper<double[]>) idx;
+			PointMapWrapper<Integer> rt = (PointMapWrapper<Integer>) idx;
 			rt.load(entries);
 		} else {
 			for (int i = 0; i < N; i++) {
@@ -95,7 +95,7 @@ public class PointMapCandidate extends Candidate {
 				for (int d = 0; d < dims; d++) {
 					buf[d] = data[i*dims+d]; 
 				}
-				idx.insert(buf, buf);
+				idx.insert(buf, i);
 			}
 		}
 	}

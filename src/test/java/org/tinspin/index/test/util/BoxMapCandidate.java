@@ -24,13 +24,12 @@ import static org.tinspin.index.Index.*;
 
 public class BoxMapCandidate extends Candidate {
 	
-	private final BoxMap<Object> idx;
+	private final BoxMap<Integer> idx;
 	private final int dims;
 	private final int N;
 	private double[] data;
-	private static final Object O = new Object();
-	private BoxIterator<Object> query = null;
-	private BoxIteratorKnn<Object> queryKnn = null;
+	private BoxIterator<Integer> query = null;
+	private BoxIteratorKnn<Integer> queryKnn = null;
 	private final boolean bulkloadSTR;
 
 	public static BoxMapCandidate create(TestStats ts) {
@@ -60,7 +59,7 @@ public class BoxMapCandidate extends Candidate {
 	public BoxMapCandidate(BoxMap<?> ri, TestStats ts) {
 		this.N = ts.cfgNEntries;
 		this.dims = ts.cfgNDims;
-		this.idx = (BoxMap<Object>) ri;
+		this.idx = (BoxMap<Integer>) ri;
 		this.bulkloadSTR = ts.INDEX.equals(TestInstances.IDX.STR);
 	}
 	
@@ -69,7 +68,7 @@ public class BoxMapCandidate extends Candidate {
 	public void load(double[] data, int dims) {
 		this.data = data;
 		if (bulkloadSTR) {
-			RTreeEntry<Object>[] entries = new RTreeEntry[N];
+			RTreeEntry<Integer>[] entries = new RTreeEntry[N];
 			int pos = 0;
 			for (int i = 0; i < N; i++) {
 				double[] lo = new double[dims];
@@ -78,9 +77,9 @@ public class BoxMapCandidate extends Candidate {
 				pos += dims;
 				System.arraycopy(data, pos, hi, 0, dims);
 				pos += dims;
-				entries[i] = RTreeEntry.createBox(lo, hi, O);
+				entries[i] = RTreeEntry.createBox(lo, hi, i);
 			}
-			RTree<Object> rt = (RTree<Object>) idx;
+			RTree<Integer> rt = (RTree<Integer>) idx;
 			rt.load(entries);
 		} else {
 			int pos = 0;
@@ -91,7 +90,7 @@ public class BoxMapCandidate extends Candidate {
 				pos += dims;
 				System.arraycopy(data, pos, hi, 0, dims);
 				pos += dims;
-				idx.insert(lo, hi, O);
+				idx.insert(lo, hi, n);
 			}
 		}
 	}
@@ -170,7 +169,7 @@ public class BoxMapCandidate extends Candidate {
 		double ret = 0;
 		int i = 0;
 		while (queryKnn.hasNext() && i < k) {
-			BoxEntryKnn<Object> e = queryKnn.next();
+			BoxEntryKnn<Integer> e = queryKnn.next();
 			ret += e.dist();
 			i++;
 		}
