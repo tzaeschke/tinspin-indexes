@@ -84,7 +84,7 @@ public class PointMultimapCandidate extends Candidate {
 				double[] buf = new double[dims];
 				System.arraycopy(data, pos, buf, 0, dims);
 				pos += dims;
-				entries[i] = new RTreeEntry<>(buf, buf, i);
+				entries[i] = RTreeEntry.createPoint(buf, i);
 			}
 			PointMultimapWrapper<Integer> rt = (PointMultimapWrapper<Integer>) idx;
 			rt.load(entries);

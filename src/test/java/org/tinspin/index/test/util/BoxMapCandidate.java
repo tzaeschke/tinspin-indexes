@@ -78,7 +78,7 @@ public class BoxMapCandidate extends Candidate {
 				pos += dims;
 				System.arraycopy(data, pos, hi, 0, dims);
 				pos += dims;
-				entries[i] = new RTreeEntry<Object>(lo, hi, O);
+				entries[i] = RTreeEntry.createBox(lo, hi, O);
 			}
 			RTree<Object> rt = (RTree<Object>) idx;
 			rt.load(entries);

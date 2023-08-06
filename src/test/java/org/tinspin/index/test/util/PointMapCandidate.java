@@ -85,7 +85,7 @@ public class PointMapCandidate extends Candidate {
 				double[] buf = new double[dims];
 				System.arraycopy(data, pos, buf, 0, dims);
 				pos += dims;
-				entries[i] = new RTreeEntry<double[]>(buf, buf, buf);
+				entries[i] = RTreeEntry.createPoint(buf, buf);
 			}
 			PointMapWrapper<double[]> rt = (PointMapWrapper<double[]>) idx;
 			rt.load(entries);

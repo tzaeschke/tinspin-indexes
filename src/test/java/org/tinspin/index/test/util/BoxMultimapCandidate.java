@@ -77,7 +77,7 @@ public class BoxMultimapCandidate extends Candidate {
 				pos += dims;
 				System.arraycopy(data, pos, hi, 0, dims);
 				pos += dims;
-				entries[i] = new RTreeEntry<>(lo, hi, i);
+				entries[i] = RTreeEntry.createBox(lo, hi, i);
 			}
 			RTree<Integer> rt = (RTree<Integer>) idx;
 			rt.load(entries);
