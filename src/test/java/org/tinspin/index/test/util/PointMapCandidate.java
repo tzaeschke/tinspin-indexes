@@ -19,7 +19,7 @@ import org.tinspin.index.phtree.PHTreeP;
 import org.tinspin.index.qthypercube.QuadTreeKD;
 import org.tinspin.index.qthypercube2.QuadTreeKD2;
 import org.tinspin.index.qtplain.QuadTreeKD0;
-import org.tinspin.index.rtree.Entry;
+import org.tinspin.index.rtree.RTreeEntry;
 import org.tinspin.index.rtree.RTree;
 import org.tinspin.index.test.util.TestInstances.IDX;
 import org.tinspin.index.util.PointMapWrapper;
@@ -79,13 +79,13 @@ public class PointMapCandidate extends Candidate {
 	public void load(double[] data, int dims) {
 		this.data = data;
 		if (bulkloadSTR) {
-			Entry<double[]>[] entries = new Entry[N];
+			RTreeEntry<double[]>[] entries = new RTreeEntry[N];
 			int pos = 0;
 			for (int i = 0; i < N; i++) {
 				double[] buf = new double[dims];
 				System.arraycopy(data, pos, buf, 0, dims);
 				pos += dims;
-				entries[i] = new Entry<double[]>(buf, buf, buf);
+				entries[i] = new RTreeEntry<double[]>(buf, buf, buf);
 			}
 			PointMapWrapper<double[]> rt = (PointMapWrapper<double[]>) idx;
 			rt.load(entries);

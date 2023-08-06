@@ -39,8 +39,8 @@ Indexes can be created via factories in the interfaces, e.g. `PointMap.Factory.c
 **WARNING** *The `Map` implementations are mostly not strict with respect to unique keys. That means they work fine if keys are unique. However, they may not enforce uniqueness (replace entries when the same key is added twice) and instead always add another entry. That means they may effectively act as multimaps.* At the moment, only PH-Tree bases indexes enforce uniqueness and properly overwrite existing keys.
 
 Note:
- - The `RTree` class can be used for **R*Trees** and **STR-Trees** depending on how it is loaded. Adding entries via `insert(...)` will create a normal R*Tree while adding entries via `load()` creates an STR-Tree. **Note:** currently, `load()` is not available in the interfaces. It requires casting the index to `RTree` (for boxes) or the respective wrapper class (for points).
- - **R*Trees** and **STR-Trees** and can be turned into a `PointMap` or `PointMultimap` via mappers, e.g. `PointMapWrapper.create(RTree.createRStar(dims))`
+ - **STR-Trees** are simply R-Trees that are preloaded using the STR algorithm. THis can be done with
+   the factory methods `....Factory.createAndLoadStrRTree(...)`.
  - `PointArray` and `BoxArray` are simple array based implementations. They scale badly with size, their only use is for verifying correctness of other indexes. 
 
 ## Changelog

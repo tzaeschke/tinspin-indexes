@@ -18,7 +18,7 @@
 package org.tinspin.index.util;
 
 import org.tinspin.index.*;
-import org.tinspin.index.rtree.Entry;
+import org.tinspin.index.rtree.RTreeEntry;
 import org.tinspin.index.rtree.RTree;
 
 public class PointMapWrapper<T> implements PointMap<T> {
@@ -164,7 +164,7 @@ public class PointMapWrapper<T> implements PointMap<T> {
 		return ind.getDepth();
 	}
 
-	public void load(Entry<T>[] entries) {
+	public void load(RTreeEntry<T>[] entries) {
 		if (!(ind instanceof RTree)) {
 			throw new UnsupportedOperationException(
 					"Bulkloading is only supported for RTrees");

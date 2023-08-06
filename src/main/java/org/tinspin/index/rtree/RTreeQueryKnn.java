@@ -109,7 +109,7 @@ public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
                 }
 
                 if (node instanceof RTreeNodeLeaf) {
-                    for (Entry<T> entry : node.getEntries()) {
+                    for (RTreeEntry<T> entry : node.getEntries()) {
                         double d = distFn.dist(center, entry);
                         if (filterFn.test(entry, d)) {
                             // Using '<=' allows dealing with infinite distances.
@@ -126,7 +126,7 @@ public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
                         }
                     }
                 } else {
-                    for (Entry<T> o : node.getEntries()) {
+                    for (RTreeEntry<T> o : node.getEntries()) {
                         RTreeNode<T> subnode = (RTreeNode<T>) o;
                         double dist = distFn.dist(center, subnode);
                         if (dist <= maxNodeDist) {

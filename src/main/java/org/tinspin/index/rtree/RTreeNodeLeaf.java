@@ -21,7 +21,7 @@ import java.util.Arrays;
 
 class RTreeNodeLeaf<T> extends RTreeNode<T> {
 
-	private ArrayList<Entry<T>> entries;
+	private ArrayList<RTreeEntry<T>> entries;
 	
 	public RTreeNodeLeaf(int dim) {
 		super(dim);
@@ -29,7 +29,7 @@ class RTreeNodeLeaf<T> extends RTreeNode<T> {
 	}
 
 	@Override
-	public void addEntry(Entry<T> e) {
+	public void addEntry(RTreeEntry<T> e) {
 		entries.add(e);
 		if (entries.size() > 1) {
 			extendMBB(e);
@@ -39,7 +39,7 @@ class RTreeNodeLeaf<T> extends RTreeNode<T> {
 	}
 
 	@Override
-	public ArrayList<Entry<T>> getEntries() {
+	public ArrayList<RTreeEntry<T>> getEntries() {
 		return entries;
 	}
 

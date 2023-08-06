@@ -20,8 +20,8 @@ package org.tinspin.index;
 import org.tinspin.index.array.RectArray;
 import org.tinspin.index.qthypercube.QuadTreeRKD;
 import org.tinspin.index.qtplain.QuadTreeRKD0;
-import org.tinspin.index.rtree.Entry;
 import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.rtree.RTreeEntry;
 
 import java.util.Iterator;
 import java.util.function.Predicate;
@@ -211,7 +211,7 @@ public interface BoxMultimap<T> extends Index {
         }
 
         /**
-         * Create an R*Tree. R*Trees can be "turned into" STR-Trees by using {@link RTree#load(Entry[])}.
+         * Create an R*Tree.
          *
          * @param dims Number of dimensions.
          * @param <T>  Value type
@@ -219,6 +219,20 @@ public interface BoxMultimap<T> extends Index {
          */
         static <T> BoxMultimap<T> createRStarTree(int dims) {
             return RTree.createRStar(dims);
+        }
+
+        /**
+         * Create an STR-loaded R*Tree.
+         *
+         * @param dims    Number of dimensions.
+         * @param entries All entries of the tree. Entries can be created with
+         *                {@link RTreeEntry#createBox(double[], double[], Object)}
+         * @return New STR-loaded R*Tree
+         */
+        static <T> BoxMultimap<T> createAndLoadStrRTree(int dims, RTreeEntry<T>[] entries) {
+            RTree<T> tree = RTree.createRStar(dims);
+            tree.load(entries);
+            return tree;
         }
     }
 }

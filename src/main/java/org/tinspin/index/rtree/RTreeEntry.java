@@ -20,13 +20,32 @@ import java.util.Arrays;
 
 import static org.tinspin.index.Index.*;
 
-public class Entry<T> extends BoxEntry<T> {
+public class RTreeEntry<T> extends BoxEntry<T> {
 
-	public Entry(double[] min, double[] max, T val) {
+	/**
+	 * Create a new entry based on an axis aligned box.
+	 * @param min Box minimum
+	 * @param max Box maximum
+	 * @param value The value associated with the box.
+	 */
+	public static <T> RTreeEntry<T> createBox(double[] min, double[] max, T value) {
+		return new RTreeEntry<>(min, max, value);
+	}
+
+	/**
+	 * Create a new R-Tree entry based on a point coordinate.
+	 * @param point The point.
+	 * @param value The value associated with the point.
+	 */
+	public static <T> RTreeEntry<T> createPoint(double[] point, T value) {
+		return new RTreeEntry<>(point, point, value);
+	}
+
+	RTreeEntry(double[] min, double[] max, T val) {
 		super(min, max, val);
 	}
 
-	double calcOverlap(Entry<T> e) {
+	double calcOverlap(RTreeEntry<T> e) {
 		double area = 1;
 		for (int i = 0; i < min().length; i++) {
 			double d = Math.min(max()[i], e.max()[i]) - Math.max(min()[i], e.min()[i]);
@@ -72,14 +91,14 @@ public class Entry<T> extends BoxEntry<T> {
 		return area;
 	}
 
-	public void setToCover(Entry<T> e1, Entry<T> e2) {
+	public void setToCover(RTreeEntry<T> e1, RTreeEntry<T> e2) {
 		for (int i = 0; i < min().length; i++) {
 			min()[i] = Math.min(e1.min()[i], e2.min()[i]);
 			max()[i] = Math.max(e1.max()[i], e2.max()[i]);
 		}
 	}
 
-	public static double calcVolume(Entry<?> e) {
+	public static double calcVolume(RTreeEntry<?> e) {
 		return calcVolume(e.min(), e.max());
 	}
 
@@ -91,8 +110,8 @@ public class Entry<T> extends BoxEntry<T> {
 		return v;
 	}
 
-	public static void calcBoundingBox(Entry<?>[] entries, int start, int end, 
-			double[] minOut, double[] maxOut) {
+	public static void calcBoundingBox(RTreeEntry<?>[] entries, int start, int end,
+									   double[] minOut, double[] maxOut) {
 		System.arraycopy(entries[start].min(), 0, minOut, 0, minOut.length);
 		System.arraycopy(entries[start].max(), 0, maxOut, 0, maxOut.length);
 		for (int i = start+1; i < end; i++) {
@@ -115,7 +134,7 @@ public class Entry<T> extends BoxEntry<T> {
 		return area;
 	}
 	
-	public static boolean checkOverlap(double[] min, double[] max, Entry<?> e) {
+	public static boolean checkOverlap(double[] min, double[] max, RTreeEntry<?> e) {
 		for (int i = 0; i < min.length; i++) {
 			if (min[i] > e.max()[i] || max[i] < e.min()[i]) {
 				return false;
@@ -143,8 +162,8 @@ public class Entry<T> extends BoxEntry<T> {
 	 * @param maxOut max return
 	 * @return estimated dead space
 	 */
-	public static double calcDeadspace(Entry<?>[] entries, int start, int end, 
-			double[] minOut, double[] maxOut) {
+	public static double calcDeadspace(RTreeEntry<?>[] entries, int start, int end,
+									   double[] minOut, double[] maxOut) {
 		Arrays.fill(minOut, Double.POSITIVE_INFINITY);
 		Arrays.fill(maxOut, Double.NEGATIVE_INFINITY);
 		double volumeSum = 0;
@@ -170,7 +189,7 @@ public class Entry<T> extends BoxEntry<T> {
 		return d;
 	}
 
-	public static double calcCenterDistance(Entry<?> e1, Entry<?> e2) {
+	public static double calcCenterDistance(RTreeEntry<?> e1, RTreeEntry<?> e2) {
 		double[] min1 = e1.min();
 		double[] max1 = e1.max();
 		double[] min2 = e2.min();
@@ -192,7 +211,7 @@ public class Entry<T> extends BoxEntry<T> {
 		Arrays.toString(len) + ";v=" + value();
 	}
 
-	protected void set(Entry<T> e) {
+	protected void set(RTreeEntry<T> e) {
 		super.set(e.min(), e.max(), e.value());
 	}
 }

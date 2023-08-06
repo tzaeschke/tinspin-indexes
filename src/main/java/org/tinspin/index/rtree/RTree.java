@@ -105,7 +105,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 	
 	public void insert(double[] point, T value) {
-		insert(new Entry<>(point, point, value));
+		insert(new RTreeEntry<>(point, point, value));
 	}
 
 	/**
@@ -116,19 +116,19 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	 */
 	@Override
 	public void insert(double[] keyMin, double[] keyMax, T value) {
-		insert(new Entry<>(keyMin, keyMax, value));
+		insert(new RTreeEntry<>(keyMin, keyMax, value));
 	}
 	
 	/**
 	 * Insert an entry.
 	 * @param e the entry
 	 */
-	public void insert(Entry<T> e) {
+	public void insert(RTreeEntry<T> e) {
 		size++;
 		insertAtDepth(e, 0);
 	}
 	
-	private void insertAtDepth(Entry<T> e, int desiredInsertionLevel) {
+	private void insertAtDepth(RTreeEntry<T> e, int desiredInsertionLevel) {
 		boolean[] blockedLevels = new boolean[depth];
 		insert(e, blockedLevels, desiredInsertionLevel);
 	}
@@ -139,7 +139,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	 * The level is usually '0' (for data points) but can be higher for
 	 * reinsertion of subtrees.
 	 */
-	private void insert(Entry<T> e, boolean[] blockedLevels, int desiredInsertionLevel) {
+	private void insert(RTreeEntry<T> e, boolean[] blockedLevels, int desiredInsertionLevel) {
 		//I1
 		RTreeNode<T> node = logic.chooseSubTree(root, e, desiredInsertionLevel, depth);
 		//I2
@@ -169,11 +169,11 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 	
 	private RTreeNode<T> overflowTreatment(RTreeNode<T> node,
-			Entry<T> e, boolean[] blockedLevels, int desiredInsertionLevel) {
+										   RTreeEntry<T> e, boolean[] blockedLevels, int desiredInsertionLevel) {
 		//OT1
 		if (node != root && !blockedLevels[desiredInsertionLevel]) {
 			blockedLevels[desiredInsertionLevel] = true;
-			Entry<T>[] toReinsert = logic.reInsert(node, e);
+			RTreeEntry<T>[] toReinsert = logic.reInsert(node, e);
 			for (int i = 0; i < toReinsert.length; i++) {
 				insert(toReinsert[i], blockedLevels, desiredInsertionLevel);
 			}
@@ -183,7 +183,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		}
 	}
 
-	public void load(Entry<T>[] entries) {
+	public void load(RTreeEntry<T>[] entries) {
 		STRLoader<T> bulkLoader = new STRLoader<>();
 		bulkLoader.load(entries);
 		size = bulkLoader.getSize();
@@ -206,7 +206,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	@Override
 	public T remove(double[] min, double[] max) {
 		MutableRef<T> ref = new MutableRef<>();
-		Predicate<Entry<T>> pred = e -> {
+		Predicate<RTreeEntry<T>> pred = e -> {
 			ref.set(e.checkExactMatch(min, max) ? e.value() : null);
 			return ref.get() != null;
 		};
@@ -235,7 +235,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	 */
 	@Override
 	public boolean removeIf(double[] min, double[] max, Predicate<BoxEntry<T>> condition) {
-		Predicate<Entry<T>> pred = e -> e.checkExactMatch(min, max) && condition.test(e);
+		Predicate<RTreeEntry<T>> pred = e -> e.checkExactMatch(min, max) && condition.test(e);
 		return findNodes(min, max, root, node -> deleteFromNode(node, pred));
 	}
 
@@ -287,7 +287,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	private interface Matcher<T> {
-		boolean test(Entry<T> entry, RTreeNode<T> node, int posInNode);
+		boolean test(RTreeEntry<T> entry, RTreeNode<T> node, int posInNode);
 	}
 
 	private interface CheckNodeAbort<T> {
@@ -316,9 +316,9 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 					}
 				}
 			} else {
-				ArrayList<Entry<T>> children = node.getEntries();
+				ArrayList<RTreeEntry<T>> children = node.getEntries();
 				for (int i = 0; i < children.size(); i++) {
-					Entry<T> e = children.get(i);
+					RTreeEntry<T> e = children.get(i);
 					if (e.checkExactMatch(min, max) && matcher.test(e, node, i)) {
 						return e.value();
 					}
@@ -341,7 +341,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		node.removeEntry(pos);
 		int level = 0;
 		while (node != root && node.isUnderfull()) {
-			ArrayList<Entry<T>> entries = node.getEntries();
+			ArrayList<RTreeEntry<T>> entries = node.getEntries();
 			RTreeNodeDir<T> parent = node.getParent();
 			parent.removeChildByIdentity(node);
 			node = parent;
@@ -374,7 +374,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		return false;
 	}
 
-	boolean deleteFromNode(RTreeNode<T> node, Predicate<Entry<T>> pred) {
+	boolean deleteFromNode(RTreeNode<T> node, Predicate<RTreeEntry<T>> pred) {
 		//this also adjusts parent MBBs
 		//Question: Should we adjust parent MBBs later if we have to remove the sub-node?
 		//-> But later adjustment would skew with reinsertion, because the
@@ -393,7 +393,7 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 
 		int level = 0;
 		while (node != root && node.isUnderfull()) {
-			ArrayList<Entry<T>> entries = node.getEntries();
+			ArrayList<RTreeEntry<T>> entries = node.getEntries();
 			RTreeNodeDir<T> parent = node.getParent();
 			parent.removeChildByIdentity(node);
 			node = parent;
@@ -510,9 +510,9 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		sb.appendLn(pre + "L=" + level + " " + node.toString() +
 				";P=" + System.identityHashCode(node.getParent()));
 		
-		ArrayList<Entry<T>> entries = node.getEntries();
+		ArrayList<RTreeEntry<T>> entries = node.getEntries();
 		for (int i = 0; i < entries.size(); i++) {
-			Entry<T> e = entries.get(i);
+			RTreeEntry<T> e = entries.get(i);
 			if (e instanceof RTreeNode) {
 				toStringTree(sb, (RTreeNode<T>) e, level-1);
 			} else {
@@ -558,9 +558,9 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 			throw new IllegalStateException();
 		}
 		
-		ArrayList<Entry<T>> entries = node.getEntries();
+		ArrayList<RTreeEntry<T>> entries = node.getEntries();
 		for (int i = 0; i < entries.size(); i++) {
-			Entry<T> e = entries.get(i);
+			RTreeEntry<T> e = entries.get(i);
 			if (!node.checkInclusion(e.min(), e.max())) {
 				throw new IllegalStateException();
 			}

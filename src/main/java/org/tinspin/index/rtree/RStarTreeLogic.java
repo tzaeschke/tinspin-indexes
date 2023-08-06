@@ -29,8 +29,8 @@ public class RStarTreeLogic implements RTreeLogic {
 	 * Choose subtree as described in the paper.
 	 */
 	@Override
-	public <T> RTreeNode<T> chooseSubTree(RTreeNode<T> root, 
-			Entry<T> e, int desiredInsertionLevel, int nLevels) {
+	public <T> RTreeNode<T> chooseSubTree(RTreeNode<T> root,
+										  RTreeEntry<T> e, int desiredInsertionLevel, int nLevels) {
 		//CS1
 		RTreeNode<T> node = root;
 		int level = nLevels-1;
@@ -70,9 +70,9 @@ public class RStarTreeLogic implements RTreeLogic {
 	}
 	
 	private static class EDPair<T> implements Comparable<EDPair<T>>{
-		Entry<T> entry;
+		RTreeEntry<T> entry;
 		double d;
-		public EDPair(double d, Entry<T> entry) {
+		public EDPair(double d, RTreeEntry<T> entry) {
 			this.d = d;
 			this.entry = entry;
 		}
@@ -84,7 +84,7 @@ public class RStarTreeLogic implements RTreeLogic {
 	
 	@SuppressWarnings("unchecked")
 	private <T> RTreeNode<T> chooseNodeWithNearlyMinimumOverlapCost(
-			RTreeNodeDir<T> dir, Entry<T> e) {
+			RTreeNodeDir<T> dir, RTreeEntry<T> e) {
 		final int P = Math.min(32, dir.getChildren().size());
 		
 		//rank by area enlargement
@@ -105,7 +105,7 @@ public class RStarTreeLogic implements RTreeLogic {
 			}
 		}
 		int dims = dir.min().length;
-		Entry<T> enlarged = new Entry<>(new double[dims], new double[dims], null);
+		RTreeEntry<T> enlarged = new RTreeEntry<>(new double[dims], new double[dims], null);
 		double bestOverLap = Double.MAX_VALUE;
 		RTreeNode<T> bestNode = null;
 		for (int i = 0; i < P; i++) {
@@ -127,11 +127,11 @@ public class RStarTreeLogic implements RTreeLogic {
 		return bestNode;
 	}
 
-	private <T> double calcAreaEnlargementSize(RTreeNode<T> node, Entry<T> e) {
+	private <T> double calcAreaEnlargementSize(RTreeNode<T> node, RTreeEntry<T> e) {
 		return node.calcAreaEnlarged(e) - node.calcArea();
 	}
 
-	private <T> double calcOverlapSize(Entry<T> node, Entry<T> toSkip, ArrayList<RTreeNode<T>> children) {
+	private <T> double calcOverlapSize(RTreeEntry<T> node, RTreeEntry<T> toSkip, ArrayList<RTreeNode<T>> children) {
 		double o = 0;
 		for (int i = 0; i < children.size(); i++) {
 			if (children.get(i) != toSkip) {
@@ -141,7 +141,7 @@ public class RStarTreeLogic implements RTreeLogic {
 		return o;
 	}
 
-	private <T> RTreeNode<T> chooseNodeWithLeastAreaEnlargement(RTreeNodeDir<T> dir, Entry<T> e) {
+	private <T> RTreeNode<T> chooseNodeWithLeastAreaEnlargement(RTreeNodeDir<T> dir, RTreeEntry<T> e) {
 		ArrayList<RTreeNode<T>> children = dir.getChildren();
 		double bestAreaEnl = Double.MAX_VALUE;
 		RTreeNode<T> bestNode = null;
@@ -174,10 +174,10 @@ public class RStarTreeLogic implements RTreeLogic {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> RTreeNode<T> split(RTreeNode<T> node, Entry<T> e) {
+	public <T> RTreeNode<T> split(RTreeNode<T> node, RTreeEntry<T> e) {
 		//S1 determine axis
 		final int M = getM(node);
-		Entry<T>[] children = node.getEntries().toArray(new Entry[M+1]);
+		RTreeEntry<T>[] children = node.getEntries().toArray(new RTreeEntry[M+1]);
 		children[M] = e;
 		
 		int splitAxis = chooseSplitAxis(children);
@@ -188,7 +188,7 @@ public class RStarTreeLogic implements RTreeLogic {
 	}
 	
 	@SuppressWarnings("unused")
-	private <T> int chooseSplitAxis(Entry<T>[] children) {
+	private <T> int chooseSplitAxis(RTreeEntry<T>[] children) {
 		int dims = children[0].min().length;
 		double[] bufMin = new double[dims];
 		double[] bufMax = new double[dims];
@@ -232,10 +232,10 @@ public class RStarTreeLogic implements RTreeLogic {
 		return bestDim;
 	} 
 
-	private <T> double calcMargin(Entry<T>[] entries, int start, int end, 
-			double[] min, double[] max) {
-		Entry.calcBoundingBox(entries, start, end, min, max);
-		return Entry.calcMargin(min, max);
+	private <T> double calcMargin(RTreeEntry<T>[] entries, int start, int end,
+								  double[] min, double[] max) {
+		RTreeEntry.calcBoundingBox(entries, start, end, min, max);
+		return RTreeEntry.calcMargin(min, max);
 	}
 
 	/**
@@ -245,7 +245,7 @@ public class RStarTreeLogic implements RTreeLogic {
 	 * @return the split index
 	 */
 	private <T> RTreeNode<T> chooseSplitIndex(
-			RTreeNode<T> nodeToSplit, Entry<T>[] children, int splitAxis) {
+			RTreeNode<T> nodeToSplit, RTreeEntry<T>[] children, int splitAxis) {
 		int dims = children[0].min().length;
 		double[] bufMin1 = new double[dims];
 		double[] bufMax1 = new double[dims];
@@ -275,9 +275,9 @@ public class RStarTreeLogic implements RTreeLogic {
 				//TODO This is done as in the reference implementation.
 				//     To improve performance, it may be worth to calculate deadSpace separately,
 				//     it is only needed in case of a draw.
-				double ds1 = Entry.calcDeadspace(children, 0, k, bufMin1, bufMax1);
-				double ds2 = Entry.calcDeadspace(children, k, children.length, bufMin2, bufMax2);
-				double overlap = Entry.calcOverlap(bufMin1, bufMax1, bufMin2, bufMax2);
+				double ds1 = RTreeEntry.calcDeadspace(children, 0, k, bufMin1, bufMax1);
+				double ds2 = RTreeEntry.calcDeadspace(children, k, children.length, bufMin2, bufMax2);
+				double overlap = RTreeEntry.calcOverlap(bufMin1, bufMax1, bufMin2, bufMax2);
 				if (overlap < bestOverlap || (overlap == bestOverlap && ds1+ds2 < bestDeadSpace)) {
 					bestOverlap = overlap;
 					bestDeadSpace = ds1 + ds2;
@@ -315,17 +315,17 @@ public class RStarTreeLogic implements RTreeLogic {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Entry<T>[] reInsert(RTreeNode<T> node, Entry<T> e) {
+	public <T> RTreeEntry<T>[] reInsert(RTreeNode<T> node, RTreeEntry<T> e) {
 		//RI1 calculate center distances from node center
 		final int M = getM(node);
 		EDPair<T>[] children = new EDPair[M+1];
-		ArrayList<Entry<T>> currentChildren =  node.getEntries();
+		ArrayList<RTreeEntry<T>> currentChildren =  node.getEntries();
 		for (int i = 0; i < M; i++) {
-			Entry<T> c = currentChildren.get(i);
-			double cd = Entry.calcCenterDistance(node, c);
+			RTreeEntry<T> c = currentChildren.get(i);
+			double cd = RTreeEntry.calcCenterDistance(node, c);
 			children[i] = new EDPair<>(cd, c);
 		}
-		double cd = Entry.calcCenterDistance(node, e);
+		double cd = RTreeEntry.calcCenterDistance(node, e);
 		children[M] = new EDPair<>(cd, e);
 		
 		//RI2 sort according to distance
@@ -344,20 +344,20 @@ public class RStarTreeLogic implements RTreeLogic {
 		
 		//RI4 reinsert entries
 		//use 'close reinsert', starting with best values, as suggested in paper
-		Entry<T>[] toReinsert = new Entry[p];
+		RTreeEntry<T>[] toReinsert = new RTreeEntry[p];
 		for (int i = 0; i < p; i++) {
 			toReinsert[i] = children[i+nToKeep].entry;
 		}
 		return toReinsert; 
 	}
 
-	private class SortByAxisAsc implements Comparator<Entry<?>> {
+	private class SortByAxisAsc implements Comparator<RTreeEntry<?>> {
 		int axis = -1;
 		public void setAxis(int axis) {
 			this.axis = axis;
 		}
 		@Override
-		public int compare(Entry<?> o1, Entry<?> o2) {
+		public int compare(RTreeEntry<?> o1, RTreeEntry<?> o2) {
 			double dMin = o1.min()[axis] - o2.min()[axis];
 			if (dMin < 0) {
 				return -1; 
@@ -369,13 +369,13 @@ public class RStarTreeLogic implements RTreeLogic {
 		}
 	}
 	
-	private class SortByAxisDes implements Comparator<Entry<?>> {
+	private class SortByAxisDes implements Comparator<RTreeEntry<?>> {
 		int axis = -1;
 		public void setAxis(int axis) {
 			this.axis = axis;
 		}
 		@Override
-		public int compare(Entry<?> o2, Entry<?> o1) {
+		public int compare(RTreeEntry<?> o2, RTreeEntry<?> o1) {
 			double dMin = o1.min()[axis] - o2.min()[axis];
 			if (dMin < 0) {
 				return -1; 
