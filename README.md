@@ -36,7 +36,7 @@ The indexes fall into four categories, depending on whether they use points or (
 
 Indexes can be created via factories in the interfaces, e.g. `PointMap.Factory.createKdTree(...)`.
 
-**WARNING** *The `Map` implementations are mostly not strict with respect to unique keys. That means they work fine if keys are unique. However, they may not enforce uniqueness (replace entries when the same key is added twice) and instead always add another entry. That means they may effectively act as multimaps.* At the moment, only PH-Tree bases indexes enforce uniqueness and properly overwrite existing keys.
+**WARNING** *The `Map` implementations are mostly not strict with respect to unique keys. That means they work fine if keys are unique. However, they may not enforce uniqueness (replace entries when the same key is added twice) and instead always add another entry. That means they may effectively act as multimaps.* At the moment, only PH-Tree based indexes enforce uniqueness and properly overwrite existing keys.
 
 Note:
  - **STR-Trees** are simply R-Trees that are preloaded using the STR algorithm. THis can be done with
