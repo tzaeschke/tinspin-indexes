@@ -24,9 +24,11 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 
 	/**
 	 * Create a new entry based on an axis aligned box.
-	 * @param min Box minimum
-	 * @param max Box maximum
+	 * @param min   Box minimum
+	 * @param max   Box maximum
 	 * @param value The value associated with the box.
+	 * @param <T>   Value type
+	 * @return New BoxEntry
 	 */
 	public static <T> RTreeEntry<T> createBox(double[] min, double[] max, T value) {
 		return new RTreeEntry<>(min, max, value);
@@ -36,6 +38,8 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 	 * Create a new R-Tree entry based on a point coordinate.
 	 * @param point The point.
 	 * @param value The value associated with the point.
+	 * @param <T>   Value type
+	 * @return New PointEntry
 	 */
 	public static <T> RTreeEntry<T> createPoint(double[] point, T value) {
 		return new RTreeEntry<>(point, point, value);
