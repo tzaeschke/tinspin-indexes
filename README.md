@@ -23,7 +23,7 @@ TinSpin indexes are also available via maven:
 <dependency>
     <groupId>org.tinspin</groupId>
     <artifactId>tinspin-indexes</artifactId>
-    <version>2.0.1</version>
+    <version>2.1.0</version>
 </dependency>
 ```
   
@@ -46,6 +46,7 @@ Note:
 ## Changelog
 
 See [CHANGELOG](CHANGELOG.md) for details.
+ - 2.1.0 **API:** Added factory methods for all indexes.
  - 2.0.1 Fixed issue with dependencies in generated pom.
  - **2.0.0** **Major API rewrite.**
  - 1.8.0 Full multimap support; many fixes; rewrote all kNN searches; Java 11.  

@@ -6,10 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+- Nothing yet
+
+## [2.1.0]
+
 ### Added
-- Added missing factory methods for STR loaded R-Trees and kD-Tree(IndexConfig)
+- **API change:** Added missing factory methods for STR loaded R-Trees and kD-Tree(IndexConfig)
   [#30](https://github.com/tzaeschke/tinspin-indexes/pull/30)
-- Added factory classes for indexes, e.g. `PointMap.Factory.createKdTree()`.
+- **API change:** Added factory classes for indexes, e.g. `PointMap.Factory.createKdTree()`.
   [#29](https://github.com/tzaeschke/tinspin-indexes/pull/29)
 
 ### Fixed
