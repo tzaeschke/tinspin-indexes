@@ -227,6 +227,7 @@ public interface BoxMultimap<T> extends Index {
          * @param dims    Number of dimensions.
          * @param entries All entries of the tree. Entries can be created with
          *                {@link RTreeEntry#createBox(double[], double[], Object)}
+         * @param <T>     Value type
          * @return New STR-loaded R*Tree
          */
         static <T> BoxMultimap<T> createAndLoadStrRTree(int dims, RTreeEntry<T>[] entries) {

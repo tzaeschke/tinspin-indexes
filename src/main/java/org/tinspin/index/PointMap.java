@@ -271,6 +271,7 @@ public interface PointMap<T> extends Index {
          * @param dims    Number of dimensions.
          * @param entries All entries of the tree. Entries can be created with
          *                {@link RTreeEntry#createPoint(double[], Object)}
+         * @param <T>     Value type
          * @return New STR-loaded R*Tree
          */
         static <T> PointMap<T> createAndLoadStrRTree(int dims, RTreeEntry<T>[] entries) {
