@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Nothing yet
 
-## [2.1.0]
+## [2.1.0] - 2023-08-12
 
 ### Added
 - **API change:** Added missing factory methods for STR loaded R-Trees and kD-Tree(IndexConfig)
@@ -141,7 +141,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added CHANGELOG - [2015-10-11]
 - Pushed to v1.3.3-SNAPSHOT - [2015-10-11]
 
-[Unreleased]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.0.1...HEAD
+[Unreleased]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.1.0...HEAD
+[2.1.0]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.0.1...tinspin-indexes-2.1.0
 [2.0.1]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.0.0...tinspin-indexes-2.0.1
 [2.0.0]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.8.0...tinspin-indexes-2.0.0
 [1.8.0]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-1.7.1...tinspin-indexes-1.8.0
