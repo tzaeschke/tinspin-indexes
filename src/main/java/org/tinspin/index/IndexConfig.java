@@ -19,12 +19,16 @@ package org.tinspin.index;
 
 public class IndexConfig {
     private int dimensions = 3;
+	private boolean defensiveKeyCopy = true;
 
-	boolean defensiveKeyCopy = true;
-
-	IndexConfig(int dimensions) {
+	protected IndexConfig(int dimensions) {
 		this.dimensions = dimensions;
 	}
+
+	public IndexConfig create(int dimensions) {
+		return new IndexConfig(dimensions);
+	}
+
 
 	/**
 	 * Number of dimensions.
