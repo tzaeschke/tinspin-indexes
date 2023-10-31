@@ -33,6 +33,7 @@ public class IndexConfig {
 	/**
 	 * Number of dimensions.
 	 * @param dimensions Number of dimensions of keys.
+	 * @return this
 	 */
 	public IndexConfig setDimensions(int dimensions) {
 		this.dimensions = dimensions;
@@ -47,6 +48,7 @@ public class IndexConfig {
 	 * The latter obviously requires more memory. Default is 'true'.
 	 * <p>
 	 * This setting works only for kd-trees.
+	 * @return this
 	 */
 	public IndexConfig setDefensiveKeyCopy(boolean defensiveKeyCopy) {
 		this.defensiveKeyCopy = defensiveKeyCopy;
