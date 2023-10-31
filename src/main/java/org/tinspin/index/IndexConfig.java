@@ -25,7 +25,7 @@ public class IndexConfig {
 		this.dimensions = dimensions;
 	}
 
-	public IndexConfig create(int dimensions) {
+	public static IndexConfig create(int dimensions) {
 		return new IndexConfig(dimensions);
 	}
 
@@ -34,21 +34,23 @@ public class IndexConfig {
 	 * Number of dimensions.
 	 * @param dimensions Number of dimensions of keys.
 	 */
-	public void setDimensions(int dimensions) {
+	public IndexConfig setDimensions(int dimensions) {
 		this.dimensions = dimensions;
+		return this;
 	}
 
 	/**
 	 * @param defensiveKeyCopy
-	 * Defensive keys copying. If `false`, the kd-tree will store the passed in
+	 * Defensive keys copying. If 'false', the kd-tree will store the passed in
 	 * double[] keys internally (this reduces required memory).
-	 * If `true`, the keys are copied in order to avoid accidental modification.
-	 * The latter obviously requires more memory.
+	 * If 'true', the keys are copied in order to avoid accidental modification.
+	 * The latter obviously requires more memory. Default is 'true'.
 	 * <p>
 	 * This setting works only for kd-trees.
 	 */
-	public void setDefensiveKeyCopy(boolean defensiveKeyCopy) {
+	public IndexConfig setDefensiveKeyCopy(boolean defensiveKeyCopy) {
 		this.defensiveKeyCopy = defensiveKeyCopy;
+		return this;
 	}
 
 

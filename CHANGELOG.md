@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Nothing yet
 
+## [2.1.2] - 2023-10-31
+
+### Fixed
+- Fixed `create()` method for `IndexConfig` not being static [#33](https://github.com/tzaeschke/tinspin-indexes/issue/35)
+
 ## [2.1.1] - 2023-10-14
 
 ### Fixed
@@ -146,7 +151,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added CHANGELOG - [2015-10-11]
 - Pushed to v1.3.3-SNAPSHOT - [2015-10-11]
 
-[Unreleased]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.1.1...HEAD
+[Unreleased]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.1.2...HEAD
+[2.1.2]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.1.1...tinspin-indexes-2.1.2
 [2.1.1]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.1.0...tinspin-indexes-2.1.1
 [2.1.0]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.0.1...tinspin-indexes-2.1.0
 [2.0.1]: https://github.com/tzaeschke/tinspin-indexes/compare/tinspin-indexes-2.0.0...tinspin-indexes-2.0.1
