@@ -127,6 +127,7 @@ public class QNode<T> {
 			if (pos < --nValues) {
 				System.arraycopy(getValues(), pos+1, getValues(), pos, nValues-pos);
 			}
+			getValues()[nValues] = null;
 		} else {
 			nValues--;
 			subs[pos] = null;

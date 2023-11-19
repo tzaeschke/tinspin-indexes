@@ -238,6 +238,9 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 			for (int i = 0; i < phc.length/2; i++) {
 				double[] min = phc[i*2];
 				double[] max = phc[i*2+1];
+				if (min == null) {
+					continue; // Entry has been removed
+				}
 				double dist = distREdge(center, min, max);
 				if (ret.size() < k) {
 					ret.add(new BoxEntryKnn<>(min, max, values[i].value(), dist));

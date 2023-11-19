@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.tinspin.index.BoxMap;
+import org.tinspin.index.Index;
 
 import java.util.*;
 
@@ -263,6 +264,66 @@ public class BoxMapTest extends AbstractWrapperTest {
         }
 
         assertEquals(0, tree.size());
+    }
+
+    @Test
+    public void testIssueKnnRemove() {
+        if (candidate == IDX.COVER) {
+            return;
+        }
+        Random r = new Random(0);
+        int dim = 3;
+        int n = 1000;
+        int nDelete = n/2;
+        ArrayList<Entry> data = createInt(0, n, 3);
+        BoxMap<Entry> tree = createTree(data.size(), dim);
+
+        Collections.shuffle(data, r);
+
+        for (Entry e : data) {
+            tree.insert(e.p1, e.p2, e);
+        }
+
+        // remove 1st half
+        for (int i = 0; i < nDelete; ++i) {
+            Entry e = data.get(i);
+            assertNotNull(tree.remove(e.p1, e.p2));
+            assertNull(tree.remove(e.p1, e.p2));
+            assertFalse(containsExact(tree, e.p1, e.p2, e.id));
+            assertFalse(tree.contains(e.p1, e.p2));
+        }
+
+        // check contains() & kNN
+        for (int i = 0; i < nDelete; ++i) {
+            Entry e = data.get(i);
+            assertFalse(containsExact(tree, e.p1, e.p2, e.id));
+            assertFalse(tree.contains(e.p1, e.p2));
+            Index.BoxEntryKnn<Entry> eKnn = tree.query1nn(e.p1);
+            assertTrue(tree.contains(eKnn.min(), eKnn.max()));
+        }
+
+        // Issue #37: Entries remained referenced in arrays after removal.
+        //   Moreover, the entry count was ignored by kNN, so it looked at the whole
+        //   array instead of just the valid entries.
+        Index.BoxIteratorKnn<Entry> itKnn = tree.queryKnn(data.get(0).p1, n);
+        Set<Integer> kNNResult = new HashSet<>();
+        while (itKnn.hasNext()) {
+            Index.BoxEntryKnn<Entry> eKnn = itKnn.next();
+            kNNResult.add(eKnn.value().id);
+        }
+        for (int i = 0; i < n; i++) {
+            Entry e = data.get(i);
+            if (i < nDelete) {
+                assertFalse(containsExact(tree, e.p1, e.p2, e.id));
+                assertFalse(tree.contains(e.p1, e.p2));
+                assertFalse(kNNResult.contains(e.id));
+            } else {
+                assertTrue(containsExact(tree, e.p1, e.p2, e.id));
+                assertTrue(tree.contains(e.p1, e.p2));
+                assertTrue(kNNResult.contains(e.id));
+            }
+        }
+        assertEquals(n - nDelete, kNNResult.size());
     }
 
     private <T> BoxMap<T> createTree(int size, int dims) {

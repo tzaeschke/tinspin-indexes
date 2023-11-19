@@ -20,6 +20,7 @@ package org.tinspin.index.test;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.tinspin.index.Index;
 import org.tinspin.index.PointMultimap;
 import org.tinspin.index.test.util.TestInstances;
 
@@ -307,6 +308,66 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 
         assertEquals(0, tree.size());
+    }
+
+    @Test
+    public void testIssueKnnRemove() {
+        if (candidate == IDX.COVER) {
+            return;
+        }
+        Random r = new Random(0);
+        int dim = 3;
+        int n = 1000;
+        int nDelete = n/2;
+        ArrayList<Entry> data = createInt(0, n, 3);
+        PointMultimap<Entry> tree = createTree(data.size(), dim);
+
+        Collections.shuffle(data, r);
+
+        for (Entry e : data) {
+            tree.insert(e.p, e);
+        }
+
+        // remove 1st half
+        for (int i = 0; i < nDelete; ++i) {
+            Entry e = data.get(i);
+            assertTrue(tree.remove(e.p, e));
+            assertFalse(tree.remove(e.p, e));
+            assertFalse(containsExact(tree, e.p, e.id));
+            assertFalse(tree.contains(e.p, e));
+        }
+
+        // check contains() & kNN
+        for (int i = 0; i < nDelete; ++i) {
+            Entry e = data.get(i);
+            assertFalse(containsExact(tree, e.p, e.id));
+            assertFalse(tree.contains(e.p, e));
+            Index.PointEntryKnn<Entry> eKnn = tree.query1nn(e.p);
+            assertTrue(tree.contains(eKnn.point(), eKnn.value()));
+        }
+
+        // Issue #37: Entries remained referenced in arrays after removal.
+        //   Moreover, the entry count was ignored by kNN, so it looked at the whole
+        //   array instead of just the valid entries.
+        Index.PointIteratorKnn<Entry> itKnn = tree.queryKnn(data.get(0).p, n);
+        Set<Integer> kNNResult = new HashSet<>();
+        while (itKnn.hasNext()) {
+            Index.PointEntryKnn<Entry> eKnn = itKnn.next();
+            kNNResult.add(eKnn.value().id);
+        }
+        for (int i = 0; i < n; i++) {
+            Entry e = data.get(i);
+            if (i < nDelete) {
+                assertFalse(containsExact(tree, e.p, e.id));
+                assertFalse(tree.contains(e.p, e));
+                assertFalse(kNNResult.contains(e.id));
+            } else {
+                assertTrue(containsExact(tree, e.p, e.id));
+                assertTrue(tree.contains(e.p, e));
+                assertTrue(kNNResult.contains(e.id));
+            }
+        }
+        assertEquals(n - nDelete, kNNResult.size());
     }
 
     private <T> PointMultimap<T> createTree(int size, int dims) {
