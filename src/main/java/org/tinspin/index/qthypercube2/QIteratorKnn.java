@@ -112,8 +112,8 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
                 }
 
                 if (node.isLeaf()) {
-                    for (PointEntry<T> entry : node.getValues()) {
-                        processEntry(entry);
+                    for (int i = 0; i < node.getValueCount(); i++) {
+                        processEntry(node.getValues()[i]);
                     }
                 } else {
                     for (Object o : node.getEntries()) {

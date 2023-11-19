@@ -127,6 +127,7 @@ public class QNode<T> {
 			if (pos < --nValues) {
 				System.arraycopy(getValues(), pos+1, getValues(), pos, nValues-pos);
 			}
+			getValues()[nValues] = null;
 		} else {
 			nValues--;
 			subs[pos] = null;
@@ -362,6 +363,9 @@ public class QNode<T> {
 			int pos = calcSubPosition(key);
 			Object sub = subs[pos];
 			if (sub instanceof QNode) {
+				if (values != null) {
+					throw new IllegalStateException(); // TODO
+				}
 				return ((QNode<T>)sub).getExact(key, pred);
 			} else  if (sub != null) {
 				PointEntry<T> e = (PointEntry<T>) sub;
