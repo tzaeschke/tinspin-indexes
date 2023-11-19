@@ -23,7 +23,7 @@ TinSpin indexes are also available via maven:
 <dependency>
     <groupId>org.tinspin</groupId>
     <artifactId>tinspin-indexes</artifactId>
-    <version>2.1.2</version>
+    <version>2.1.3</version>
 </dependency>
 ```
   
@@ -46,6 +46,7 @@ Note:
 ## Changelog
 
 See [CHANGELOG](CHANGELOG.md) for details.
+ - 2.1.3 Fixed `remove()` not cleaning up properly and kNN returning deleted entries.
  - 2.1.2 Made `create()` method `static` for `IndexConfig`.
  - 2.1.1 Added `create()` method for `IndexConfig`.
  - 2.1.0 **API:** Added factory methods for all indexes.
