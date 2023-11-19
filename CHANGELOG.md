@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [2.1.3] - 2023-11-19
 
+### Fixed
 - Fixed QUadtreeKD2 kNN finding previously deleted entries [#37](https://github.com/tzaeschke/tinspin-indexes/issue/37)
 
 ## [2.1.2] - 2023-10-31
