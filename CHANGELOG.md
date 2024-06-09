@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [2.1.4 - Unreleased]
 
-- Fixed tree corruption after remove() in QT2. 
+- Fixed tree corruption after remove() in QT2. [#40](https://github.com/tzaeschke/tinspin-indexes/issue/40)
 
 ## [2.1.3] - 2023-11-19
 
