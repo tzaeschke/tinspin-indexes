@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [2.1.4 - Unreleased]
 
 - Fixed tree corruption after remove() in QT2. [#40](https://github.com/tzaeschke/tinspin-indexes/issue/40)
+  - Fixed tree consistency (single-entry leaf after remove)
+  - Fixed tree consistency (nValues) -> verify
+  - Fixed bug in qt2.contains()
+TODO
+- CLean up calls to checkMerge() -> call leaf-merge only in leaf!
+- What is going on with root expansion? Why does it not fail in tests?
+- check qt0
 
 ## [2.1.3] - 2023-11-19
 

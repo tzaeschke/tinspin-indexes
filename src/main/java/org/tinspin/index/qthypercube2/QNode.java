@@ -211,7 +211,9 @@ public class QNode<T> {
 			Object o = subs[pos];
 			if (o instanceof QNode) {
 				PointEntry<T> removed = ((QNode<T>)o).remove(this, key, maxNodeSize, pred);
-				checkAndMergeLeafNodesInParent(parent, maxNodeSize);
+				if (removed != null) {
+					checkAndMergeLeafNodesInParent(parent, maxNodeSize);
+				}
 				return removed;
 			} else if (o instanceof PointEntry) {
 				PointEntry<T> e = (PointEntry<T>) o;
@@ -284,7 +286,7 @@ public class QNode<T> {
 				}
 				return qe;
 			}
-			throw new IllegalStateException();
+			return null;
 		}
 		
 		for (int i = 0; i < nValues; i++) {
@@ -313,9 +315,25 @@ public class QNode<T> {
 		}
 	}
 
+	private boolean checkMergeSingleLeaf(QNode<T> parent) {
+		// Merge single value into parent if  possible
+		if (!isLeaf() || parent == null || nValues > 1) {
+			return false;
+		}
+		for (int i = 0; i < parent.subs.length; i++) {
+			if (parent.subs[i] == this) {
+				parent.subs[i] = values[0];
+				parent.nValues++;
+				nValues = 0;
+				return true;
+			}
+		}
+		throw new IllegalStateException();
+	}
+
 	@SuppressWarnings("unchecked")
 	private void checkAndMergeLeafNodesInParent(QNode<T> parent, int maxNodeSize) {
-		if (parent != null) {
+		if (!checkMergeSingleLeaf(parent) && parent != null) {
 			parent.checkAndMergeLeafNodes(maxNodeSize);
 		}
 	}
@@ -323,8 +341,7 @@ public class QNode<T> {
 	@SuppressWarnings("unchecked")
 	private void checkAndMergeLeafNodes(int maxNodeSize) {
 		//check: We start with including all local values: nValues
-		int nTotal = nValues;
-		int nSubs = 0;
+		int nTotal = 0;
 		for (int i = 0; i < subs.length; i++) {
 			Object e = subs[i];
 			if (e instanceof QNode) {
@@ -335,31 +352,16 @@ public class QNode<T> {
 					return;
 				}
 				nTotal += sub.getValueCount();
-				if (nTotal > maxNodeSize) {
-					//too many children
-					return;
-				}
-				nSubs++;
+			} else if (e instanceof PointEntry) {
+				nTotal++;
 			}
+		}
+		if (nTotal > maxNodeSize) {
+			//too many children
+			return;
 		}
 
 		//okay, let's merge.
-		// Special case: only one subnode (all subs are leaf nodes)
-		if (nSubs == 1) {
-			for (int i = 0; i < subs.length; i++) {
-				Object e = subs[i];
-				if (e instanceof QNode) {
-					QNode<T> sub = (QNode<T>) e;
-					values = sub.values;
-					nValues = sub.nValues;
-					subs = null;
-					isLeaf = true;
-					return;
-				}
-			}
-			throw new IllegalStateException();
-		}
-
 		values = new PointEntry[nTotal];
 		nValues = 0;
 		for (int i = 0; i < subs.length; i++) {
@@ -394,7 +396,7 @@ public class QNode<T> {
 				return ((QNode<T>)sub).getExact(key, pred);
 			} else  if (sub != null) {
 				PointEntry<T> e = (PointEntry<T>) sub;
-				if (QUtil.isPointEqual(e.point(), key)) {
+				if (QUtil.isPointEqual(e.point(), key) && pred.test(e)) {
 					return e;
 				}
 			}
@@ -433,10 +435,6 @@ public class QNode<T> {
 				System.out.println("Outer: " + parent.radius + " " + Arrays.toString(parent.center));
 				System.out.println("Child: " + radius + " " + Arrays.toString(center));
 				for (int d = 0; d < center.length; d++) {
-//					if ((centerOuter[d]+radiusOuter) / (centerEnclosed[d]+radiusEnclosed) < 0.9999999 ||
-//							(centerOuter[d]-radiusOuter) / (centerEnclosed[d]-radiusEnclosed) > 1.0000001) {
-//						return false;
-//					}
 					double parentMax = parent.center[d] + parent.radius;
 					double childMax = center[d] + radius;
 					double parentMin = parent.center[d] - parent.radius;
@@ -451,12 +449,8 @@ public class QNode<T> {
 						System.out.println("min: " + parentMin + " vs " + childMin);
 						System.out.println("  r: " + parentMin / childMin);
 					}
-					// System.out.println("max " + (parent.center[d]+parent.radius) + " vs " + (center[d]+radius));
-					// System.out.println("  r=" + (parent.center[d]+parent.radius) / (center[d]+radius));
-					// System.out.println("min " + (parent.center[d]-parent.radius) + " vs " + (center[d]-radius));
-					// System.out.println("  r=" + (parent.center[d]-parent.radius) / (center[d]-radius));
 				}
-				// throw new IllegalStateException(); // TODO reenable
+				throw new IllegalStateException();
 			}
 		}
 		if (values != null) {
@@ -480,6 +474,7 @@ public class QNode<T> {
 				throw new IllegalStateException();
 			}
 			int nSubs = 0;
+			int nFoundValues = 0;
 			for (int i = 0; i < subs.length; i++) {
 				Object n = subs[i];
 				//TODO check pos
@@ -488,9 +483,14 @@ public class QNode<T> {
 					((QNode<T>)n).checkNode(s, this, depth+1);
 				} else if (n != null) {
 					s.nEntries++;
+					nFoundValues++;
 					checkEntry(n);
 				}
 			}
+			if (nValues != nFoundValues) {
+				throw new IllegalStateException();
+			}
+			s.histoValues[nFoundValues]++;
 			s.histo(nSubs);
 		}
 	}
@@ -502,10 +502,6 @@ public class QNode<T> {
 			System.out.println("Node: " + radius + " " + Arrays.toString(center));
 			System.out.println("Child: " + Arrays.toString(e.point()));
 			for (int d = 0; d < center.length; d++) {
-//				if ((centerOuter[d]+radiusOuter) / (centerEnclosed[d]+radiusEnclosed) < 0.9999999 || 
-//						(centerOuter[d]-radiusOuter) / (centerEnclosed[d]-radiusEnclosed) > 1.0000001) {
-//					return false;
-//				}
 				System.out.println("min/max for " + d);
 				System.out.println("min: " + (center[d]-radius) + " vs " + (e.point()[d]));
 				System.out.println("r=" + (center[d]-radius) / (e.point()[d]));

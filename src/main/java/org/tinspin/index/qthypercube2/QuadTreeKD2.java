@@ -396,6 +396,7 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 							  int depth, int posInParent) {
 		String prefix = ".".repeat(depth);
 		sb.append(prefix + posInParent + " d=" + depth);
+		sb.append(" nV=" + node.getValueCount());
 		sb.append(" " + Arrays.toString(node.getCenter()));
 		sb.appendLn("/" + node.getRadius());
 		prefix += " ";
@@ -436,7 +437,7 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	 * Statistics container class.
 	 */
 	public static class QStats extends Stats {
-		final int[] histoValues = new int[100];
+		final int[] histoValues = new int[1000];
 		final int[] histoSubs;
 		static final int HISTO_MAX = (1 << 10) + 1;
 		public QStats(int dims) {

@@ -211,6 +211,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             assertFalse(containsExact(tree, pOld, e.id));
             assertTrue(containsExact(tree, e.p, e.id));
         }
+        tree.getStats();
 
         for (int i = 0; i < data.size(); ++i) {
             Entry e = data.get(i);
@@ -327,6 +328,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             tree.insert(e.p, e);
         }
+        tree.getStats();
 
         // remove 1st half
         for (int i = 0; i < nDelete; ++i) {
@@ -336,6 +338,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             assertFalse(containsExact(tree, e.p, e.id));
             assertFalse(tree.contains(e.p, e));
         }
+        tree.getStats();
 
         // check contains() & kNN
         for (int i = 0; i < nDelete; ++i) {
