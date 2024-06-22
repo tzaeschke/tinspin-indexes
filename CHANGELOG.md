@@ -14,8 +14,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Fixed tree consistency (single-entry leaf after remove)
   - Fixed tree consistency (nValues) -> verify
   - Fixed bug in qt2.contains()
-TODO
-- CLean up calls to checkMerge() -> call leaf-merge only in leaf!
 
 ## [2.1.3] - 2023-11-19
 

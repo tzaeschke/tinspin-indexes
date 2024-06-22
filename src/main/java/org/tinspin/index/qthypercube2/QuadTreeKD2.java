@@ -284,24 +284,6 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 					//extend upwards, even if extension unnecessary for this dimension.
 					center2[d] = center[d]+radius; 
 				}
-
-//				double parentMax = center2[d] + radius2 * QUtil.EPS_MUL;
-//				double childMax = center[d] + radius;
-//				double parentMin = center2[d] - radius2 * 1.000000001;// * QUtil.EPS_MUL;
-//				double childMin = center[d] - radius;
-//				if (parentMax < childMax) {
-//					System.out.println("ec DIM: " + d);
-//					System.out.println("ec max: " + (center2[d]+radius2*QUtil.EPS_MUL) + " vs " + (center[d]+radius));
-//					System.out.println("ec   r: " + (center2[d]+radius2*QUtil.EPS_MUL) / (center[d]+radius));
-//				}
-//				if (parentMin > childMin) {
-//					System.out.println("ec DIM: " + d);
-//					System.out.println("ec min: " + parentMin + " vs " + childMin);
-//					System.out.println("ec   r: " + parentMin / childMin);
-//					System.out.println("ec min: " + (center2[d]-radius2*QUtil.EPS_MUL) + " vs " + (center[d]-radius));
-//					System.out.println("ec   r: " + (center2[d]-radius2*QUtil.EPS_MUL) / (center[d]-radius));
-//				}
-
 			}
 			if (QuadTreeKD2.DEBUG && !QUtil.isNodeEnclosed(center, radius, center2, radius2)) {
 				throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
