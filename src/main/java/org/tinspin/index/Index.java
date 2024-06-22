@@ -41,6 +41,7 @@ public interface Index {
 	/**
 	 * @return Collect and return some index statistics. Note that indexes are not required
 	 * to fill all fields. Also, individual indexes may use subclasses with additional fields.
+     * Many indexes also perform consistency checks while gathering stats.
 	 */
 	Stats getStats();
 

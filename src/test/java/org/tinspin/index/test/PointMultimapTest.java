@@ -211,6 +211,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             assertFalse(containsExact(tree, pOld, e.id));
             assertTrue(containsExact(tree, e.p, e.id));
         }
+        tree.getStats();
 
         for (int i = 0; i < data.size(); ++i) {
             Entry e = data.get(i);
@@ -327,6 +328,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             tree.insert(e.p, e);
         }
+        tree.getStats();
 
         // remove 1st half
         for (int i = 0; i < nDelete; ++i) {
@@ -336,6 +338,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             assertFalse(containsExact(tree, e.p, e.id));
             assertFalse(tree.contains(e.p, e));
         }
+        tree.getStats();
 
         // check contains() & kNN
         for (int i = 0; i < nDelete; ++i) {
@@ -417,4 +420,42 @@ public class PointMultimapTest extends AbstractWrapperTest {
             return "id=" + id + ":" + Arrays.toString(p);
         }
     }
+
+    @Test
+    public void testIssue0040_remove() {
+        double[][] data = new double[][] {
+                new double[]{-49.0949020385742, -2.05027413368225, 819588127, 0},
+                new double[]{-49.0949020385742, -2.05027389526367, 819588127, 0},
+                new double[]{-45.6938514709473, 32.9847145080566, -2056090140, 0},
+                new double[]{-45.6938514709473, 32.9847145080566, -2056090140, 0},
+                new double[]{-1.7595032453537, 112.097793579102, -267989921, 0},
+                new double[]{-1.75950336456299, 112.097793579102, -267989921, 0},
+                new double[]{45.6938438415527, 32.9847145080566, 1591613824, 0},
+                new double[]{45.6938438415527, 32.9847145080566, 1591613824, 0},
+                new double[]{49.0948944091797, -2.05027413368225, 14481734, 0},
+                new double[]{49.0948944091797, -2.05027389526367, 14481734, 0},
+                new double[]{-49.0949020385742, -2.05027413368225, 819588127, 1},
+                new double[]{-49.0949020385742, -2.05027389526367, 819588127, 1},
+                new double[]{-49.0949020385742, -2.05027413368225, 916603126, 0},
+        };
+
+        PointMultimap<Integer> tree = createTree(100,2);
+        for (int i = 0; i < data.length; i++) {
+            if (data[i][3] == 0) {
+                tree.insert(Arrays.copyOf(data[i], 2), (int)data[i][2]);
+            } else {
+                tree.remove(Arrays.copyOf(data[i], 2), (int)data[i][2]);
+            }
+        }
+
+        assertEquals(9, tree.size());
+        int n = 0;
+        double[] min = new double[]{-50, -3};
+        double[] max = new double[]{50, 113};
+        for (Index.PointIterator<Integer> it = tree.query(min, max); it.hasNext(); it.next()) {
+            n++;
+        }
+        assertEquals(9, n);
+    }
+
 }

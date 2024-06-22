@@ -127,6 +127,7 @@ public class PointMapTest extends AbstractWrapperTest {
             tree.insert(e.p, e);
         }
         // System.out.println(tree.toStringTree());
+        tree.getStats();
         for (Entry e : data) {
             assertTrue("contains(point) failed: " + e, tree.contains(e.p));
             Entry e2 = tree.queryExact(e.p);

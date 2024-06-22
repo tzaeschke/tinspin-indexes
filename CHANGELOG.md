@@ -8,10 +8,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Nothing yet
 
+## [2.1.4 - Unreleased]
+
+- Fixed tree corruption after remove() in QT2. [#40](https://github.com/tzaeschke/tinspin-indexes/issue/40)
+  - Fixed tree consistency (single-entry leaf after remove)
+  - Fixed tree consistency (nValues) -> verify
+  - Fixed bug in qt2.contains()
+
 ## [2.1.3] - 2023-11-19
 
 ### Fixed
-- Fixed QUadtreeKD2 kNN finding previously deleted entries [#37](https://github.com/tzaeschke/tinspin-indexes/issue/37)
+- Fixed QuadtreeKD2 kNN finding previously deleted entries [#37](https://github.com/tzaeschke/tinspin-indexes/issue/37)
 
 ## [2.1.2] - 2023-10-31
 
