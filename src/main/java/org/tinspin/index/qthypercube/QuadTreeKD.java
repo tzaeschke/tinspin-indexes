@@ -407,7 +407,7 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 	 * Statistics container class.
 	 */
 	public static class QStats extends Stats {
-		final int[] histoValues = new int[100];
+		final int[] histoValues = new int[1000];
 		final int[] histoSubs;
 
 		public QStats(int dims) {

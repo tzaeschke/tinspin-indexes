@@ -14,18 +14,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */package org.tinspin;
+ */
+package org.tinspin.util;
 
+import static org.junit.Assert.*;
 import org.junit.Test;
-import org.tinspin.index.util.MinHeapI;
-import org.tinspin.index.util.MinHeap;
+import org.tinspin.index.util.*;
 
 import java.util.Arrays;
 import java.util.Random;
 
-import static org.junit.Assert.*;
-
-public class MinHeapTest {
+public class MinMaxHeapTest {
 
     private static final int SEEDS = 10; // 100 for benchmarking
 
@@ -49,8 +48,12 @@ public class MinHeapTest {
         }
     }
 
-    private MinHeapI<Entry> create() {
-        return MinHeap.create((o1, o2) -> o1.d < o2.d);
+    private MinMaxHeapI<Entry> create() {
+        // return new MinMaxHeapB(64);
+        // return MinMaxHeapC2.create();
+        // return MinMaxHeapZ2.create();
+        return MinMaxHeap.create((o1, o2) -> o1.d < o2.d);
+        // return MinMaxHeapZ3.create((o1, o2) -> o1.d < o2.d ? 1 : 0);
     }
 
     private Entry[] data(int n, int seed) {
@@ -62,7 +65,7 @@ public class MinHeapTest {
         return data;
     }
 
-    private void populate(MinHeapI<Entry> heap, Entry[] data) {
+    private void populate(MinMaxHeapI<Entry> heap, Entry[] data) {
         assertTrue(heap.isEmpty());
         assertEquals(0, heap.size());
         double min = Double.POSITIVE_INFINITY;
@@ -74,10 +77,8 @@ public class MinHeapTest {
             min = Math.min(min, data[i].d);
             max = Math.max(max, data[i].d);
             assertNotNull(heap.peekMin());
-            if (min != heap.peekMin().d) {
-                System.out.println();
-            }
             assertEquals(min, heap.peekMin().d, 0.0);
+            assertEquals(max, heap.peekMax().d, 0.0);
         }
     }
 
@@ -95,7 +96,7 @@ public class MinHeapTest {
 
     private void testMin(int n, int seed) {
         Entry[] data = data(n, seed);
-        MinHeapI<Entry> heap = create();
+        MinMaxHeapI<Entry> heap = create();
         populate(heap, data);
 
         Arrays.sort(data);
@@ -106,6 +107,7 @@ public class MinHeapTest {
             assertFalse(heap.isEmpty());
             assertEquals(data.length - i, heap.size());
             assertEquals(data[i].d, heap.peekMin().d, 0.0);
+            assertEquals(data[n-1].d, heap.peekMax().d, 0.0);
            // ((MinMaxHeapZ)heap).checkConsistency();
             heap.popMin();
         }
@@ -113,15 +115,33 @@ public class MinHeapTest {
         assertEquals(0, heap.size());
     }
 
-//    @Test
-//    public void testMin2() {
-//        for (int seed = 0; seed < SEEDS; seed++) {
-//            for (int i = 1; i < 35; i++) {
-//                testMin(i, seed);
-//            }
-//            for (int i = 1; i < 100; i++) {
-//                testMin(i * 100, seed);
-//            }
-//        }
-//    }
+    @Test
+    public void testMax() {
+        for (int seed = 0; seed < SEEDS; seed++) {
+            for (int i = 1; i < 35; i++) {
+                testMax(i, seed);
+            }
+            for (int i = 1; i < 100; i++) {
+                testMax(i * 100, seed);
+            }
+        }
+    }
+
+    private void testMax(int n, int seed) {
+        Entry[] data = data(n, seed);
+        MinMaxHeapI<Entry> heap = create();
+        populate(heap, data);
+
+        Arrays.sort(data);
+
+        for (int i = 0; i < data.length; i++) {
+            assertFalse(heap.isEmpty());
+            assertEquals(data.length - i, heap.size());
+            assertEquals(data[0].d, heap.peekMin().d, 0.0);
+            assertEquals(data[n-1-i].d, heap.peekMax().d, 0.0);
+            heap.popMax();
+        }
+        assertTrue(heap.isEmpty());
+        assertEquals(0, heap.size());
+    }
 }

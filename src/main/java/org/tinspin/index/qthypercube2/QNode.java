@@ -433,7 +433,7 @@ public class QNode<T> {
 		if (parent != null) {
 			if (!QUtil.isNodeEnclosed(center, radius, parent.center, parent.radius*QUtil.EPS_MUL)) {
 				System.out.println("Outer: " + parent.radius + " " + Arrays.toString(parent.center));
-				System.out.println("Child: " + radius + " " + Arrays.toString(center));
+				System.out.println("Child(" + depth + "): " + radius + " " + Arrays.toString(center));
 				for (int d = 0; d < center.length; d++) {
 					double parentMax = parent.center[d] + parent.radius;
 					double childMax = center[d] + radius;
@@ -457,6 +457,7 @@ public class QNode<T> {
 			s.nLeaf++;
 			s.nEntries += nValues;
 			s.histoValues[nValues]++;
+			s.maxValuesInNode = Math.max(s.maxValuesInNode, nValues);
 			for (int i = 0; i < nValues; i++) {
 				PointEntry<T> e = values[i];
 				checkEntry(e);

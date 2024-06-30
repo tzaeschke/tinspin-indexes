@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.util.MathTools;
 import org.tinspin.index.util.StringBuilderLn;
 
 /**
@@ -108,7 +109,7 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 		PointEntry<T> e = new PointEntry<>(key, value);
 		if (root == null) {
 			// We calculate a better radius when adding a second point.
-			root = new QNode<>(key.clone(), INITIAL_RADIUS);
+			root = new QNode<>(MathTools.floorPowerOfTwoCopy(key), INITIAL_RADIUS);
 		}
 		if (root.getRadius() == INITIAL_RADIUS) {
 			adjustRootSize(key);
@@ -127,16 +128,20 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 			return;
 		}
 		if (root.getRadius() == INITIAL_RADIUS) {
-			double dist = PointDistance.L2.dist(key, root.getCenter());
-			if (dist > 0) {
-				root.adjustRadius(2 * dist);
+			double dMax = MathTools.maxDelta(key, root.getCenter());
+			for (int i = 0; i < root.getValueCount(); i++) {
+				dMax = Math.max(dMax, MathTools.maxDelta(root.getValues()[i].point(), root.getCenter()));
+			}
+			double radius = MathTools.ceilPowerOfTwo(dMax + QUtil.EPS_MUL);
+			if (radius > 0) {
+				root.adjustRadius(radius);
 			} else if (root.getValueCount() >= maxNodeSize - 1) {
-				// we just set an arbitrary radius here
+				// all entries have (approximately?) the same coordinates. We just set an arbitrary radius here.
 				root.adjustRadius(1000);
 			}
 		}
 	}
-	
+
 	/**
 	 * Check whether a given key exists.
 	 * @param key the key to check

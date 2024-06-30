@@ -141,7 +141,10 @@ public class PointMultimapTest extends AbstractWrapperTest {
         for (Entry e : data) {
             tree.insert(e.p, e);
         }
-        // System.out.println(tree.toStringTree());
+
+        // Check consistency
+        tree.getStats();
+
         for (Entry e : data) {
             PointIterator<Entry> it = tree.queryExactPoint(e.p);
             assertTrue("query(point) failed: " + e, it.hasNext());
@@ -166,6 +169,8 @@ public class PointMultimapTest extends AbstractWrapperTest {
             }
             assertEquals(data.size(), nExtent);
         }
+
+        tree.getStats();
 
         for (Entry e : data) {
             // System.out.println("query: " + Arrays.toString(e.p));
