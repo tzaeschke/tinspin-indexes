@@ -27,6 +27,7 @@ public class Stats {
 	public int minLevel = Integer.MAX_VALUE;
 	public int maxLevel = -1;
 	public int maxDepth = 0;
+	public int maxValuesInNode = 0;
 	public double sumLevel;
 	public int maxNodeSize = -1;
 	public int nLeaf;
@@ -49,7 +50,9 @@ public class Stats {
 				";nNodes=" + nNodes +
 				";nLeaf=" + nLeaf + 
 				";nInner=" + nInner +
-				";minLevel=" + minLevel + 
+				";maxDepth=" + maxDepth +
+				";maxValues=" + maxValuesInNode +
+				";minLevel=" + minLevel +
 				";maxLevel=" + maxLevel + 
 				";avgLevel=" + (sumLevel/nEntries) +
 				";maxNodeSize=" + maxNodeSize;

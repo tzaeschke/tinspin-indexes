@@ -303,6 +303,7 @@ public class QNode<T> {
 			s.nLeaf++;
 			s.nEntries += values.size();
 			s.histoValues[values.size()]++;
+			s.maxValuesInNode = Math.max(s.maxValuesInNode, values.size());
 			for (int i = 0; i < values.size(); i++) {
 				PointEntry<T> e = values.get(i);
 				if (!QUtil.fitsIntoNode(e.point(), center, radius*QUtil.EPS_MUL)) {
