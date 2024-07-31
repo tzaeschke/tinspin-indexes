@@ -33,6 +33,20 @@ public class MathTools {
     }
 
     /**
+     * Calculates the {@link #ceilPowerOfTwo(double)} of an array.
+     * @param d input vector
+     * @return copied vector with next power of two above or equal to 'input'
+     * @see #floorPowerOfTwo(double)
+     */
+    public static double[] ceilPowerOfTwoCopy(double[] d) {
+        double[] d2 = new double[d.length];
+        for (int i = 0; i < d.length; i++) {
+            d2[i] = ceilPowerOfTwo(d[i]);
+        }
+        return d2;
+    }
+
+    /**
      * Similar to Math.floor() with the floor being the next lower power of 2.
      * The resulting number can repeatedly and (almost) always be divided by two without loss of precision.
      * We calculate the "floor" by setting the "fraction" of the bit representation to 0.

@@ -101,22 +101,24 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 
 	/**
 	 * Note: This will align center and radius to a power of two before creating a tree.
-	 * @param dims dimensions, usually 2 or 3
-	 * @param maxNodeSize maximum entries per node, default is 10
 	 * @param center center of initial root node
 	 * @param radius radius of initial root node
+	 * @param align Whether center and radius should be aligned to powers of two. Aligning considerably
+	 *              reduces risk of precision problems. Recommended: "true".
+	 * @param maxNodeSize maximum entries per node, default is 10
 	 * @return New quadtree
 	 * @param <T> Value type
 	 */
-	public static <T> QuadTreeKD2<T> createAligned(int dims, int maxNodeSize,
-											double[] center, double radius) {
-		QuadTreeKD2<T> t = new QuadTreeKD2<>(dims, maxNodeSize);
+	public static <T> QuadTreeKD2<T> create(double[] center, double radius, boolean align, int maxNodeSize) {
+		QuadTreeKD2<T> t = new QuadTreeKD2<>(center.length, maxNodeSize);
 		if (radius <= 0) {
 			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
 		}
-		double[] alignedCenter = MathTools.floorPowerOfTwoCopy(center);
-		double alignedRadius = MathTools.ceilPowerOfTwo(radius);
-		t.root = new QNode<>(Arrays.copyOf(alignedCenter, alignedCenter.length), alignedRadius);
+		if (align) {
+			center = MathTools.floorPowerOfTwoCopy(center);
+			radius = MathTools.ceilPowerOfTwo(radius);
+		}
+		t.root = new QNode<>(Arrays.copyOf(center, center.length), radius);
 		return t;
 	}
 
@@ -128,7 +130,7 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	 * @param radius radius of initial root node
 	 * @return New quadtree
 	 * @param <T> Value type
-	 * @deprecated Please use {@link #createAligned(int, int, double[], double)}
+	 * @deprecated Please use {@link #create(double[], double, boolean, int)}
 	 */
 	@Deprecated
 	public static <T> QuadTreeKD2<T> create(int dims, int maxNodeSize, 

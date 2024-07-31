@@ -196,7 +196,7 @@ public interface PointMap<T> extends Index {
          * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
          * @param <T>             Value type
          * @return New Quadtree
-         * @deprecated Please use {@link #createAlignedQuadtree(int, int, double[], double)}
+         * @deprecated Please use {@link #createQuadtree(double[], double, boolean, int)}
          */
         @Deprecated
         static <T> PointMap<T> createQuadtree(int dims, int maxNodeCapacity, double[] center, double radius) {
@@ -210,15 +210,16 @@ public interface PointMap<T> extends Index {
          * <p>
          * Center and radius will be aligned with powers of two to avoid precision problems.
          *
-         * @param dims            Number of dimensions.
-         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
          * @param center          Estimated center of all coordinates.
          * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
+         * @param align           Whether center and radius should be aligned to powers of two. Aligning considerably
+         *                        reduces risk of precision problems. Recommended: "true".
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
          * @param <T>             Value type
          * @return New Quadtree
          */
-        static <T> PointMap<T> createAlignedQuadtree(int dims, int maxNodeCapacity, double[] center, double radius) {
-            return QuadTreeKD0.createAligned(dims, maxNodeCapacity, center, radius);
+        static <T> PointMap<T> createQuadtree(double[] center, double radius, boolean align, int maxNodeCapacity) {
+            return QuadTreeKD0.create(center, radius, align, maxNodeCapacity);
         }
 
         /**
@@ -244,7 +245,7 @@ public interface PointMap<T> extends Index {
          * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
          * @param <T>             Value type
          * @return New QuadtreeHC
-         * @deprecated Please use {@link #createAlignedQuadtreeHC(int, int, double[], double)}
+         * @deprecated Please use {@link #createQuadtreeHC(double[], double, boolean, int)}
          */
         @Deprecated
         static <T> PointMap<T> createQuadtreeHC(int dims, int maxNodeCapacity, double[] center, double radius) {
@@ -258,15 +259,16 @@ public interface PointMap<T> extends Index {
          * <p>
          * Center and radius will be aligned with powers of two to avoid precision problems.
          *
-         * @param dims            Number of dimensions.
-         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
          * @param center          Estimated center of all coordinates.
          * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
+         * @param align           Whether center and radius should be aligned to powers of two. Aligning considerably
+         *                        reduces risk of precision problems. Recommended: "true".
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
          * @param <T>             Value type
          * @return New QuadtreeHC
          */
-        static <T> PointMap<T> createAlignedQuadtreeHC(int dims, int maxNodeCapacity, double[] center, double radius) {
-            return QuadTreeKD.createAligned(dims, maxNodeCapacity, center, radius);
+        static <T> PointMap<T> createQuadtreeHC(double[] center, double radius, boolean align, int maxNodeCapacity) {
+            return QuadTreeKD.create(center, radius, align, maxNodeCapacity);
         }
 
         /**
@@ -291,7 +293,7 @@ public interface PointMap<T> extends Index {
          * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
          * @param <T>             Value type
          * @return New QuadtreeHC2
-         * @deprecated PLease use {@link #createAlignedQuadtreeHC2(int, int, double[], double)}
+         * @deprecated PLease use {@link #createQuadtreeHC2(double[], double, boolean, int)}
          */
         @Deprecated
         static <T> PointMap<T> createQuadtreeHC2(int dims, int maxNodeCapacity, double[] center, double radius) {
@@ -305,15 +307,16 @@ public interface PointMap<T> extends Index {
          * <p>
          * Center and radius will be aligned with powers of two to avoid precision problems.
          *
-         * @param dims            Number of dimensions.
-         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
          * @param center          Estimated center of all coordinates.
          * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
+         * @param align           Whether center and radius should be aligned to powers of two. Aligning considerably
+         *                        reduces risk of precision problems. Recommended: "true".
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
          * @param <T>             Value type
          * @return New QuadtreeHC2
          */
-        static <T> PointMap<T> createAlignedQuadtreeHC2(int dims, int maxNodeCapacity, double[] center, double radius) {
-            return QuadTreeKD2.createAligned(dims, maxNodeCapacity, center, radius);
+        static <T> PointMap<T> createQuadtreeHC2(double[] center, double radius, boolean align, int maxNodeCapacity) {
+            return QuadTreeKD2.create(center, radius, align, maxNodeCapacity);
         }
 
         /**
