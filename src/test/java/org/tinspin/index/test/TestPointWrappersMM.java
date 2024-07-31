@@ -32,9 +32,10 @@ public class TestPointWrappersMM extends AbstractWrapperTest {
 
     @BeforeClass
     public static void beforeClass() {
-        //init results
-        //use this as reference for all others
-        //if the naive implementation should be wrong, the others should fail as well
+        TestRunner.PRINT = false;
+        // init results
+        // use this as reference for all others
+        // if the naive implementation should be wrong, the others should fail as well
         expectedCube = createUnitTestStatsDupl(IDX.ARRAY, TST.CUBE_P, N, dims, 1.0, N_DUPL);
         new TestRunner(expectedCube).run();
 
@@ -61,7 +62,7 @@ public class TestPointWrappersMM extends AbstractWrapperTest {
     @Test
     @Parameters
     public void testCube() {
-        System.out.println("Testing: " + candidate.name());
+        TestRunner.log("Testing: " + candidate.name());
         TestStats ts = createUnitTestStatsDupl(candidate, TST.CUBE_P, N, dims, 1.0, N_DUPL);
         TestRunner tr = new TestRunner(ts);
         tr.run();
@@ -72,7 +73,7 @@ public class TestPointWrappersMM extends AbstractWrapperTest {
     @Test
     @Parameters
     public void testCluster() {
-        System.out.println("Testing: " + candidate.name());
+        TestRunner.log("Testing: " + candidate.name());
         TestStats ts = createUnitTestStatsDupl(candidate, TST.CLUSTER_P, N, dims, 5.0, N_DUPL);
         TestRunner tr = new TestRunner(ts);
         tr.run();

@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.Random;
 
 import ch.ethz.globis.tinspin.TestStats;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tinspin.index.BoxMap;
 import org.tinspin.index.array.RectArray;
@@ -32,6 +33,7 @@ import org.tinspin.index.test.util.JmxTools;
 import org.tinspin.index.test.util.TestBox;
 import org.tinspin.index.test.util.TestBoxCube;
 import org.tinspin.index.test.util.TestInstances.TST;
+import org.tinspin.index.test.util.TestRunner;
 
 import static org.tinspin.index.Index.*;
 
@@ -41,6 +43,11 @@ public class PhTreeTest {
 	private static final int DIM = 3;
 	private static final double param1 = 0.01;
 	private static final RectComp COMP = new RectComp();
+
+	@BeforeClass
+    public static void beforeClass() {
+		TestRunner.PRINT = false;
+	}
 
 	@Test
 	public void testR() {
@@ -76,7 +83,7 @@ public class PhTreeTest {
 	private void repeatQuery(TestBox test, BoxMap<Integer> tree1, BoxMap<Integer> tree2, int repeat) {
 		int dims = DIM;
 		//log("N=" + N);
-		log("querying index ... repeat = " + repeat);
+		println("querying index ... repeat = " + repeat);
 		double[][] lower = new double[repeat][dims]; 
 		double[][] upper = new double[repeat][dims];
 		test.generateWindowQueries(lower, upper);
@@ -85,7 +92,7 @@ public class PhTreeTest {
 		int n = 0;
 		n = repeatQueries(tree1, tree2, lower, upper);
 		long t2 = System.currentTimeMillis();
-		log("Query time: " + (t2-t1) + " ms -> " + (t2-t1)/(double)repeat + " ms/q -> " +
+		println("Query time: " + (t2-t1) + " ms -> " + (t2-t1)/(double)repeat + " ms/q -> " +
 				(t2-t1)*1000*1000/(double)n + " ns/q/r  (n=" + n + ")");
 	}
 	
@@ -107,8 +114,8 @@ public class PhTreeTest {
 				n2++;
 			}
 			if (n1 != n2) {
-				log("n1/n2=" + n1 + "/" + n2);
-				log("q=" + Arrays.toString(lower[i]) + "/" + Arrays.toString(upper[i]));
+				println("n1/n2=" + n1 + "/" + n2);
+				println("q=" + Arrays.toString(lower[i]) + "/" + Arrays.toString(upper[i]));
 				set1.sort(COMP);
 				set2.sort(COMP);
 				for (int j = 0; j < set1.size(); j++) {
@@ -116,15 +123,15 @@ public class PhTreeTest {
 					BoxEntry<Integer> e2 = set2.get(j);
 					if (!Arrays.equals(e1.min(), e2.min()) ||
 							!Arrays.equals(e1.max(), e2.max())) {
-						log("j=" + j + " mismatch: " + e1 + " -/- " + e2);
+						println("j=" + j + " mismatch: " + e1 + " -/- " + e2);
 					}
 				}
 			}
 			assertEquals(n1, n2);
 			n += n1;
-			if (i%10 == 0) System.out.print('.');
+			if (i%10 == 0) print(".");
 		}
-		System.out.println();
+		println("");
 		//log("n=" + n/(double)lower.length);
 		return n;
 	}
@@ -146,9 +153,17 @@ public class PhTreeTest {
 			return 0;
 		}
 	}
-	
-	private static void log(String string) {
-		System.out.println(string);
+
+	private static void println(String string) {
+		if (TestRunner.PRINT) {
+			System.out.println(string);
+		}
+	}
+
+	private static void print(String string) {
+		if (TestRunner.PRINT) {
+			System.out.print(string);
+		}
 	}
 
 }

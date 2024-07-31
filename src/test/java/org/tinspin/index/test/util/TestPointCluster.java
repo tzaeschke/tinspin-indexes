@@ -67,7 +67,9 @@ public class TestPointCluster extends TestPoint {
 	//diagonal version
 	@Override
 	public double[] generate() {
-		log("Running: TestCluster(" + S.cfgDataLen + "," + S.cfgDuplicates + ")");
+		if (TestRunner.PRINT) {
+			log("Running: TestCluster(" + S.cfgDataLen + "," + S.cfgDuplicates + ")");
+		}
 		double len = 1.0;
 		switch (TYPE.toType(param1)) {
 		case ORIGINAL: return generateOriginal(len);

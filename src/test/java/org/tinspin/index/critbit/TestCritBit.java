@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tinspin.index.critbit.CritBit;
 import org.tinspin.index.critbit.CritBit1D;
@@ -48,7 +49,11 @@ public class TestCritBit {
 	private CritBit1D<Integer> newCritBit(int depth) {
 		return CritBit.create1D(depth);
 	}
-	
+
+	@BeforeClass public static void beforeClass() {
+		Examples.PRINT = false;
+	}
+
 	@Test
 	public void testInsertIntRBug1() {
 		randomInsertCheck(1000, 7374, 32);

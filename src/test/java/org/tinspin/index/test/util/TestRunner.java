@@ -28,10 +28,9 @@ import org.tinspin.index.test.util.TestInstances.TST;
  * @author Tilmann Zaeschke
  */
 public class TestRunner {
-	
-	private static final SimpleDateFormat FT = new SimpleDateFormat ("yyyy-MM-dd' 'HH:mm:ss");
 
-	public static boolean USE_NEW_QUERIES = true;
+	public static boolean PRINT = false;
+	private static final SimpleDateFormat FT = new SimpleDateFormat ("yyyy-MM-dd' 'HH:mm:ss");
 
 	private final TestStats S;
 	private Random R;
@@ -471,12 +470,16 @@ public class TestRunner {
 		return n;
 	}
 	
-	static void log(String string) {
-		System.out.println(string);
+	public static void log(String string) {
+		if (PRINT) {
+			System.out.println(string);
+		}
 	}
 
-	static void logNLF(String string) {
-		System.out.print(string);
+	public static void logNLF(String string) {
+		if (PRINT) {
+			System.out.print(string);
+		}
 	}
 
 

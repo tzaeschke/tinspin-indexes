@@ -25,7 +25,9 @@ public class TestBoxCube extends TestBox {
 	@Override
 	public double[] generate() {
 		double rectLen = S.cfgRectLen;
-		log("Running: TestCube (" + rectLen + "," + S.cfgDuplicates + ")");
+		if (TestRunner.PRINT) {
+			log("Running: TestCube (" + rectLen + "," + S.cfgDuplicates + ")");
+		}
 		
 		int dims = S.cfgNDims;
 		int nEntries = S.cfgNEntries;

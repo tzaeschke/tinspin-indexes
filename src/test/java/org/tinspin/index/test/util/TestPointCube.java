@@ -27,7 +27,9 @@ public class TestPointCube extends TestPoint {
 	 */
 	@Override
 	public double[] generate() {
-		log("Running: TestCube(" + S.cfgDataLen + "," + S.cfgDuplicates + ")");
+		if (TestRunner.PRINT) {
+			log("Running: TestCube(" + S.cfgDataLen + "," + S.cfgDuplicates + ")");
+		}
 		double[] data = new double[getN() * DIM];
 		int dup = S.cfgDuplicates;
 		for (int i = 0; i < getN(); i += dup) {

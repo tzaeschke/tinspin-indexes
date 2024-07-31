@@ -31,9 +31,10 @@ public class TestBoxWrappers extends AbstractWrapperTest {
 
     @BeforeClass
     public static void beforeClass() {
-        //init results
-        //use this as reference for all others
-        //if the naive implementation should be wrong, the others should fail as well
+        TestRunner.PRINT = false;
+        // init results
+        // use this as reference for all others
+        // if the naive implementation should be wrong, the others should fail as well
         expectedCube = createUnitTestStats(IDX.ARRAY, TST.CUBE_R, N, dims, 1.0);
         new TestRunner(expectedCube).run();
 
