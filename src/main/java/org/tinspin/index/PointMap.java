@@ -283,6 +283,7 @@ public interface PointMap<T> extends Index {
         }
 
         /**
+         * WARNING: Unaligned center and radius can cause precision problems, see README.
          * Create a Quadtree with extended hypercube navigation.
          * Center/radius are used to find a good initial root. They do not need to be exact. If possible, they should
          * span an area that is somewhat larger rather than smaller than the actual data.
@@ -293,7 +294,7 @@ public interface PointMap<T> extends Index {
          * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
          * @param <T>             Value type
          * @return New QuadtreeHC2
-         * @deprecated PLease use {@link #createQuadtreeHC2(double[], double, boolean, int)}
+         * @deprecated Please use {@link #createQuadtreeHC2(double[], double, boolean, int)}
          */
         @Deprecated
         static <T> PointMap<T> createQuadtreeHC2(int dims, int maxNodeCapacity, double[] center, double radius) {

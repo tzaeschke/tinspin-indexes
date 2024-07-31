@@ -143,7 +143,7 @@ public interface PointMultimap<T> extends Index {
 
     interface Factory {
         /**
-         * Create an array backed PointMap. This is only for testing and rather inefficient for large data sets.
+         * Create an array backed PointMultiMap. This is only for testing and rather inefficient for large data sets.
          *
          * @param dims Number of dimensions.
          * @param size Number of entries.
@@ -307,7 +307,7 @@ public interface PointMultimap<T> extends Index {
          * @param radius          Estimated maximum orthogonal distance from center for all coordinates.
          * @param <T>             Value type
          * @return New QuadtreeHC2
-         * @deprecated PLease use {@link #createQuadtreeHC2(double[], double, boolean, int)}
+         * @deprecated Please use {@link #createQuadtreeHC2(double[], double, boolean, int)}
          */
         @Deprecated
         static <T> PointMultimap<T> createQuadtreeHC2(int dims, int maxNodeCapacity, double[] center, double radius) {
