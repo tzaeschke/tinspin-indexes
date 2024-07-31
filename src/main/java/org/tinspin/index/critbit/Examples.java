@@ -28,6 +28,8 @@ import org.tinspin.index.critbit.CritBit.QueryIteratorKD;
  */
 public class Examples {
 
+	public static boolean PRINT = true;
+
 	public static void main(String[] args) {
 		ex1D_32();
 		ex1D_float();
@@ -123,6 +125,8 @@ public class Examples {
 	}
 
 	private static void log(String msg) {
-		System.out.println(msg);
+		if (PRINT) {
+			System.out.println(msg);
+		}
 	}
 }

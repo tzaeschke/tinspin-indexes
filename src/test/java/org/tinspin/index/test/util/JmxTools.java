@@ -36,6 +36,7 @@ import javax.management.openmbean.TabularData;
 
 public class JmxTools {
 
+	public static boolean PRINT = false;
 	private static final MBeanServer SERVER = ManagementFactory.getPlatformMBeanServer();
 	private static final String[] POOL_NAMES;
 	static {
@@ -78,7 +79,7 @@ public class JmxTools {
 			sleep();
 			td2 = totalDiff;
 			tt2 = totalTime;
-			System.out.println("GC: " + (td1/1024/1024) + "MB -> " + (td2/1024/1024) + "MB  " +
+			println("GC: " + (td1/1024/1024) + "MB -> " + (td2/1024/1024) + "MB  " +
 			"tGC=" + (tt2-tt1) + "  tSys=" + (ts2-ts1));
 			n++;
 			//Ignore Eden collection of <3MB
@@ -374,4 +375,9 @@ public class JmxTools {
 //		System.out.println("Not supported: " + o.getClass());
 //	}
 
+	private static void println(String s) {
+		if (PRINT) {
+			System.out.println(s);
+		}
+	}
 }
