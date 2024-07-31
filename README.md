@@ -41,6 +41,9 @@ Indexes can be created via factories in the interfaces, e.g. `PointMap.Factory.c
 Note:
  - **STR-Trees** are simply R-Trees that are preloaded using the STR algorithm. THis can be done with
    the factory methods `....Factory.createAndLoadStrRTree(...)`.
+ - **Quadtree precision problems**. Many quadtree implementations are vulnerable to precision problem due to repeated 
+   division by 2.0 of radius and subnode centers. Our quadtree implementations avoid this problem by aligning node center
+   coordinates and radius to a power of two. Power of two values are mostly immune to precision problems when dividing by 2.0.
  - `PointArray` and `BoxArray` are simple array based implementations. They scale badly with size, their only use is for verifying correctness of other indexes. 
 
 ## Changelog

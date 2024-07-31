@@ -65,8 +65,8 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	private final int dims;
 	private final int maxNodeSize;
 	private QNode<T> root = null;
-	private int size = 0; 
-	
+	private int size = 0;
+
 
 	private QuadTreeKD2(int dims, int maxNodeSize) {
 		if (DEBUG) {
@@ -76,6 +76,11 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 		this.maxNodeSize = maxNodeSize;
 	}
 
+	/**
+	 * @param dims dimensions, usually 2 or 3
+	 * @return New quadtree
+	 * @param <T> Value type
+	 */
 	public static <T> QuadTreeKD2<T> create(int dims) {
 		int maxNodeSize = DEFAULT_MAX_NODE_SIZE;
 		if (2 * dims > DEFAULT_MAX_NODE_SIZE) {
@@ -83,11 +88,49 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 		}
 		return new QuadTreeKD2<>(dims, maxNodeSize);
 	}
-	
+
+	/**
+	 * @param dims dimensions, usually 2 or 3
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @return New quadtree
+	 * @param <T> Value type
+	 */
 	public static <T> QuadTreeKD2<T> create(int dims, int maxNodeSize) {
 		return new QuadTreeKD2<>(dims, maxNodeSize);
 	}
-	
+
+	/**
+	 * Note: This will align center and radius to a power of two before creating a tree.
+	 * @param dims dimensions, usually 2 or 3
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @param center center of initial root node
+	 * @param radius radius of initial root node
+	 * @return New quadtree
+	 * @param <T> Value type
+	 */
+	public static <T> QuadTreeKD2<T> createAligned(int dims, int maxNodeSize,
+											double[] center, double radius) {
+		QuadTreeKD2<T> t = new QuadTreeKD2<>(dims, maxNodeSize);
+		if (radius <= 0) {
+			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
+		}
+		double[] alignedCenter = MathTools.floorPowerOfTwoCopy(center);
+		double alignedRadius = MathTools.ceilPowerOfTwo(radius);
+		t.root = new QNode<>(Arrays.copyOf(alignedCenter, alignedCenter.length), alignedRadius);
+		return t;
+	}
+
+	/**
+	 * WARNING: Unaligned center and radius can cause precision problems.
+	 * @param dims dimensions, usually 2 or 3
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @param center center of initial root node
+	 * @param radius radius of initial root node
+	 * @return New quadtree
+	 * @param <T> Value type
+	 * @deprecated Please use {@link #createAligned(int, int, double[], double)}
+	 */
+	@Deprecated
 	public static <T> QuadTreeKD2<T> create(int dims, int maxNodeSize, 
 			double[] center, double radius) {
 		QuadTreeKD2<T> t = new QuadTreeKD2<>(dims, maxNodeSize);

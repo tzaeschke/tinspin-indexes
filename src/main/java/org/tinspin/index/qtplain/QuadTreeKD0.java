@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.util.MathTools;
 import org.tinspin.index.util.StringBuilderLn;
 
 /**
@@ -39,8 +40,10 @@ import org.tinspin.index.util.StringBuilderLn;
 public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 
 	private static final int MAX_DEPTH = 50;
-	private static final int DEFAULT_MAX_NODE_SIZE = 10;
 	public static final boolean DEBUG = false;
+	private static final int DEFAULT_MAX_NODE_SIZE = 10;
+	private static final double INITIAL_RADIUS = Double.MAX_VALUE;
+
 	private final int dims;
 	private final int maxNodeSize;
 	private QNode<T> root = null;
@@ -61,9 +64,40 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 	public static <T> QuadTreeKD0<T> create(int dims, int maxNodeSize) {
 		return new QuadTreeKD0<>(dims, maxNodeSize);
 	}
-	
-	public static <T> QuadTreeKD0<T> create(int dims, int maxNodeSize, 
-			double[] center, double radius) {
+
+	/**
+	 * Note: This will align center and radius to a power of two before creating a tree.
+	 * @param dims dimensions, usually 2 or 3
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @param center center of initial root node
+	 * @param radius radius of initial root node
+	 * @return New quadtree
+	 * @param <T> Value type
+	 */	public static <T> QuadTreeKD0<T> createAligned(int dims, int maxNodeSize,
+											double[] center, double radius) {
+		QuadTreeKD0<T> t = new QuadTreeKD0<>(dims, maxNodeSize);
+		if (radius <= 0) {
+			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
+		}
+		double[] alignedCenter = MathTools.floorPowerOfTwoCopy(center);
+		double alignedRadius = MathTools.ceilPowerOfTwo(radius);
+		t.root = new QNode<>(Arrays.copyOf(alignedCenter, alignedCenter.length), alignedRadius);
+		return t;
+	}
+
+	/**
+	 * WARNING: Unaligned center and radius can cause precision problems.
+	 * @param dims dimensions, usually 2 or 3
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @param center center of initial root node
+	 * @param radius radius of initial root node
+	 * @return New quadtree
+	 * @param <T> Value type
+	 * @deprecated Please use {@link #createAligned(int, int, double[], double)}
+	 */
+	@Deprecated
+	public static <T> QuadTreeKD0<T> create(int dims, int maxNodeSize,
+											double[] center, double radius) {
 		QuadTreeKD0<T> t = new QuadTreeKD0<>(dims, maxNodeSize);
 		if (radius <= 0) {
 			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
@@ -71,7 +105,7 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 		t.root = new QNode<>(Arrays.copyOf(center, center.length), radius);
 		return t;
 	}
-	
+
 	/**
 	 * Insert a key-value pair.
 	 * @param key the key
@@ -82,7 +116,13 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 		size++;
 		PointEntry<T> e = new PointEntry<>(key, value);
 		if (root == null) {
-			initializeRoot(key);
+			// We calculate a better radius when adding a second point.
+			// We align the center to a power of two. That reduces precision problems when
+			// creating subnode centers.
+			root = new QNode<>(MathTools.floorPowerOfTwoCopy(key), INITIAL_RADIUS);
+		}
+		if (root.getRadius() == INITIAL_RADIUS) {
+			adjustRootSize(key);
 		}
 		ensureCoverage(e);
 		QNode<T> r = root;
@@ -92,29 +132,28 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 		}
 	}
 
-	// TODO doing the same as in QTZ/QTZ2 breaks the tests...
-	private void initializeRoot(double[] key) {
-		double lo = Double.MAX_VALUE;
-		double hi = -Double.MAX_VALUE;
-		for (int d = 0; d < dims; d++) {
-			lo = Math.min(lo, key[d]);
-			hi = Math.max(hi, key[d]);
+	private void adjustRootSize(double[] key) {
+		// Idea: we calculate the root size only when adding a point that is distinct from the root's center
+		if (!root.isLeaf() || root.getEntries().isEmpty()) {
+			return;
 		}
-		if (lo == 0 && hi == 0) {
-			hi = 1.0;
+		if (root.getRadius() == INITIAL_RADIUS) {
+			// Root size has not been initialized yet.
+			// We start by getting the maximum horizontal distance between the node center and any point in the node
+			double dMax = MathTools.maxDelta(key, root.getCenter());
+			for (int i = 0; i < root.getEntries().size(); i++) {
+				dMax = Math.max(dMax, MathTools.maxDelta(root.getEntries().get(i).point(), root.getCenter()));
+			}
+			// We calculate the minimum required radius that is also a power of two.
+			// This radius can be divided by 2 many times without precision problems.
+			double radius = MathTools.ceilPowerOfTwo(dMax + QUtil.EPS_MUL);
+			if (radius > 0) {
+				root.adjustRadius(radius);
+			} else if (root.getEntries().size() >= maxNodeSize - 1) {
+				// we just set an arbitrary radius here
+				root.adjustRadius(1000);
+			}
 		}
-		double maxDistOrigin = Math.abs(hi) > Math.abs(lo) ? hi : lo;
-		maxDistOrigin = Math.abs(maxDistOrigin);
-		//no we use (0,0)/(+-maxDistOrigin*2,+-maxDistOrigin*2) as root.
-
-		//HACK: To avoid precision problems, we ensure that at least the initial
-		//point is not exactly on the border of the quadrants:
-		maxDistOrigin *= QUtil.EPS_MUL*QUtil.EPS_MUL;
-		double[] center = new double[dims];
-		for (int d = 0; d < dims; d++) {
-			center[d] = key[d] > 0 ? maxDistOrigin : -maxDistOrigin;
-		}
-		root = new QNode<>(center, maxDistOrigin);
 	}
 
 	/**
@@ -122,11 +161,7 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 	 * @param key the key to check
 	 * @return true iff the key exists
 	 */
-	@Deprecated
 	public boolean contains(double[] key) {
-		if (root == null) {
-			return false;
-		}
 		return root.getExact(key, entry -> true) != null;
 	}
 	
