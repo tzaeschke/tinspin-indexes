@@ -21,8 +21,10 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.qthypercube.QuadTreeRKD;
 import org.tinspin.index.qtplain.QuadTreeKD0.QStats;
 import org.tinspin.index.util.BoxIteratorWrapper;
+import org.tinspin.index.util.MathTools;
 import org.tinspin.index.util.StringBuilderLn;
 
 /**
@@ -56,25 +58,75 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	public static <T> QuadTreeRKD0<T> create(int dims, int maxNodeSize) {
 		return new QuadTreeRKD0<>(dims, maxNodeSize);
 	}
-	
-	public static <T> QuadTreeRKD0<T> create(int dims, int maxNodeSize, 
-			double[] min, double[] max) {
+
+	/**
+	 * @param dims Number of dimensions per coordinate, usually 2 or 3
+	 * @param maxNodeSize Maximum node capacity before a split occurs. Default is 10.
+	 * @param min Estimated global minimum
+	 * @param max Estimated global minimum
+	 * @return New quadtree
+	 * @param <T> Value type
+	 * @deprecated Please use {@link #create(double[], double[], boolean, int)}
+	 */
+	@Deprecated
+	public static <T> QuadTreeRKD0<T> create(int dims, int maxNodeSize, double[] min, double[] max) {
+		return create(min, max, false, maxNodeSize);
+	}
+
+	/**
+	 * @param min Estimated global minimum
+	 * @param max Estimated global minimum
+	 * @param align Whether min and max should be aligned to powers of two. Aligning considerably
+	 *              reduces risk of precision problems. Recommended: "true".
+	 * @param maxNodeSize Maximum node capacity before a split occurs. Default is 10.
+	 * @return New quadtree
+	 * @param <T> Value type
+	 */
+	public static <T> QuadTreeRKD0<T> create(double[] min, double[] max, boolean align, int maxNodeSize) {
 		double radius = 0;
-		double[] center = new double[dims];
-		for (int i = 0; i < dims; i++) {
+		double[] center = new double[min.length];
+		for (int i = 0; i < center.length; i++) {
 			center[i] = (max[i]+min[i])/2.0;
 			if (max[i]-min[i]>radius) {
 				radius = max[i]-min[i];
 			}
 		}
-		return create(dims, maxNodeSize, center, radius);
+		return create(center, radius, align, maxNodeSize);
 	}
-	
-	public static <T> QuadTreeRKD0<T> create(int dims, int maxNodeSize, 
-			double[] center, double radius) {
-		QuadTreeRKD0<T> t = new QuadTreeRKD0<>(dims, maxNodeSize);
+
+	/**
+	 * WARNING: Unaligned center and radius can cause precision problems.
+	 * @param dims dimensions, usually 2 or 3
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @param center center of initial root node
+	 * @param radius radius of initial root node
+	 * @return New quadtree
+	 * @param <T> Value type
+	 * @deprecated Please use {@link #create(double[], double, boolean, int)}
+	 */
+	@Deprecated
+	public static <T> QuadTreeRKD0<T> create(int dims, int maxNodeSize, double[] center, double radius) {
+		return create(center, radius, false, maxNodeSize);
+	}
+
+	/**
+	 * Note: This will align center and radius to a power of two before creating a tree.
+	 * @param center center of initial root node
+	 * @param radius radius of initial root node
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @param align Whether center and radius should be aligned to powers of two. Aligning considerably
+	 *              reduces risk of precision problems. Recommended: "true".
+	 * @return New quadtree
+	 * @param <T> Value type
+	 */
+	public static <T> QuadTreeRKD0<T> create(double[] center, double radius, boolean align, int maxNodeSize) {
+		QuadTreeRKD0<T> t = new QuadTreeRKD0<>(center.length, maxNodeSize);
 		if (radius <= 0) {
 			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
+		}
+		if (align) {
+			center = MathTools.floorPowerOfTwoCopy(center);
+			radius = MathTools.ceilPowerOfTwo(radius);
 		}
 		t.root = new QRNode<>(Arrays.copyOf(center, center.length), radius);
 		return t;

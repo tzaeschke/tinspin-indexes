@@ -145,7 +145,7 @@ public interface BoxMultimap<T> extends Index {
 
     interface Factory {
         /**
-         * Create an array backed BoxMap. This is only for testing and rather inefficient for large data sets.
+         * Create an array backed BoxMultiMap. This is only for testing and rather inefficient for large data sets.
          *
          * @param dims Number of dimensions.
          * @param size Number of entries.
@@ -168,6 +168,7 @@ public interface BoxMultimap<T> extends Index {
         }
 
         /**
+         * WARNING: Unaligned center and radius can cause precision problems, see README.
          * Create a plain Quadtree.
          * Min/max are used to find a good initial root. They do not need to be exact. If possible, min/max should
          * span an area that is somewhat larger rather than smaller than the actual data.
@@ -178,9 +179,30 @@ public interface BoxMultimap<T> extends Index {
          * @param max             Estimated maximum of all coordinates.
          * @param <T>             Value type
          * @return New Quadtree
+         * @deprecated Please use {@link #createQuadtree(double[], double[], boolean, int)}
          */
+        @Deprecated
         static <T> BoxMultimap<T> createQuadtree(int dims, int maxNodeCapacity, double[] min, double[] max) {
             return QuadTreeRKD0.create(dims, maxNodeCapacity, min, max);
+        }
+
+        /**
+         * Create a plain Quadtree.
+         * Min/max are used to find a good initial root. They do not need to be exact. If possible, min/max should
+         * span an area that is somewhat larger rather than smaller than the actual data.
+         * <p>
+         * Center and radius will be aligned with powers of two to avoid precision problems.
+         *
+         * @param min             Estimated minimum of all coordinates.
+         * @param max             Estimated maximum of all coordinates.
+         * @param align           Whether center and radius should be aligned to powers of two. Aligning considerably
+         *                        reduces risk of precision problems. Recommended: "true".
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
+         * @param <T>             Value type
+         * @return New Quadtree
+         */
+        static <T> BoxMultimap<T> createQuadtree(double[] min, double[] max, boolean align, int maxNodeCapacity) {
+            return QuadTreeRKD0.create(min, max, align, maxNodeCapacity);
         }
 
         /**
@@ -195,7 +217,8 @@ public interface BoxMultimap<T> extends Index {
         }
 
         /**
-         * Create a plain Quadtree.
+         * WARNING: Unaligned center and radius can cause precision problems, see README.
+         * Create a Quadtree with hypercube navigation.
          * Min/max are used to find a good initial root. They do not need to be exact. If possible, min/max should
          * span an area that is somewhat larger rather than smaller than the actual data.
          *
@@ -205,9 +228,30 @@ public interface BoxMultimap<T> extends Index {
          * @param max             Estimated maximum of all coordinates.
          * @param <T>             Value type
          * @return New QuadtreeHC
+         * @deprecated Please use {@link #createQuadtree(double[], double[], boolean, int)}
          */
+        @Deprecated
         static <T> BoxMultimap<T> createQuadtreeHC(int dims, int maxNodeCapacity, double[] min, double[] max) {
             return QuadTreeRKD.create(dims, maxNodeCapacity, min, max);
+        }
+
+        /**
+         * Create a Quadtree with hypercube navigation.
+         * Min/max are used to find a good initial root. They do not need to be exact. If possible, min/max should
+         * span an area that is somewhat larger rather than smaller than the actual data.
+         * <p>
+         * Center and radius will be aligned with powers of two to avoid precision problems.
+         *
+         * @param min             Estimated minimum of all coordinates.
+         * @param max             Estimated maximum of all coordinates.
+         * @param align           Whether center and radius should be aligned to powers of two. Aligning considerably
+         *                        reduces risk of precision problems. Recommended: "true".
+         * @param maxNodeCapacity Maximum entries in a node before the node is split. The default is 10.
+         * @param <T>             Value type
+         * @return New QuadtreeHC
+         */
+        static <T> BoxMultimap<T> createQuadtreeHC(double[] min, double[] max, boolean align, int maxNodeCapacity) {
+            return QuadTreeRKD.create(min, max, align, maxNodeCapacity);
         }
 
         /**

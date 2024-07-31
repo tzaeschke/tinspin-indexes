@@ -15,9 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Fixed tree consistency (single-entry leaf after remove)
   - Fixed tree consistency (nValues) -> verify
   - Fixed bug in qt2.contains()
-- Fixed QT2 inconsistency after root resizing after insert(). [#42](https://github.com/tzaeschke/tinspin-indexes/issues/42)
+- Fixed QT2 inconsistency after root resizing after insert(). 
   Essentially, we force all radii and the center of the root to be powers of two.
-  This should immensely reduce precision problems. 
+  This should immensely reduce precision problems.
+  [#42](https://github.com/tzaeschke/tinspin-indexes/issues/42)
 - Removed unnecessary JUnit test console output. [#45](https://github.com/tzaeschke/tinspin-indexes/pull/45)
 
 ## [2.1.3] - 2023-11-19

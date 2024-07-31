@@ -65,8 +65,8 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	private final int dims;
 	private final int maxNodeSize;
 	private QNode<T> root = null;
-	private int size = 0; 
-	
+	private int size = 0;
+
 
 	private QuadTreeKD2(int dims, int maxNodeSize) {
 		if (DEBUG) {
@@ -76,6 +76,11 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 		this.maxNodeSize = maxNodeSize;
 	}
 
+	/**
+	 * @param dims dimensions, usually 2 or 3
+	 * @return New quadtree
+	 * @param <T> Value type
+	 */
 	public static <T> QuadTreeKD2<T> create(int dims) {
 		int maxNodeSize = DEFAULT_MAX_NODE_SIZE;
 		if (2 * dims > DEFAULT_MAX_NODE_SIZE) {
@@ -83,11 +88,51 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 		}
 		return new QuadTreeKD2<>(dims, maxNodeSize);
 	}
-	
+
+	/**
+	 * @param dims dimensions, usually 2 or 3
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @return New quadtree
+	 * @param <T> Value type
+	 */
 	public static <T> QuadTreeKD2<T> create(int dims, int maxNodeSize) {
 		return new QuadTreeKD2<>(dims, maxNodeSize);
 	}
-	
+
+	/**
+	 * Note: This will align center and radius to a power of two before creating a tree.
+	 * @param center center of initial root node
+	 * @param radius radius of initial root node
+	 * @param align Whether center and radius should be aligned to powers of two. Aligning considerably
+	 *              reduces risk of precision problems. Recommended: "true".
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @return New quadtree
+	 * @param <T> Value type
+	 */
+	public static <T> QuadTreeKD2<T> create(double[] center, double radius, boolean align, int maxNodeSize) {
+		QuadTreeKD2<T> t = new QuadTreeKD2<>(center.length, maxNodeSize);
+		if (radius <= 0) {
+			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
+		}
+		if (align) {
+			center = MathTools.floorPowerOfTwoCopy(center);
+			radius = MathTools.ceilPowerOfTwo(radius);
+		}
+		t.root = new QNode<>(Arrays.copyOf(center, center.length), radius);
+		return t;
+	}
+
+	/**
+	 * WARNING: Unaligned center and radius can cause precision problems.
+	 * @param dims dimensions, usually 2 or 3
+	 * @param maxNodeSize maximum entries per node, default is 10
+	 * @param center center of initial root node
+	 * @param radius radius of initial root node
+	 * @return New quadtree
+	 * @param <T> Value type
+	 * @deprecated Please use {@link #create(double[], double, boolean, int)}
+	 */
+	@Deprecated
 	public static <T> QuadTreeKD2<T> create(int dims, int maxNodeSize, 
 			double[] center, double radius) {
 		QuadTreeKD2<T> t = new QuadTreeKD2<>(dims, maxNodeSize);
@@ -109,6 +154,8 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 		PointEntry<T> e = new PointEntry<>(key, value);
 		if (root == null) {
 			// We calculate a better radius when adding a second point.
+			// We align the center to a power of two. That reduces precision problems when
+			// creating subnode centers.
 			root = new QNode<>(MathTools.floorPowerOfTwoCopy(key), INITIAL_RADIUS);
 		}
 		if (root.getRadius() == INITIAL_RADIUS) {
@@ -128,10 +175,14 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 			return;
 		}
 		if (root.getRadius() == INITIAL_RADIUS) {
+			// Root size has not been initialized yet.
+			// We start by getting the maximum horizontal distance between the node center and any point in the node
 			double dMax = MathTools.maxDelta(key, root.getCenter());
 			for (int i = 0; i < root.getValueCount(); i++) {
 				dMax = Math.max(dMax, MathTools.maxDelta(root.getValues()[i].point(), root.getCenter()));
 			}
+			// We calculate the minimum required radius that is also a power of two.
+			// This radius can be divided by 2 many times without precision problems.
 			double radius = MathTools.ceilPowerOfTwo(dMax + QUtil.EPS_MUL);
 			if (radius > 0) {
 				root.adjustRadius(radius);
