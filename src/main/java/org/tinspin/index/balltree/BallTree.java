@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Tilmann Zaeschke
+ * Copyright 2016-2024 Tilmann Zaeschke
  * 
  * This file is part of TinSpin.
  * 
@@ -306,7 +306,7 @@ public class BallTree<T> implements PointMap<T>, PointMultimap<T> {
 	@Override
 	public PointIterator<T> query(double[] min, double[] max) {
 		//This does not use min/max but is really very basic.
-		return new QIterator0<>(this, min, max);
+		return new BTIterator<>(this, min, max);
 		//return new QIterator<>(this, min, max);
 	}
 
@@ -325,7 +325,7 @@ public class BallTree<T> implements PointMap<T>, PointMultimap<T> {
 	 */
 	@Override
 	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance dist) {
-		return new QIteratorKnn<>(root, k, center, dist, (e, d) -> true);
+		return new BTIteratorKnn<>(root, k, center, dist, (e, d) -> true);
 	}
 
 	/**
@@ -349,13 +349,11 @@ public class BallTree<T> implements PointMap<T>, PointMultimap<T> {
 		sb.append(" " + Arrays.toString(node.getCenter()));
 		sb.appendLn("/" + node.getRadius());
 		prefix += " ";
-		if (node.getChildNodes() != null) {
-			for (int i = 0; i < node.getChildNodes().length; i++) {
-				BTNode<T> sub = node.getChildNodes()[i];
-				if (sub != null) {
-					toStringTree(sb, sub, depth+1, i);
-				}
-			}
+		if (node.getLeftChild() != null) {
+			toStringTree(sb, node.getLeftChild(), depth+1, 0);
+		}
+		if (node.getRightChild() != null) {
+			toStringTree(sb, node.getRightChild(), depth+1, 1);
 		}
 		if (node.getEntries() != null) {
 			for (int i = 0; i < node.getEntries().size(); i++) {

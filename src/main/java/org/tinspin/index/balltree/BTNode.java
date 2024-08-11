@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Tilmann Zaeschke
+ * Copyright 2016-2024 Tilmann Zaeschke
  * 
  * This file is part of TinSpin.
  * 
@@ -41,7 +41,6 @@ public class BTNode<T> {
 	private double radius;
 	// null indicates that we have sub-node i.o. values
 	private ArrayList<PointEntry<T>> values;
-	private BTNode<T>[] subs;
 	private BTNode<T> left;
 	private BTNode<T> right;
 
@@ -89,7 +88,6 @@ public class BTNode<T> {
 		//split
 		ArrayList<PointEntry<T>> vals = values;
 		values = null;
-		subs = new BTNode[2];
 		PointEntry<T> start = vals.get(0);
 		int dims = start.point().length;
 		double[][] ordered = BTUtil.orderCoordinates(vals);
@@ -395,7 +393,7 @@ public class BTNode<T> {
 					throw new IllegalStateException();
 				}
 			}
-			if (subs != null) {
+			if (left != null || right != null) {
 				throw new IllegalStateException();
 			}
 		} else {
@@ -409,8 +407,12 @@ public class BTNode<T> {
 		return values != null;
 	}
 
-	BTNode<T>[] getChildNodes() {
-		return subs;
+	BTNode<T> getLeftChild() {
+		return left;
+	}
+
+	BTNode<T> getRightChild() {
+		return right;
 	}
 
 	// TODO add radii as argument

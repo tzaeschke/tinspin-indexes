@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2023 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2016-2024 Tilmann Zaeschke. All rights reserved.
  *
  * This file is part of TinSpin.
  *
@@ -25,7 +25,7 @@ import java.util.NoSuchElementException;
 
 import static org.tinspin.index.Index.*;
 
-public class QIteratorKnn<T> implements PointIteratorKnn<T> {
+public class BTIteratorKnn<T> implements PointIteratorKnn<T> {
 
     private final BTNode<T> root;
     private final PointDistance distFn;
@@ -38,7 +38,7 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
     private double[] center;
     private double currentDistance;
 
-    QIteratorKnn(BTNode<T> root, int minResults, double[] center, PointDistance distFn, PointFilterKnn<T> filterFn) {
+    BTIteratorKnn(BTNode<T> root, int minResults, double[] center, PointDistance distFn, PointFilterKnn<T> filterFn) {
         this.filterFn = filterFn;
         this.distFn = distFn;
         this.root = root;
@@ -124,13 +124,15 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
                         }
                     }
                 } else {
-                    for (BTNode<T> subnode : node.getChildNodes()) {
-                        if (subnode != null) {
-                            double dist = distFn.dist(center, subnode.getCenter()) - subnode.getRadius();
-                            if (dist <= maxNodeDist) {
-                                queueN.push(new NodeDistT(dist, subnode));
-                            }
-                        }
+                    BTNode leftChild = node.getLeftChild();
+                    double distL = distFn.dist(center, leftChild.getCenter()) - leftChild.getRadius();
+                    if (distL <= maxNodeDist) {
+                        queueN.push(new NodeDistT(distL, leftChild));
+                    }
+                    BTNode rightChild = node.getLeftChild();
+                    double distR = distFn.dist(center, rightChild.getCenter()) - rightChild.getRadius();
+                    if (distR <= maxNodeDist) {
+                        queueN.push(new NodeDistT(distR, rightChild));
                     }
                 }
             }

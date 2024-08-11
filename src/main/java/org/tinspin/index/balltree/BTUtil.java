@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Tilmann Zaeschke
+ * Copyright 2016-2024 Tilmann Zaeschke
  *
  * This file is part of TinSpin.
  *
@@ -22,8 +22,6 @@ import org.tinspin.index.PointDistance;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import static org.tinspin.index.Index.BoxEntry;
 
 class BTUtil {
 
@@ -81,12 +79,19 @@ class BTUtil {
 //    }
 
     public static boolean overlap(double[] min, double[] max, double[] center, double radius) {
+        double[] p = new double[min.length];
         for (int d = 0; d < min.length; d++) {
-            if (max[d] < center[d] - radius || min[d] > center[d] + radius) {
-                return false;
+            if (center[d] <= min[d]) {
+                p[d] = min[d];
+            } else if (center[d] >= max[d]) {
+                p[d] = max[d];
+            } else {
+                p[d] = center[d];
             }
+
         }
-        return true;
+        // TODO sqr-dist?
+        return PointDistance.l2(p, center) <= radius;
     }
 
 //    public static boolean isRectEnclosed(double[] minEnclosed, double[] maxEnclosed, double[] minOuter, double[] maxOuter) {

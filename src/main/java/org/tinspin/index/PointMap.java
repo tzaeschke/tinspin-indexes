@@ -18,6 +18,7 @@
 package org.tinspin.index;
 
 import org.tinspin.index.array.PointArray;
+import org.tinspin.index.balltree.BallTree;
 import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.kdtree.KDTree;
 import org.tinspin.index.phtree.PHTreeP;
@@ -130,11 +131,22 @@ public interface PointMap<T> extends Index {
         }
 
         /**
-         * Create a COverTree.
+         * Create a BallTree.
          *
          * @param dims Number of dimensions.
          * @param <T>  Value type
-         * @return New PH-Tree
+         * @return New BallTree
+         */
+        static <T> PointMap<T> createBallTree(int dims) {
+            return BallTree.create(dims);
+        }
+
+        /**
+         * Create a CoverTree.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New CoverTree
          */
         static <T> PointMap<T> createCoverTree(int dims) {
             return CoverTree.create(dims);

@@ -342,6 +342,8 @@ public class PointMapTest extends AbstractWrapperTest {
                 return PointMap.Factory.createRStarTree(dims);
             case COVER:
                 return PointMap.Factory.createCoverTree(dims);
+            case BALL:
+                return PointMap.Factory.createBallTree(dims);
             default:
                 throw new UnsupportedOperationException(candidate.name());
         }

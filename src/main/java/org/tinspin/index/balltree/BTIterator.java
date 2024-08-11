@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Tilmann Zaeschke
+ * Copyright 2016-2024 Tilmann Zaeschke
  * 
  * This file is part of TinSpin.
  * 
@@ -28,7 +28,7 @@ import static org.tinspin.index.Index.PointIterator;
  *
  * @param <T> Value type
  */
-public class QIterator0<T> implements PointIterator<T> {
+public class BTIterator<T> implements PointIterator<T> {
 
 	private class IteratorStack {
 		private final ArrayList<StackEntry<T>> stack;
@@ -73,18 +73,20 @@ public class QIterator0<T> implements PointIterator<T> {
 	
 	private static class StackEntry<T> {
 		int pos;
-		BTNode<T>[] subs;
+		BTNode<T> left;
+		BTNode<T> right;
 		ArrayList<PointEntry<T>> vals;
 		int len;
 		
 		void set(BTNode<T> node) {
 			this.pos = 0;
 			this.vals = node.getEntries();
-			this.subs = node.getChildNodes();
+			this.left = node.getLeftChild();
+			this.right = node.getRightChild();
 			if (this.vals != null) {
 				len = this.vals.size();
 			} else {
-				len = this.subs.length;
+				len = 2;
 			}
 		}
 		
@@ -94,7 +96,7 @@ public class QIterator0<T> implements PointIterator<T> {
 	}
 	
 	
-	QIterator0(BallTree<T> tree, double[] min, double[] max) {
+	BTIterator(BallTree<T> tree, double[] min, double[] max) {
 		this.stack = new IteratorStack();
 		this.tree = tree;
 		reset(min, max);
@@ -112,9 +114,8 @@ public class QIterator0<T> implements PointIterator<T> {
 						return;
 					}
 				} else {
-					BTNode<T> node = se.subs[pos];
-					if (node != null && 
-							BTUtil.overlap(min, max, node.getCenter(), node.getRadius())) {
+					BTNode<T> node = pos == 0 ? se.left : se.right;
+					if (BTUtil.overlap(min, max, node.getCenter(), node.getRadius())) {
 						se = stack.prepareAndPush(node);
 					}
 				}
