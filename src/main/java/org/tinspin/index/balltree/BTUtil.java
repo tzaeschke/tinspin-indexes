@@ -57,27 +57,6 @@ class BTUtil {
         return true;
     }
 
-//    public static boolean isRectEqual(double[] p1L, double[] p1U, double[] p2L, double[] p2U) {
-//        return isPointEqual(p1L, p2L) && isPointEqual(p1U, p2U);
-//    }
-//
-//    public static <T> boolean isRectEqual(BoxEntry<T> e, double[] keyL, double[] keyU) {
-//        return isRectEqual(e.min(), e.max(), keyL, keyU);
-//    }
-//
-//    public static <T> boolean isRectEqual(BoxEntry<T> e, BoxEntry<T> e2) {
-//        return isRectEqual(e.min(), e.max(), e2.min(), e2.max());
-//    }
-//
-//    public static boolean overlap(double[] min, double[] max, double[] min2, double[] max2) {
-//        for (int d = 0; d < min.length; d++) {
-//            if (max[d] < min2[d] || min[d] > max2[d]) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
-
     public static boolean overlap(double[] min, double[] max, double[] center, double radius) {
         double[] p = new double[min.length];
         for (int d = 0; d < min.length; d++) {
@@ -93,31 +72,6 @@ class BTUtil {
         // TODO sqr-dist?
         return PointDistance.l2(p, center) <= radius;
     }
-
-//    public static boolean isRectEnclosed(double[] minEnclosed, double[] maxEnclosed, double[] minOuter, double[] maxOuter) {
-//        for (int d = 0; d < minOuter.length; d++) {
-//            if (maxOuter[d] < maxEnclosed[d] || minOuter[d] > minEnclosed[d]) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
-//
-//    /**
-//     * The tests for inclusion with UPPER BOUNDARY EXCLUSIVE!
-//     * I.e. it firs only if maxEnclosed is SMALLER than (center + radius).
-//     */
-//    public static boolean fitsIntoNode(double[] minEnclosed, double[] maxEnclosed, double[] centerNode, double radiusNode) {
-//        double r2 = 0;
-//        for (int d = 0; d < centerNode.length; d++) {
-//            double r = centerNode[d] -
-//            r2
-//            if ((centerNode[d] + radiusNode) <= maxEnclosed[d] || (centerNode[d] - radiusNode) > minEnclosed[d]) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
 
     public static boolean isNodeEnclosed(double[] centerEnclosed, double radiusEnclosed, double[] centerOuter, double radiusOuter) {
         return PointDistance.l2(centerEnclosed, centerOuter) + radiusEnclosed <= radiusOuter;

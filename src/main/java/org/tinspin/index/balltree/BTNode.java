@@ -51,7 +51,6 @@ public class BTNode<T> {
 		this.values = values;
 	}
 
-	@SuppressWarnings("unchecked")
 	BTNode(double[] center, double radius, BTNode<T> parent, BTNode<T> left, BTNode<T> right) {
 		this.center = center;
 		this.radius = radius;
@@ -61,7 +60,7 @@ public class BTNode<T> {
 		this.right = right;
 	}
 
-	@SuppressWarnings({ "unchecked", "unused" })
+	@SuppressWarnings({"unused" })
 	BTNode<T> tryPut(PointEntry<T> e, int maxNodeSize, boolean enforceLeaf) {
 		if (BallTree.DEBUG && !BTUtil.fitsIntoNode(e.point(), center, radius)) {
 			throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
@@ -101,26 +100,26 @@ public class BTNode<T> {
 				splitDim = d;
 			}
 		}
-		double splitValue = ordered[splitDim][values.size() / 2];
+		double splitValue = ordered[splitDim][vals.size() / 2];
 
-		ArrayList<PointEntry<T>> left = new ArrayList<>();
-		ArrayList<PointEntry<T>> right = new ArrayList<>();
+		ArrayList<PointEntry<T>> leftPoints = new ArrayList<>();
+		ArrayList<PointEntry<T>> rightPoints = new ArrayList<>();
 		for (int i = 0; i < vals.size(); i++) {
 			PointEntry<T> pe = vals.get(i);
 			if (pe.point()[splitDim] >= splitValue) {
-				right.add(pe);
+				rightPoints.add(pe);
 			} else {
-				left.add(pe);
+				leftPoints.add(pe);
 			}
 		}
 
 		double[] centerLeft = new double[dims];
 		double[] centerRight = new double[dims];
-		double radiusLeft = BTUtil.calcBoundingSphere(left, centerLeft);
-		double radiusRight = BTUtil.calcBoundingSphere(left, centerRight);
+		double radiusLeft = BTUtil.calcBoundingSphere(leftPoints, centerLeft);
+		double radiusRight = BTUtil.calcBoundingSphere(rightPoints, centerRight);
 
-		this.left = new BTNode<>(centerLeft, radiusLeft, this, left);
-		this.right = new BTNode<>(centerRight, radiusRight, this, right);
+		this.left = new BTNode<>(centerLeft, radiusLeft, this, leftPoints);
+		this.right = new BTNode<>(centerRight, radiusRight, this, rightPoints);
 
 		return findBestChildForInsert(e);
 	}
@@ -153,25 +152,6 @@ public class BTNode<T> {
 			parent.adjustRadius();
 		}
 		return resizeVolLeft > resizeVolRight ? this.right : this.left;
-	}
-
-
-	/**
-	 * The subnode position has reverse ordering of the point's
-	 * dimension ordering. Dimension 0 of a point is the highest
-	 * ordered bit in the position.
-	 * @param p point
-	 * @return subnode position
-	 */
-	private int calcSubPosition(double[] p) {
-		int subNodePos = 0;
-		for (int d = 0; d < center.length; d++) {
-			subNodePos <<= 1;
-			if (p[d] >= center[d]) {
-				subNodePos |= 1;
-			}
-		}
-		return subNodePos;
 	}
 
 	PointEntry<T> remove(BTNode<T> parent, double[] key, int maxNodeSize, Predicate<PointEntry<T>> pred) {
