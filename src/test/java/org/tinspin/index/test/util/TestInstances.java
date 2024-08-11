@@ -11,6 +11,7 @@ import ch.ethz.globis.tinspin.TestHandle;
 import ch.ethz.globis.tinspin.data.AbstractTest;
 import org.tinspin.index.array.PointArray;
 import org.tinspin.index.array.RectArray;
+import org.tinspin.index.balltree.BallTree;
 import org.tinspin.index.covertree.CoverTree;
 import org.tinspin.index.kdtree.KDTree;
 import org.tinspin.index.phtree.PHTreeMMP;
@@ -38,6 +39,8 @@ public class TestInstances {
 		PHTREE(PHTreeP.class.getName(), PHTreeR.class.getName()),
 		/** PH-Tree multimap based on PhTreeMultiMapF2 */
 		PHTREE_MM(PHTreeMMP.class.getName(), ""),
+		/** CoverTree */
+		BALL(BallTree.class.getName(), ""),
 		/** CoverTree */
 		COVER(CoverTree.class.getName(), ""),
 		/** KD-Tree */

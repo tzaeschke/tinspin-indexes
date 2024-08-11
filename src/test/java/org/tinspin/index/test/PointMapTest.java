@@ -47,6 +47,7 @@ public class PointMapTest extends AbstractWrapperTest {
     public static Iterable<Object[]> candidates() {
         ArrayList<Object[]> l = new ArrayList<>();
         // l.add(new Object[]{IDX.ARRAY});
+        l.add(new Object[]{IDX.BALL});
         l.add(new Object[]{IDX.COVER});
         l.add(new Object[]{IDX.KDTREE});
         l.add(new Object[]{IDX.PHTREE_MM});
