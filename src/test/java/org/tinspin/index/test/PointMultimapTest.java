@@ -51,6 +51,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         ArrayList<Object[]> l = new ArrayList<>();
         // l.add(new Object[]{IDX.ARRAY});
         // l.add(new Object[]{IDX.COVER});
+        l.add(new Object[]{IDX.BALL});
         l.add(new Object[]{IDX.KDTREE});
         l.add(new Object[]{IDX.PHTREE_MM});
         l.add(new Object[]{IDX.QUAD_HC});
@@ -160,7 +161,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
         }
 
         if (candidate != IDX.COVER && candidate != IDX.KDTREE && candidate != IDX.QUAD_PLAIN
-                && candidate != IDX.QUAD_HC && candidate != IDX.QUAD_HC2) {
+                && candidate != IDX.QUAD_HC && candidate != IDX.QUAD_HC2 && candidate != IDX.BALL) {
             int nExtent = 0;
             PointIterator<Entry> extent = tree.iterator();
             while (extent.hasNext()) {
@@ -382,6 +383,8 @@ public class PointMultimapTest extends AbstractWrapperTest {
         switch (candidate) {
             case ARRAY:
                 return PointMultimap.Factory.createArray(dims, size);
+            case BALL:
+                return PointMultimap.Factory.createKdTree(dims);
 //            //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE:
                 return PointMultimap.Factory.createKdTree(dims);
