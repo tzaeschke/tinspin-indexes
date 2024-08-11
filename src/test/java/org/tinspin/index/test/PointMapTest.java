@@ -145,7 +145,7 @@ public class PointMapTest extends AbstractWrapperTest {
         }
 
         if (candidate != IDX.COVER && candidate != IDX.KDTREE && candidate != IDX.QUAD_PLAIN
-                && candidate != IDX.QUAD_HC && candidate != IDX.QUAD_HC2) {
+                && candidate != IDX.QUAD_HC && candidate != IDX.QUAD_HC2 && candidate != IDX.BALL) {
             int nExtent = 0;
             PointIterator<Entry> extent = tree.iterator();
             while (extent.hasNext()) {

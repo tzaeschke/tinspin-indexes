@@ -129,7 +129,7 @@ public class BTIteratorKnn<T> implements PointIteratorKnn<T> {
                     if (distL <= maxNodeDist) {
                         queueN.push(new NodeDistT(distL, leftChild));
                     }
-                    BTNode rightChild = node.getLeftChild();
+                    BTNode rightChild = node.getRightChild();
                     double distR = distFn.dist(center, rightChild.getCenter()) - rightChild.getRadius();
                     if (distR <= maxNodeDist) {
                         queueN.push(new NodeDistT(distR, rightChild));
