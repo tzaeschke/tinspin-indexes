@@ -384,7 +384,7 @@ public class PointMultimapTest extends AbstractWrapperTest {
             case ARRAY:
                 return PointMultimap.Factory.createArray(dims, size);
             case BALL:
-                return PointMultimap.Factory.createKdTree(dims);
+                return PointMultimap.Factory.createBallTree(dims);
 //            //case CRITBIT: return new PointArray<>(dims, size);
             case KDTREE:
                 return PointMultimap.Factory.createKdTree(dims);

@@ -18,6 +18,7 @@
 package org.tinspin.index;
 
 import org.tinspin.index.array.PointArray;
+import org.tinspin.index.balltree.BallTree;
 import org.tinspin.index.kdtree.KDTree;
 import org.tinspin.index.phtree.PHTreeMMP;
 import org.tinspin.index.qthypercube.QuadTreeKD;
@@ -152,6 +153,17 @@ public interface PointMultimap<T> extends Index {
          */
         static <T> PointMultimap<T> createArray(int dims, int size) {
             return new PointArray<>(dims, size);
+        }
+
+        /**
+         * Create a BallTree.
+         *
+         * @param dims Number of dimensions.
+         * @param <T>  Value type
+         * @return New BallTree
+         */
+        static <T> PointMultimap<T> createBallTree(int dims) {
+            return BallTree.create(dims);
         }
 
         /**
