@@ -67,20 +67,27 @@ public class BTNode<T> {
 					" center/radius=" + Arrays.toString(center) + "/" + radius);
 		}
 		
-		//traverse subs?
+		// traverse subs?
 		if (values == null) {
 			return findBestChildForInsert(e);
 		}
 		
-		//add if:
-		//a) we have space
-		//b) we have maxDepth
-		//c) elements are equal (work only for n=1, avoids splitting
-		//   in cases where splitting won't help. For n>1 the
-		//   local limit is (temporarily) violated.
+		// add if:
+		// a) we have space
+		// b) we have maxDepth
+		// c) elements are equal (work only for n=1, avoids splitting
+		//    in cases where splitting won't help. For n>1 the
+		//    local limit is (temporarily) violated.
 		if (values.size() < maxNodeSize || enforceLeaf || 
 				BTUtil.isPointEqual(e.point(), values.get(0).point())) {
 			values.add(e);
+			double requiredR = DIST.dist(e.point(), center);
+			if (requiredR > radius) {
+				radius = requiredR;
+				if (parent != null) {
+					parent.adjustRadius();
+				}
+			}
 			return null;
 		}
 		
@@ -120,6 +127,7 @@ public class BTNode<T> {
 
 		this.left = new BTNode<>(centerLeft, radiusLeft, this, leftPoints);
 		this.right = new BTNode<>(centerRight, radiusRight, this, rightPoints);
+		adjustRadius();
 
 		return findBestChildForInsert(e);
 	}
@@ -139,18 +147,19 @@ public class BTNode<T> {
 		double resizeLeft = distLeft > radiusLeft ? distLeft - radiusLeft : 0;
 		double resizeRight = distRight > radiusRight ? distRight - radiusRight : 0;
 
-		double resizeVolLeft = resizeLeft > 0 ? Math.pow(distLeft, dims) - Math.pow(radiusLeft, dims) : 0;
-		double resizeVolRight = resizeRight > 0 ? Math.pow(distRight, dims) - Math.pow(radiusRight, dims) : 0;
-
-		if (resizeVolLeft == 0 && resizeVolRight == 0) {
+		if (resizeLeft == 0 && resizeRight == 0) {
 			// We just pick the one with the smaller radius -> more compact...  ?
 			return  this.left.radius < this.right.radius ? this.left : this.right;
 		}
 
 		// adjust parent radius (and position???)
-		if (parent != null) {
+		if (resizeLeft > 0 && resizeRight > 0 && parent != null) {
 			parent.adjustRadius();
 		}
+
+		// decide based on volume increase.
+		double resizeVolLeft = resizeLeft > 0 ? Math.pow(distLeft, dims) - Math.pow(radiusLeft, dims) : 0;
+		double resizeVolRight = resizeRight > 0 ? Math.pow(distRight, dims) - Math.pow(radiusRight, dims) : 0;
 		return resizeVolLeft > resizeVolRight ? this.right : this.left;
 	}
 
@@ -338,9 +347,9 @@ public class BTNode<T> {
 //							(centerOuter[d]-radiusOuter) / (centerEnclosed[d]-radiusEnclosed) > 1.0000001) {
 //						return false;
 //					}
-					System.out.println("Outer: " + parent.radius + " " + 
-						Arrays.toString(parent.center));
+					System.out.println("Outer: " + parent.radius + " " + Arrays.toString(parent.center));
 					System.out.println("Child: " + radius + " " + Arrays.toString(center));
+					System.out.println("Required radius = " + (DIST.dist(center, parent.center) + radius));
 					System.out.println((parent.center[d]+parent.radius) + " vs " + (center[d]+radius)); 
 					System.out.println("r=" + (parent.center[d]+parent.radius) / (center[d]+radius)); 
 					System.out.println((parent.center[d]-parent.radius) + " vs " + (center[d]-radius));
