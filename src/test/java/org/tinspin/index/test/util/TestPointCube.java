@@ -18,8 +18,8 @@ import java.util.Random;
  */
 public class TestPointCube extends TestPoint {
 
-	public TestPointCube(Random R, TestStats S) {
-		super(R, S);
+	public TestPointCube(Random rnd, TestStats stats) {
+		super(rnd, stats);
 	}
 
 	/**

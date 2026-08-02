@@ -18,6 +18,11 @@ public abstract class TestBox extends AbstractTest {
 		super(rnd, stats);
 	}
 
+	@SuppressWarnings("deprecation")
+	public final double[][] generateUpdates(int n, double[] data, double[][] ups) {
+		throw new UnsupportedOperationException();
+	}
+
 	@Override
 	public final double[][] generateUpdates(int n, double[] data, double[][] ups, int[] ids) {
 		double maxD = maxUpdateDistance();
