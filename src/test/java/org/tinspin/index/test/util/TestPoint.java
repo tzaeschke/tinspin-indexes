@@ -15,11 +15,11 @@ import java.util.Random;
 public abstract class TestPoint extends AbstractTest {
 	
 	
-	protected TestPoint(Random R, TestStats S) {
-		super(R, S);
+	protected TestPoint(Random rnd, TestStats stats) {
+		super(rnd, stats);
 	}
-	
-	@Override
+
+	@SuppressWarnings("deprecation")
 	public final double[][] generateUpdates(int n, double[] data, double[][] ups) {
 		throw new UnsupportedOperationException();
 	}

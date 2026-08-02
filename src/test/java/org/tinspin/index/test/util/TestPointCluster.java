@@ -19,8 +19,8 @@ import java.util.Random;
  */
 public class TestPointCluster extends TestPoint {
 
-	public TestPointCluster(Random R, TestStats S) {
-		super(R, S);
+	public TestPointCluster(Random rnd, TestStats stats) {
+		super(rnd, stats);
 	}
 
 	private static double BOX_YZ_OFFS = 0.01; //0.5;
@@ -29,7 +29,7 @@ public class TestPointCluster extends TestPoint {
 	private static int GAUSS_N = 1000;
 	private static final double GAUSS_SIGMA = 0.001;
 	
-	private static enum TYPE {
+	private enum TYPE {
 		ORIGINAL(2),
 		HORIZONTAL05(3.5),
 		HORIZONTAL04(3.4),

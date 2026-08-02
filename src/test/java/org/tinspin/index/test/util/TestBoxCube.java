@@ -18,8 +18,8 @@ public class TestBoxCube extends TestBox {
 
 	public static final double MIN_X = 0;
 	
-	public TestBoxCube(Random R, TestStats S) {
-		super(R, S);
+	public TestBoxCube(Random rnd, TestStats stats) {
+		super(rnd, stats);
 	}
 	
 	@Override

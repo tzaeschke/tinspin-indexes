@@ -24,7 +24,7 @@ public class TestBoxCluster extends TestBox {
 	private static int GAUSS_N = 1000;
 	private static final double GAUSS_SIGMA = 0.001;
 	
-	private static enum TYPE {
+	private enum TYPE {
 		HORIZONTAL05(3.5),
 		HORIZONTAL04(3.4),
 		GAUSS(5.0);
@@ -43,8 +43,8 @@ public class TestBoxCluster extends TestBox {
 	}
 	
 	
-	public TestBoxCluster(Random R, TestStats S) {
-		super(R, S);
+	public TestBoxCluster(Random rnd, TestStats stats) {
+		super(rnd, stats);
 	}
 	
 	

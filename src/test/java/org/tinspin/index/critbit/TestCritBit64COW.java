@@ -32,7 +32,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
-import org.tinspin.index.critbit.CritBit64COW;
 import org.tinspin.index.critbit.CritBit64.CBIterator;
 import org.tinspin.index.critbit.CritBit64.Entry;
 import org.tinspin.index.critbit.CritBit64.QueryIterator;
@@ -175,7 +174,7 @@ public class TestCritBit64COW {
         //iterator should sill see the entry there
         CritBit64COW.Entry<Integer> e = it.nextEntry();
         assertEquals(1L, e.key());
-        assertEquals(new Integer(1), e.value());
+        assertEquals(Integer.valueOf(1), e.value());
         assertFalse(it.hasNext());
     }
 
@@ -301,16 +300,16 @@ public class TestCritBit64COW {
     public void testMultiThreading() throws InterruptedException {
         CritBit64COW<Integer> tree = newCritBit();
 
-        int N_W = 10; //threads
-        int N = 1*1000*1000;
+        int nWorkers = 10; //threads
+        final int N = 1_000_000;
         
-        ExecutorService es = Executors.newFixedThreadPool(N_W);
-    	int batchSize = N/N_W;
-        for (int i = 0; i < N_W; i++) {
+        ExecutorService es = Executors.newFixedThreadPool(nWorkers);
+    	int batchSize = N/nWorkers;
+        for (int i = 0; i < nWorkers; i++) {
         	es.execute( new Writer(tree, i*batchSize, batchSize) );
 		}
         es.shutdown();
-        es.awaitTermination(10, TimeUnit.SECONDS);
+        assertTrue(es.awaitTermination(10, TimeUnit.SECONDS));
 		
         if (!es.isTerminated()) {
         	fail();
@@ -330,13 +329,13 @@ public class TestCritBit64COW {
 
 	@Test
 	public void testIteratorWithNullValues() {
-		int N = 10000;
-		Random R = new Random(0);
+		final int N = 10000;
+        final Random rnd = new Random(0);
 
 		CritBit64COW<?> cb = newCritBit();
 		long[] data = new long[N];
 		for (int i = 0; i < N; i++) {
-			long l = R.nextInt(123456789); 
+			long l = rnd.nextInt(123456789);
 			data[i] = l;
 			cb.put(l, null);
 		}
@@ -450,13 +449,13 @@ public class TestCritBit64COW {
 	
 	@Test
 	public void testPrint() {
-		int N = 100;
-		Random R = new Random(0);
+        final int N = 100;
+        final Random rnd = new Random(0);
 
 		CritBit64COW<?> cb = newCritBit();
 		long[] data = new long[N];
 		for (int i = 0; i < N; i++) {
-			long l = R.nextInt(123456789); 
+			long l = rnd.nextInt(123456789);
 			data[i] = l;
 			cb.put(l, null);
 		}

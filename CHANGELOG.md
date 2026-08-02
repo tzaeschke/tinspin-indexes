@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Updated maven plugins and fixed pom warning
   [#47](https://github.com/tzaeschke/tinspin-indexes/pull/47)
+- Fixed deprecation warnings
+  [#48](https://github.com/tzaeschke/tinspin-indexes/pull/48)
 
 ## [2.1.4] - 2024-08-01
 
