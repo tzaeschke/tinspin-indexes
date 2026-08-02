@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Nothing yet
 
+### Fixed
+
+- Updated maven plugins and fixed pom warning
+  [#47](https://github.com/tzaeschke/tinspin-indexes/pull/47)
+
 ## [2.1.4] - 2024-08-01
 
 ### Fixed
