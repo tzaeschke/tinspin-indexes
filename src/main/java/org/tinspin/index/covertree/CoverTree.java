@@ -59,8 +59,10 @@ import org.tinspin.index.Stats;
  * TODO
  * - Rebalancing (nearest-ancestor)
  * - Merge Node/Point classes
- *     
+ *
  * @author Tilmann Zäschke
+ *
+ * @param <T> Value type.
  */
 public class CoverTree<T> implements PointMap<T> {
 

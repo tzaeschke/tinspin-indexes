@@ -23,7 +23,8 @@ import org.tinspin.index.critbit.CritBit.QueryIterator;
 import org.tinspin.index.critbit.CritBit.QueryIteratorKD;
 
 /**
- * 
+ * Critbit tree examples.
+ *
  * @author Tilmann Zaeschke
  */
 public class Examples {

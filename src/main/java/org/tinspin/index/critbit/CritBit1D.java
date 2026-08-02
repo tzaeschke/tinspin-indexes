@@ -21,7 +21,8 @@ import org.tinspin.index.critbit.CritBit.FullIterator;
 import org.tinspin.index.critbit.CritBit.QueryIterator;
 
 /**
- * 
+ * A 1-dimensional critbit tree.
+ *
  * @author Tilmann Zaeschke
  * 
  * @param <V> value type

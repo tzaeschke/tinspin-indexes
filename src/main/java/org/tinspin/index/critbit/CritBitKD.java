@@ -20,7 +20,8 @@ package org.tinspin.index.critbit;
 import org.tinspin.index.critbit.CritBit.QueryIteratorKD;
 
 /**
- * 
+ * A k-dimensional critbit tree.
+ *
  * @author Tilmann Zaeschke
  * 
  * @param <V> value type
