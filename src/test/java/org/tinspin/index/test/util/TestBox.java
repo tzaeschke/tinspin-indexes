@@ -14,13 +14,8 @@ import java.util.Random;
 
 public abstract class TestBox extends AbstractTest {
 	
-	protected TestBox(Random R, TestStats S) {
-		super(R, S);
-	}
-
-	@Override
-	public final double[][] generateUpdates(int n, double[] data, double[][] ups) {
-		throw new UnsupportedOperationException();
+	protected TestBox(Random rnd, TestStats stats) {
+		super(rnd, stats);
 	}
 
 	@Override
