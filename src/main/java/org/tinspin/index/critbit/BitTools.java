@@ -25,6 +25,7 @@ package org.tinspin.index.critbit;
  */
 public class BitTools {
 
+	/** Constructor. */
 	protected BitTools() {}
 
     /**
@@ -116,6 +117,7 @@ public class BitTools {
 	 * Loss-less transformation of long integers to double floats with the same ordering property.
 	 *
 	 * @param value value to convert
+	 * @param ret result
 	 * @return double float representation.
 	 */
 	public static double[] toDouble(long[] value, double[] ret) {
@@ -130,6 +132,7 @@ public class BitTools {
 	 * Loss-less transformation of integers to floats with the same ordering property.
 	 *
 	 * @param value value to convert
+	 * @param ret result
 	 * @return float representation.
 	 */
 	public static float[] toFloat(long[] value, float[] ret) {
@@ -373,6 +376,7 @@ public class BitTools {
 	 * @param ba bitset
 	 * @param posBit Counts from left to right (highest to lowest)!!!
 	 * @param b bit to set
+	 * @return updated bitset
 	 */
 	public static long setBit(long ba, int posBit, boolean b) {
         if (b) {
@@ -387,6 +391,7 @@ public class BitTools {
 	 *
 	 * @param ba bitset
 	 * @param posBit Counts from left to right (highest to lowest)!!!
+	 * @return updated bitset
 	 */
 	public static long set1(long ba, int posBit) {
     	return ba | (0x8000000000000000L >>> posBit);
@@ -397,6 +402,7 @@ public class BitTools {
 	 *
 	 * @param ba bitset
 	 * @param posBit Counts from left to right (highest to lowest)!!!
+	 * @return updated bitset
 	 */
     public static long set0(long ba, int posBit) {
     	return ba & (~(0x8000000000000000L >>> posBit));

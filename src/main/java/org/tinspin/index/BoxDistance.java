@@ -17,13 +17,20 @@
  */
 package org.tinspin.index;
 
+/**
+ * Interface and standard implementations of Box distances.
+ */
 @FunctionalInterface
 public interface BoxDistance {
 
+	/** Distance based on box center points. */
 	BoxDistance CENTER = BoxDistance::centerDistance;
+	/** Distance based on closest points on box edges. */
 	BoxDistance EDGE = BoxDistance::edgeDistance;
 
 	/**
+	 * Distance between point and min-max-box.
+	 *
 	 * @param point A point
 	 * @param min Minimum corner of axis aligned box
 	 * @param max Maximum corner of axis aligned box
@@ -47,48 +54,18 @@ public interface BoxDistance {
 	}
 
 	/**
-	 * This class calculates the distance to a rectangular shaped object.
-	 * <p>
-	 * This class completely ignores the center given as parameter to the interface.
-	 * 
-	 * TODO: maybe we could get rid of the center parameter altogether and always let 
-	 *       the RectangleDistanceFunction hold it's reference points?
-	 */
-	class RectangleDist implements BoxDistance {
-		private final double[] lower;
-		private final double[] upper;
-
-		public RectangleDist(double[] lower, double[] upper) {
-			this.lower = lower;
-			this.upper = upper;
-		}
-
-		@Override
-		public double dist(double[] ignored, double[] min, double[] max) {
-			double dist = 0;
-			for (int i = 0; i < lower.length; i++) {
-				double d = 0;
-				if (min[i] > upper[i]) {
-					// "right" side of our box
-					d = min[i] - upper[i];
-				} else if (max[i] < lower[i]) {
-					// "left" side of our box
-					d = lower[i] - max[i];
-				} // else intersecting
-				dist += d * d;
-			}
-			return dist;
-		}
-	}
-
-	/**
-	 * Special wrapper class which takes the inverse or the given function.
+	 * Special wrapper class which takes the inverse of the given distance function.
 	 * Can be used to get the farthest neighbors using the nearest neighbor algorithm.
 	 */
 	class FarthestNeighbor implements BoxDistance {
 		private static final double EPSILON = 2 * Double.MIN_VALUE;
 		private final BoxDistance dist;
 
+		/**
+		 * Constructor.
+		 *
+		 * @param dist distance function
+		 */
 		public FarthestNeighbor(BoxDistance dist) {
 			this.dist = dist;
 		}
@@ -113,6 +90,13 @@ public interface BoxDistance {
 		}
 	}
 
+	/**
+	 * Implementation of center distance. Calculates Euclidean distance between a point and the center points of a box.
+	 * @param center a point
+	 * @param min min values of box
+	 * @param max max values of box
+	 * @return distance
+	 */
 	static double centerDistance(double[] center, double[] min, double[] max) {
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {
@@ -122,6 +106,13 @@ public interface BoxDistance {
 		return Math.sqrt(dist);
 	}
 
+	/**
+	 * Implementation of edge distance. Calculates Euclidean distance between a point and the closest edge point a box.
+	 * @param center a point
+	 * @param min min values of box
+	 * @param max max values of box
+	 * @return distance
+	 */
 	static double edgeDistance(double[] center, double[] min, double[] max) {
 		double dist = 0;
 		for (int i = 0; i < center.length; i++) {
@@ -136,12 +127,28 @@ public interface BoxDistance {
 		return Math.sqrt(dist);
 	}
 
+	/**
+	 * Edge distance implementation.
+	 */
 	class EdgeDistance {
 		final PointDistance distFn;
+
+		/**
+		 * Constructor.
+		 * @param distFn distance function.
+		 */
 		public EdgeDistance(PointDistance distFn) {
 			this.distFn = distFn;
 		}
 
+		/**
+		 * Distance calculator between a point and the closest point on the closest edge of the box defined by
+		 * min and max.
+		 * @param center point
+		 * @param min box min
+		 * @param max box max
+		 * @return distance
+		 */
 		public double edgeDistance(double[] center, double[] min, double[] max) {
 			double[] dist = new double[center.length];
 			for (int i = 0; i < center.length; i++) {

@@ -17,6 +17,9 @@
  */
 package org.tinspin.index;
 
+/**
+ * Interface and standard implementations of Point distances.
+ */
 @FunctionalInterface
 public interface PointDistance {
 
