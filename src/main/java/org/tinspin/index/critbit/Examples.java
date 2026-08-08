@@ -29,8 +29,17 @@ import org.tinspin.index.critbit.CritBit.QueryIteratorKD;
  */
 public class Examples {
 
+	/**
+	 * Control console logging.
+	 */
 	public static boolean PRINT = true;
 
+	private Examples() {}
+
+	/**
+	 * Run all example.
+	 * @param args unused.
+	 */
 	public static void main(String[] args) {
 		ex1D_32();
 		ex1D_float();

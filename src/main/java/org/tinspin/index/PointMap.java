@@ -83,11 +83,13 @@ public interface PointMap<T> extends Index {
     T queryExact(double[] point);
 
     /**
+     * An iterator over all entries.
      * @return An iterator over all entries.
      */
     PointIterator<T> iterator();
 
     /**
+     * Return all points that lie inside the query rectangle.
      * @param min Lower left corner of the query window
      * @param max Upper right corner of the query window
      * @return All points that lie inside the query rectangle.

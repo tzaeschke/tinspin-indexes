@@ -44,22 +44,32 @@ public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 	private final ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
 	private final ArrayList<PointEntryKnn<Object>> pool = new ArrayList<>();
 	private final PriorityQueue<PointEntryKnn<Object>> queue = new PriorityQueue<>(new PEComparator());
-	
-	
+
+	/**
+	 * Create a kNN iterator.
+	 * @param tree the tree
+	 * @param center thr center
+	 * @param k k
+	 * @param dist distance function
+	 */
 	public CoverTreeQueryKnn(CoverTree<T> tree, double[] center, int k, 
 			PointDistance dist) {
 		this.tree = tree;
 		reset(center, k, dist == null ? PointDistance.L2 : dist);
 	}
-
 	
 	@Override
 	public CoverTreeQueryKnn<T> reset(double[] center, int k) {
 		reset(center, k, null);
 		return this;
 	}
-	
-	
+
+	/**
+	 * Reset the iterator.
+	 * @param center new center
+	 * @param k new k
+	 * @param dist new distance function
+	 */
 	public void reset(double[] center, int k, PointDistance dist) {
 		if (dist != null) {
 			this.dist = dist;

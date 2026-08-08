@@ -54,8 +54,16 @@ public interface Index {
 	 */
 	Stats getStats();
 
+    /**
+     * The number of nodes in the tree.
+     * @return The number of nodes.
+     */
 	int getNodeCount();
 
+    /**
+     * The maximum depth of the tree in terms of nodes.
+     * @return maximum depth.
+     */
 	int getDepth();
 
 	/**
@@ -104,6 +112,12 @@ public interface Index {
      * @param <T> Entry type.
      */
     interface QueryIteratorKnn<T> extends Iterator<T> {
+        /**
+         * Reset the iterator (allows object reuse).
+         * @param center new center point
+         * @param k new k
+         * @return fresh iterator
+         */
         QueryIteratorKnn<T> reset(double[] center, int k);
     }
 

@@ -69,6 +69,10 @@ public class CritBit64COW<V> extends CritBit64<V> implements Iterable<V> {
         return new CritBit64COW<V>();
     }
 
+    /**
+     * Create a copy of this tree.
+     * @return a copy.
+     */
     public CritBit64COW<V> copy() {
         CritBit64COW<V> critBitCopy = create();
         critBitCopy.info = this.info.copy();
