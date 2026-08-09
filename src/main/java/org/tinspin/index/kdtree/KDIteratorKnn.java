@@ -25,6 +25,10 @@ import java.util.NoSuchElementException;
 
 import static org.tinspin.index.Index.*;
 
+/**
+ * Iterator for kNN queries over kd-trees.
+ * @param <T>
+ */
 public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
 
     private final Node<T> root;
@@ -80,6 +84,10 @@ public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
         return ret;
     }
 
+    /**
+     * Current search distance.
+     * @return current search distance
+     */
     public double distance() {
         return currentDistance;
     }

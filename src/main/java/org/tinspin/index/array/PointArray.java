@@ -19,7 +19,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	private int N;
 	private PointEntry<T>[] values;
 	private int insPos = 0;
-	private static final PEComparator comparator = new PEComparator();
+	private static final PEComparator comparator = Index.PE_COMP_DEFAULT;
 
 	/**
 	 * Setup of a simple array data structure (no indexing).

@@ -416,20 +416,19 @@ public interface Index {
     /**
      * Distance comparator function for Point kNN query result entries.
      */
-    class PEComparator implements Comparator<PointEntryKnn<?>> {
+    interface PEComparator extends Comparator<PointEntryKnn<?>> {
         @Override
-        public int compare(PointEntryKnn<?> o1, PointEntryKnn<?> o2) {
-            return Double.compare(o1.dist, o2.dist);
-        }
+        int compare(PointEntryKnn<?> o1, PointEntryKnn<?> o2);
     }
 
     /**
      * Distance comparator function for Box kNN query result entries.
      */
-    class BEComparator implements Comparator<BoxEntryKnn<?>> {
+    interface BEComparator extends Comparator<BoxEntryKnn<?>> {
 	    @Override
-	    public int compare(BoxEntryKnn<?> o1, BoxEntryKnn<?> o2) {
-            return Double.compare(o1.dist, o2.dist);
-	    }
+	    int compare(BoxEntryKnn<?> o1, BoxEntryKnn<?> o2);
 	}
+
+    BEComparator BE_COMP_DEFAULT = (o1, o2) ->  Double.compare(o1.dist, o2.dist);
+    PEComparator PE_COMP_DEFAULT = (o1, o2) -> Double.compare(o1.dist, o2.dist);
 }

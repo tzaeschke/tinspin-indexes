@@ -33,6 +33,7 @@ import org.tinspin.index.util.StringBuilderLn;
  */
 public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 
+	/** Enable debug checks and output. */
 	public static final boolean DEBUG = false;
 
 	private final int dims;
@@ -74,10 +75,22 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 		this.defensiveKeyCopy = defensiveKeyCopy;
 	}
 
+	/**
+	 * Create new tree.
+	 * @param dims number of dimensions.
+	 * @return new tree
+	 * @param <T> value type
+	 */
 	public static <T> KDTree<T> create(int dims) {
 		return new KDTree<>(dims, true);
 	}
 
+	/**
+	 * Create new tree.
+	 * @param config configuration object
+	 * @return new tree
+	 * @param <T> value type
+	 */
 	public static <T> KDTree<T> create(IndexConfig config) {
 		return new KDTree<>(config.getDimensions(), config.getDefensiveKeyCopy());
 	}
@@ -590,6 +603,10 @@ public class KDTree<T> implements PointMap<T>, PointMultimap<T> {
 	 * Statistics container class.
 	 */
 	public static class KDStats extends Stats {
+		/**
+		 * Constructor.
+		 * @param tree tree
+		 */
 		public KDStats(KDTree<?> tree) {
 			super(tree.nDist1NN + tree.nDistKNN, tree.nDist1NN, tree.nDistKNN);
 		}

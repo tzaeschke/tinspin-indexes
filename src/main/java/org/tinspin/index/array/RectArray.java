@@ -269,7 +269,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 		return Math.sqrt(dist);
 	}
 
-	private static final BEComparator COMP = new BEComparator();
+	private static final BEComparator COMP = Index.BE_COMP_DEFAULT;
 
 	@Override
 	public String toString() {

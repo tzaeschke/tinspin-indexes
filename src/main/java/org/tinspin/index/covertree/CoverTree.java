@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import org.tinspin.index.Index;
 import org.tinspin.index.PointDistance;
 import org.tinspin.index.PointMap;
 import org.tinspin.index.Stats;
@@ -78,7 +79,7 @@ public class CoverTree<T> implements PointMap<T> {
 	private final double BASE;
 	private final double LOG_BASE;
 	private final PointDistance dist;
-	private static final PEComparator comparator = new PEComparator();
+	private static final PEComparator comparator = Index.PE_COMP_DEFAULT;
 	private long nDistCalc = 0;
 	private long nDist1NN = 0;
 	private long nDistKNN = 0;

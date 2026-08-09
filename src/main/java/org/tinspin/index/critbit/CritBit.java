@@ -1140,7 +1140,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		}
 
 	}
-	
+
+	/**
+	 * Query iterator with mask. TODO describe.
+	 * @param <V> value type
+	 */
 	public static class QueryIteratorWithMask<V> implements Iterator<V> {
 		private final CritBit<V> cb;
 		private final long[] valIntTemplate;
@@ -1161,6 +1165,13 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private final long[] domMaskHi;
 		private final long MAX_MASK;
 
+		/**
+		 * Create.
+		 * @param cb tree
+		 * @param minOrig min
+		 * @param maxOrig max
+		 * @param DIM dimensions
+		 */
 		@SuppressWarnings("unchecked")
 		public QueryIteratorWithMask(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DIM) {
 			this.cb = cb;
@@ -1174,6 +1185,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			reset(minOrig, maxOrig);
 		}
 
+		/**
+		 * Reset the iterator.
+		 * @param min new min
+		 * @param max new max
+		 */
 		public void reset(long[] min, long[] max) {
 			stackTop = -1;
 			nextKey = null;
@@ -1505,7 +1521,10 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		}
 
 	}
-	
+
+	/**
+	 * TODO describe.
+	 */
 	public static class CheckEmptyWithMask {
 		private final CritBit<?> cb;
 		private final long[] valIntTemplate;
@@ -1527,7 +1546,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private boolean pointFound; 
 
 		/**
-		 * 
+		 * Create.
 		 * @param cb parent tree
 		 * @param dims dimensions
 		 */
@@ -1542,6 +1561,13 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			this.MAX_MASK = ~((-1L) << dims);
 		}
 
+		/**
+		 * Check if empty.
+		 * @param min min
+		 * @param max max
+		 * @param ignoreUpper TODO describe
+		 * @return TODO describe
+		 */
 		public boolean isEmpty(long[] min, long[] max, boolean ignoreUpper) {
 			this.ignoreUpper = ignoreUpper;
 			this.minOrig = min;
@@ -2207,6 +2233,10 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			return ret;
 		}
 
+		/**
+		 * Increment iterator and return new key.
+		 * @return next key
+		 */
 		public long[] nextKey() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
@@ -2215,7 +2245,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			findNext();
 			return ret;
 		}
-		
+
+		/**
+		 * Increment iterator and return new entry.
+		 * @return next entry
+		 */
 		public Entry<V> nextEntry() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();

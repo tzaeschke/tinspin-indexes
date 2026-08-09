@@ -17,6 +17,9 @@
  */
 package org.tinspin.index.util;
 
+/**
+ * Collection of math utility functions.
+ */
 public class MathTools {
 
     private MathTools() {}

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.PriorityQueue;
 
+import org.tinspin.index.Index;
 import org.tinspin.index.PointDistance;
 
 import static org.tinspin.index.Index.*;
@@ -43,7 +44,7 @@ public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 	private PointDistance dist;
 	private final ArrayList<PointEntryKnn<T>> candidates = new ArrayList<>();
 	private final ArrayList<PointEntryKnn<Object>> pool = new ArrayList<>();
-	private final PriorityQueue<PointEntryKnn<Object>> queue = new PriorityQueue<>(new PEComparator());
+	private final PriorityQueue<PointEntryKnn<Object>> queue = new PriorityQueue<>(Index.PE_COMP_DEFAULT);
 
 	/**
 	 * Create a kNN iterator.

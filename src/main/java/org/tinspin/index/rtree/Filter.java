@@ -56,6 +56,11 @@ public interface Filter {
 		private final double[] lower;
 		private final double[] upper;
 
+		/**
+		 * Constructor.
+		 * @param lower window min
+		 * @param upper window max
+		 */
 		public RectangleIntersectFilter(double[] lower, double[] upper) {
 			this.lower = lower;
 			this.upper = upper;
@@ -76,11 +81,16 @@ public interface Filter {
 	/**
 	 * Union of different "ranges".
 	 */
-	public static class UnionFilter implements Filter {
+	class UnionFilter implements Filter {
 
 		private final Filter filter1;
 		private final Filter filter2;
 
+		/**
+		 * Constructor.
+		 * @param filter1 filter 1
+		 * @param filter2 filter 2
+		 */
 		public UnionFilter(Filter filter1, Filter filter2) {
 			this.filter1 = filter1;
 			this.filter2 = filter2;

@@ -42,6 +42,10 @@ public class MinMaxHeap<T> implements MinMaxHeapI<T> {
         this.less = lessFn;
     }
 
+    /**
+     * Interface for entry comparison.
+     * @param <T> entry type
+     */
     @FunctionalInterface
     public interface Less<T> {
         boolean less(T o1, T o2);
@@ -360,6 +364,10 @@ public class MinMaxHeap<T> implements MinMaxHeapI<T> {
         return size == 0;
     }
 
+    /**
+     * Return all entries as string.
+     * @return all entries as string
+     */
     public String print() {
         StringBuilderLn s = new StringBuilderLn();
         int x = 2;
@@ -374,6 +382,7 @@ public class MinMaxHeap<T> implements MinMaxHeapI<T> {
         return s.toString();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void clear() {
         size = 0;

@@ -19,17 +19,48 @@ package org.tinspin.index.util;
 
 public interface MinMaxHeapI<T> {
 
+    /**
+     * Add entry.
+     * @param value new entry
+     */
     void push(T value);
 
+    /**
+     * Remove min entry.
+     */
     void popMin();
+
+    /**
+     * Remove max entry.
+     */
     void popMax();
 
+    /**
+     * Look at min entry.
+     * @return min entry
+     */
     T peekMin();
+
+    /**
+     * Look at max entry.
+     * @return max entry
+     */
     T peekMax();
 
+    /**
+     * Number of entries.
+     * @return number of entries
+     */
     int size();
 
+    /**
+     * Check if heap is empty.
+     * @return 'true' if empty
+     */
     boolean isEmpty();
 
+    /**
+     * Remove all entries.
+     */
     void clear();
 }

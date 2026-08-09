@@ -42,6 +42,10 @@ public class MinHeap<T> implements MinHeapI<T> {
         this.less = lessFn;
     }
 
+    /**
+     * comparison function.
+     * @param <T> entry type
+     */
     @FunctionalInterface
     public interface Less<T> {
         boolean less(T o1, T o2);
