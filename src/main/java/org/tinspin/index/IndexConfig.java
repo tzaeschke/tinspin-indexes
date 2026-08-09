@@ -24,6 +24,10 @@ public class IndexConfig {
     private int dimensions = 3;
 	private boolean defensiveKeyCopy = true;
 
+	/**
+	 * Constructor.
+	 * @param dimensions dimensions
+	 */
 	protected IndexConfig(int dimensions) {
 		this.dimensions = dimensions;
 	}

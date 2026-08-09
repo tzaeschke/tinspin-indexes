@@ -70,15 +70,18 @@ public class CritBit64<V> implements Iterable<V> {
 	/** Info object. TODO this is badly named ("info"). */
 	protected AtomicInfo<V> info = new AtomicInfo<>();
 
-	/** Info class. TODO this is badly named (do not use Atomic). */
-	protected static class AtomicInfo<V> {
-		protected Node<V> root;
+	/**
+	 * Info class. TODO this is badly named (do not use Atomic).
+	 * @param <V> entry type
+	 */
+	static class AtomicInfo<V> {
+		Node<V> root;
         //the following contains either the actual key or the prefix for the sub-node
-		protected long rootKey;
-		protected V rootVal;
-		protected int size;
+		long rootKey;
+		V rootVal;
+		int size;
 
-		protected AtomicInfo<V> copy() {
+		AtomicInfo<V> copy() {
             AtomicInfo<V> c = new AtomicInfo<>();
             c.root = this.root;
             c.rootKey = this.rootKey;
@@ -1084,9 +1087,19 @@ public class CritBit64<V> implements Iterable<V> {
 			this.key = key;
 			this.value = value;		
 		}
+
+		/**
+		 * Key.
+		 * @return key
+		 */
 		public long key() {
 			return key;
 		}
+
+		/**
+		 * Value.
+		 * @return value
+		 */
 		public V value() {
 			return value;
 		}

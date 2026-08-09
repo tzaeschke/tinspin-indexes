@@ -429,6 +429,13 @@ public interface Index {
 	    int compare(BoxEntryKnn<?> o1, BoxEntryKnn<?> o2);
 	}
 
-    BEComparator BE_COMP_DEFAULT = (o1, o2) ->  Double.compare(o1.dist, o2.dist);
+    /**
+     * Default distance comparator for PointEntryKnn.
+     */
     PEComparator PE_COMP_DEFAULT = (o1, o2) -> Double.compare(o1.dist, o2.dist);
+
+    /**
+     * Default distance comparator for BoxEntryKnn.
+     */
+    BEComparator BE_COMP_DEFAULT = (o1, o2) ->  Double.compare(o1.dist, o2.dist);
 }

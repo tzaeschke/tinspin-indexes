@@ -48,6 +48,12 @@ public class MinMaxHeap<T> implements MinMaxHeapI<T> {
      */
     @FunctionalInterface
     public interface Less<T> {
+        /**
+         * Compare two entries
+         * @param o1 entry 1
+         * @param o2 entry 2
+         * @return 'true' if o1 is less than o2
+         */
         boolean less(T o1, T o2);
     }
 

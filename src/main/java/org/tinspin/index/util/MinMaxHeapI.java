@@ -17,6 +17,10 @@
  */
 package org.tinspin.index.util;
 
+/**
+ * MinMAxHeap interface.
+ * @param <T> entry type
+ */
 public interface MinMaxHeapI<T> {
 
     /**

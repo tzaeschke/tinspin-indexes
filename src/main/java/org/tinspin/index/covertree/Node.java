@@ -21,6 +21,10 @@ import java.util.ArrayList;
 
 import static org.tinspin.index.Index.*;
 
+/**
+ * Node of a CoverTree.
+ * @param <T> value type
+ */
 public class Node<T> {
 
 	private PointEntry<T> p;

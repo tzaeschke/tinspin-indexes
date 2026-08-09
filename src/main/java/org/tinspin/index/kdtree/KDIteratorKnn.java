@@ -27,7 +27,7 @@ import static org.tinspin.index.Index.*;
 
 /**
  * Iterator for kNN queries over kd-trees.
- * @param <T>
+ * @param <T> value type
  */
 public class KDIteratorKnn<T> implements PointIteratorKnn<T> {
 

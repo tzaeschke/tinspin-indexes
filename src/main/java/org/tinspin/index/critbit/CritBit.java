@@ -761,6 +761,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
 
+		/**
+		 * Create.
+		 * @param cb tree
+		 * @param DEPTH bit depth
+		 */
 		@SuppressWarnings("unchecked")
 		public FullIterator(CritBit<V> cb, int DEPTH) {
 			this.stack = new Node[DEPTH];
