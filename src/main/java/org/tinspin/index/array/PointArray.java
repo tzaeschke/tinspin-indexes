@@ -12,6 +12,10 @@ import java.util.function.Predicate;
 import org.tinspin.index.*;
 import org.tinspin.index.util.StringBuilderLn;
 
+/**
+ * A simple spatial index based on an array.
+ * @param <T> value type
+ */
 public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 	
 	private final double[][] phc;

@@ -401,6 +401,12 @@ public interface Index {
      */
     @FunctionalInterface
     interface PointFilterKnn<T> {
+        /**
+         * Filter entries by distance.
+         * @param entry entry
+         * @param distance distance
+         * @return true if entry is closer than distance
+         */
         boolean test(PointEntry<T> entry, double distance);
     }
 
@@ -410,6 +416,12 @@ public interface Index {
      */
     @FunctionalInterface
     interface BoxFilterKnn<T> {
+        /**
+         * Filter entries by distance.
+         * @param entry entry
+         * @param distance distance
+         * @return true if entry is closer than distance
+         */
         boolean test(BoxEntry<T> entry, double distance);
     }
 

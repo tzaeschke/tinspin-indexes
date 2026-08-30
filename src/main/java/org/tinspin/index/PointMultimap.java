@@ -143,6 +143,9 @@ public interface PointMultimap<T> extends Index {
     PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn);
 
 
+    /**
+     * Factory for PointMultiMap indexes.
+     */
     interface Factory {
         /**
          * Create an array backed PointMultiMap. This is only for testing and rather inefficient for large data sets.

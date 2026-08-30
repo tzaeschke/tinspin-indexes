@@ -128,7 +128,9 @@ public class CritBit64<V> implements Iterable<V> {
         }
 	}
 
-	// Constructor.
+	/**
+	 * Constructor.
+ 	 */
 	protected CritBit64() {
 		//private 
 	}

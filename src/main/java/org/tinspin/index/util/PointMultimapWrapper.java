@@ -23,6 +23,10 @@ import org.tinspin.index.rtree.RTree;
 
 import java.util.function.Predicate;
 
+/**
+ * Wrapper class to make a BoxMultiMap look like a PointMultiMap.
+ * @param <T> value type.
+ */
 public class PointMultimapWrapper<T> implements PointMultimap<T> {
 
 	private final BoxMultimap<T> ind;
@@ -30,7 +34,13 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 	private PointMultimapWrapper(BoxMultimap<T> ind) {
 		this.ind = ind;
 	}
-	
+
+	/**
+	 * Create a PointMultiMap from a BoxMultiMap.
+	 * @param ind index
+	 * @return wrapper
+	 * @param <T> value type
+	 */
 	public static <T> PointMultimap<T> create(BoxMultimap<T> ind) {
 		return new PointMultimapWrapper<>(ind);
 	}
@@ -177,6 +187,10 @@ public class PointMultimapWrapper<T> implements PointMultimap<T> {
 		return ind.getDepth();
 	}
 
+	/**
+	 * Load the index with a set of entries.
+	 * @param entries entries
+	 */
 	public void load(RTreeEntry<T>[] entries) {
 		if (!(ind instanceof RTree)) {
 			throw new UnsupportedOperationException(
