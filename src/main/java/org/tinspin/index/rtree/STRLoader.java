@@ -34,6 +34,13 @@ public class STRLoader<T> {
 	private int depth;
 
 	/**
+	 * Create new STR loader.
+	 */
+	public STRLoader() {
+		// Nothing
+	}
+
+	/**
 	 * Get root node.
 	 * @return root node
 	 */

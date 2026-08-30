@@ -72,7 +72,10 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
 		return area;
 	}
 
-
+	/**
+	 * Set bounding box.
+	 * @param e new bounding box
+	 */
 	protected void setMBB(RTreeEntry<T> e) {
 		for (int i = 0; i < min().length; i++) {
 			min()[i] = e.min()[i];
@@ -120,6 +123,9 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
 		return !Arrays.equals(min(), minOld) || !Arrays.equals(max(), maxOld);
 	}
 
+	/**
+	 * Reset bounding box.
+	 */
 	protected void resetMBB() {
 		Arrays.fill(min(), Double.POSITIVE_INFINITY);
 		Arrays.fill(max(), Double.NEGATIVE_INFINITY);

@@ -28,7 +28,11 @@ import java.util.Arrays;
 public class RTreeNodeDir<T> extends RTreeNode<T> {
 
 	private ArrayList<RTreeNode<T>> children;
-	
+
+	/**
+	 * Create a new
+	 * @param dim dimensions
+	 */
 	public RTreeNodeDir(int dim) {
 		super(dim);
 		children = new ArrayList<>();

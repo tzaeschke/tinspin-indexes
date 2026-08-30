@@ -51,7 +51,13 @@ public class Stats {
 	public long nDistCalc1NN;
 	/** Number of performed distance calculations for k-NN.  */
 	public long nDistCalcKNN;
-	
+
+	/**
+	 * Constructors.
+	 * @param nDistCalc number of distance calculations
+	 * @param nDistCalc1NN number of distance calculations for 1-NN
+	 * @param nDistCalcKNN number of distance calculations for k-NN
+	 */
 	protected Stats(long nDistCalc, long nDistCalc1NN, long nDistCalcKNN) {
 		this.nDistCalc = nDistCalc;
 		this.nDistCalc1NN = nDistCalc1NN;

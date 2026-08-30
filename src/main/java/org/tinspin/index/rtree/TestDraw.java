@@ -28,16 +28,16 @@ public class TestDraw extends JPanel {
 		RECTANGLES;
 	}
 	
-	/** svUID */
+	/** svUID. */
 	private static final long serialVersionUID = 1L;
 	private static final int LEN_X = 1000;
 	private static final int LEN_Y = 1000;
 	private static final int OFS_X = 50;
 	private static final int OFS_Y = 50;
 	
-	//public class BasicJPanel extends JPanel{
-
+	/** data. */
 	private int[] data;
+	/** Drawing mode. */
 	private final MODE mode;
 	
 	private TestDraw(MODE mode) {
