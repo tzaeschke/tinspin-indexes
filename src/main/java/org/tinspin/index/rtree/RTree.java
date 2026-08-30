@@ -75,6 +75,8 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	/**
 	 * Create an RTree. By default, it is an R*tree.
 	 * @param dims dimensionality
+	 * @param <T> value type
+	 * @return new RStarTree
 	 */
 	public static <T> RTree<T> createRStar(int dims) {
 		return new RTree<>(dims);

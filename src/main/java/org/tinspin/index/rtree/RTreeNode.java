@@ -21,6 +21,10 @@ import java.util.Arrays;
 
 import static org.tinspin.index.Index.*;
 
+/**
+ * Base class for RTree nodes.
+ * @param <T> value type
+ */
 public abstract class RTreeNode<T> extends RTreeEntry<T> {
 
 	private RTreeNodeDir<T> parent;
@@ -53,6 +57,11 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
 		return area;
 	}
 
+	/**
+	 * Calculate area if this node would be enlarged by "e".
+	 * @param e other entry
+	 * @return new area
+	 */
 	public double calcAreaEnlarged(RTreeEntry<T> e) {
 		double area = 1;
 		for (int i = 0; i < min().length; i++) {
@@ -116,16 +125,30 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
 		Arrays.fill(max(), Double.NEGATIVE_INFINITY);
 	}
 
+	/**
+	 * Clear all entries.
+	 */
 	public abstract void clear();
 
+	/**
+	 * Set parent node.
+	 * @param parent new parent
+	 */
 	public void setParent(RTreeNodeDir<T> parent) {
 		this.parent = parent;
 	}
 
+	/**
+	 * Get parent node
+	 * @return parent
+	 */
 	public RTreeNodeDir<T> getParent() {
 		return parent;
 	}
-	
+
+	/**
+	 * Recursively recalculate bounding box of parents.
+	 */
 	public void extendParentMBB() {
 		RTreeNodeDir<T> current = this.parent;
 		// TODO ?
@@ -137,6 +160,9 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
 		}
 	}
 
+	/**
+	 * Recursively recalculate bounding box of parents.
+	 */
 	public void recalcParentMBB() {
 		RTreeNodeDir<T> current = this.parent;
 		//stop adjusting parent if we get a root or if there was no change
@@ -145,16 +171,31 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
 		}
 	}
 
+	/**
+	 * Recursively recalculate bounding box of this node and its parents.
+	 */
 	public void recalcRecursiveMBB() {
 		if (recalcMBB()) {
 			recalcParentMBB();
 		}
 	}
 
+	/**
+	 * Check if this node has space for more entries.
+	 * @return true if it has more entries
+	 */
 	public abstract boolean hasSpace();
 
+	/**
+	 * Check if this node has too few entries.
+	 * @return true if it has too few entries
+	 */
 	public abstract boolean isUnderfull();
 
+	/**
+	 * Remove entry at position.
+	 * @param i position
+	 */
 	public void removeEntry(int i) {
 		getEntries().remove(i);
 		recalcRecursiveMBB();

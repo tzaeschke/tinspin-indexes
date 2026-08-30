@@ -20,11 +20,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
+/**
+ * R-Star-tree implementation.
+ */
 public class RStarTreeLogic implements RTreeLogic {
 
 	private final SortByAxisAsc SORT_BY_AXIS_ASC = new SortByAxisAsc();
 	private final SortByAxisDes SORT_BY_AXIS_DES = new SortByAxisDes();
-	
+
+	/**
+	 * Constructor.
+	 */
+	public RStarTreeLogic() {
+		// Nothing
+	}
+
 	/**
 	 * Choose subtree as described in the paper.
 	 */

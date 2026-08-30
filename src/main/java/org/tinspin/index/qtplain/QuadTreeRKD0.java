@@ -38,6 +38,9 @@ import org.tinspin.index.util.StringBuilderLn;
 public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	private static final int MAX_DEPTH = 50;
+	/**
+	 * Enable debug output and checks.
+	 */
 	public static final boolean DEBUG = false;
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
 	private final int dims;
@@ -64,6 +67,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	/**
 	 * Create new tree.
 	 * @param dims dimensions, usually 2 or 3
+	 * @param maxNodeSize Maximum node capacity before a split occurs. Default is 10.
 	 * @return New quadtree
 	 * @param <T> Value type
 	 * @deprecated Please use {@link #create(double[], double[], boolean, int)}

@@ -118,6 +118,9 @@ public interface PointMap<T> extends Index {
      */
     PointIteratorKnn<T> queryKnn(double[] center, int k);
 
+    /**
+     * Factory for pint indexes.
+     */
     interface Factory {
         /**
          * Create an array backed PointMap. This is only for testing and rather inefficient for large data sets.

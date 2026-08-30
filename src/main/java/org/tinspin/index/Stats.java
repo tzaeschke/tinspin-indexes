@@ -22,20 +22,34 @@ package org.tinspin.index;
  * Class to collect statistics for a given tree.
  */
 public class Stats {
-	
+
+	/** Dimensions. */
 	public int dims;
+	/** Number of entries. */
 	public int nEntries = 0;
+	/** Number of nodes. */
 	public int nNodes = 0;
+	/** Min level (CoverTree only). */
 	public int minLevel = Integer.MAX_VALUE;
+	/** Max level. For RTree: max measured level. */
 	public int maxLevel = -1;
+	/** Dimensions. For RTree: specified depth. */
 	public int maxDepth = 0;
+	/** Max values in a single node. */
 	public int maxValuesInNode = 0;
+	/** Sum of levels (CoverTree only). */
 	public double sumLevel;
+	/** Maximum node size. */
 	public int maxNodeSize = -1;
+	/** Number of leaf nodes. */
 	public int nLeaf;
+	/** Number of inner nodes. */
 	public int nInner;
+	/** Number of performed distance calculations. */
 	public long nDistCalc;
+	/** Number of performed distance calculations for 1-NN. */
 	public long nDistCalc1NN;
+	/** Number of performed distance calculations for k-NN.  */
 	public long nDistCalcKNN;
 	
 	protected Stats(long nDistCalc, long nDistCalc1NN, long nDistCalcKNN) {

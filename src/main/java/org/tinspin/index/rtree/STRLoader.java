@@ -22,29 +22,53 @@ import java.util.Comparator;
 
 import static org.tinspin.index.Index.*;
 
+/**
+ * STR bulk loader for RTrees.
+ * @param <T> value type
+ */
 public class STRLoader<T> {
 
 	private int nNodes = 0;
 	private int size = 0;
 	private RTreeNode<T> root;
 	private int depth;
-	
+
+	/**
+	 * Get root node.
+	 * @return root node
+	 */
 	public RTreeNode<T> getRoot() {
 		return root;
 	}
 
+	/**
+	 * Number of nodes.
+	 * @return number of nodes
+	 */
 	public int getNNodes() {
 		return nNodes;
 	}
 
+	/**
+	 * Number of entries.
+	 * @return number of entries
+	 */
 	public int getSize() {
 		return size;
 	}
 
+	/**
+	 * Depth.
+	 * @return depth
+	 */
 	public int getDepth() {
 		return depth;
 	}
 
+	/**
+	 * Bulk load the tree with entries
+	 * @param entries entries
+	 */
 	@SuppressWarnings("unchecked")
 	public void load(RTreeEntry<T>[] entries) {
 		int dims = entries[0].min().length;

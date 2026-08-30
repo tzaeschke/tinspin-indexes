@@ -37,6 +37,9 @@ import org.tinspin.index.util.StringBuilderLn;
 public class QuadTreeRKD<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	private static final int MAX_DEPTH = 50;
+	/**
+	 * Enable debug output and checks.
+	 */
 	public static final boolean DEBUG = false;
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
 	private final int dims;

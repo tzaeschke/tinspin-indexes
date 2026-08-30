@@ -40,6 +40,9 @@ import org.tinspin.index.util.StringBuilderLn;
 public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 
 	private static final int MAX_DEPTH = 50;
+	/**
+	 * Enable debug output and checks.
+	 */
 	public static final boolean DEBUG = false;
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
 	private static final double INITIAL_RADIUS = Double.MAX_VALUE;
