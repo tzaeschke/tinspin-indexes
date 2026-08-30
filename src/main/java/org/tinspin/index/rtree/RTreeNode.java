@@ -21,7 +21,7 @@ import java.util.Arrays;
 
 import static org.tinspin.index.Index.*;
 
-abstract class RTreeNode<T> extends RTreeEntry<T> {
+public abstract class RTreeNode<T> extends RTreeEntry<T> {
 
 	private RTreeNodeDir<T> parent;
 
@@ -36,8 +36,8 @@ abstract class RTreeNode<T> extends RTreeEntry<T> {
 	/**
 	 * Calculates the overlap of this node with 'othernode' if this node would be 
 	 * enlarged to contain 'enlargement'.
-	 * @param enlargement
-	 * @param otherNode
+	 * @param enlargement enlargement
+	 * @param otherNode other node
 	 * @return overlap of enlarged nodes.
 	 */
 	double calcOverlapEnlarged(RTreeEntry<T> enlargement, RTreeNode<T> otherNode) {

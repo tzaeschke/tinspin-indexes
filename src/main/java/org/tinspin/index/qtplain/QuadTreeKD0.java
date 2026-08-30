@@ -57,10 +57,25 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 		this.maxNodeSize = maxNodeSize;
 	}
 
+	/**
+	 * Create a QuadTree.
+	 * @param dims dimensions
+	 * @return new tree
+	 * @param <T> value type
+	 * @see #create(double[], double, boolean, int)
+	 */
 	public static <T> QuadTreeKD0<T> create(int dims) {
 		return new QuadTreeKD0<>(dims, DEFAULT_MAX_NODE_SIZE);
 	}
-	
+
+	/**
+	 * Create a QuadTree.
+	 * @param dims dimensions
+	 * @param maxNodeSize max entries per node
+	 * @return new tree
+	 * @param <T> value type
+	 * @see #create(double[], double, boolean, int)
+	 */
 	public static <T> QuadTreeKD0<T> create(int dims, int maxNodeSize) {
 		return new QuadTreeKD0<>(dims, maxNodeSize);
 	}
@@ -504,6 +519,9 @@ public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 	 * Statistics container class.
 	 */
 	public static class QStats extends Stats {
+		/**
+		 * Create new statistics entry.
+		 */
 		protected QStats() {
 			super(0, 0, 0);
 		}

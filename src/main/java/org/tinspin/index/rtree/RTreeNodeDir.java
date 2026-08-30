@@ -25,7 +25,7 @@ import java.util.Arrays;
  * 
  * @param <T>
  */
-class RTreeNodeDir<T> extends RTreeNode<T> {
+public class RTreeNodeDir<T> extends RTreeNode<T> {
 
 	private ArrayList<RTreeNode<T>> children;
 	

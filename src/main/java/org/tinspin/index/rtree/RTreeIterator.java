@@ -23,6 +23,10 @@ import java.util.function.Predicate;
 
 import static org.tinspin.index.Index.*;
 
+/**
+ * R-tree iterator.
+ * @param <T> value type
+ */
 public class RTreeIterator<T> implements BoxIterator<T> {
 	
 	private class IteratorStack {
@@ -75,6 +79,12 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 		}
 	}
 
+	/**
+	 * Constructor.
+	 * @param tree tree
+	 * @param min min
+	 * @param max max
+	 */
 	public RTreeIterator(RTree<T> tree, double[] min, double[] max) {
 		this.stack = new IteratorStack(tree.getDepth());
 		this.tree = tree;
@@ -83,6 +93,14 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 		reset(min, max);
 	}
 
+	/**
+	 * Create tree.
+	 * @param tree tree
+	 * @param min min
+	 * @param max max
+	 * @return new tree
+	 * @param <T> value type
+	 */
 	public static <T> RTreeIterator<T> createExactMatch(RTree<T> tree, double[] min, double[] max) {
 		return new RTreeIterator<>(tree, min, max, e -> e instanceof RTreeNode ? RTreeEntry.checkOverlap(min, max, e) :
 				Arrays.equals(min, e.min()) && Arrays.equals(max, e.max()));

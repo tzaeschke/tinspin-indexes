@@ -50,16 +50,31 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 		this.maxNodeSize = maxNodeSize;
 	}
 
+	/**
+	 * Create new tree.
+	 * @param dims dimensions, usually 2 or 3
+	 * @return New quadtree
+	 * @param <T> Value type
+	 * @see #create(double[], double[], boolean, int)
+	 */
 	public static <T> QuadTreeRKD0<T> create(int dims) {
 		return new QuadTreeRKD0<>(dims, DEFAULT_MAX_NODE_SIZE);
 	}
-	
+
+	/**
+	 * Create new tree.
+	 * @param dims dimensions, usually 2 or 3
+	 * @return New quadtree
+	 * @param <T> Value type
+	 * @deprecated Please use {@link #create(double[], double[], boolean, int)}
+	 */
 	@Deprecated
 	public static <T> QuadTreeRKD0<T> create(int dims, int maxNodeSize) {
 		return new QuadTreeRKD0<>(dims, maxNodeSize);
 	}
 
 	/**
+	 * Create new tree.
 	 * @param dims Number of dimensions per coordinate, usually 2 or 3
 	 * @param maxNodeSize Maximum node capacity before a split occurs. Default is 10.
 	 * @param min Estimated global minimum
@@ -74,6 +89,7 @@ public class QuadTreeRKD0<T> implements BoxMap<T>, BoxMultimap<T> {
 	}
 
 	/**
+	 * Create new tree.
 	 * @param min Estimated global minimum
 	 * @param max Estimated global minimum
 	 * @param align Whether min and max should be aligned to powers of two. Aligning considerably

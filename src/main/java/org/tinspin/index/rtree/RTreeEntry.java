@@ -20,6 +20,10 @@ import java.util.Arrays;
 
 import static org.tinspin.index.Index.*;
 
+/**
+ * R-Tree entry.
+ * @param <T> value type.
+ */
 public class RTreeEntry<T> extends BoxEntry<T> {
 
 	/**
@@ -77,6 +81,12 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		return true;
 	}
 
+	/**
+	 * Check min/max identity of this entry with min/max.
+	 * @param min2 min
+	 * @param max2 max
+	 * @return true if local min/max is equal to given min/max.
+	 */
 	public boolean checkExactMatch(double[] min2, double[] max2) {
 		for (int i = 0; i < min().length; i++) {
 			if (min()[i] != min2[i] || max()[i] != max2[i]) {
@@ -86,6 +96,10 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		return true;
 	}
 
+	/**
+	 * Calculate area of this entry
+	 * @return area or volume
+	 */
 	public double calcArea() {
 		double area = 1;
 		for (int i = 0; i < min().length; i++) {
@@ -95,6 +109,11 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		return area;
 	}
 
+	/**
+	 * Expand entry to fit e1 and e2
+	 * @param e1 entry 1
+	 * @param e2 entry 2
+	 */
 	public void setToCover(RTreeEntry<T> e1, RTreeEntry<T> e2) {
 		for (int i = 0; i < min().length; i++) {
 			min()[i] = Math.min(e1.min()[i], e2.min()[i]);
@@ -102,10 +121,21 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		}
 	}
 
+	/**
+	 * Calculate volume of box.
+	 * @param e entry
+	 * @return volume
+	 */
 	public static double calcVolume(RTreeEntry<?> e) {
 		return calcVolume(e.min(), e.max());
 	}
 
+	/**
+	 * Calculate volume of box.
+	 * @param min min
+	 * @param max max
+	 * @return volume
+	 */
 	public static double calcVolume(double[] min, double[] max) {
 		double v = 1;
 		for (int d = 0; d < min.length; d++) {
@@ -114,6 +144,14 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		return v;
 	}
 
+	/**
+	 * Calculate bounding box.
+	 * @param entries entries
+	 * @param start first entry to check
+	 * @param end last entry to check
+	 * @param minOut new BB min
+	 * @param maxOut new BB max
+	 */
 	public static void calcBoundingBox(RTreeEntry<?>[] entries, int start, int end,
 									   double[] minOut, double[] maxOut) {
 		System.arraycopy(entries[start].min(), 0, minOut, 0, minOut.length);
@@ -126,6 +164,14 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		}
 	}
 
+	/**
+	 * Check for overlap of min/max with e
+	 * @param min1 min
+	 * @param max1 max
+	 * @param min2 min
+	 * @param max2 max
+	 * @return the overlapping area/volume
+	 */
 	public static double calcOverlap(double[] min1, double[] max1, double[] min2, double[] max2) {
 		double area = 1;
 		for (int i = 0; i < min1.length; i++) {
@@ -137,7 +183,14 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		}
 		return area;
 	}
-	
+
+	/**
+	 * Check for overlap of min/max with e
+	 * @param min min
+	 * @param max max
+	 * @param e e
+	 * @return true if the two boxes overlap
+	 */
 	public static boolean checkOverlap(double[] min, double[] max, RTreeEntry<?> e) {
 		for (int i = 0; i < min.length; i++) {
 			if (min[i] > e.max()[i] || max[i] < e.min()[i]) {
@@ -147,6 +200,14 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		return true;
 	}
 
+	/**
+	 * Check for inclusion of "in" inside of "out".
+	 * @param minOut outer min
+	 * @param maxOut outer max
+	 * @param minIn inner min
+	 * @param maxIn inner max
+	 * @return true if "in" is inside of "out"
+	 */
 	public static boolean calcIncludes(double[] minOut, double[] maxOut, 
 			double[] minIn, double[] maxIn) {
 		for (int i = 0; i < minOut.length; i++) {
@@ -185,6 +246,12 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		return calcVolume(minOut, maxOut) - volumeSum;
 	}
 
+	/**
+	 * Calculate margin (L1 distance)
+	 * @param min2 min
+	 * @param max2 max
+	 * @return margin
+	 */
 	public static double calcMargin(double[] min2, double[] max2) {
 		double d = 0;
 		for (int i = 0; i < min2.length; i++) {
@@ -193,6 +260,12 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		return d;
 	}
 
+	/**
+	 * Calculate distance between the centers of to entries.
+	 * @param e1 entry 1
+	 * @param e2 entry 2
+	 * @return distance
+	 */
 	public static double calcCenterDistance(RTreeEntry<?> e1, RTreeEntry<?> e2) {
 		double[] min1 = e1.min();
 		double[] max1 = e1.max();
@@ -215,6 +288,10 @@ public class RTreeEntry<T> extends BoxEntry<T> {
 		Arrays.toString(len) + ";v=" + value();
 	}
 
+	/**
+	 * Set entry to be a copy of "e".
+	 * @param e other entry
+	 */
 	protected void set(RTreeEntry<T> e) {
 		super.set(e.min(), e.max(), e.value());
 	}

@@ -12,6 +12,10 @@ import java.util.function.Predicate;
 import org.tinspin.index.*;
 import org.tinspin.index.util.BoxIteratorWrapper;
 
+/**
+ * Simple spatial collection for rectangle/box entries.
+ * @param <T> value type
+ */
 public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	private final double[][] phc;

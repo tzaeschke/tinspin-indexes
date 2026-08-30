@@ -83,6 +83,10 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
         return ret;
     }
 
+    /**
+     * Distance of current entry.
+     * @return distance
+     */
     public double distance() {
         return currentDistance;
     }

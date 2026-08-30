@@ -239,9 +239,9 @@ public class RStarTreeLogic implements RTreeLogic {
 	}
 
 	/**
-	 * 
+	 * Calculate the axis for a node split.
 	 * @param children After calling this methods, the children will be in the best sorting order.
-	 * @param splitAxis
+	 * @param splitAxis id of the split axis
 	 * @return the split index
 	 */
 	private <T> RTreeNode<T> chooseSplitIndex(
@@ -351,7 +351,7 @@ public class RStarTreeLogic implements RTreeLogic {
 		return toReinsert; 
 	}
 
-	private class SortByAxisAsc implements Comparator<RTreeEntry<?>> {
+	private static class SortByAxisAsc implements Comparator<RTreeEntry<?>> {
 		int axis = -1;
 		public void setAxis(int axis) {
 			this.axis = axis;
@@ -369,7 +369,7 @@ public class RStarTreeLogic implements RTreeLogic {
 		}
 	}
 	
-	private class SortByAxisDes implements Comparator<RTreeEntry<?>> {
+	private static class SortByAxisDes implements Comparator<RTreeEntry<?>> {
 		int axis = -1;
 		public void setAxis(int axis) {
 			this.axis = axis;

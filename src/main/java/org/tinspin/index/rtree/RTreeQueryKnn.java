@@ -25,6 +25,10 @@ import java.util.NoSuchElementException;
 
 import static org.tinspin.index.Index.*;
 
+/**
+ * kNN iterator.
+ * @param <T> value type
+ */
 public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
 
     private final RTree<T> tree;
@@ -78,6 +82,10 @@ public class RTreeQueryKnn<T> implements BoxIteratorKnn<T> {
         return ret;
     }
 
+    /**
+     * Distance of current element.
+     * @return distance
+     */
     public double distance() {
         return currentDistance;
     }
