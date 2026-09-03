@@ -26,6 +26,10 @@ import java.util.NoSuchElementException;
 import static org.tinspin.index.Index.*;
 import static org.tinspin.index.qthypercube.QUtil.distToRectNode;
 
+/**
+ * Iterator for kNN.
+ * @param <T> value type
+ */
 public class QIteratorKnn<T> implements PointIteratorKnn<T> {
 
     private final QNode<T> root;
@@ -79,6 +83,10 @@ public class QIteratorKnn<T> implements PointIteratorKnn<T> {
         return ret;
     }
 
+    /**
+     * Distance of current entry.
+     * @return distance
+     */
     public double distance() {
         return currentDistance;
     }

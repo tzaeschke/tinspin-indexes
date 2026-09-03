@@ -17,17 +17,15 @@ package org.tinspin.index.rtree;
 
 import static org.tinspin.index.Index.*;
 
+/**
+ * Filter function interface for R-tree queries.
+ */
 public interface Filter {
 
 	/**
 	 * Doesn't filter anything.
 	 */
-	public static final Filter ALL = new Filter() {
-		@Override
-		public boolean intersects(double[] min, double[] max) {
-			return true;
-		}
-	};
+	Filter ALL = (min, max) -> true;
 
 	/**
 	 * Intersects is used for the tree nodes and should only check for
@@ -53,11 +51,16 @@ public interface Filter {
 	/**
 	 * Rectangular region filter.
 	 */
-	public static class RectangleIntersectFilter implements Filter {
+	class RectangleIntersectFilter implements Filter {
 
 		private final double[] lower;
 		private final double[] upper;
 
+		/**
+		 * Constructor.
+		 * @param lower window min
+		 * @param upper window max
+		 */
 		public RectangleIntersectFilter(double[] lower, double[] upper) {
 			this.lower = lower;
 			this.upper = upper;
@@ -78,11 +81,16 @@ public interface Filter {
 	/**
 	 * Union of different "ranges".
 	 */
-	public static class UnionFilter implements Filter {
+	class UnionFilter implements Filter {
 
 		private final Filter filter1;
 		private final Filter filter2;
 
+		/**
+		 * Constructor.
+		 * @param filter1 filter 1
+		 * @param filter2 filter 2
+		 */
 		public UnionFilter(Filter filter1, Filter filter2) {
 			this.filter1 = filter1;
 			this.filter2 = filter2;

@@ -17,14 +17,26 @@
  */
 package org.tinspin.index;
 
+/**
+ * Configuration object for indexes.
+ */
 public class IndexConfig {
     private int dimensions = 3;
 	private boolean defensiveKeyCopy = true;
 
+	/**
+	 * Constructor.
+	 * @param dimensions dimensions
+	 */
 	protected IndexConfig(int dimensions) {
 		this.dimensions = dimensions;
 	}
 
+	/**
+	 * Create.
+	 * @param dimensions number of dimensions.
+	 * @return new IndexCOnfiguration object.
+	 */
 	public static IndexConfig create(int dimensions) {
 		return new IndexConfig(dimensions);
 	}
@@ -41,13 +53,14 @@ public class IndexConfig {
 	}
 
 	/**
-	 * @param defensiveKeyCopy
 	 * Defensive keys copying. If 'false', the kd-tree will store the passed in
 	 * double[] keys internally (this reduces required memory).
 	 * If 'true', the keys are copied in order to avoid accidental modification.
 	 * The latter obviously requires more memory. Default is 'true'.
 	 * <p>
 	 * This setting works only for kd-trees.
+	 *
+	 * @param defensiveKeyCopy enable defensive copying
 	 * @return this
 	 */
 	public IndexConfig setDefensiveKeyCopy(boolean defensiveKeyCopy) {
@@ -55,11 +68,18 @@ public class IndexConfig {
 		return this;
 	}
 
-
+	/**
+	 * Number of dimensions.
+	 * @return number of dimensions.
+	 */
 	public int getDimensions() {
 		return dimensions;
 	}
 
+	/**
+	 * Defensive copying.
+	 * @return true or false.
+	 */
 	public boolean getDefensiveKeyCopy() {
 		return defensiveKeyCopy;
 	}

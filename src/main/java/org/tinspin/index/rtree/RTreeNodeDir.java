@@ -21,14 +21,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Directory node
+ * Directory node.
  * 
- * @param <T>
+ * @param <T> value type
  */
-class RTreeNodeDir<T> extends RTreeNode<T> {
+public class RTreeNodeDir<T> extends RTreeNode<T> {
 
 	private ArrayList<RTreeNode<T>> children;
-	
+
+	/**
+	 * Create a new
+	 * @param dim dimensions
+	 */
 	public RTreeNodeDir(int dim) {
 		super(dim);
 		children = new ArrayList<>();
@@ -58,6 +62,10 @@ class RTreeNodeDir<T> extends RTreeNode<T> {
 //		}
 	}
 
+	/**
+	 * Remove a child node.
+	 * @param e The node to remove
+	 */
 	public void removeChildByIdentity(RTreeNode<T> e) {
 		for (int i = 0; i < children.size(); i++) {
 			if (children.get(i) == e) {
@@ -71,10 +79,18 @@ class RTreeNodeDir<T> extends RTreeNode<T> {
 		throw new IllegalStateException();
 	}
 
+	/**
+	 * Check if this node contains leaf nodes.
+	 * @return true if it contains leaf nodes
+	 */
 	public boolean containsLeafNodes() {
 		return children.get(0) instanceof RTreeNodeLeaf;
 	}
 
+	/**
+	 * Get children.
+	 * @return children
+	 */
 	public ArrayList<RTreeNode<T>> getChildren() {
 		return children;
 	}

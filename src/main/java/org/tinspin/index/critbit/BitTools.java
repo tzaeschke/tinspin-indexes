@@ -19,12 +19,18 @@ package org.tinspin.index.critbit;
 
 
 /**
- * 
+ * Assorted helper functions.
+ *
  * @author Tilmann Zaeschke
  */
 public class BitTools {
 
+	/** Constructor. */
+	protected BitTools() {}
+
     /**
+	 * Loss-less transformation of a double float to a long integer with the same ordering.
+	 *
      * @param value value to convert
      * @return long representation.
      */
@@ -38,22 +44,42 @@ public class BitTools {
 		return (r >= 0) ? r : r ^ 0x7FFFFFFFFFFFFFFFL;
 	}
 
+	/**
+	 * Loss-less transformation of a float to an integer with the same ordering.
+	 *
+	 * @param value value to convert
+	 * @return long representation.
+	 */
 	public static long toSortableLong(float value) {
 		//see toSortableLong(double)
 		int r =  Float.floatToRawIntBits(value);
 		return (r >= 0) ? r : r ^ 0x7FFFFFFF;
 	}
 
+	/**
+	 * Loss-less transformation of a long integer to a double float with the same ordering property.
+	 *
+	 * @param value value to convert
+	 * @return double float representation.
+	 */
 	public static double toDouble(long value) {
 		return Double.longBitsToDouble(value >= 0.0 ? value : value ^ 0x7FFFFFFFFFFFFFFFL);
 	}
 
+	/**
+	 * Loss-less transformation of an integer to a float with the same ordering property.
+	 *
+	 * @param value value to convert
+	 * @return float representation.
+	 */
 	public static float toFloat(long value) {
 		int iVal = (int) value;
 		return Float.intBitsToFloat(iVal >= 0.0 ? iVal : iVal ^ 0x7FFFFFFF);
 	}
 
 	/**
+	 * Loss-less transformation of a double floats to long integers with the same ordering property.
+	 *
 	 * @param value Value to be transformed
 	 * @param ret The array used to store the return value
 	 * @return long representation.
@@ -71,6 +97,13 @@ public class BitTools {
 		return ret;
 	}
 
+	/**
+	 * Loss-less transformation of floats to integers with the same ordering property.
+	 *
+	 * @param value Value to be transformed
+	 * @param ret The array used to store the return value
+	 * @return long representation.
+	 */
 	public static long[] toSortableLong(float[] value, long[] ret) {
 		//see toSortableLong(double)
 		for (int i = 0; i < value.length; i++) {
@@ -80,7 +113,14 @@ public class BitTools {
 		return ret;
 	}
 
-	public static double[] toDouble(long value[], double[] ret) {
+	/**
+	 * Loss-less transformation of long integers to double floats with the same ordering property.
+	 *
+	 * @param value value to convert
+	 * @param ret result
+	 * @return double float representation.
+	 */
+	public static double[] toDouble(long[] value, double[] ret) {
 		for (int i = 0; i < value.length; i++) {
 			ret[i] = Double.longBitsToDouble(
 					value[i] >= 0.0 ? value[i] : value[i] ^ 0x7FFFFFFFFFFFFFFFL);
@@ -88,6 +128,13 @@ public class BitTools {
 		return ret;
 	}
 
+	/**
+	 * Loss-less transformation of integers to floats with the same ordering property.
+	 *
+	 * @param value value to convert
+	 * @param ret result
+	 * @return float representation.
+	 */
 	public static float[] toFloat(long[] value, float[] ret) {
 		for (int i = 0; i < value.length; i++) {
 			int iVal = (int) value[i];
@@ -96,6 +143,12 @@ public class BitTools {
 		return ret;
 	}
 
+	/**
+	 * Transformation of String to an indexable long integer with (almost) the same ordering property.
+	 *
+	 * @param s String
+	 * @return long representation.
+	 */
 	public static long toSortableLong(String s) {
 		// store magic number: 6 chars + (hash >> 16)
 		long n = 0;
@@ -104,13 +157,13 @@ public class BitTools {
 			n |= (byte) s.charAt(i);
 			n = n << 8;
 		}
-		//Fill with empty spaces if string is too short
+		// Fill with empty spaces if string is too short
 		for ( ; i < 6; i++) {
 			n = n << 8;
 		}
 		n = n << 8;
 
-		//add hashcode
+		// add hashcode
 		n |= (0xFFFF & s.hashCode());
 		return n;
 	}
@@ -253,6 +306,8 @@ public class BitTools {
 	}
 
 	/**
+	 * Return bit ot position from long[].
+	 *
 	 * @param ba byte array
 	 * @param posBit Counts from left to right!!!
 	 * @return current bit
@@ -265,6 +320,8 @@ public class BitTools {
 	}
 
 	/**
+	 * Return bit ot position from long integer.
+	 *
 	 * @param l bit set
 	 * @param posBit Counts from left to right!!!
 	 * @return current bit
@@ -275,8 +332,8 @@ public class BitTools {
 	}
 
 	/**
-	 * @param src source array
 	 * Reads a bit from {@code src}, writes it to {@code dst} and returns it.
+	 * @param src source array
 	 * @param posBit Counts from left to right
 	 * @param dst target array
 	 * @return current bit
@@ -296,6 +353,8 @@ public class BitTools {
 	}
 
 	/**
+	 * Set bit at position.
+	 *
 	 * @param ba byte array
 	 * @param posBit Counts from left to right (highest to lowest)!!!
 	 * @param b bit to set
@@ -311,8 +370,15 @@ public class BitTools {
         }
 	}
 
-
-    public static long setBit(long ba, int posBit, boolean b) {
+	/**
+	 * Set bit at position.
+	 *
+	 * @param ba bitset
+	 * @param posBit Counts from left to right (highest to lowest)!!!
+	 * @param b bit to set
+	 * @return updated bitset
+	 */
+	public static long setBit(long ba, int posBit, boolean b) {
         if (b) {
             return ba | (0x8000000000000000L >>> posBit);
         } else {
@@ -320,35 +386,65 @@ public class BitTools {
         }
 	}
 
-    public static long set1(long ba, int posBit) {
+	/**
+	 * Set bit at position to 1.
+	 *
+	 * @param ba bitset
+	 * @param posBit Counts from left to right (highest to lowest)!!!
+	 * @return updated bitset
+	 */
+	public static long set1(long ba, int posBit) {
     	return ba | (0x8000000000000000L >>> posBit);
 	}
 
+	/**
+	 * Set bit at position to 0.
+	 *
+	 * @param ba bitset
+	 * @param posBit Counts from left to right (highest to lowest)!!!
+	 * @return updated bitset
+	 */
     public static long set0(long ba, int posBit) {
     	return ba & (~(0x8000000000000000L >>> posBit));
 	}
 
 
-	public static String toBinary(long[] la, int DEPTH) {
+	/**
+	 * Create human-readable string.
+	 * @param la byte array
+	 * @param bitCount number of bits to display
+	 * @return string
+	 */
+	public static String toBinary(long[] la, int bitCount) {
 	    StringBuilder sb = new StringBuilder();
 	    for (long l: la) {
-	    	sb.append(toBinary(l, DEPTH));
+	    	sb.append(toBinary(l, bitCount));
 	        sb.append(", ");
 	    }
 	    return sb.toString();
 	}
 
-	public static String toBinary(long l, int DEPTH) {
+	/**
+	 * Create human-readable string.
+	 * @param l bitset
+	 * @param bitCount number of bits to display
+	 * @return string
+	 */
+	public static String toBinary(long l, int bitCount) {
         StringBuilder sb = new StringBuilder();
         //long mask = DEPTH < 64 ? (1<<(DEPTH-1)) : 0x8000000000000000L;
-        for (int i = 0; i < DEPTH; i++) {
-            long mask = (1l << (long)(DEPTH-i-1));
-            if ((l & mask) != 0) { sb.append("1"); } else { sb.append("0"); }
-            if ((i+1)%8==0 && (i+1)<DEPTH) sb.append('.');
-        	mask >>>= 1;
+        for (int i = 0; i < bitCount; i++) {
+            long mask = (1L << (bitCount-i-1L));
+            if ((l & mask) != 0) {
+				sb.append("1");
+			} else {
+				sb.append("0");
+			}
+            if ((i+1)%8==0 && (i+1)<bitCount) {
+				sb.append('.');
+			}
         }
         return sb.toString();
     }
-
 
 }

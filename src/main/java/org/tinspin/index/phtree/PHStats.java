@@ -21,9 +21,17 @@ import org.tinspin.index.Stats;
 import ch.ethz.globis.phtree.util.PhTreeStats;
 
 
+/**
+ * Statistics of a PH-tree.
+ */
 public class PHStats extends Stats {
 	private final PhTreeStats ph;
 
+	/**
+	 * Constructor.
+	 * @param s stats
+	 * @param dims dimensions
+	 */
 	public PHStats(PhTreeStats s, int dims) {
 		super(0, 0, 0);
 		ph = s;
@@ -32,7 +40,10 @@ public class PHStats extends Stats {
 		nEntries = (int) s.size;
 	}
 
-
+	/**
+	 * Get stats.
+	 * @return stats
+	 */
 	public PhTreeStats getPhStats() {
 		return ph;
 	}

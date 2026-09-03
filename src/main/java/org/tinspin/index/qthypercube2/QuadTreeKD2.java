@@ -57,6 +57,9 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	/** Enable basic HCI navigation with Algo #2 inc(), for example for window queries. */
 	public static boolean ENABLE_HCI_2 = true;
 	private static final int MAX_DEPTH = 50;
+	/**
+	 * Enable debug output and checks.
+	 */
 	public static final boolean DEBUG = false;
 	// This is the MINIMUM MAX_NODE_SIZE. MAX__NODE_SIZE is adjust upwards automatically
 	// with increasing dimensionality
@@ -77,6 +80,7 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	}
 
 	/**
+	 * Create new tree.
 	 * @param dims dimensions, usually 2 or 3
 	 * @return New quadtree
 	 * @param <T> Value type
@@ -90,6 +94,7 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	}
 
 	/**
+	 * Create new tree.
 	 * @param dims dimensions, usually 2 or 3
 	 * @param maxNodeSize maximum entries per node, default is 10
 	 * @return New quadtree
@@ -478,12 +483,22 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 		final int[] histoValues = new int[1000];
 		final int[] histoSubs;
 		static final int HISTO_MAX = (1 << 10) + 1;
+
+		/**
+		 * Create new stats.
+		 * @param dims dimensions.
+		 */
 		public QStats(int dims) {
 			super(0, 0, 0);
 			this.dims = dims;
 			int histoSize = 1 + (1 << dims);
 			this.histoSubs = new int[Math.min(histoSize, HISTO_MAX)];
 		}
+
+		/**
+		 * Add entry to histogram.
+		 * @param pos position
+		 */
 		public void histo(int pos) {
 			if (pos < histoSubs.length) {
 				histoSubs[pos]++;
@@ -528,7 +543,11 @@ public class QuadTreeKD2<T> implements PointMap<T>, PointMultimap<T> {
 	public int getDepth() {
 		return getStats().getMaxDepth();
 	}
-	
+
+	/**
+	 * Return root node.
+	 * @return root node
+	 */
 	protected QNode<T> getRoot() {
 		return root;
 	}

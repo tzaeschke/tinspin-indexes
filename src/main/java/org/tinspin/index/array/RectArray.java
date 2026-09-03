@@ -12,6 +12,10 @@ import java.util.function.Predicate;
 import org.tinspin.index.*;
 import org.tinspin.index.util.BoxIteratorWrapper;
 
+/**
+ * Simple spatial collection for rectangle/box entries.
+ * @param <T> value type
+ */
 public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 
 	private final double[][] phc;
@@ -269,7 +273,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 		return Math.sqrt(dist);
 	}
 
-	private static final BEComparator COMP = new BEComparator();
+	private static final BEComparator COMP = Index.BE_COMP_DEFAULT;
 
 	@Override
 	public String toString() {

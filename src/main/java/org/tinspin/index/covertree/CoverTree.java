@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import org.tinspin.index.Index;
 import org.tinspin.index.PointDistance;
 import org.tinspin.index.PointMap;
 import org.tinspin.index.Stats;
@@ -59,8 +60,10 @@ import org.tinspin.index.Stats;
  * TODO
  * - Rebalancing (nearest-ancestor)
  * - Merge Node/Point classes
- *     
+ *
  * @author Tilmann Zäschke
+ *
+ * @param <T> Value type.
  */
 public class CoverTree<T> implements PointMap<T> {
 
@@ -76,7 +79,7 @@ public class CoverTree<T> implements PointMap<T> {
 	private final double BASE;
 	private final double LOG_BASE;
 	private final PointDistance dist;
-	private static final PEComparator comparator = new PEComparator();
+	private static final PEComparator comparator = Index.PE_COMP_DEFAULT;
 	private long nDistCalc = 0;
 	private long nDist1NN = 0;
 	private long nDistKNN = 0;
@@ -92,19 +95,48 @@ public class CoverTree<T> implements PointMap<T> {
 		this.LOG_BASE = Math.log(BASE);
 		this.dist = dist != null ? dist : PointDistance.L2;
 	}
-		
+
+	/**
+	 * Create an entry for the cover tree.
+	 * @param point coordinates
+	 * @param value value
+	 * @return new entry
+	 * @param <T> value type
+	 */
 	public static <T> PointEntry<T> create(double[] point, T value) {
 		return new PointEntry<>(point, value);
 	}
 
+	/**
+	 * Create a new cover tree.
+	 * @param nDims number of dimensions
+	 * @return new tree
+	 * @param <T> value type
+	 */
 	public static <T> CoverTree<T> create(int nDims) {
 		return new CoverTree<>(nDims, DEFAULT_BASE, PointDistance.L2);
 	}
-	
+
+	/**
+	 * Create a new cover tree.
+	 * @param nDims number of dimensions
+	 * @param base the base, 1.3 is a good value
+	 * @param dist distance function
+	 * @return new tree
+	 * @param <T> value type
+	 */
 	public static <T> CoverTree<T> create(int nDims, double base, PointDistance dist) {
 		return new CoverTree<>(nDims, base, dist);
 	}
-	
+
+	/**
+	 * Create a new cover tree and bulk load it with some data.
+	 * @param data bulk load data.
+	 * @param base the base, 1.3 is a good value
+	 * @param distFn distance function
+	 * @return new cover tree.
+	 * @param <T> value type
+	 */
 	public static <T> CoverTree<T> create(PointEntry<T>[] data, double base,
 			PointDistance distFn) {
 		if (data == null || data.length == 0) {
@@ -882,10 +914,21 @@ public class CoverTree<T> implements PointMap<T> {
 		return Math.pow(BASE, level);
 	}
 
+	/**
+	 * Lookup an entry, using exact match.
+	 *
+	 * @param key the point
+	 * @return `true` if an entry was found, otherwise `false`.
+	 * @see PointMap#contains(double[])
+	 */
 	public boolean contains(double[] key) {
 		return queryExact(key) != null;
 	}
 
+	/**
+	 * Check the tree for consistence.
+	 * @throws IllegalStateException in case of inconsistencies.
+	 */
 	public void check() {
 		if (root != null) {
 			CTStats stats = new CTStats(this); 
@@ -958,7 +1001,10 @@ public class CoverTree<T> implements PointMap<T> {
 		}
 		return currentMax;
 	}
-	
+
+	/**
+	 * Statistics collection for the cover tree.
+	 */
 	 public static class CTStats extends Stats {
 		double sumMaxDist = 0;
 		

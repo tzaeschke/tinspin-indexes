@@ -17,6 +17,9 @@
  */
 package org.tinspin.index;
 
+/**
+ * Interface and standard implementations of Point distances.
+ */
 @FunctionalInterface
 public interface PointDistance {
 
@@ -25,10 +28,16 @@ public interface PointDistance {
 	/** L2/Euclidean distance. */
 	PointDistance L2 = PointDistance::l2;
 
+	/**
+	 * Distance function.
+	 * @param p1 point 1
+	 * @param p2 point 2
+	 * @return the distance between the two points.
+	 */
 	double dist(double[] p1, double[] p2);
 
 	/**
-	 * 
+	 * Distance function.
 	 * @param p1 a point
 	 * @param entry another point
 	 * @return distance between the points
@@ -68,6 +77,11 @@ public interface PointDistance {
 		return Math.sqrt(dist);
 	}
 
+	/**
+	 * The name of the distance function.
+	 * @param fn distance function
+	 * @return name if known, otherwise "unknown"
+	 */
 	static String getName(PointDistance fn) {
 		//'nice' hack, eh?
 		if (fn == L1) {

@@ -21,7 +21,8 @@ import org.tinspin.index.critbit.CritBit.FullIterator;
 import org.tinspin.index.critbit.CritBit.QueryIterator;
 
 /**
- * 
+ * A 1-dimensional critbit tree.
+ *
  * @author Tilmann Zaeschke
  * 
  * @param <V> value type
@@ -29,6 +30,7 @@ import org.tinspin.index.critbit.CritBit.QueryIterator;
 public interface CritBit1D<V> {
 
 	/**
+	 * Add an entry.
 	 * @param key key
 	 * @param value value 
 	 * @return previous value or 'null' if none existed
@@ -37,7 +39,8 @@ public interface CritBit1D<V> {
 	 */
 	V put(long[] key, V value);
 
-	/** 
+	/**
+	 * Check for entry.
 	 * @param key key
 	 * @return 'true' if the key exists
 	 *
@@ -45,7 +48,8 @@ public interface CritBit1D<V> {
 	 */
 	boolean contains(long[] key);
 
-	/** 
+	/**
+	 * Query entries.
 	 * @param min Lower left corner of the query window
 	 * @param max Upper right corner of the query window
 	 * @return Iterator over query result
@@ -54,14 +58,16 @@ public interface CritBit1D<V> {
 	 */
 	QueryIterator<V> query(long[] min, long[] max);
 
-	/** 
+	/**
+	 * Number of entries.
 	 * @return Number of entries
 	 *  
 	 * @see CritBit#size() 
 	 */
 	int size();
 
-	/** 
+	/**
+	 * Remove an entry.
 	 * @param key key
 	 * @return previous value or 'null' if none existed
 	 * 
@@ -69,12 +75,14 @@ public interface CritBit1D<V> {
 	 */
 	V remove(long[] key);
 
-	/** 
+	/**
+	 * Print all entries.
 	 * @see CritBit#printTree()
 	 */
 	void printTree();
 
-	/** 
+	/**
+	 * Get an entry.
 	 * @param key key
 	 * @return the value or 'null' if the key does not exists
 	 * 
@@ -83,6 +91,7 @@ public interface CritBit1D<V> {
 	V get(long[] key);
 
 	/**
+	 * Iterate over all entries.
 	 * @return Iterator over all entries
 	 * 
 	 * @see CritBit#iterator() 

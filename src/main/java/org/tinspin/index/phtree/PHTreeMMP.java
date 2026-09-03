@@ -41,6 +41,12 @@ public class PHTreeMMP<T> implements PointMultimap<T> {
         this.tree = PhTreeMultiMapF2.create(dims);
     }
 
+    /**
+     * Create PH-tree.
+     * @param dims dimensions
+     * @return new PH-tree
+     * @param <T> value type
+     */
     public static <T> PHTreeMMP<T> create(int dims) {
         return new PHTreeMMP<>(dims);
     }

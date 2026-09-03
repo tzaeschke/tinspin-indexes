@@ -25,14 +25,24 @@ import ch.ethz.globis.phtree.PhTreeSolidF.PhIteratorSF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhKnnQuerySF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhQuerySF;
 
+/**
+ * PH-tree for rectangles/boxes. This is a map with one entry per key.
+ * @param <T> value type.
+ */
 public class PHTreeR<T> implements BoxMap<T> {
 
 	private final PhTreeSolidF<T> tree;
 	
 	private PHTreeR(int dims) {
 		tree = PhTreeSolidF.create(dims);
-	} 
-	
+	}
+
+	/**
+	 * Constructor.
+	 * @param dims dimensions
+	 * @return new PH-tree
+	 * @param <T> value type
+	 */
 	public static <T> PHTreeR<T> createPHTree(int dims) {
 		return new PHTreeR<>(dims);
 	}

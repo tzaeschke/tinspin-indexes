@@ -11,9 +11,15 @@ import java.awt.Graphics;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+/**
+ * Visualization of the index.
+ */
 public class TestDraw extends JPanel {
 
-	public static enum MODE {
+	/**
+	 * Drawing mode.
+	 */
+	public enum MODE {
 		/** Draw each point. */
 		POINTS,
 		/** Draw lines for each pair of points. P1-P2, P3-P4, P5-P6 ... */
@@ -22,16 +28,16 @@ public class TestDraw extends JPanel {
 		RECTANGLES;
 	}
 	
-	/** svUID */
+	/** svUID. */
 	private static final long serialVersionUID = 1L;
 	private static final int LEN_X = 1000;
 	private static final int LEN_Y = 1000;
 	private static final int OFS_X = 50;
 	private static final int OFS_Y = 50;
 	
-	//public class BasicJPanel extends JPanel{
-
+	/** data. */
 	private int[] data;
+	/** Drawing mode. */
 	private final MODE mode;
 	
 	private TestDraw(MODE mode) {
@@ -40,9 +46,9 @@ public class TestDraw extends JPanel {
 	}
 	
 	/**
-	 * 
-	 * @param data
-	 * @param DIM
+	 * Set data.
+	 * @param data data
+	 * @param DIM dimensions
 	 * @param dx dimension to use as X [0..DIM-1]
 	 * @param dy dimension to use as Y [0..DIM-1]
 	 */
@@ -182,6 +188,10 @@ public class TestDraw extends JPanel {
 		}
 	}
 
+	/**
+	 * Draw array of points.
+	 * @param data data
+	 */
 	public static void draw(double[][] data) {
 		int dim = data[0].length;
 		double[] data2 = new double[data.length*dim];
@@ -193,10 +203,21 @@ public class TestDraw extends JPanel {
 		draw(data2, dim);
 	}
 
+	/**
+	 * Draw points.
+	 * @param data data
+	 * @param dim dimensions
+	 */
 	public static void draw(double[] data, int dim) {
 		draw(data, dim, MODE.POINTS);
 	}
 
+	/**
+	 * Draw points.
+	 * @param data data
+	 * @param dim dimensions
+	 * @param mode drawing mode
+	 */
 	public static void draw(double[] data, int dim, MODE mode) {
 		JFrame frame = new JFrame("MyPanel");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -209,6 +230,12 @@ public class TestDraw extends JPanel {
 		frame.setVisible(true);
 	}
 
+	/**
+	 * Draw points.
+	 * @param data data
+	 * @param dim dimensions
+	 * @param mode drawing mode
+	 */
 	public static void draw(double[][] data, int dim, MODE mode) {
 		double[] data2 = new double[data.length*data[0].length];
 		int i = 0;
@@ -221,7 +248,7 @@ public class TestDraw extends JPanel {
 	}
 
 	/**
-	 * 
+	 * Draw data.
 	 * @param data Data
 	 * @param dim Total number of dimension in original data
 	 * @param dx Id of dimension that should be drawn as 'x'
@@ -240,7 +267,7 @@ public class TestDraw extends JPanel {
 	}
 
 	/**
-	 * 
+	 * Draw data.
 	 * @param data Data
 	 * @param dim Total number of dimension in original data
 	 * @param dx Id of dimension that should be drawn as 'x'

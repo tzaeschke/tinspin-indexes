@@ -98,12 +98,22 @@ public class RTreeQuery1nn<T> {
 			this.pos = 0;
 		}
 	}
-	
+
+	/**
+	 * Create new iterator.
+	 * @param tree tree
+	 */
 	public RTreeQuery1nn(RTree<T> tree) {
 		this.stack = new IteratorStack(tree.getDepth(), RTree.NODE_MAX_DIR);
 		this.tree = tree;
 	}
 
+	/**
+	 * Prime iterator to perform 1-NN query.
+	 * @param center center
+	 * @param dist distance function
+	 * @return closest neighbor to center.
+	 */
 	public BoxEntryKnn<T> reset(double[] center, BoxDistance dist) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth(), RTree.NODE_MAX_DIR);
@@ -179,7 +189,7 @@ public class RTreeQuery1nn<T> {
 //	}
 	
 	/**
-	 * 
+	 * Sort entries.
 	 * @param iPos iterator pos
 	 * @param minDist mindist
 	 */

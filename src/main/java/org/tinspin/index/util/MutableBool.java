@@ -16,25 +16,44 @@
  */
 package org.tinspin.index.util;
 
+/**
+ * Mutable boolean.
+ */
 public class MutableBool {
     private boolean i;
 
+    /**
+     * Create.
+     */
     public MutableBool() {
         i = false;
     }
 
+    /**
+     * Create.
+     * @param i initial value
+     */
     public MutableBool(boolean i) {
         this.i = i;
     }
 
+    /**
+     * Get.
+     * @return current value
+     */
     public boolean get() {
         return i;
     }
 
+    /**
+     * Set.
+     * @param i new value
+     */
     public void set(boolean i) {
         this.i = i;
     }
 
+    @Override
     public String toString() {
         return Boolean.toString(i);
     }

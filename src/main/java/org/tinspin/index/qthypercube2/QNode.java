@@ -518,6 +518,10 @@ public class QNode<T> {
 		return isLeaf;
 	}
 
+	/**
+	 * Number of values in this node.
+	 * @return number off values
+	 */
 	public int getValueCount() {
 		return nValues;
 	}

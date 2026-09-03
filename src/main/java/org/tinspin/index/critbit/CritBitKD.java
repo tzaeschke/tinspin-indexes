@@ -20,14 +20,16 @@ package org.tinspin.index.critbit;
 import org.tinspin.index.critbit.CritBit.QueryIteratorKD;
 
 /**
- * 
+ * A k-dimensional critbit tree.
+ *
  * @author Tilmann Zaeschke
  * 
  * @param <V> value type
  */
 public interface CritBitKD<V> {
 
-	/** 
+	/**
+	 * Add entry.
 	 * @param key key
 	 * @param value value 
 	 * @return previous value or 'null' if none existed
@@ -36,7 +38,8 @@ public interface CritBitKD<V> {
 	 */
 	V putKD(long[] key, V value);
 
-	/** 
+	/**
+	 * Check if entry exists.
 	 * @param key key
 	 * @return 'true' if the key exists
 	 * 
@@ -45,13 +48,15 @@ public interface CritBitKD<V> {
 	boolean containsKD(long[] key);
 
 	/**
+	 * Number of entries.
 	 * @return Number of entries
 	 *  
 	 * @see CritBit#size() 
 	 */  
 	int size();
 
-	/** 
+	/**
+	 * Window query.
 	 * @param lowerLeft Lower left corner of the query window
 	 * @param upperRight Upper right corner of the query window
 	 * @return Iterator over query result
@@ -60,7 +65,8 @@ public interface CritBitKD<V> {
 	 */  
 	QueryIteratorKD<V> queryKD(long[] lowerLeft, long[] upperRight);
 
-	/** 
+	/**
+	 * Remove entry.
 	 * @param key key
 	 * @return previous value or 'null' if none existed
 	 * 
@@ -68,12 +74,14 @@ public interface CritBitKD<V> {
 	 */  
 	V removeKD(long[] key);
 
-	/** 
+	/**
+	 * Print entries.
 	 * @see CritBit#printTree() 
 	 */  
 	void printTree();
 
-	/** 
+	/**
+	 * Get value for key.
 	 * @param key key
 	 * @return the value or 'null' if the key does not exists
 	 * 

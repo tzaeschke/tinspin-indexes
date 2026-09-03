@@ -94,11 +94,13 @@ public interface PointMultimap<T> extends Index {
     PointIterator<T> queryExactPoint(double[] point);
 
     /**
+     * An iterator over all entries.
      * @return An iterator over all entries.
      */
     PointIterator<T> iterator();
 
     /**
+     * Return all points that lie inside the query rectangle.
      * @param min Lower left corner of the query window
      * @param max Upper right corner of the query window
      * @return All points that lie inside the query rectangle.
@@ -141,6 +143,9 @@ public interface PointMultimap<T> extends Index {
     PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn);
 
 
+    /**
+     * Factory for PointMultiMap indexes.
+     */
     interface Factory {
         /**
          * Create an array backed PointMultiMap. This is only for testing and rather inefficient for large data sets.

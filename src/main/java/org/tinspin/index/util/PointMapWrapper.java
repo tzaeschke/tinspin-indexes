@@ -21,6 +21,10 @@ import org.tinspin.index.*;
 import org.tinspin.index.rtree.RTreeEntry;
 import org.tinspin.index.rtree.RTree;
 
+/**
+ * Wrapper class to make a box index look like a point index.
+ * @param <T> value type
+ */
 public class PointMapWrapper<T> implements PointMap<T> {
 
 	private final BoxMap<T> ind;
@@ -28,7 +32,13 @@ public class PointMapWrapper<T> implements PointMap<T> {
 	private PointMapWrapper(BoxMap<T> ind) {
 		this.ind = ind;
 	}
-	
+
+	/**
+	 * Create a wrapper instance.
+	 * @param ind original index
+	 * @return wrapper
+	 * @param <T> value type
+	 */
 	public static <T> PointMap<T> create(BoxMap<T> ind) {
 		return new PointMapWrapper<>(ind);
 	}
@@ -164,6 +174,10 @@ public class PointMapWrapper<T> implements PointMap<T> {
 		return ind.getDepth();
 	}
 
+	/**
+	 * Bulk load the index with a set of entries.
+	 * @param entries entries
+	 */
 	public void load(RTreeEntry<T>[] entries) {
 		if (!(ind instanceof RTree)) {
 			throw new UnsupportedOperationException(

@@ -45,6 +45,9 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	//PAPER: m = 20% of M
 	static final int NODE_MIN_DIR = 2;//11;  //2 <= min <= max/2
 	static final int NODE_MIN_DATA = 2;//10;  //2 <= min <= max/2
+	/**
+	 * Enable debug output and checks.
+	 */
 	public static final boolean DEBUG = false;
 	private final int dims;
 	private int size = 0;
@@ -67,8 +70,14 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 			System.err.println("WARNING: Using DEBUG mode.");
 		}
 		init();
-	} 
-	
+	}
+
+	/**
+	 * Create an RTree. By default, it is an R*tree.
+	 * @param dims dimensionality
+	 * @param <T> value type
+	 * @return new RStarTree
+	 */
 	public static <T> RTree<T> createRStar(int dims) {
 		return new RTree<>(dims);
 	}
@@ -103,7 +112,12 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	public void clear() {
 		init();
 	}
-	
+
+	/**
+	 * Insert an entry.
+	 * @param point point
+	 * @param value value
+	 */
 	public void insert(double[] point, T value) {
 		insert(new RTreeEntry<>(point, point, value));
 	}
@@ -183,6 +197,10 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		}
 	}
 
+	/**
+	 * Bulk load.
+	 * @param entries entries
+	 */
 	public void load(RTreeEntry<T>[] entries) {
 		STRLoader<T> bulkLoader = new STRLoader<>();
 		bulkLoader.load(entries);
@@ -192,6 +210,11 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		depth = bulkLoader.getDepth();
 	}
 
+	/**
+	 * Remove point.
+	 * @param point point
+	 * @return the previously associated object, if any.
+	 */
 	public Object remove(double[] point) {
 		//TODO speed up
 		return remove(point, point);
@@ -469,6 +492,15 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		return new RTreeQueryKnn<>(this, k, center, dist, (e, d) -> true);
 	}
 
+	/**
+	 * kNN Iterator.
+	 * @param center center
+	 * @param dist distance
+	 * @param closestDist closest distance
+	 * @param minBound min bound
+	 * @param maxBound max bound
+	 * @return entries.
+	 */
 	public Iterable<BoxEntryKnn<T>> queryRangedNearestNeighbor(
 			double[] center, BoxDistance dist,
 			BoxDistance closestDist, double[] minBound, double[] maxBound) {
@@ -521,6 +553,9 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 		}
 	}
 
+	/**
+	 * Statistics.
+	 */
 	public static class RTreeStats extends Stats {
 		RTreeStats(RTree<?> tree) {
 			super(tree.nDist1NN + tree.nDistKNN, tree.nDist1NN, tree.nDistKNN);
@@ -615,7 +650,11 @@ public class RTree<T> implements BoxMap<T>, BoxMultimap<T> {
 	public int getNodeCount() {
 		return nNodes;
 	}
-	
+
+	/**
+	 * Return root node.
+	 * @return root node
+	 */
 	protected RTreeNode<T> getRoot() {
 		return root;
 	}

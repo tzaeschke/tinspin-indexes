@@ -26,14 +26,24 @@ import ch.ethz.globis.phtree.PhTreeF.PhIteratorF;
 import ch.ethz.globis.phtree.PhTreeF.PhKnnQueryF;
 import ch.ethz.globis.phtree.PhTreeF.PhQueryF;
 
+/**
+ * PH-tree for points. This is a map with one entry per key.
+ * @param <T> value type.
+ */
 public class PHTreeP<T> implements PointMap<T> {
 
 	private final PhTreeF<T> tree;
 	
 	private PHTreeP(int dims) {
 		tree = PhTreeF.create(dims);
-	} 
-	
+	}
+
+	/**
+	 * Constructor.
+	 * @param dims dimensions
+	 * @return new PH-tree
+	 * @param <T> value type
+	 */
 	public static <T> PHTreeP<T> create(int dims) {
 		return new PHTreeP<>(dims);
 	}

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+TODO
+- remove RTreeNode.extendParentMBB()  line 150
+
+
 - Nothing yet
 
 ### Fixed
@@ -14,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   [#47](https://github.com/tzaeschke/tinspin-indexes/pull/47)
 - Fixed deprecation warnings
   [#48](https://github.com/tzaeschke/tinspin-indexes/pull/48)
+- Fixed javadoc warnings
+  [#49](https://github.com/tzaeschke/tinspin-indexes/pull/49)
 
 ## [2.1.4] - 2024-08-01
 

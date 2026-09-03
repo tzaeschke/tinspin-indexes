@@ -26,6 +26,10 @@ import org.tinspin.index.rtree.RTreeEntry;
 
 import java.util.Iterator;
 
+/**
+ * Common interface for all indexes that use boxes as keys.
+ * @param <T> Value type.
+ */
 public interface BoxMap<T> extends Index {
 
     /**
@@ -76,11 +80,13 @@ public interface BoxMap<T> extends Index {
     T queryExact(double[] min, double[] max);
 
     /**
+     * An iterator over all entries.
      * @return An iterator over all entries.
      */
     BoxIterator<T> iterator();
 
     /**
+     * Return all boxes that intersect with the query rectangle.
      * @param min Lower left corner of the query window
      * @param max Upper right corner of the query window
      * @return All boxes that intersect with the query rectangle.
@@ -111,6 +117,9 @@ public interface BoxMap<T> extends Index {
      */
     BoxIteratorKnn<T> queryKnn(double[] center, int k);
 
+    /**
+     * Factory class for indexes that use boxes as keys.
+     */
     interface Factory {
         /**
          * Create an array backed BoxMap. This is only for testing and rather inefficient for large data sets.

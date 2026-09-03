@@ -24,11 +24,21 @@ import static org.tinspin.index.Index.BoxIterator;
 
 import static org.tinspin.index.Index.*;
 
+/**
+ * Wrapper class to create an iterator over BoxEntries.
+ * @param <E> Value type.
+ */
 public class BoxIteratorWrapper<E> implements BoxIterator<E> {
 
     private final BiFunction<double[], double[], Iterator<BoxEntry<E>>> fn;
     private Iterator<BoxEntry<E>> it;
 
+    /**
+     * Constructor.
+     * @param min query window min
+     * @param max query window max
+     * @param f query function
+     */
     public BoxIteratorWrapper(double[] min, double[] max, BiFunction<double[], double[], Iterator<BoxEntry<E>>> f) {
         fn = f;
         reset(min, max);

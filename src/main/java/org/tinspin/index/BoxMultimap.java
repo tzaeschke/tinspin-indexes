@@ -97,11 +97,13 @@ public interface BoxMultimap<T> extends Index {
     BoxIterator<T> queryExactBox(double[] min, double[] max);
 
     /**
+     * An iterator over all entries.
      * @return An iterator over all entries.
      */
     BoxIterator<T> iterator();
 
     /**
+     * Return all boxes that intersect with the query rectangle.
      * @param min Lower left corner of the query window
      * @param max Upper right corner of the query window
      * @return All boxes that intersect with the query rectangle.
@@ -143,6 +145,9 @@ public interface BoxMultimap<T> extends Index {
      */
     BoxIteratorKnn<T> queryKnn(double[] center, int k, BoxDistance distFn);
 
+    /**
+     * Factory class for all multi-indexes that use boxes as keys.
+     */
     interface Factory {
         /**
          * Create an array backed BoxMultiMap. This is only for testing and rather inefficient for large data sets.

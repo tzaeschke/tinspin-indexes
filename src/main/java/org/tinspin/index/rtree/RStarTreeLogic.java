@@ -20,11 +20,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
+/**
+ * R-Star-tree implementation.
+ */
 public class RStarTreeLogic implements RTreeLogic {
 
 	private final SortByAxisAsc SORT_BY_AXIS_ASC = new SortByAxisAsc();
 	private final SortByAxisDes SORT_BY_AXIS_DES = new SortByAxisDes();
-	
+
+	/**
+	 * Constructor.
+	 */
+	public RStarTreeLogic() {
+		// Nothing
+	}
+
 	/**
 	 * Choose subtree as described in the paper.
 	 */
@@ -239,9 +249,9 @@ public class RStarTreeLogic implements RTreeLogic {
 	}
 
 	/**
-	 * 
+	 * Calculate the axis for a node split.
 	 * @param children After calling this methods, the children will be in the best sorting order.
-	 * @param splitAxis
+	 * @param splitAxis id of the split axis
 	 * @return the split index
 	 */
 	private <T> RTreeNode<T> chooseSplitIndex(
@@ -351,7 +361,7 @@ public class RStarTreeLogic implements RTreeLogic {
 		return toReinsert; 
 	}
 
-	private class SortByAxisAsc implements Comparator<RTreeEntry<?>> {
+	private static class SortByAxisAsc implements Comparator<RTreeEntry<?>> {
 		int axis = -1;
 		public void setAxis(int axis) {
 			this.axis = axis;
@@ -369,7 +379,7 @@ public class RStarTreeLogic implements RTreeLogic {
 		}
 	}
 	
-	private class SortByAxisDes implements Comparator<RTreeEntry<?>> {
+	private static class SortByAxisDes implements Comparator<RTreeEntry<?>> {
 		int axis = -1;
 		public void setAxis(int axis) {
 			this.axis = axis;

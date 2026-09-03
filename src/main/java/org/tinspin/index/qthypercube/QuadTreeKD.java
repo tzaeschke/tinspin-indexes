@@ -49,6 +49,9 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 	/** Enable basic HCI navigation with Algo #2 inc(), for example for window queries. */
 	public static boolean ENABLE_HCI_2 = true;
 	private static final int MAX_DEPTH = 50;
+	/**
+	 * Enable debug output and checks.
+	 */
 	public static final boolean DEBUG = false;
 	private static final int DEFAULT_MAX_NODE_SIZE = 10;
 	private static final double INITIAL_RADIUS = Double.MAX_VALUE;
@@ -66,10 +69,25 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 		this.maxNodeSize = maxNodeSize;
 	}
 
+	/**
+	 * Create a QuadTree.
+	 * @param dims dimensions
+	 * @return new tree
+	 * @param <T> value type
+	 * @see #create(double[], double, boolean, int)
+	 */
 	public static <T> QuadTreeKD<T> create(int dims) {
 		return new QuadTreeKD<>(dims, DEFAULT_MAX_NODE_SIZE);
 	}
-	
+
+	/**
+	 * Create a QuadTree.
+	 * @param dims dimensions
+	 * @param maxNodeSize max entries per node
+	 * @return new tree
+	 * @param <T> value type
+	 * @see #create(double[], double, boolean, int)
+	 */
 	public static <T> QuadTreeKD<T> create(int dims, int maxNodeSize) {
 		return new QuadTreeKD<>(dims, maxNodeSize);
 	}
@@ -454,6 +472,10 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 		final int[] histoValues = new int[1000];
 		final int[] histoSubs;
 
+		/**
+		 * New stats entry.
+		 * @param dims dimensions
+		 */
 		public QStats(int dims) {
 			super(0, 0, 0);
 			this.dims = dims;
@@ -497,7 +519,11 @@ public class QuadTreeKD<T> implements PointMap<T>, PointMultimap<T> {
 	public int getDepth() {
 		return getStats().getMaxDepth();
 	}
-	
+
+	/**
+	 * Root node.
+	 * @return root node
+	 */
 	protected QNode<T> getRoot() {
 		return root;
 	}

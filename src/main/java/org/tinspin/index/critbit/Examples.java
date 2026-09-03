@@ -23,13 +23,23 @@ import org.tinspin.index.critbit.CritBit.QueryIterator;
 import org.tinspin.index.critbit.CritBit.QueryIteratorKD;
 
 /**
- * 
+ * Critbit tree examples.
+ *
  * @author Tilmann Zaeschke
  */
 public class Examples {
 
+	/**
+	 * Control console logging.
+	 */
 	public static boolean PRINT = true;
 
+	private Examples() {}
+
+	/**
+	 * Run all example.
+	 * @param args unused.
+	 */
 	public static void main(String[] args) {
 		ex1D_32();
 		ex1D_float();

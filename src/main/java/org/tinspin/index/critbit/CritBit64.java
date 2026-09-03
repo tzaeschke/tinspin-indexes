@@ -58,20 +58,30 @@ package org.tinspin.index.critbit;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Critbit tree optimized for 64 bit integers.
+ * @param <V> value type
+ */
 public class CritBit64<V> implements Iterable<V> {
 
+	/** Bit depth. */
 	protected static final int DEPTH = 64;
-	
+
+	/** Info object. TODO this is badly named ("info"). */
 	protected AtomicInfo<V> info = new AtomicInfo<>();
 
-	protected static class AtomicInfo<V> {
-		protected Node<V> root;
+	/**
+	 * Info class. TODO this is badly named (do not use Atomic).
+	 * @param <V> entry type
+	 */
+	static class AtomicInfo<V> {
+		Node<V> root;
         //the following contains either the actual key or the prefix for the sub-node
-		protected long rootKey;
-		protected V rootVal;
-		protected int size;
+		long rootKey;
+		V rootVal;
+		int size;
 
-		protected AtomicInfo<V> copy() {
+		AtomicInfo<V> copy() {
             AtomicInfo<V> c = new AtomicInfo<>();
             c.root = this.root;
             c.rootKey = this.rootKey;
@@ -80,7 +90,11 @@ public class CritBit64<V> implements Iterable<V> {
             return c;
         }
     }
-	
+
+	/**
+	 * Node.
+	 * @param <V> value type.
+	 */
 	protected static class Node<V> {
 		//TODO replace posDiff with posMask 
 		//     --> Possibly easier to calculate (non-log?)
@@ -113,7 +127,10 @@ public class CritBit64<V> implements Iterable<V> {
             this.posDiff = original.posDiff;
         }
 	}
-	
+
+	/**
+	 * Constructor.
+ 	 */
 	protected CritBit64() {
 		//private 
 	}
@@ -124,7 +141,7 @@ public class CritBit64<V> implements Iterable<V> {
 	 * @param <V> value type
 	 */
 	public static <V> CritBit64<V> create() {
-		return new CritBit64<V>();
+		return new CritBit64<>();
 	}
 	
 	/**
@@ -230,7 +247,10 @@ public class CritBit64<V> implements Iterable<V> {
 			parentPosDiff = n.posDiff;
 		}
 	}
-	
+
+	/**
+	 * Print tree.
+	 */
 	public void printTree() {
 		System.out.println("Tree: \n" + toString());
 	}
@@ -268,7 +288,11 @@ public class CritBit64<V> implements Iterable<V> {
 			s.append(level + " " + BitTools.toBinary(n.hiPost,64) + " v=" + n.hiVal + NL);
 		}
 	}
-	
+
+	/**
+	 * Check tree for consistency.
+	 * @return 'true' if no inconsistencies were found.
+	 */
 	public boolean checkTree() {
 		if (info.root == null) {
 			if (info.size > 1) {
@@ -331,9 +355,10 @@ public class CritBit64<V> implements Iterable<V> {
 	}
 
 	/**
-	 * 
+	 * Check if prefix matches.
+	 * @param posDiff start position
 	 * @param v key
-	 * @param startPos start position
+	 * @param prefix bit prefix
 	 * @return True if the prefix matches the value or if no prefix is defined
 	 */
 	private boolean doesPrefixMatch(int posDiff, long v, long prefix) {
@@ -518,7 +543,11 @@ public class CritBit64<V> implements Iterable<V> {
 	public CBIterator<V> iterator() {
 		return new CBIterator<V>().reset(this);
 	}
-	
+
+	/**
+	 * Full entry iterator.
+	 * @param <V> value type
+	 */
 	public static class CBIterator<V> implements Iterator<V> {
 		private long nextKey = 0; 
 		private V nextValue = null;
@@ -531,12 +560,20 @@ public class CritBit64<V> implements Iterable<V> {
 		private final byte[] readHigherNext;
 		private int stackTop = -1;
 
+		/**
+		 * Constructor.
+		 */
 		@SuppressWarnings("unchecked")
 		public CBIterator() {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
 		}
-		
+
+		/**
+		 * Reset iterator.
+		 * @param cb tree.
+		 * @return this iterator.
+		 */
 		public CBIterator<V> reset(CritBit64<V> cb) {
 			stackTop = -1;
 			hasNext = true;
@@ -612,6 +649,10 @@ public class CritBit64<V> implements Iterable<V> {
 			return ret;
 		}
 
+		/**
+		 * Increment iterator and return new key.
+		 * @return next key
+		 */
 		public long nextKey() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
@@ -621,6 +662,10 @@ public class CritBit64<V> implements Iterable<V> {
 			return ret;
 		}
 
+		/**
+		 * Increment iterator and return new entry.
+		 * @return next entry
+		 */
 		public Entry<V> nextEntry() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
@@ -646,7 +691,11 @@ public class CritBit64<V> implements Iterable<V> {
 	public QueryIterator<V> query(long min, long max) {
 		return new QueryIterator<V>().reset(this, min, max);
 	}
-	
+
+	/**
+	 * Iterator for window queries.
+	 * @param <V> value type.
+	 */
 	public static class QueryIterator<V> implements Iterator<V> {
 		private long minOrig;
 		private long maxOrig;
@@ -662,13 +711,23 @@ public class CritBit64<V> implements Iterable<V> {
 		private final long[] prefixes;
 		private int stackTop = -1;
 
+		/**
+		 * Constructor.
+		 */
 		@SuppressWarnings("unchecked")
 		public QueryIterator() {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			this.prefixes = new long[DEPTH];
 		}
-		
+
+		/**
+		 * Reset iterator.
+		 * @param cb tree
+		 * @param minOrig new min
+		 * @param maxOrig new max
+		 * @return this iterator
+		 */
 		public QueryIterator<V> reset(CritBit64<V> cb, long minOrig, long maxOrig) {
 			stackTop = -1;
 			hasNext = true;
@@ -790,6 +849,10 @@ public class CritBit64<V> implements Iterable<V> {
 			return ret;
 		}
 
+		/**
+		 * Increment iterator and return new key.
+		 * @return next key
+		 */
 		public long nextKey() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
@@ -799,6 +862,10 @@ public class CritBit64<V> implements Iterable<V> {
 			return ret;
 		}
 
+		/**
+		 * Increment iterator and return new entry.
+		 * @return next entry
+		 */
 		public Entry<V> nextEntry() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
@@ -826,7 +893,13 @@ public class CritBit64<V> implements Iterable<V> {
 	public QueryIteratorMask<V> queryWithMask(long min, long max) {
 		return new QueryIteratorMask<V>().reset(this, min, max);
 	}
-	
+
+	/**
+	 * Iterator with mask.
+	 *
+	 * @param <V> value type.
+	 * @see CritBit64#queryWithMask(long, long)
+	 */
 	public static class QueryIteratorMask<V> implements Iterator<V> {
 		private long minOrig;
 		private long maxOrig;
@@ -842,13 +915,23 @@ public class CritBit64<V> implements Iterable<V> {
 		private final long[] prefixes;
 		private int stackTop = -1;
 
+		/**
+		 * Constructor.
+		 */
 		@SuppressWarnings("unchecked")
 		public QueryIteratorMask() {
 			this.stack = new Node[DEPTH];
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			this.prefixes = new long[DEPTH];
 		}
-		
+
+		/**
+		 * Reset iterator.
+		 * @param cb new tree
+		 * @param minOrig new min
+		 * @param maxOrig new max
+		 * @return this iterator
+		 */
 		public QueryIteratorMask<V> reset(CritBit64<V> cb, long minOrig, long maxOrig) {
 			stackTop = -1;
 			hasNext = true;
@@ -929,7 +1012,8 @@ public class CritBit64<V> implements Iterable<V> {
 		/**
 		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
 		 * fits.
-		 * @param keyTemplate
+		 * @param keyTemplate key buffer
+		 * @param value value
 		 * @return Whether we have a match or not
 		 */
 		private boolean checkMatchFullIntoNextVal(long keyTemplate, V value) {
@@ -961,6 +1045,10 @@ public class CritBit64<V> implements Iterable<V> {
 			return ret;
 		}
 
+		/**
+		 * Increment iterator and return new key.
+		 * @return next key
+		 */
 		public long nextKey() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
@@ -970,6 +1058,10 @@ public class CritBit64<V> implements Iterable<V> {
 			return ret;
 		}
 
+		/**
+		 * Increment iterator and return new entry.
+		 * @return next entry
+		 */
 		public Entry<V> nextEntry() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
@@ -985,7 +1077,11 @@ public class CritBit64<V> implements Iterable<V> {
 		}
 
 	}
-	
+
+	/**
+	 * Entry class for this tree.
+	 * @param <V> value type.
+	 */
 	public static class Entry<V> {
 		private final long key;
 		private final V value;
@@ -993,9 +1089,19 @@ public class CritBit64<V> implements Iterable<V> {
 			this.key = key;
 			this.value = value;		
 		}
+
+		/**
+		 * Key.
+		 * @return key
+		 */
 		public long key() {
 			return key;
 		}
+
+		/**
+		 * Value.
+		 * @return value
+		 */
 		public V value() {
 			return value;
 		}

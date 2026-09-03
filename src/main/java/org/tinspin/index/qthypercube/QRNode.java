@@ -370,10 +370,18 @@ public class QRNode<T> {
 		}
 	}
 
+	/**
+	 * Has values.
+	 * @return true if this node has any values.
+	 */
 	public boolean hasValues() {
 		return values != null;
 	}
 
+	/**
+	 * Has child nodes.
+	 * @return true if this node has any child nodes.
+	 */
 	public boolean hasChildNodes() {
 		return subs != null;
 	}

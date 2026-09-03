@@ -26,6 +26,10 @@ import java.util.NoSuchElementException;
 import static org.tinspin.index.Index.*;
 import static org.tinspin.index.qtplain.QUtil.distToRectNodeEDGE;
 
+/**
+ * Iterator for kNN.
+ * @param <T> value type
+ */
 public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
 
     private final QRNode<T> root;
@@ -79,6 +83,10 @@ public class QRIteratorKnn<T> implements BoxIteratorKnn<T> {
         return ret;
     }
 
+    /**
+     * Distance of current entry.
+     * @return distance
+     */
     public double distance() {
         return currentDistance;
     }
