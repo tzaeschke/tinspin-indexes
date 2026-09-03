@@ -17,16 +17,15 @@
  */
 package org.tinspin.index.critbit;
 
-/**
- * This version of CritBit uses Copy-On-Write to create new versions of the tree
- * following each write operation.
- *
- */
+
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A concurrency enabled version of the CritBit64 tree. 
+ * This version of CritBit uses Copy-On-Write to create new versions of the tree
+ * following each write operation.
+ *
+ * A concurrency enabled version of the CritBit64 tree.
  * The implementation uses copy-on-write concurrency, therefore locking occurs only during updates,
  * read-access is never locked.
  * 

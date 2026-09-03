@@ -17,6 +17,8 @@
  */
 package org.tinspin.index.critbit;
 
+import org.tinspin.index.util.Refs;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -768,7 +770,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 */
 		@SuppressWarnings("unchecked")
 		public FullIterator(CritBit<V> cb, int DEPTH) {
-			this.stack = new Node[DEPTH];
+			this.stack = Refs.newArray(Node.class, DEPTH);
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			int intArrayLen = (DEPTH+63) >>> 6;
 			this.valIntTemplate = new long[intArrayLen];
@@ -921,7 +923,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		@SuppressWarnings("unchecked")
 		QueryIterator(CritBit<V> cb, long[] minOrig, long[] maxOrig) {
 			this.cb = cb;
-			this.stack = new Node[cb.DEPTH];
+			this.stack = Refs.newArray(Node.class, cb.DEPTH);
 			this.readHigherNext = new byte[cb.DEPTH];  // default = false
 			int intArrayLen = (cb.DEPTH+63) >>> 6;
 			this.valIntTemplate = new long[intArrayLen];
@@ -1180,7 +1182,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		@SuppressWarnings("unchecked")
 		public QueryIteratorWithMask(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DIM) {
 			this.cb = cb;
-			this.stack = new Node[cb.DEPTH];
+			this.stack = Refs.newArray(Node.class, cb.DEPTH);
 			this.readHigherNext = new byte[cb.DEPTH];  // default = false
 			int intArrayLen = (cb.DEPTH+63) >>> 6;
 			this.valIntTemplate = new long[intArrayLen];
@@ -1557,7 +1559,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 */
 		public CheckEmptyWithMask(CritBit<?> cb, int dims) {
 			this.cb = cb;
-			this.stack = new Node[cb.DEPTH];
+			this.stack = Refs.newArray(Node.class, cb.DEPTH);
 			this.readHigherNext = new byte[cb.DEPTH];  // default = false
 			int intArrayLen = (cb.DEPTH+63) >>> 6;
 			this.valIntTemplate = new long[intArrayLen];
@@ -1998,7 +2000,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 */
 		@SuppressWarnings("unchecked")
 		public QueryIteratorKD(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DIM, int DEPTH) {
-			this.stack = new Node[DIM*DEPTH];
+			this.stack = Refs.newArray(Node.class, DIM*DEPTH);
 			this.readHigherNext = new byte[DIM*DEPTH];  // default = false
 			this.keyOrigTemplate = new long[DIM];
 			this.minOrig = minOrig;

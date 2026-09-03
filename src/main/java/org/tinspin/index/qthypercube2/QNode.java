@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.function.Predicate;
 
 import org.tinspin.index.qthypercube2.QuadTreeKD2.QStats;
+import org.tinspin.index.util.Refs;
 
 import static org.tinspin.index.Index.*;
 
@@ -40,7 +41,7 @@ import static org.tinspin.index.Index.*;
  */
 public class QNode<T> {
 
-	private double[] center;
+	private final double[] center;
 	private double radius;
 	// null indicates that we have sub-node i.o. values
 	private PointEntry<T>[] values;
@@ -52,7 +53,7 @@ public class QNode<T> {
 	QNode(double[] center, double radius) {
 		this.center = center;
 		this.radius = radius;
-		this.values = new PointEntry[2];
+		this.values = Refs.newArray(PointEntry.class, 2);
 		this.isLeaf = true;
 	}
 
@@ -362,7 +363,7 @@ public class QNode<T> {
 		}
 
 		//okay, let's merge.
-		values = new PointEntry[nTotal];
+		values = Refs.newArray(PointEntry.class, nTotal);
 		nValues = 0;
 		for (int i = 0; i < subs.length; i++) {
 			Object e = subs[i];
