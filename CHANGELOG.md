@@ -18,6 +18,8 @@ TODO
   [#47](https://github.com/tzaeschke/tinspin-indexes/pull/47)
 - Fixed deprecation warnings
   [#48](https://github.com/tzaeschke/tinspin-indexes/pull/48)
+- Fixed javadoc warnings
+  [#49](https://github.com/tzaeschke/tinspin-indexes/pull/49)
 
 ## [2.1.4] - 2024-08-01
 
