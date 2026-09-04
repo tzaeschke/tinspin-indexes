@@ -15,6 +15,7 @@ import org.tinspin.index.qtplain.QuadTreeRKD0;
 import org.tinspin.index.rtree.RTreeEntry;
 import org.tinspin.index.rtree.RTree;
 import org.tinspin.index.test.util.TestInstances.IDX;
+import org.tinspin.index.util.Refs;
 
 import java.util.Arrays;
 
@@ -68,7 +69,7 @@ public class BoxMultimapCandidate extends Candidate {
 	public void load(double[] data, int dims) {
 		this.data = data;
 		if (bulkloadSTR) {
-			RTreeEntry<Integer>[] entries = new RTreeEntry[N];
+			RTreeEntry<Integer>[] entries = Refs.newArray(RTreeEntry.class, N);
 			int pos = 0;
 			for (int i = 0; i < N; i++) {
 				double[] lo = new double[dims];

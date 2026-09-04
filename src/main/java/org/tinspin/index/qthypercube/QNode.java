@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.function.Predicate;
 
 import org.tinspin.index.qthypercube.QuadTreeKD.QStats;
+import org.tinspin.index.util.Refs;
 
 import static org.tinspin.index.Index.*;
 
@@ -51,7 +52,7 @@ public class QNode<T> {
 		this.center = center;
 		this.radius = radius;
 		this.values = null;
-		this.subs = new QNode[1 << center.length];
+		this.subs = Refs.newArray(QNode.class, 1 << center.length);
 		subs[subNodePos] = subNode;
 	}
 
@@ -82,7 +83,7 @@ public class QNode<T> {
 		//split
 		ArrayList<PointEntry<T>> vals = values;
 		values = null;
-		subs = new QNode[1 << center.length];
+		subs = Refs.newArray(QNode.class, 1 << center.length);
 		for (int i = 0; i < vals.size(); i++) {
 			PointEntry<T> e2 = vals.get(i);
 			QNode<T> sub = getOrCreateSub(e2);

@@ -22,7 +22,7 @@ public class PointIteratorWrapper<E> implements PointIterator<E> {
      */
     public PointIteratorWrapper(double[] min, double[] max, BiFunction<double[], double[], Iterator<PointEntry<E>>> f) {
         fn = f;
-        reset(min, max);
+        it = fn.apply(min, max);
     }
 
     @Override

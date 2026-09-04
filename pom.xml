@@ -126,7 +126,7 @@
 				<version>3.15.0</version>
 				<configuration>
 					<release>11</release>
-					<compilerArgument>-Xlint:deprecation</compilerArgument>
+					<compilerArgument>-Xlint:all</compilerArgument>
 				</configuration>
 			</plugin>
 			<plugin>

@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import org.tinspin.index.BoxDistance;
+import org.tinspin.index.util.Refs;
 
 import static org.tinspin.index.Index.*;
 
@@ -39,7 +40,7 @@ public class RTreeQuery1nn<T> {
 		
 		@SuppressWarnings("unchecked")
 		IteratorStack(int depth, int nSubNodes) {
-			stack = new IterPos[depth];
+			stack = Refs.newArray(IterPos.class, depth);
 			for (int i = 0; i < stack.length; i++) {
 				stack[i] = new IterPos<>(nSubNodes);
 			}
@@ -68,7 +69,7 @@ public class RTreeQuery1nn<T> {
 
 	private static class DEComparator implements Comparator<NodeDistT<?>> {
 		@Override
-		public int compare(NodeDistT o1, NodeDistT o2) {
+		public int compare(NodeDistT<?> o1, NodeDistT<?> o2) {
 			return Double.compare(o1.dist, o2.dist);
 		}
 	}
@@ -87,7 +88,7 @@ public class RTreeQuery1nn<T> {
 		
 		@SuppressWarnings("unchecked")
 		public IterPos(int nSubNodes) {
-			subNodes = new NodeDistT[nSubNodes];
+			subNodes = Refs.newArray(NodeDistT.class, nSubNodes);
 			for (int i = 0; i < nSubNodes; i++) {
 				subNodes[i] = new NodeDistT<>(Double.POSITIVE_INFINITY, null);
 			}

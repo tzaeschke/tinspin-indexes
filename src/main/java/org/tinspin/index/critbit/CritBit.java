@@ -1189,7 +1189,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 			this.domMaskLo = new long[intArrayLen];
 			this.domMaskHi = new long[intArrayLen];
 			this.MAX_MASK = ~((-1L) << DIM);
-			reset(minOrig, maxOrig);
+			resetPrivate(minOrig, maxOrig);
 		}
 
 		/**
@@ -1198,6 +1198,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 * @param max new max
 		 */
 		public void reset(long[] min, long[] max) {
+			resetPrivate(min, max);
+		}
+
+		// private method to avoid "this" escape in constructor
+		private void resetPrivate(long[] min, long[] max) {
 			stackTop = -1;
 			nextKey = null;
 			this.minOrig = min;
@@ -1964,7 +1969,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	public QueryIteratorKD<V> queryKD(long[] min, long[] max) {
 		checkDIM(min);
 		checkDIM(max);
-		return new QueryIteratorKD<V>(this, min, max, DIM, DEPTH);
+		return new QueryIteratorKD<>(this, min, max, DIM, DEPTH);
 	}
 
 	/**

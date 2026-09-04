@@ -16,6 +16,8 @@
  */
 package org.tinspin.index.rtree;
 
+import org.tinspin.index.util.Refs;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -85,7 +87,7 @@ public class STRLoader<T> {
 		
 		sortChunks(entries, dims, M, comp);
 		
-		RTreeNode<T>[] nodes = new RTreeNode[(int) Math.ceil(N/(double)M)];
+		RTreeNode<T>[] nodes = Refs.newArray(RTreeNode.class, (int) Math.ceil(N/(double)M));
 		int posNode = 0;
 		RTreeNode<T> node = null;
 		for (int i = 0; i < entries.length; i++) {
@@ -106,10 +108,10 @@ public class STRLoader<T> {
 		}
 		
 		int MDir = RTree.NODE_MAX_DIR;
-		RTreeNodeDir<T>[] parentNodes = null; 
+		RTreeNodeDir<T>[] parentNodes;
 		do {
 			depth++;
-			parentNodes = new RTreeNodeDir[(int) Math.ceil(nodes.length/(double)MDir)];
+			parentNodes = Refs.newArray(RTreeNodeDir.class, (int) Math.ceil(nodes.length/(double)MDir));
 			//sort
 			sortChunks(nodes, dims, MDir, comp);
 			nNodes += parentNodes.length;

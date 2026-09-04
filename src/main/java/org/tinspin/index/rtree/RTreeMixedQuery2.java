@@ -152,7 +152,7 @@ class RTreeMixedQuery2<T> implements Iterator<BoxEntryKnn<T>> {
 			} else if (ent instanceof RTreeNodeLeaf) {
 				processNode((RTreeNodeLeaf<T>) ent);
 			} else {
-				nextElement = (RTreeNodeWrapper<T>) top;
+				nextElement = top;
 			}
 
 			if (nextElement != null) {

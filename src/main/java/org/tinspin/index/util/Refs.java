@@ -15,7 +15,16 @@ import java.lang.reflect.Array;
  * @author ztilmann
  */
 public class Refs {
-	
+
+	private Refs() {}
+
+	/**
+	 * This method has two purposes: avoid compiler lint warnings and enable object pooling in a future release.
+	 * @param c array type
+	 * @param size array size
+	 * @return new array
+	 * @param <T> array type
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T[] newArray(Class<T> c, int size) {
 		return (T[]) Array.newInstance(c, size);

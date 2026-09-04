@@ -41,7 +41,7 @@ public class BoxIteratorWrapper<E> implements BoxIterator<E> {
      */
     public BoxIteratorWrapper(double[] min, double[] max, BiFunction<double[], double[], Iterator<BoxEntry<E>>> f) {
         fn = f;
-        reset(min, max);
+        it = fn.apply(min, max);
     }
 
     @Override
