@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 
 import org.tinspin.index.*;
 import org.tinspin.index.util.BoxIteratorWrapper;
+import org.tinspin.index.util.Refs;
 
 /**
  * Simple spatial collection for rectangle/box entries.
@@ -38,7 +39,7 @@ public class RectArray<T> implements BoxMap<T>, BoxMultimap<T> {
 		this.size = 0;
 		this.dims = dims;
 		phc = new double[2*N][dims];
-		values = new BoxEntry[N];
+		values = Refs.newArray(BoxEntry.class, N);
 	}
 
 

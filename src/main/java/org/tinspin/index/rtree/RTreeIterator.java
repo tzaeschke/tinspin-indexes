@@ -16,6 +16,8 @@
  */
 package org.tinspin.index.rtree;
 
+import org.tinspin.index.util.Refs;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
@@ -35,7 +37,7 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 		
 		@SuppressWarnings("unchecked")
 		IteratorStack(int depth) {
-			stack = new IterPos[depth];
+			stack = Refs.newArray(IterPos.class, depth);
 		}
 
 		boolean isEmpty() {
@@ -90,7 +92,7 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 		this.tree = tree;
 		// Default: intersection query
 		this.filter = (RTreeEntry<T> entry)-> RTreeEntry.checkOverlap(this.min, this.max, entry);
-		reset(min, max);
+		resetPrivate(min, max);
 	}
 
 	/**
@@ -110,11 +112,16 @@ public class RTreeIterator<T> implements BoxIterator<T> {
 		this.stack = new IteratorStack(tree.getDepth());
 		this.tree = tree;
 		this.filter = filter;
-		reset(min, max);
+		resetPrivate(min, max);
 	}
 
 	@Override
 	public BoxIterator<T> reset(double[] min, double[] max) {
+		return resetPrivate(min, max);
+	}
+
+	// private method to avoid "this" escape in constructor
+	private BoxIterator<T> resetPrivate(double[] min, double[] max) {
 		if (stack.stack.length < tree.getDepth()) {
 			this.stack = new IteratorStack(tree.getDepth());
 		} else {

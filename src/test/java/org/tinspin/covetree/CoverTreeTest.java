@@ -25,6 +25,7 @@ import java.util.Random;
 import org.junit.Test;
 import org.tinspin.index.PointDistance;
 import org.tinspin.index.covertree.CoverTree;
+import org.tinspin.index.util.Refs;
 
 import static org.tinspin.index.Index.*;
 
@@ -32,44 +33,44 @@ public class CoverTreeTest {
 
 	@Test
 	public void smokeTestShort() {
-		double[][] point_list = {{2,3}, {5,4}, {9,6}, {4,7}};//, {8,1}, {7,2}};
-		smokeTest(point_list);
+		double[][] pointList = {{2,3}, {5,4}, {9,6}, {4,7}};//, {8,1}, {7,2}};
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTestDupl() {
-		double[][] point_list = {{2,3}, {2,3}, {2,3}, {2,3}, {2,3}, {2,3}};
-		smokeTest(point_list);
+		double[][] pointList = {{2,3}, {2,3}, {2,3}, {2,3}, {2,3}, {2,3}};
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest2D_0() {
-		double[][] point_list = new double[20][2];
-		Random R = new Random(0);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		double[][] pointList = new double[20][2];
+		Random rnd = new Random(0);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> { return (double)rnd.nextInt(100);} );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest2D_1() {
-		double[][] point_list = new double[20][2];
-		Random R = new Random(1);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		double[][] pointList = new double[20][2];
+		Random rnd = new Random(1);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> { return (double)rnd.nextInt(100);} );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest2D_245() {
-		double[][] point_list = new double[5][2];
-		Random R = new Random(245);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		double[][] pointList = new double[5][2];
+		Random rnd = new Random(245);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> { return (double)rnd.nextInt(100);} );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	/**
@@ -77,201 +78,201 @@ public class CoverTreeTest {
 	 */
 	@Test
 	public void smokeTest2D_Line() {
-		double[][] point_list = new double[10000][3];
+		double[][] pointList = new double[10000][3];
 		int n = 0;
-		for (double[] p : point_list) {
+		for (double[] p : pointList) {
 			p[0] = n % 3;
 			p[1] = n++; 
 			p[2] = n % 5;
 		}
-		List<double[]> list = Arrays.asList(point_list);
+		List<double[]> list = Arrays.asList(pointList);
 		Collections.shuffle(list);
-		point_list = list.toArray(point_list);
-		smokeTest(point_list);
+		pointList = list.toArray(pointList);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest2D_LineR() {
 		for (int r = 0; r < 1000; r++) {
 			//System.out.println("r=" + r);
-			double[][] point_list = new double[20][3];
+			double[][] pointList = new double[20][3];
 			int n = 0;
-			for (double[] p : point_list) {
+			for (double[] p : pointList) {
 				p[0] = n % 3;
 				p[1] = n++; 
 				p[2] = n % 5;
 			}
-			List<double[]> list = Arrays.asList(point_list);
+			List<double[]> list = Arrays.asList(pointList);
 			Collections.shuffle(list, new Random(r));
-			point_list = list.toArray(point_list);
-			smokeTest(point_list);
+			pointList = list.toArray(pointList);
+			smokeTest(pointList);
 		}
 	}
 	
 	@Test
 	public void smokeTest2D_LineR141() {
-		double[][] point_list = new double[20][3];
+		double[][] pointList = new double[20][3];
 		int n = 0;
-		for (double[] p : point_list) {
+		for (double[] p : pointList) {
 			p[0] = n % 3;
 			p[1] = n++; 
 			p[2] = n % 5;
 		}
-		List<double[]> list = Arrays.asList(point_list);
+		List<double[]> list = Arrays.asList(pointList);
 		Collections.shuffle(list, new Random(141));
-		point_list = list.toArray(point_list);
-		smokeTest(point_list);
+		pointList = list.toArray(pointList);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest5D() {
-		double[][] point_list = new double[20][5];
-		Random R = new Random(0);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		double[][] pointList = new double[20][5];
+		Random rnd = new Random(0);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> { return (double)rnd.nextInt(100);} );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest1D_Large() {
-		double[][] point_list = new double[100_000][1];
-		Random R = new Random(0);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		double[][] pointList = new double[100_000][1];
+		Random rnd = new Random(0);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> { return (double)rnd.nextInt(100);} );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest3D_Large() {
-		double[][] point_list = new double[100_000][3];
-		Random R = new Random(0);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		double[][] pointList = new double[100_000][3];
+		Random rnd = new Random(0);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> { return (double)rnd.nextInt(100);} );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest10D_Large() {
-		double[][] point_list = new double[10_000][10];
-		Random R = new Random(0);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> { return (double)R.nextInt(100);} );
+		double[][] pointList = new double[10_000][10];
+		Random rnd = new Random(0);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> { return (double)rnd.nextInt(100);} );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest2D_10_1() {
-		double[][] point_list = new double[10][2];
-		Random R = new Random(1);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		double[][] pointList = new double[10][2];
+		Random rnd = new Random(1);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> rnd.nextDouble()*10-5 );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest2D_10_5() {
-		double[][] point_list = new double[10][2];
-		Random R = new Random(5);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		double[][] pointList = new double[10][2];
+		Random rnd = new Random(5);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> rnd.nextDouble()*10-5 );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest25D_Large() {
 		for (int r = 0; r < 2000; r++) {
 			//System.out.println("r=" + r);
-			double[][] point_list = new double[10][2];
-			Random R = new Random(r);
-			for (double[] p : point_list) {
-				Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+			double[][] pointList = new double[10][2];
+			Random rnd = new Random(r);
+			for (double[] p : pointList) {
+				Arrays.setAll(p, i -> rnd.nextDouble()*10-5 );
 			}
-			smokeTest(point_list);
+			smokeTest(pointList);
 		}
 	}
 	
 	@Test
 	public void smokeTest2D_Reinsert0() {
-		double[][] point_list = new double[4][2];
-		Random R = new Random(0);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		double[][] pointList = new double[4][2];
+		Random rnd = new Random(0);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> rnd.nextDouble()*10-5 );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest2D_Reinsert5() {
-		double[][] point_list = new double[5][2];
-		Random R = new Random(275);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		double[][] pointList = new double[5][2];
+		Random rnd = new Random(275);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> rnd.nextDouble()*10-5 );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest2D_Reinsert398() {
-		double[][] point_list = new double[5][2];
-		Random R = new Random(398);
-		for (double[] p : point_list) {
-			Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+		double[][] pointList = new double[5][2];
+		Random rnd = new Random(398);
+		for (double[] p : pointList) {
+			Arrays.setAll(p, i -> rnd.nextDouble()*10-5 );
 		}
-		smokeTest(point_list);
+		smokeTest(pointList);
 	}
 	
 	@Test
 	public void smokeTest3D_Bulk() {
 		for (int r = 0; r < 1000; r++) {
 			//System.out.println("r=" + r);
-			double[][] point_list = new double[100][2];
-			Random R = new Random(r);
-			for (double[] p : point_list) {
-				Arrays.setAll(p, (i) -> R.nextDouble()*10-5 );
+			double[][] pointList = new double[100][2];
+			Random rnd = new Random(r);
+			for (double[] p : pointList) {
+				Arrays.setAll(p, i -> rnd.nextDouble()*10-5 );
 			}
-			smokeTestBulk(point_list);
+			smokeTestBulk(pointList);
 		}
 	}
 	
-	private void smokeTest(double[][] point_list) {
-		int dim = point_list[0].length;
+	private void smokeTest(double[][] pointList) {
+		int dim = pointList[0].length;
 		CoverTree<double[]> tree = CoverTree.create(dim);
-		for (double[] data : point_list) {
+		for (double[] data : pointList) {
 			tree.insert(data, data);
 			//System.out.println(tree.toStringTree());
 			//tree.check();
 		}
 		
-		smokeTestAccess(tree, point_list);
+		smokeTestAccess(tree, pointList);
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void smokeTestBulk(double[][] point_list) {
-		PointEntry<double[]>[] points = new PointEntry[point_list.length];
-		for (int i = 0; i < point_list.length; i++) {
-			PointEntry<double[]> p = CoverTree.create(point_list[i], point_list[i]);
+	private void smokeTestBulk(double[][] pointList) {
+		PointEntry<double[]>[] points = Refs.newArray(PointEntry.class, pointList.length);
+		for (int i = 0; i < pointList.length; i++) {
+			PointEntry<double[]> p = CoverTree.create(pointList[i], pointList[i]);
 			points[i] = p;
 		}
 		CoverTree<double[]> tree = CoverTree.create(points, 1.3, PointDistance.L2);
-		smokeTestAccess(tree, point_list);
+		smokeTestAccess(tree, pointList);
 	}
 	
-	private void smokeTestAccess(CoverTree<double[]> tree, double[][] point_list) {
+	private void smokeTestAccess(CoverTree<double[]> tree, double[][] pointList) {
 		tree.check();
 //	    System.out.println(tree.toStringTree());
-		for (double[] key : point_list) {
+		for (double[] key : pointList) {
 			if (!tree.contains(key)) {
 				throw new IllegalStateException(Arrays.toString(key));
 			}
 		}
 
-		for (double[] key : point_list) {
+		for (double[] key : pointList) {
 //			System.out.println("1NN query: " + Arrays.toString(key));
 			PointEntryKnn<double[]> p = tree.query1nn(key);
 			if (p == null) {
@@ -283,7 +284,7 @@ public class CoverTreeTest {
 			}
 		}
 	    
-		for (double[] key : point_list) {
+		for (double[] key : pointList) {
 //			System.out.println("kNN query: " + Arrays.toString(key));
 			PointIteratorKnn<double[]> iter = tree.queryKnn(key, 1);
 			if (!iter.hasNext()) {
@@ -295,7 +296,7 @@ public class CoverTreeTest {
 			}
 		}
 	    
-//		for (double[] key : point_list) {
+//		for (double[] key : pointList) {
 ////			System.out.println(tree.toStringTree());
 ////			System.out.println("Removing: " + Arrays.toString(key));
 //			if (!tree.containsExact(key)) {

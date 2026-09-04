@@ -16,6 +16,8 @@
  */
 package org.tinspin.index.rtree;
 
+import org.tinspin.index.util.Refs;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -75,7 +77,11 @@ public class RStarTreeLogic implements RTreeLogic {
 		}
 		@Override
 		public boolean equals(Object obj) {
-			return this == obj;
+			return super.equals(obj);
+		}
+		@Override
+		public int hashCode() {
+			return super.hashCode();
 		}
 	}
 	
@@ -100,7 +106,7 @@ public class RStarTreeLogic implements RTreeLogic {
 		//rank by area enlargement
 		ArrayList<RTreeNode<T>> children = dir.getChildren();
 		//TODO This doesn't always allow for ties...
-		NDPair<T>[] areas = new NDPair[P];
+		NDPair<T>[] areas = Refs.newArray(NDPair.class, P);
 		for (int i = 0; i < children.size(); i++) {
 			RTreeNode<T> child = children.get(i);
 			double area = calcAreaEnlargementSize(child, e);
@@ -187,7 +193,7 @@ public class RStarTreeLogic implements RTreeLogic {
 	public <T> RTreeNode<T> split(RTreeNode<T> node, RTreeEntry<T> e) {
 		//S1 determine axis
 		final int M = getM(node);
-		RTreeEntry<T>[] children = node.getEntries().toArray(new RTreeEntry[M+1]);
+		RTreeEntry<T>[] children = node.getEntries().toArray(Refs.newArray(RTreeEntry.class, M+1));
 		children[M] = e;
 		
 		int splitAxis = chooseSplitAxis(children);
@@ -328,7 +334,7 @@ public class RStarTreeLogic implements RTreeLogic {
 	public <T> RTreeEntry<T>[] reInsert(RTreeNode<T> node, RTreeEntry<T> e) {
 		//RI1 calculate center distances from node center
 		final int M = getM(node);
-		EDPair<T>[] children = new EDPair[M+1];
+		EDPair<T>[] children = Refs.newArray(EDPair.class, M+1);
 		ArrayList<RTreeEntry<T>> currentChildren =  node.getEntries();
 		for (int i = 0; i < M; i++) {
 			RTreeEntry<T> c = currentChildren.get(i);
@@ -354,7 +360,7 @@ public class RStarTreeLogic implements RTreeLogic {
 		
 		//RI4 reinsert entries
 		//use 'close reinsert', starting with best values, as suggested in paper
-		RTreeEntry<T>[] toReinsert = new RTreeEntry[p];
+		RTreeEntry<T>[] toReinsert = Refs.newArray(RTreeEntry.class, p);
 		for (int i = 0; i < p; i++) {
 			toReinsert[i] = children[i+nToKeep].entry;
 		}

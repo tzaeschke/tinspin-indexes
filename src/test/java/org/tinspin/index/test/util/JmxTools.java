@@ -247,9 +247,9 @@ public class JmxTools {
 //								//String[] key2 = {"key", "value"};
 //								String[] key3 = {"committed", "init", "max", "used"};
 //								//System.out.println("cd2: " + cd2.getCompositeType());
-////								for (String s2: key2) {
-////									System.out.println("222- " + s2 + " -> " + cd2.get(s2));
-////								}
+//  //								for (String s2: key2) {
+//  //									System.out.println("222- " + s2 + " -> " + cd2.get(s2));
+//  //								}
 //								System.out.println("222- \"key\" -> " + cd2.get("key"));
 //								for (String s3: key3) {
 //									CompositeData cd3 = (CompositeData) cd2.get("value");
@@ -263,12 +263,12 @@ public class JmxTools {
 //					
 //					for (Object v: cd.values()) {
 //						System.out.println("v=("+v.getClass().getName()+")" + v);
-////						if (v instanceof TabularData) {
-////							TabularData t = (TabularData) v;
-////							for (Object k: t.keySet()) {
-////								//print(t, k, "-");
-////							}
-////						}
+//  //						if (v instanceof TabularData) {
+//  //							TabularData t = (TabularData) v;
+//  //							for (Object k: t.keySet()) {
+//  //								//print(t, k, "-");
+//  //							}
+//  //						}
 //					}
 //				}
 //			}

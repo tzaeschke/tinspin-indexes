@@ -17,6 +17,8 @@
  */
 package org.tinspin.index.critbit;
 
+import org.tinspin.index.util.Refs;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -768,7 +770,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 */
 		@SuppressWarnings("unchecked")
 		public FullIterator(CritBit<V> cb, int DEPTH) {
-			this.stack = new Node[DEPTH];
+			this.stack = Refs.newArray(Node.class, DEPTH);
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			int intArrayLen = (DEPTH+63) >>> 6;
 			this.valIntTemplate = new long[intArrayLen];
@@ -921,7 +923,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		@SuppressWarnings("unchecked")
 		QueryIterator(CritBit<V> cb, long[] minOrig, long[] maxOrig) {
 			this.cb = cb;
-			this.stack = new Node[cb.DEPTH];
+			this.stack = Refs.newArray(Node.class, cb.DEPTH);
 			this.readHigherNext = new byte[cb.DEPTH];  // default = false
 			int intArrayLen = (cb.DEPTH+63) >>> 6;
 			this.valIntTemplate = new long[intArrayLen];
@@ -1180,14 +1182,14 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		@SuppressWarnings("unchecked")
 		public QueryIteratorWithMask(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DIM) {
 			this.cb = cb;
-			this.stack = new Node[cb.DEPTH];
+			this.stack = Refs.newArray(Node.class, cb.DEPTH);
 			this.readHigherNext = new byte[cb.DEPTH];  // default = false
 			int intArrayLen = (cb.DEPTH+63) >>> 6;
 			this.valIntTemplate = new long[intArrayLen];
 			this.domMaskLo = new long[intArrayLen];
 			this.domMaskHi = new long[intArrayLen];
 			this.MAX_MASK = ~((-1L) << DIM);
-			reset(minOrig, maxOrig);
+			resetPrivate(minOrig, maxOrig);
 		}
 
 		/**
@@ -1196,6 +1198,11 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 * @param max new max
 		 */
 		public void reset(long[] min, long[] max) {
+			resetPrivate(min, max);
+		}
+
+		// private method to avoid "this" escape in constructor
+		private void resetPrivate(long[] min, long[] max) {
 			stackTop = -1;
 			nextKey = null;
 			this.minOrig = min;
@@ -1557,7 +1564,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 */
 		public CheckEmptyWithMask(CritBit<?> cb, int dims) {
 			this.cb = cb;
-			this.stack = new Node[cb.DEPTH];
+			this.stack = Refs.newArray(Node.class, cb.DEPTH);
 			this.readHigherNext = new byte[cb.DEPTH];  // default = false
 			int intArrayLen = (cb.DEPTH+63) >>> 6;
 			this.valIntTemplate = new long[intArrayLen];
@@ -1962,7 +1969,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 	public QueryIteratorKD<V> queryKD(long[] min, long[] max) {
 		checkDIM(min);
 		checkDIM(max);
-		return new QueryIteratorKD<V>(this, min, max, DIM, DEPTH);
+		return new QueryIteratorKD<>(this, min, max, DIM, DEPTH);
 	}
 
 	/**
@@ -1998,7 +2005,7 @@ public class CritBit<V> implements CritBit1D<V>, CritBitKD<V> {
 		 */
 		@SuppressWarnings("unchecked")
 		public QueryIteratorKD(CritBit<V> cb, long[] minOrig, long[] maxOrig, int DIM, int DEPTH) {
-			this.stack = new Node[DIM*DEPTH];
+			this.stack = Refs.newArray(Node.class, DIM*DEPTH);
 			this.readHigherNext = new byte[DIM*DEPTH];  // default = false
 			this.keyOrigTemplate = new long[DIM];
 			this.minOrig = minOrig;

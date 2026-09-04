@@ -17,6 +17,11 @@
  */
 package org.tinspin.index.critbit;
 
+import org.tinspin.index.util.Refs;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 /**
  * CritBit64 is a 1D crit-bit tree with 64bit key length.
  * 
@@ -54,12 +59,6 @@ package org.tinspin.index.critbit;
  *  - Initial release
  * 
  * @author Tilmann Zaeschke
- */
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-/**
- * Critbit tree optimized for 64 bit integers.
  * @param <V> value type
  */
 public class CritBit64<V> implements Iterable<V> {
@@ -565,7 +564,7 @@ public class CritBit64<V> implements Iterable<V> {
 		 */
 		@SuppressWarnings("unchecked")
 		public CBIterator() {
-			this.stack = new Node[DEPTH];
+			this.stack = Refs.newArray(Node.class, DEPTH);
 			this.readHigherNext = new byte[DEPTH];  // default = false
 		}
 
@@ -716,7 +715,7 @@ public class CritBit64<V> implements Iterable<V> {
 		 */
 		@SuppressWarnings("unchecked")
 		public QueryIterator() {
-			this.stack = new Node[DEPTH];
+			this.stack = Refs.newArray(Node.class, DEPTH);
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			this.prefixes = new long[DEPTH];
 		}
@@ -920,7 +919,7 @@ public class CritBit64<V> implements Iterable<V> {
 		 */
 		@SuppressWarnings("unchecked")
 		public QueryIteratorMask() {
-			this.stack = new Node[DEPTH];
+			this.stack = Refs.newArray(Node.class, DEPTH);
 			this.readHigherNext = new byte[DEPTH];  // default = false
 			this.prefixes = new long[DEPTH];
 		}

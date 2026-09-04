@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.tinspin.index.*;
+import org.tinspin.index.util.Refs;
 import org.tinspin.index.util.StringBuilderLn;
 
 /**
@@ -37,7 +38,7 @@ public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
 		this.N = size;
 		this.dims = dims;
 		phc = new double[N][dims];
-		values = new PointEntry[N];
+		values = Refs.newArray(PointEntry.class, N);
 	}
 	
 	

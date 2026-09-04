@@ -56,7 +56,7 @@ public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 	public CoverTreeQueryKnn(CoverTree<T> tree, double[] center, int k, 
 			PointDistance dist) {
 		this.tree = tree;
-		reset(center, k, dist == null ? PointDistance.L2 : dist);
+		resetPrivate(center, k, dist == null ? PointDistance.L2 : dist);
 	}
 	
 	@Override
@@ -71,7 +71,12 @@ public class CoverTreeQueryKnn<T> implements PointIteratorKnn<T> {
 	 * @param k new k
 	 * @param dist new distance function
 	 */
-	public void reset(double[] center, int k, PointDistance dist) {
+	private void reset(double[] center, int k, PointDistance dist) {
+		resetPrivate(center, k, dist);
+	}
+
+	// private method to avoid "this" escape in constructor
+	private void resetPrivate(double[] center, int k, PointDistance dist) {
 		if (dist != null) {
 			this.dist = dist;
 		}
