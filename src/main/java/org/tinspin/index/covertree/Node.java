@@ -1,8 +1,8 @@
 /*
  * Copyright 2016-2017 Tilmann Zaeschke
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,169 +17,169 @@
  */
 package org.tinspin.index.covertree;
 
-import java.util.ArrayList;
-
 import static org.tinspin.index.Index.*;
+
+import java.util.ArrayList;
 
 /**
  * Node of a CoverTree.
+ *
  * @param <T> value type
  */
 public class Node<T> {
 
-	private PointEntry<T> p;
-	private ArrayList<Node<T>> children;
-	private int level;
-	private double distToParent;
-	private double maxDist = -1;
-	
-	Node(PointEntry<T> p, int level) {
-		this.p = p;
-		this.level = level;
-	}
+  private PointEntry<T> p;
+  private ArrayList<Node<T>> children;
+  private int level;
+  private double distToParent;
+  private double maxDist = -1;
 
-	Node<T> initLevel(int level) {
-		this.level = level;
-		this.maxDist = 0;
-		return this;
-	}
+  Node(PointEntry<T> p, int level) {
+    this.p = p;
+    this.level = level;
+  }
 
-	PointEntry<T> point() {
-		return p;
-	}
-	
-	void setDistanceToParent(double d) {
-		this.distToParent = d;
-	}
-	
-	double getDistanceToParent() {
-		return this.distToParent;
-	}
-	
-	void addChild(Node<T> node, double distToParent) {
-		if (node.level + 1 != level) {
-			throw new IllegalStateException("level" + level + '/' + node.level);
-		}
-		if (children == null) {
-			children = new ArrayList<>();
-		}
-		node.distToParent = distToParent;
-		if (node.hasChildren()) {
-			if (node.maxDist == -1 || node.distToParent + node.maxDist > maxDist) {
-				maxDist = -1; //Needs recalc
-			}
-		} else if (maxDist != -1 && distToParent > maxDist) {
-			maxDist = distToParent;
-		}
-		children.add(node);
-	}
+  Node<T> initLevel(int level) {
+    this.level = level;
+    this.maxDist = 0;
+    return this;
+  }
 
-	void replaceChild(int i, Node<T> qNew) {
-		children.set(i, qNew);
-	}
+  PointEntry<T> point() {
+    return p;
+  }
 
-	ArrayList<Node<T>> getChildren() {
-		return children;
-	}
+  void setDistanceToParent(double d) {
+    this.distToParent = d;
+  }
 
-	ArrayList<Node<T>> getOrCreateChildren() {
-		if (children == null) {
-			children = new ArrayList<>();
-		}
-		return children;
-	}
+  double getDistanceToParent() {
+    return this.distToParent;
+  }
 
-	boolean hasChildren() {
-		return children != null && !children.isEmpty(); 
-	}
-	
-	Node<T> removeAnyLeaf() {
-		//TODO closest?
-		Node<T> any = children.get(0);
-		if (any.hasChildren()) {
-			//TODO only invalidate if maxDist == d(any, point);
-			maxDist = -1;
-			return any.removeAnyLeaf();
-		}
-		//Not cheap, but better than resorting or returning the farthest child.
-		//TODO return farthest child?
-		Node<T> leaf = children.remove(0);
-		if (children.isEmpty()) {
-			maxDist = 0;
-		} else if (leaf.getDistanceToParent() >= maxDist) {
-			maxDist = -1;
-		}
-		return leaf;
-	}
+  void addChild(Node<T> node, double distToParent) {
+    if (node.level + 1 != level) {
+      throw new IllegalStateException("level" + level + '/' + node.level);
+    }
+    if (children == null) {
+      children = new ArrayList<>();
+    }
+    node.distToParent = distToParent;
+    if (node.hasChildren()) {
+      if (node.maxDist == -1 || node.distToParent + node.maxDist > maxDist) {
+        maxDist = -1; // Needs recalc
+      }
+    } else if (maxDist != -1 && distToParent > maxDist) {
+      maxDist = distToParent;
+    }
+    children.add(node);
+  }
 
-	double maxdist(CoverTree<T> tree) {
-		if (maxDist == -1) {
-			maxDist = recalcMaxDist(this, this, tree);
-		}
-		return maxDist;
-	}
+  void replaceChild(int i, Node<T> qNew) {
+    children.set(i, qNew);
+  }
 
-	double maxdistInternal() {
-		return maxDist;
-	}
+  ArrayList<Node<T>> getChildren() {
+    return children;
+  }
 
-	void adjustMaxDist(double newDist) {
-		maxDist = (maxDist == -1) ? -1 : Math.max(newDist, maxDist); 
-	}
-	
-	private static <T> double recalcMaxDist(Node<T> p, Node<T> node, CoverTree<T> tree) {
-		double maxDist = 0;
-		if (node.children != null) {
-			for (int i = 0; i < node.children.size(); i++) {
-				Node<T> child = node.children.get(i);
-				// level 'x-1' this is == distToParent....
-				double distChild = p == node ? child.getDistanceToParent() : tree.d(p, child);
-				//first check dist, then check children, otherwise the 'if' below may not work 
-				maxDist = Math.max(maxDist, distChild);
-				double maxDistChild = child.maxdist(tree);
-				if (maxDistChild + distChild > maxDist) {
-					//traverse children's children.
-					maxDist = Math.max(maxDist, recalcMaxDist(p, child, tree));
-				}
-			}
-		}
-		return maxDist;
-	}
-	
-	int getLevel() {
-		return level;
-	}
+  ArrayList<Node<T>> getOrCreateChildren() {
+    if (children == null) {
+      children = new ArrayList<>();
+    }
+    return children;
+  }
 
-	void setLevel(int level) {
-		this.level = level;
-	}
+  boolean hasChildren() {
+    return children != null && !children.isEmpty();
+  }
 
-	void invalidateMaxDist() {
-		maxDist = -1;
-	}
+  Node<T> removeAnyLeaf() {
+    // TODO closest?
+    Node<T> any = children.get(0);
+    if (any.hasChildren()) {
+      // TODO only invalidate if maxDist == d(any, point);
+      maxDist = -1;
+      return any.removeAnyLeaf();
+    }
+    // Not cheap, but better than resorting or returning the farthest child.
+    // TODO return farthest child?
+    Node<T> leaf = children.remove(0);
+    if (children.isEmpty()) {
+      maxDist = 0;
+    } else if (leaf.getDistanceToParent() >= maxDist) {
+      maxDist = -1;
+    }
+    return leaf;
+  }
 
-	void removeChild(int i) {
-		Node<T> n = children.remove(i);
-		if (maxDist != -1) {
-			if (n.maxDist != -1 && n.getDistanceToParent() + n.maxDist >= maxDist) {
-				maxDist = -1;
-			} else if (n.maxDist == -1) {
-				maxDist = -1;
-			}
-		}		
-	}
+  double maxdist(CoverTree<T> tree) {
+    if (maxDist == -1) {
+      maxDist = recalcMaxDist(this, this, tree);
+    }
+    return maxDist;
+  }
 
-	void clearAndRemoveAllChildren(ArrayList<Node<T>> clearedChildren) {
-		if (hasChildren()) {
-			for (int i = 0; i < children.size(); i++) {
-				Node<T> c = children.get(i);
-				c.clearAndRemoveAllChildren(clearedChildren);
-			}
-			clearedChildren.addAll(children);
-			children.clear();
-		}
-		maxDist = 0;
-		distToParent = 0;
-	}
+  double maxdistInternal() {
+    return maxDist;
+  }
 
+  void adjustMaxDist(double newDist) {
+    maxDist = (maxDist == -1) ? -1 : Math.max(newDist, maxDist);
+  }
+
+  private static <T> double recalcMaxDist(Node<T> p, Node<T> node, CoverTree<T> tree) {
+    double maxDist = 0;
+    if (node.children != null) {
+      for (int i = 0; i < node.children.size(); i++) {
+        Node<T> child = node.children.get(i);
+        // level 'x-1' this is == distToParent....
+        double distChild = p == node ? child.getDistanceToParent() : tree.d(p, child);
+        // first check dist, then check children, otherwise the 'if' below may not work
+        maxDist = Math.max(maxDist, distChild);
+        double maxDistChild = child.maxdist(tree);
+        if (maxDistChild + distChild > maxDist) {
+          // traverse children's children.
+          maxDist = Math.max(maxDist, recalcMaxDist(p, child, tree));
+        }
+      }
+    }
+    return maxDist;
+  }
+
+  int getLevel() {
+    return level;
+  }
+
+  void setLevel(int level) {
+    this.level = level;
+  }
+
+  void invalidateMaxDist() {
+    maxDist = -1;
+  }
+
+  void removeChild(int i) {
+    Node<T> n = children.remove(i);
+    if (maxDist != -1) {
+      if (n.maxDist != -1 && n.getDistanceToParent() + n.maxDist >= maxDist) {
+        maxDist = -1;
+      } else if (n.maxDist == -1) {
+        maxDist = -1;
+      }
+    }
+  }
+
+  void clearAndRemoveAllChildren(ArrayList<Node<T>> clearedChildren) {
+    if (hasChildren()) {
+      for (int i = 0; i < children.size(); i++) {
+        Node<T> c = children.get(i);
+        c.clearAndRemoveAllChildren(clearedChildren);
+      }
+      clearedChildren.addAll(children);
+      children.clear();
+    }
+    maxDist = 0;
+    distToParent = 0;
+  }
 }

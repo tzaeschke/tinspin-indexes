@@ -20,44 +20,46 @@ import java.util.Objects;
 
 /**
  * Mutable reference.
+ *
  * @param <T> reference type
  */
 public class MutableRef<T> {
-    private T t;
+  private T t;
 
-    /**
-     * Create.
-     */
-    public MutableRef() {
-        t = null;
-    }
+  /** Create. */
+  public MutableRef() {
+    t = null;
+  }
 
-    /**
-     * Create.
-     * @param t initial value
-     */
-    public MutableRef(T t) {
-        this.t = t;
-    }
+  /**
+   * Create.
+   *
+   * @param t initial value
+   */
+  public MutableRef(T t) {
+    this.t = t;
+  }
 
-    /**
-     * Get.
-     * @return current value
-     */
-    public T get() {
-        return t;
-    }
+  /**
+   * Get.
+   *
+   * @return current value
+   */
+  public T get() {
+    return t;
+  }
 
-    /**
-     * Set.
-     * @param t new value
-     */
-    public void set(T t) {
-        this.t = t;
-    }
+  /**
+   * Set.
+   *
+   * @param t new value
+   */
+  public void set(T t) {
+    this.t = t;
+  }
 
-    @Override
-    public String toString() {
-        return Objects.toString(t);
-    }
+  @Override
+  public String toString() {
+    return Objects.toString(t);
+  }
 }

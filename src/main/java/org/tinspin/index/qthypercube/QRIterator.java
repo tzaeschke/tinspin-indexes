@@ -1,8 +1,8 @@
 /*
  * Copyright 2016-2017 Tilmann Zaeschke
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,10 +17,10 @@
  */
 package org.tinspin.index.qthypercube;
 
+import static org.tinspin.index.Index.*;
+
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
-
-import static org.tinspin.index.Index.*;
 
 /**
  * Resetable query iterator.
@@ -29,170 +29,170 @@ import static org.tinspin.index.Index.*;
  */
 public class QRIterator<T> implements BoxIterator<T> {
 
-	private final QuadTreeRKD<T> tree;
-	private final IteratorStack stack;
-	private BoxEntry<T> next = null;
-	private double[] min;
-	private double[] max;
-	
-	QRIterator(QuadTreeRKD<T> tree, double[] min, double[] max) {
-		this.stack = new IteratorStack();
-		this.tree = tree;
-		reset(min, max);
-	}
-	
-	private void findNext() {
-		while(!stack.isEmpty()) {
-			StackEntry<T> se = stack.peek();
-			while (se.posSub < se.lenSub) {
-				int pos = (int) se.posSub;
-				se.inc();
-				//abort in next round if no increment is detected
-				if (se.posSub <= pos) {
-					se.posSub = Long.MAX_VALUE;
-				}
-				QRNode<T> node = se.subs[pos];
-				if (node != null) {
-					se = stack.prepareAndPush(node, min, max);
-				}
-			}
-			while (se.posE < se.lenE) {
-				BoxEntry<T> e = se.vals.get(se.posE++);
-				if (QUtil.overlap(min, max, e.min(), e.max())) {
-					next = e;
-					return;
-				}
-			}
-			stack.pop();
-		}
-		next = null;
-	}
-	
-	@Override
-	public boolean hasNext() {
-		return next != null;
-	}
+  private final QuadTreeRKD<T> tree;
+  private final IteratorStack stack;
+  private BoxEntry<T> next = null;
+  private double[] min;
+  private double[] max;
 
-	@Override
-	public BoxEntry<T> next() {
-		if (!hasNext()) {
-			throw new NoSuchElementException();
-		}
-		BoxEntry<T> ret = next;
-		findNext();
-		return ret;
-	}
+  QRIterator(QuadTreeRKD<T> tree, double[] min, double[] max) {
+    this.stack = new IteratorStack();
+    this.tree = tree;
+    reset(min, max);
+  }
 
-	/**
-	 * Reset the iterator. This iterator can be reused in order to reduce load on the
-	 * garbage collector.
-	 *
-	 * @param min lower left corner of query
-	 * @param max upper right corner of query
-	 * @return this.
-	 */
-	@Override
-	public BoxIterator<T> reset(double[] min, double[] max) {
-		stack.clear();
-		this.min = min;
-		this.max = max;
-		next = null;
-		if (tree.getRoot() != null) {
-			stack.prepareAndPush(tree.getRoot(), min, max);
-			findNext();
-		}
-		return this;
-	}
-	
-	private class IteratorStack {
-		private final ArrayList<StackEntry<T>> stack;
-		private int size = 0;
-		
-		IteratorStack() {
-			stack = new ArrayList<>();
-		}
+  private void findNext() {
+    while (!stack.isEmpty()) {
+      StackEntry<T> se = stack.peek();
+      while (se.posSub < se.lenSub) {
+        int pos = (int) se.posSub;
+        se.inc();
+        // abort in next round if no increment is detected
+        if (se.posSub <= pos) {
+          se.posSub = Long.MAX_VALUE;
+        }
+        QRNode<T> node = se.subs[pos];
+        if (node != null) {
+          se = stack.prepareAndPush(node, min, max);
+        }
+      }
+      while (se.posE < se.lenE) {
+        BoxEntry<T> e = se.vals.get(se.posE++);
+        if (QUtil.overlap(min, max, e.min(), e.max())) {
+          next = e;
+          return;
+        }
+      }
+      stack.pop();
+    }
+    next = null;
+  }
 
-		boolean isEmpty() {
-			return size == 0;
-		}
+  @Override
+  public boolean hasNext() {
+    return next != null;
+  }
 
-		StackEntry<T> prepareAndPush(QRNode<T> node, double[] min, double[] max) {
-			if (size == stack.size()) {
-				stack.add(new StackEntry<>());
-			}
-			StackEntry<T> ni = stack.get(size++);
-			
-			ni.set(node, min, max);
-			return ni;
-		}
+  @Override
+  public BoxEntry<T> next() {
+    if (!hasNext()) {
+      throw new NoSuchElementException();
+    }
+    BoxEntry<T> ret = next;
+    findNext();
+    return ret;
+  }
 
-		StackEntry<T> peek() {
-			return stack.get(size-1);
-		}
+  /**
+   * Reset the iterator. This iterator can be reused in order to reduce load on the garbage
+   * collector.
+   *
+   * @param min lower left corner of query
+   * @param max upper right corner of query
+   * @return this.
+   */
+  @Override
+  public BoxIterator<T> reset(double[] min, double[] max) {
+    stack.clear();
+    this.min = min;
+    this.max = max;
+    next = null;
+    if (tree.getRoot() != null) {
+      stack.prepareAndPush(tree.getRoot(), min, max);
+      findNext();
+    }
+    return this;
+  }
 
-		void pop() {
-			--size;
-		}
+  private class IteratorStack {
+    private final ArrayList<StackEntry<T>> stack;
+    private int size = 0;
 
-		public void clear() {
-			size = 0;
-		}
-	}
+    IteratorStack() {
+      stack = new ArrayList<>();
+    }
 
-	private static class StackEntry<T> {
-		int posE;
-		long posSub;
-		long m0;
-		long m1;
-		QRNode<T>[] subs;
-		ArrayList<BoxEntry<T>> vals;
-		int lenE;
-		int lenSub;
-		
-		void set(QRNode<T> node, double[] min, double[] max) {
-			this.vals = node.getEntries();
-			this.subs = node.getChildNodes();
+    boolean isEmpty() {
+      return size == 0;
+    }
 
-			lenE = this.vals != null ? this.vals.size() : 0;
-			posE = 0;
-			if (subs != null) {
-				lenSub = this.subs.length;
-				m0 = 0;
-				m1 = 0;
-				double[] center = node.getCenter();
-				for (int d = 0; d < center.length; d++) {
-					m0 <<= 1;
-					m1 <<= 1;
-					if (max[d] >= center[d]) {
-						m1 |= 1;
-						if (min[d] >= center[d]) {
-							m0 |= 1;
-						}
-					}
-				}
-				posSub = m0;
-			} else {
-				lenSub = 0;
-				posSub = 0;
-			}
-		}
-		
-		//boolean checkHcPos(long pos) {
-		//	return ((pos | m0) & m1) == pos;
-		//}
+    StackEntry<T> prepareAndPush(QRNode<T> node, double[] min, double[] max) {
+      if (size == stack.size()) {
+        stack.add(new StackEntry<>());
+      }
+      StackEntry<T> ni = stack.get(size++);
 
-		void inc() {
-			//first, fill all 'invalid' bits with '1' (bits that can have only one value).
-			long r = posSub | (~m1);
-			//increment. The '1's in the invalid bits will cause bitwise overflow to the next valid bit.
-			r++;
-			//remove invalid bits.
-			posSub = (r & m1) | m0;
+      ni.set(node, min, max);
+      return ni;
+    }
 
-			//return -1 if we exceed 'max' and cause an overflow or return the original value. The
-			//latter can happen if there is only one possible value (all filter bits are set).
-			//The <= is also owed to the bug tested in testBugDecrease()
-			//return (r <= v) ? -1 : r;
-		}
-	}
+    StackEntry<T> peek() {
+      return stack.get(size - 1);
+    }
+
+    void pop() {
+      --size;
+    }
+
+    public void clear() {
+      size = 0;
+    }
+  }
+
+  private static class StackEntry<T> {
+    int posE;
+    long posSub;
+    long m0;
+    long m1;
+    QRNode<T>[] subs;
+    ArrayList<BoxEntry<T>> vals;
+    int lenE;
+    int lenSub;
+
+    void set(QRNode<T> node, double[] min, double[] max) {
+      this.vals = node.getEntries();
+      this.subs = node.getChildNodes();
+
+      lenE = this.vals != null ? this.vals.size() : 0;
+      posE = 0;
+      if (subs != null) {
+        lenSub = this.subs.length;
+        m0 = 0;
+        m1 = 0;
+        double[] center = node.getCenter();
+        for (int d = 0; d < center.length; d++) {
+          m0 <<= 1;
+          m1 <<= 1;
+          if (max[d] >= center[d]) {
+            m1 |= 1;
+            if (min[d] >= center[d]) {
+              m0 |= 1;
+            }
+          }
+        }
+        posSub = m0;
+      } else {
+        lenSub = 0;
+        posSub = 0;
+      }
+    }
+
+    // boolean checkHcPos(long pos) {
+    //	return ((pos | m0) & m1) == pos;
+    // }
+
+    void inc() {
+      // first, fill all 'invalid' bits with '1' (bits that can have only one value).
+      long r = posSub | (~m1);
+      // increment. The '1's in the invalid bits will cause bitwise overflow to the next valid bit.
+      r++;
+      // remove invalid bits.
+      posSub = (r & m1) | m0;
+
+      // return -1 if we exceed 'max' and cause an overflow or return the original value. The
+      // latter can happen if there is only one possible value (all filter bits are set).
+      // The <= is also owed to the bug tested in testBugDecrease()
+      // return (r <= v) ? -1 : r;
+    }
+  }
 }

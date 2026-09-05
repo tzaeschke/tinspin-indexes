@@ -16,60 +16,60 @@
  */
 package org.tinspin.index.util;
 
-/**
- * StringBuilder with new-line functionality.
- */
+/** StringBuilder with new-line functionality. */
 public class StringBuilderLn {
-    private final StringBuilder sb = new StringBuilder();
+  private final StringBuilder sb = new StringBuilder();
 
-    /**
-     * Create new StringBuilder.
-     */
-    public StringBuilderLn() {
-        // Nothing to do here
-    }
+  /** Create new StringBuilder. */
+  public StringBuilderLn() {
+    // Nothing to do here
+  }
 
-    /**
-     * Append string.
-     * @param str string
-     * @return this StringBuilder
-     */
-    public StringBuilderLn append(String str) {
-        this.sb.append(str);
-        return this;
-    }
+  /**
+   * Append string.
+   *
+   * @param str string
+   * @return this StringBuilder
+   */
+  public StringBuilderLn append(String str) {
+    this.sb.append(str);
+    return this;
+  }
 
-    /**
-     * Append object.
-     * @param obj object
-     * @return this StringBuilder
-     */
-    public StringBuilderLn append(Object obj) {
-        this.sb.append(obj);
-        return this;
-    }
+  /**
+   * Append object.
+   *
+   * @param obj object
+   * @return this StringBuilder
+   */
+  public StringBuilderLn append(Object obj) {
+    this.sb.append(obj);
+    return this;
+  }
 
-    /**
-     * Append newline.
-     * @return this StringBuilder
-     */
-    public StringBuilderLn appendLn() {
-        this.sb.append(System.lineSeparator());
-        return this;
-    }
+  /**
+   * Append newline.
+   *
+   * @return this StringBuilder
+   */
+  public StringBuilderLn appendLn() {
+    this.sb.append(System.lineSeparator());
+    return this;
+  }
 
-    /**
-     * Append string and newline.
-     * @param str string
-     * @return this StringBuilder
-     */
-    public StringBuilderLn appendLn(String str) {
-        this.sb.append(str).append(System.lineSeparator());
-        return this;
-    }
+  /**
+   * Append string and newline.
+   *
+   * @param str string
+   * @return this StringBuilder
+   */
+  public StringBuilderLn appendLn(String str) {
+    this.sb.append(str).append(System.lineSeparator());
+    return this;
+  }
 
-    @Override
-    public String toString() {
-        return this.sb.toString();
-    }
+  @Override
+  public String toString() {
+    return this.sb.toString();
+  }
 }

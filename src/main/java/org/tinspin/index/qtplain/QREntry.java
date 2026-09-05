@@ -1,8 +1,8 @@
 /*
  * Copyright 2016-2017 Tilmann Zaeschke
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,11 +17,10 @@
  */
 package org.tinspin.index.qtplain;
 
-import java.util.Arrays;
 
-//import org.tinspin.index.BoxEntry;
+// import org.tinspin.index.BoxEntry;
 
-//public class BoxEntry<T> implements BoxEntry<T> {
+// public class BoxEntry<T> implements BoxEntry<T> {
 //
 //	private double[] pointL;
 //	private double[] pointU;
@@ -63,4 +62,4 @@ import java.util.Arrays;
 //		this.pointL = newPointL;
 //		this.pointU = newPointU;
 //	}
-//}
+// }

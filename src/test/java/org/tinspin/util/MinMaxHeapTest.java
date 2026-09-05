@@ -18,130 +18,132 @@
 package org.tinspin.util;
 
 import static org.junit.Assert.*;
-import org.junit.Test;
-import org.tinspin.index.util.*;
 
 import java.util.Arrays;
 import java.util.Random;
+import org.junit.Test;
+import org.tinspin.index.util.*;
 
 public class MinMaxHeapTest {
 
-    private static final int SEEDS = 10; // 100 for benchmarking
+  private static final int SEEDS = 10; // 100 for benchmarking
 
-    private static class Entry implements Comparable<Entry> {
+  private static class Entry implements Comparable<Entry> {
 
-        Entry(double d, int id) {
-            this.d = d;
-            this.id = id;
-        }
-        double d;
-        int id;
-        @Override
-        public int compareTo(Entry o) {
-            return Double.compare(d, o.d);
-        }
-
-        @Override
-        public String toString() {
-            // return String.format("(%d,%.2f)", id, d);
-            return String.format("%.3f", d);
-        }
+    Entry(double d, int id) {
+      this.d = d;
+      this.id = id;
     }
 
-    private MinMaxHeapI<Entry> create() {
-        // return new MinMaxHeapB(64);
-        // return MinMaxHeapC2.create();
-        // return MinMaxHeapZ2.create();
-        return MinMaxHeap.create((o1, o2) -> o1.d < o2.d);
-        // return MinMaxHeapZ3.create((o1, o2) -> o1.d < o2.d ? 1 : 0);
+    double d;
+    int id;
+
+    @Override
+    public int compareTo(Entry o) {
+      return Double.compare(d, o.d);
     }
 
-    private Entry[] data(int n, int seed) {
-        Random rnd = new Random(seed);
-        Entry[] data = new Entry[n];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = new Entry(rnd.nextDouble(), i);
-        }
-        return data;
+    @Override
+    public String toString() {
+      // return String.format("(%d,%.2f)", id, d);
+      return String.format("%.3f", d);
     }
+  }
 
-    private void populate(MinMaxHeapI<Entry> heap, Entry[] data) {
-        assertTrue(heap.isEmpty());
-        assertEquals(0, heap.size());
-        double min = Double.POSITIVE_INFINITY;
-        double max = Double.NEGATIVE_INFINITY;
-        for (int i = 0; i < data.length; i++) {
-            heap.push(data[i]);
-            assertFalse(heap.isEmpty());
-            assertEquals(i+1, heap.size());
-            min = Math.min(min, data[i].d);
-            max = Math.max(max, data[i].d);
-            assertNotNull(heap.peekMin());
-            assertEquals(min, heap.peekMin().d, 0.0);
-            assertEquals(max, heap.peekMax().d, 0.0);
-        }
+  private MinMaxHeapI<Entry> create() {
+    // return new MinMaxHeapB(64);
+    // return MinMaxHeapC2.create();
+    // return MinMaxHeapZ2.create();
+    return MinMaxHeap.create((o1, o2) -> o1.d < o2.d);
+    // return MinMaxHeapZ3.create((o1, o2) -> o1.d < o2.d ? 1 : 0);
+  }
+
+  private Entry[] data(int n, int seed) {
+    Random rnd = new Random(seed);
+    Entry[] data = new Entry[n];
+    for (int i = 0; i < data.length; i++) {
+      data[i] = new Entry(rnd.nextDouble(), i);
     }
+    return data;
+  }
 
-    @Test
-    public void testMin() {
-        for (int seed = 0; seed < SEEDS; seed++) {
-            for (int i = 1; i < 35; i++) {
-                testMin(i, seed);
-            }
-            for (int i = 1; i < 100; i++) {
-                testMin(i * 100, seed);
-            }
-        }
+  private void populate(MinMaxHeapI<Entry> heap, Entry[] data) {
+    assertTrue(heap.isEmpty());
+    assertEquals(0, heap.size());
+    double min = Double.POSITIVE_INFINITY;
+    double max = Double.NEGATIVE_INFINITY;
+    for (int i = 0; i < data.length; i++) {
+      heap.push(data[i]);
+      assertFalse(heap.isEmpty());
+      assertEquals(i + 1, heap.size());
+      min = Math.min(min, data[i].d);
+      max = Math.max(max, data[i].d);
+      assertNotNull(heap.peekMin());
+      assertEquals(min, heap.peekMin().d, 0.0);
+      assertEquals(max, heap.peekMax().d, 0.0);
     }
+  }
 
-    private void testMin(int n, int seed) {
-        Entry[] data = data(n, seed);
-        MinMaxHeapI<Entry> heap = create();
-        populate(heap, data);
-
-        Arrays.sort(data);
-
-        for (int i = 0; i < data.length; i++) {
-//            System.out.println("pop i=" + i);
- //           ((MinMaxHeapZ)heap).print();
-            assertFalse(heap.isEmpty());
-            assertEquals(data.length - i, heap.size());
-            assertEquals(data[i].d, heap.peekMin().d, 0.0);
-            assertEquals(data[n-1].d, heap.peekMax().d, 0.0);
-           // ((MinMaxHeapZ)heap).checkConsistency();
-            heap.popMin();
-        }
-        assertTrue(heap.isEmpty());
-        assertEquals(0, heap.size());
+  @Test
+  public void testMin() {
+    for (int seed = 0; seed < SEEDS; seed++) {
+      for (int i = 1; i < 35; i++) {
+        testMin(i, seed);
+      }
+      for (int i = 1; i < 100; i++) {
+        testMin(i * 100, seed);
+      }
     }
+  }
 
-    @Test
-    public void testMax() {
-        for (int seed = 0; seed < SEEDS; seed++) {
-            for (int i = 1; i < 35; i++) {
-                testMax(i, seed);
-            }
-            for (int i = 1; i < 100; i++) {
-                testMax(i * 100, seed);
-            }
-        }
+  private void testMin(int n, int seed) {
+    Entry[] data = data(n, seed);
+    MinMaxHeapI<Entry> heap = create();
+    populate(heap, data);
+
+    Arrays.sort(data);
+
+    for (int i = 0; i < data.length; i++) {
+      //            System.out.println("pop i=" + i);
+      //           ((MinMaxHeapZ)heap).print();
+      assertFalse(heap.isEmpty());
+      assertEquals(data.length - i, heap.size());
+      assertEquals(data[i].d, heap.peekMin().d, 0.0);
+      assertEquals(data[n - 1].d, heap.peekMax().d, 0.0);
+      // ((MinMaxHeapZ)heap).checkConsistency();
+      heap.popMin();
     }
+    assertTrue(heap.isEmpty());
+    assertEquals(0, heap.size());
+  }
 
-    private void testMax(int n, int seed) {
-        Entry[] data = data(n, seed);
-        MinMaxHeapI<Entry> heap = create();
-        populate(heap, data);
-
-        Arrays.sort(data);
-
-        for (int i = 0; i < data.length; i++) {
-            assertFalse(heap.isEmpty());
-            assertEquals(data.length - i, heap.size());
-            assertEquals(data[0].d, heap.peekMin().d, 0.0);
-            assertEquals(data[n-1-i].d, heap.peekMax().d, 0.0);
-            heap.popMax();
-        }
-        assertTrue(heap.isEmpty());
-        assertEquals(0, heap.size());
+  @Test
+  public void testMax() {
+    for (int seed = 0; seed < SEEDS; seed++) {
+      for (int i = 1; i < 35; i++) {
+        testMax(i, seed);
+      }
+      for (int i = 1; i < 100; i++) {
+        testMax(i * 100, seed);
+      }
     }
+  }
+
+  private void testMax(int n, int seed) {
+    Entry[] data = data(n, seed);
+    MinMaxHeapI<Entry> heap = create();
+    populate(heap, data);
+
+    Arrays.sort(data);
+
+    for (int i = 0; i < data.length; i++) {
+      assertFalse(heap.isEmpty());
+      assertEquals(data.length - i, heap.size());
+      assertEquals(data[0].d, heap.peekMin().d, 0.0);
+      assertEquals(data[n - 1 - i].d, heap.peekMax().d, 0.0);
+      heap.popMax();
+    }
+    assertTrue(heap.isEmpty());
+    assertEquals(0, heap.size());
+  }
 }

@@ -1,8 +1,8 @@
 /*
  * Copyright 2016-2017 Tilmann Zaeschke
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,544 +19,562 @@ package org.tinspin.index.qtplain;
 
 import java.util.*;
 import java.util.function.Predicate;
-
 import org.tinspin.index.*;
 import org.tinspin.index.util.MathTools;
 import org.tinspin.index.util.StringBuilderLn;
 
 /**
- * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and
- * (if desired) automatic guessing of root rectangle. 
- * <p>
- * This version of the quadtree stores for each node only the center point and the
- * distance (radius) to the edges.
- * This reduces space requirements but increases problems with numerical precision.
- * Overall it is more space efficient and slightly faster. 
- * 
- * @author ztilmann
+ * A simple MX-quadtree implementation with configurable maximum depth, maximum nodes size, and (if
+ * desired) automatic guessing of root rectangle.
  *
+ * <p>This version of the quadtree stores for each node only the center point and the distance
+ * (radius) to the edges. This reduces space requirements but increases problems with numerical
+ * precision. Overall it is more space efficient and slightly faster.
+ *
+ * @author ztilmann
  * @param <T> Value type.
  */
 public class QuadTreeKD0<T> implements PointMap<T>, PointMultimap<T> {
 
-	private static final int MAX_DEPTH = 50;
-	/**
-	 * Enable debug output and checks.
-	 */
-	public static final boolean DEBUG = false;
-	private static final int DEFAULT_MAX_NODE_SIZE = 10;
-	private static final double INITIAL_RADIUS = Double.MAX_VALUE;
+  private static final int MAX_DEPTH = 50;
 
-	private final int dims;
-	private final int maxNodeSize;
-	private QNode<T> root = null;
-	private int size = 0; 
-	
-	private QuadTreeKD0(int dims, int maxNodeSize) {
-		if (DEBUG) {
-			System.err.println("Warning: DEBUG enabled");
-		}
-		this.dims = dims;
-		this.maxNodeSize = maxNodeSize;
-	}
+  /** Enable debug output and checks. */
+  public static final boolean DEBUG = false;
 
-	/**
-	 * Create a QuadTree.
-	 * @param dims dimensions
-	 * @return new tree
-	 * @param <T> value type
-	 * @see #create(double[], double, boolean, int)
-	 */
-	public static <T> QuadTreeKD0<T> create(int dims) {
-		return new QuadTreeKD0<>(dims, DEFAULT_MAX_NODE_SIZE);
-	}
+  private static final int DEFAULT_MAX_NODE_SIZE = 10;
+  private static final double INITIAL_RADIUS = Double.MAX_VALUE;
 
-	/**
-	 * Create a QuadTree.
-	 * @param dims dimensions
-	 * @param maxNodeSize max entries per node
-	 * @return new tree
-	 * @param <T> value type
-	 * @see #create(double[], double, boolean, int)
-	 */
-	public static <T> QuadTreeKD0<T> create(int dims, int maxNodeSize) {
-		return new QuadTreeKD0<>(dims, maxNodeSize);
-	}
+  private final int dims;
+  private final int maxNodeSize;
+  private QNode<T> root = null;
+  private int size = 0;
 
-	/**
-	 * Note: This will align center and radius to a power of two before creating a tree.
-	 * @param maxNodeSize maximum entries per node, default is 10
-	 * @param center center of initial root node
-	 * @param radius radius of initial root node
-	 * @param align Whether center and radius should be aligned to powers of two. Aligning considerably
-	 *              reduces risk of precision problems. Recommended: "true".
-	 * @return New quadtree
-	 * @param <T> Value type
-	 */	public static <T> QuadTreeKD0<T> create(double[] center, double radius, boolean align, int maxNodeSize) {
-		QuadTreeKD0<T> t = new QuadTreeKD0<>(center.length, maxNodeSize);
-		if (radius <= 0) {
-			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
-		}
-		if (align) {
-			center = MathTools.floorPowerOfTwoCopy(center);
-			radius = MathTools.ceilPowerOfTwo(radius);
-		}
-		t.root = new QNode<>(Arrays.copyOf(center, center.length), radius);
-		return t;
-	}
+  private QuadTreeKD0(int dims, int maxNodeSize) {
+    if (DEBUG) {
+      System.err.println("Warning: DEBUG enabled");
+    }
+    this.dims = dims;
+    this.maxNodeSize = maxNodeSize;
+  }
 
-	/**
-	 * WARNING: Unaligned center and radius can cause precision problems.
-	 * @param dims dimensions, usually 2 or 3
-	 * @param maxNodeSize maximum entries per node, default is 10
-	 * @param center center of initial root node
-	 * @param radius radius of initial root node
-	 * @return New quadtree
-	 * @param <T> Value type
-	 * @deprecated Please use {@link #create(double[], double, boolean, int)}
-	 */
-	@Deprecated
-	public static <T> QuadTreeKD0<T> create(int dims, int maxNodeSize,
-											double[] center, double radius) {
-		QuadTreeKD0<T> t = new QuadTreeKD0<>(dims, maxNodeSize);
-		if (radius <= 0) {
-			throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
-		}
-		t.root = new QNode<>(Arrays.copyOf(center, center.length), radius);
-		return t;
-	}
+  /**
+   * Create a QuadTree.
+   *
+   * @param dims dimensions
+   * @return new tree
+   * @param <T> value type
+   * @see #create(double[], double, boolean, int)
+   */
+  public static <T> QuadTreeKD0<T> create(int dims) {
+    return new QuadTreeKD0<>(dims, DEFAULT_MAX_NODE_SIZE);
+  }
 
-	/**
-	 * Insert a key-value pair.
-	 * @param key the key
-	 * @param value the value
-	 */
-	@Override
-	public void insert(double[] key, T value) {
-		size++;
-		PointEntry<T> e = new PointEntry<>(key, value);
-		if (root == null) {
-			// We calculate a better radius when adding a second point.
-			// We align the center to a power of two. That reduces precision problems when
-			// creating subnode centers.
-			root = new QNode<>(MathTools.floorPowerOfTwoCopy(key), INITIAL_RADIUS);
-		}
-		if (root.getRadius() == INITIAL_RADIUS) {
-			adjustRootSize(key);
-		}
-		ensureCoverage(e);
-		QNode<T> r = root;
-		int depth = 0;
-		while (r != null) {
-			r = r.tryPut(e, maxNodeSize, depth++ > MAX_DEPTH);
-		}
-	}
+  /**
+   * Create a QuadTree.
+   *
+   * @param dims dimensions
+   * @param maxNodeSize max entries per node
+   * @return new tree
+   * @param <T> value type
+   * @see #create(double[], double, boolean, int)
+   */
+  public static <T> QuadTreeKD0<T> create(int dims, int maxNodeSize) {
+    return new QuadTreeKD0<>(dims, maxNodeSize);
+  }
 
-	private void adjustRootSize(double[] key) {
-		// Idea: we calculate the root size only when adding a point that is distinct from the root's center
-		if (!root.isLeaf() || root.getEntries().isEmpty()) {
-			return;
-		}
-		if (root.getRadius() == INITIAL_RADIUS) {
-			// Root size has not been initialized yet.
-			// We start by getting the maximum horizontal distance between the node center and any point in the node
-			double dMax = MathTools.maxDelta(key, root.getCenter());
-			for (int i = 0; i < root.getEntries().size(); i++) {
-				dMax = Math.max(dMax, MathTools.maxDelta(root.getEntries().get(i).point(), root.getCenter()));
-			}
-			// We calculate the minimum required radius that is also a power of two.
-			// This radius can be divided by 2 many times without precision problems.
-			double radius = MathTools.ceilPowerOfTwo(dMax + QUtil.EPS_MUL);
-			if (radius > 0) {
-				root.adjustRadius(radius);
-			} else if (root.getEntries().size() >= maxNodeSize - 1) {
-				// we just set an arbitrary radius here
-				root.adjustRadius(1000);
-			}
-		}
-	}
+  /**
+   * Note: This will align center and radius to a power of two before creating a tree.
+   *
+   * @param maxNodeSize maximum entries per node, default is 10
+   * @param center center of initial root node
+   * @param radius radius of initial root node
+   * @param align Whether center and radius should be aligned to powers of two. Aligning
+   *     considerably reduces risk of precision problems. Recommended: "true".
+   * @return New quadtree
+   * @param <T> Value type
+   */
+  public static <T> QuadTreeKD0<T> create(
+      double[] center, double radius, boolean align, int maxNodeSize) {
+    QuadTreeKD0<T> t = new QuadTreeKD0<>(center.length, maxNodeSize);
+    if (radius <= 0) {
+      throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
+    }
+    if (align) {
+      center = MathTools.floorPowerOfTwoCopy(center);
+      radius = MathTools.ceilPowerOfTwo(radius);
+    }
+    t.root = new QNode<>(Arrays.copyOf(center, center.length), radius);
+    return t;
+  }
 
-	/**
-	 * Check whether a given key exists.
-	 * @param key the key to check
-	 * @return true iff the key exists
-	 */
-	public boolean contains(double[] key) {
-		return root.getExact(key, entry -> true) != null;
-	}
-	
-	/**
-	 * Get the value associates with the key.
-	 * @param key the key to look up
-	 * @return the value for the key or 'null' if the key was not found
-	 */
-	@Override
-	public T queryExact(double[] key) {
-		if (root == null) {
-			return null;
-		}
-		PointEntry<T> e = root.getExact(key, entry -> true);
-		return e == null ? null : e.value();
-	}
+  /**
+   * WARNING: Unaligned center and radius can cause precision problems.
+   *
+   * @param dims dimensions, usually 2 or 3
+   * @param maxNodeSize maximum entries per node, default is 10
+   * @param center center of initial root node
+   * @param radius radius of initial root node
+   * @return New quadtree
+   * @param <T> Value type
+   * @deprecated Please use {@link #create(double[], double, boolean, int)}
+   */
+  @Deprecated
+  public static <T> QuadTreeKD0<T> create(
+      int dims, int maxNodeSize, double[] center, double radius) {
+    QuadTreeKD0<T> t = new QuadTreeKD0<>(dims, maxNodeSize);
+    if (radius <= 0) {
+      throw new IllegalArgumentException("Radius must be > 0 but was " + radius);
+    }
+    t.root = new QNode<>(Arrays.copyOf(center, center.length), radius);
+    return t;
+  }
 
-	@Override
-	public boolean contains(double[] key, T value) {
-		if (root == null) {
-			return false;
-		}
-		return root.getExact(key, e -> Objects.equals(value, e.value())) != null;
-	}
+  /**
+   * Insert a key-value pair.
+   *
+   * @param key the key
+   * @param value the value
+   */
+  @Override
+  public void insert(double[] key, T value) {
+    size++;
+    PointEntry<T> e = new PointEntry<>(key, value);
+    if (root == null) {
+      // We calculate a better radius when adding a second point.
+      // We align the center to a power of two. That reduces precision problems when
+      // creating subnode centers.
+      root = new QNode<>(MathTools.floorPowerOfTwoCopy(key), INITIAL_RADIUS);
+    }
+    if (root.getRadius() == INITIAL_RADIUS) {
+      adjustRootSize(key);
+    }
+    ensureCoverage(e);
+    QNode<T> r = root;
+    int depth = 0;
+    while (r != null) {
+      r = r.tryPut(e, maxNodeSize, depth++ > MAX_DEPTH);
+    }
+  }
 
-	/**
-	 * Remove a key.
-	 * @param key key to remove
-	 * @return the value associated with the key or 'null' if the key was not found
-	 */
-	@Override
-	public T remove(double[] key) {
-		if (root == null) {
-			return null;
-		}
-		PointEntry<T> e = root.remove(null, key, maxNodeSize, x -> true);
-		if (e == null) {
-			return null;
-		}
-		size--;
-		return e.value();
-	}
+  private void adjustRootSize(double[] key) {
+    // Idea: we calculate the root size only when adding a point that is distinct from the root's
+    // center
+    if (!root.isLeaf() || root.getEntries().isEmpty()) {
+      return;
+    }
+    if (root.getRadius() == INITIAL_RADIUS) {
+      // Root size has not been initialized yet.
+      // We start by getting the maximum horizontal distance between the node center and any point
+      // in the node
+      double dMax = MathTools.maxDelta(key, root.getCenter());
+      for (int i = 0; i < root.getEntries().size(); i++) {
+        dMax =
+            Math.max(dMax, MathTools.maxDelta(root.getEntries().get(i).point(), root.getCenter()));
+      }
+      // We calculate the minimum required radius that is also a power of two.
+      // This radius can be divided by 2 many times without precision problems.
+      double radius = MathTools.ceilPowerOfTwo(dMax + QUtil.EPS_MUL);
+      if (radius > 0) {
+        root.adjustRadius(radius);
+      } else if (root.getEntries().size() >= maxNodeSize - 1) {
+        // we just set an arbitrary radius here
+        root.adjustRadius(1000);
+      }
+    }
+  }
 
-	@Override
-	public boolean remove(double[] key, T value) {
-		return removeIf(key, e -> Objects.equals(e.value(), value));
-	}
+  /**
+   * Check whether a given key exists.
+   *
+   * @param key the key to check
+   * @return true iff the key exists
+   */
+  public boolean contains(double[] key) {
+    return root.getExact(key, entry -> true) != null;
+  }
 
-	@Override
-	public boolean removeIf(double[] key, Predicate<PointEntry<T>> condition) {
-		if (root == null) {
-			return false;
-		}
-		PointEntry<T> e = root.remove(null, key, maxNodeSize, condition);
-		if (e == null) {
-			return false;
-		}
-		size--;
-		return true;
-	}
+  /**
+   * Get the value associates with the key.
+   *
+   * @param key the key to look up
+   * @return the value for the key or 'null' if the key was not found
+   */
+  @Override
+  public T queryExact(double[] key) {
+    if (root == null) {
+      return null;
+    }
+    PointEntry<T> e = root.getExact(key, entry -> true);
+    return e == null ? null : e.value();
+  }
 
-	/**
-	 * Reinsert the key.
-	 * @param oldKey old key
-	 * @param newKey new key
-	 * @return the value associated with the key or 'null' if the key was not found.
-	 */
-	@Override
-	public T update(double[] oldKey, double[] newKey) {
-		return updateIf(oldKey, newKey, e -> true);
-	}
+  @Override
+  public boolean contains(double[] key, T value) {
+    if (root == null) {
+      return false;
+    }
+    return root.getExact(key, e -> Objects.equals(value, e.value())) != null;
+  }
 
-	/**
-	 * Reinsert the key.
-	 * @param oldKey old key
-	 * @param newKey new key
-	 * @param value the value of the entry that should be updated.
-	 * @return the value associated with the key or 'null' if the key was not found.
-	 */
-	@Override
-	public boolean update(double[] oldKey, double[] newKey, T value) {
-		return updateIf(oldKey, newKey, e -> Objects.equals(e.value(), value)) != null;
-	}
+  /**
+   * Remove a key.
+   *
+   * @param key key to remove
+   * @return the value associated with the key or 'null' if the key was not found
+   */
+  @Override
+  public T remove(double[] key) {
+    if (root == null) {
+      return null;
+    }
+    PointEntry<T> e = root.remove(null, key, maxNodeSize, x -> true);
+    if (e == null) {
+      return null;
+    }
+    size--;
+    return e.value();
+  }
 
-	/**
-	 * Reinsert the key.
-	 * @param oldKey old key
-	 * @param newKey new key
-	 * @param condition A predicate that must evaluate to 'true' for an entry to be updated.
-	 * @return the value associated with the key or 'null' if the key was not found.
-	 */
-	public T updateIf(double[] oldKey, double[] newKey, Predicate<PointEntry<T>> condition) {
-		if (root == null) {
-			return null;
-		}
-		boolean[] requiresReinsert = new boolean[]{false};
-		PointEntry<T> e = root.update(null, oldKey, newKey, maxNodeSize, requiresReinsert,
-				0, MAX_DEPTH, condition);
-		if (e == null) {
-			//not found
-			return null;
-		}
-		if (requiresReinsert[0]) {
-			//does not fit in root node...
-			ensureCoverage(e);
-			QNode<T> r = root;
-			int depth = 0;
-			while (r != null) {
-				r = r.tryPut(e, maxNodeSize, depth++>MAX_DEPTH);
-			}
-		}
-		return e.value();
-	}
+  @Override
+  public boolean remove(double[] key, T value) {
+    return removeIf(key, e -> Objects.equals(e.value(), value));
+  }
 
-	/**
-	 * Ensure that the tree covers the entry.
-	 * @param e Entry to cover.
-	 */
-	private void ensureCoverage(PointEntry<T> e) {
-		double[] p = e.point();
-		while(!QUtil.fitsIntoNode(e.point(), root.getCenter(), root.getRadius())) {
-			double[] center = root.getCenter();
-			double radius = root.getRadius();
-			double[] center2 = new double[center.length];
-			double radius2 = radius*2;
-			for (int d = 0; d < center.length; d++) {
-				if (p[d] < center[d]-radius) {
-					center2[d] = center[d]-radius;
-					//root will end up in upper quadrant in this 
-					//dimension
-				} else {
-					//extend upwards, even if extension unnecessary for this dimension.
-					center2[d] = center[d]+radius; 
-				}
-			}
-			if (QuadTreeKD0.DEBUG && !QUtil.isNodeEnclosed(center, radius, center2, radius2)) {
-				throw new IllegalStateException("e=" + Arrays.toString(e.point()) + 
-						" center/radius=" + Arrays.toString(center2) + "/" + radius);
-			}
-			root = new QNode<>(center2, radius2, root);
-		}
-	}
-	
-	/**
-	 * Get the number of key-value pairs in the tree.
-	 * @return the size
-	 */
-	@Override
-	public int size() {
-		return size;
-	}
+  @Override
+  public boolean removeIf(double[] key, Predicate<PointEntry<T>> condition) {
+    if (root == null) {
+      return false;
+    }
+    PointEntry<T> e = root.remove(null, key, maxNodeSize, condition);
+    if (e == null) {
+      return false;
+    }
+    size--;
+    return true;
+  }
 
-	/**
-	 * Removes all elements from the tree.
-	 */
-	@Override
-	public void clear() {
-		size = 0;
-		root = null;
-	}
+  /**
+   * Reinsert the key.
+   *
+   * @param oldKey old key
+   * @param newKey new key
+   * @return the value associated with the key or 'null' if the key was not found.
+   */
+  @Override
+  public T update(double[] oldKey, double[] newKey) {
+    return updateIf(oldKey, newKey, e -> true);
+  }
 
-	/**
-	 * @param point the point
-	 * @return an iterator over all entries at the given coordinate.
-	 * @see PointMultimap#queryExactPoint(double[])
-	 */
-	public PointIterator<T> queryExactPoint(double[] point) {
-		return query(point, point);
-	}
+  /**
+   * Reinsert the key.
+   *
+   * @param oldKey old key
+   * @param newKey new key
+   * @param value the value of the entry that should be updated.
+   * @return the value associated with the key or 'null' if the key was not found.
+   */
+  @Override
+  public boolean update(double[] oldKey, double[] newKey, T value) {
+    return updateIf(oldKey, newKey, e -> Objects.equals(e.value(), value)) != null;
+  }
 
-	/**
-	 * Query the tree, returning all points in the axis-aligned rectangle between 'min' and 'max'.
-	 * @param min lower left corner of query
-	 * @param max upper right corner of query
-	 * @return all entries in the rectangle
-	 */
-	@Override
-	public QIterator<T> query(double[] min, double[] max) {
-		return new QIterator<>(this, min, max);
-	}
+  /**
+   * Reinsert the key.
+   *
+   * @param oldKey old key
+   * @param newKey new key
+   * @param condition A predicate that must evaluate to 'true' for an entry to be updated.
+   * @return the value associated with the key or 'null' if the key was not found.
+   */
+  public T updateIf(double[] oldKey, double[] newKey, Predicate<PointEntry<T>> condition) {
+    if (root == null) {
+      return null;
+    }
+    boolean[] requiresReinsert = new boolean[] {false};
+    PointEntry<T> e =
+        root.update(null, oldKey, newKey, maxNodeSize, requiresReinsert, 0, MAX_DEPTH, condition);
+    if (e == null) {
+      // not found
+      return null;
+    }
+    if (requiresReinsert[0]) {
+      // does not fit in root node...
+      ensureCoverage(e);
+      QNode<T> r = root;
+      int depth = 0;
+      while (r != null) {
+        r = r.tryPut(e, maxNodeSize, depth++ > MAX_DEPTH);
+      }
+    }
+    return e.value();
+  }
 
-	/**
-	 * Resettable query iterator.
-	 *
-	 * @param <T> Value type
-	 */
-	public static class QIterator<T> implements PointIterator<T> {
+  /**
+   * Ensure that the tree covers the entry.
+   *
+   * @param e Entry to cover.
+   */
+  private void ensureCoverage(PointEntry<T> e) {
+    double[] p = e.point();
+    while (!QUtil.fitsIntoNode(e.point(), root.getCenter(), root.getRadius())) {
+      double[] center = root.getCenter();
+      double radius = root.getRadius();
+      double[] center2 = new double[center.length];
+      double radius2 = radius * 2;
+      for (int d = 0; d < center.length; d++) {
+        if (p[d] < center[d] - radius) {
+          center2[d] = center[d] - radius;
+          // root will end up in upper quadrant in this
+          // dimension
+        } else {
+          // extend upwards, even if extension unnecessary for this dimension.
+          center2[d] = center[d] + radius;
+        }
+      }
+      if (QuadTreeKD0.DEBUG && !QUtil.isNodeEnclosed(center, radius, center2, radius2)) {
+        throw new IllegalStateException(
+            "e="
+                + Arrays.toString(e.point())
+                + " center/radius="
+                + Arrays.toString(center2)
+                + "/"
+                + radius);
+      }
+      root = new QNode<>(center2, radius2, root);
+    }
+  }
 
-		private final QuadTreeKD0<T> tree;
-		private final ArrayDeque<Iterator<?>> stack;
-		private PointEntry<T> next = null;
-		private double[] min;
-		private double[] max;
-		
-		QIterator(QuadTreeKD0<T> tree, double[] min, double[] max) {
-			this.stack = new ArrayDeque<>();
-			this.tree = tree;
-			reset(min, max);
-		}
-		
-		@SuppressWarnings("unchecked")
-		private void findNext() {
-			while(!stack.isEmpty()) {
-				Iterator<?> it = stack.peek();
-				while (it.hasNext()) {
-					Object o = it.next();
-					if (o instanceof QNode) {
-						QNode<T> node = (QNode<T>)o;
-						if (QUtil.overlap(min, max, node.getCenter(), node.getRadius())) {
-							it = node.getChildIterator();
-							stack.push(it);
-						}
-						continue;
-					}
-					PointEntry<T> e = (PointEntry<T>) o;
-					if (QUtil.isPointEnclosed(e.point(), min, max)) {
-						next = e;
-						return;
-					}
-				}
-				stack.pop();
-			}
-			next = null;
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return next != null;
-		}
+  /**
+   * Get the number of key-value pairs in the tree.
+   *
+   * @return the size
+   */
+  @Override
+  public int size() {
+    return size;
+  }
 
-		@Override
-		public PointEntry<T> next() {
-			if (!hasNext()) {
-				throw new NoSuchElementException();
-			}
-			PointEntry<T> ret = next;
-			findNext();
-			return ret;
-		}
+  /** Removes all elements from the tree. */
+  @Override
+  public void clear() {
+    size = 0;
+    root = null;
+  }
 
-		/**
-		 * Reset the iterator. This iterator can be reused in order to reduce load on the
-		 * garbage collector.
-		 * @param min lower left corner of query
-		 * @param max upper right corner of query
-		 * @return this.
-		 */
-		@Override
-		public PointIterator<T> reset(double[] min, double[] max) {
-			stack.clear();
-			this.min = min;
-			this.max = max;
-			next = null;
-			if (tree.root != null) {
-				stack.push(tree.root.getChildIterator());
-				findNext();
-			}
-			return this;
-		}
-	}
+  /**
+   * @param point the point
+   * @return an iterator over all entries at the given coordinate.
+   * @see PointMultimap#queryExactPoint(double[])
+   */
+  public PointIterator<T> queryExactPoint(double[] point) {
+    return query(point, point);
+  }
 
-	@Override
-	public PointEntryKnn<T> query1nn(double[] center) {
-		return new QIteratorKnn<>(this.root, 1, center, PointDistance.L2, (e, d) -> true).next();
-	}
+  /**
+   * Query the tree, returning all points in the axis-aligned rectangle between 'min' and 'max'.
+   *
+   * @param min lower left corner of query
+   * @param max upper right corner of query
+   * @return all entries in the rectangle
+   */
+  @Override
+  public QIterator<T> query(double[] min, double[] max) {
+    return new QIterator<>(this, min, max);
+  }
 
-	/**
-	 *
-	 * @param center center point
-	 * @param k      number of neighbors
-	 * @param dist   the point distance function to be used
-	 * @return Iterator over query result
-	 * @see PointMultimap#queryKnn(double[], int, PointDistance)
-	 */
-	@Override
-	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance dist) {
-		return new QIteratorKnn<>(this.root, k, center, dist, (e, d) -> true);
-	}
+  /**
+   * Resettable query iterator.
+   *
+   * @param <T> Value type
+   */
+  public static class QIterator<T> implements PointIterator<T> {
 
-	/**
-	 * Returns a printable list of the tree.
-	 * @return the tree as String
-	 */
+    private final QuadTreeKD0<T> tree;
+    private final ArrayDeque<Iterator<?>> stack;
+    private PointEntry<T> next = null;
+    private double[] min;
+    private double[] max;
+
+    QIterator(QuadTreeKD0<T> tree, double[] min, double[] max) {
+      this.stack = new ArrayDeque<>();
+      this.tree = tree;
+      reset(min, max);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void findNext() {
+      while (!stack.isEmpty()) {
+        Iterator<?> it = stack.peek();
+        while (it.hasNext()) {
+          Object o = it.next();
+          if (o instanceof QNode) {
+            QNode<T> node = (QNode<T>) o;
+            if (QUtil.overlap(min, max, node.getCenter(), node.getRadius())) {
+              it = node.getChildIterator();
+              stack.push(it);
+            }
+            continue;
+          }
+          PointEntry<T> e = (PointEntry<T>) o;
+          if (QUtil.isPointEnclosed(e.point(), min, max)) {
+            next = e;
+            return;
+          }
+        }
+        stack.pop();
+      }
+      next = null;
+    }
+
     @Override
-	public String toStringTree() {
-		StringBuilderLn sb = new StringBuilderLn();
-		if (root == null) {
-			sb.append("empty tree");
-		} else {
-			toStringTree(sb, root, 0, 0);
-		}
-		return sb.toString();
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void toStringTree(StringBuilderLn sb, QNode<T> node, int depth, int posInParent) {
-		Iterator<?> it = node.getChildIterator();
-		String prefix = ".".repeat(depth);
-		sb.append(prefix + posInParent + " d=" + depth);
-		sb.append(" " + Arrays.toString(node.getCenter()));
-		sb.appendLn("/" + node.getRadius());
-		prefix += " ";
-		int pos = 0;
-		while (it.hasNext()) {
-			Object o = it.next();
-			if (o instanceof QNode) {
-				QNode<T> sub = (QNode<T>) o;
-				toStringTree(sb, sub, depth+1, pos);
-			} else if (o instanceof PointEntry) {
-				PointEntry<T> e = (PointEntry<T>) o;
-				sb.append(prefix + Arrays.toString(e.point()));
-				sb.appendLn(" v=" + e.value());
-			}
-			pos++;
-		}
-	}
-	
-	@Override
-	public String toString() {
-		return "QuadTreeKD0;maxNodeSize=" + maxNodeSize + 
-				";maxDepth=" + MAX_DEPTH + 
-				";DEBUG=" + DEBUG + 
-				";center/radius=" + (root==null ? "null" : 
-					(Arrays.toString(root.getCenter()) + "/" +
-				root.getRadius()));
-	}
-	
-	@Override
-	public QStats getStats() {
-		QStats s = new QStats();
-		if (root != null) {
-			root.checkNode(s, null, 0);
-		}
-		return s;
-	}
-	
-	/**
-	 * Statistics container class.
-	 */
-	public static class QStats extends Stats {
-		/**
-		 * Create new statistics entry.
-		 */
-		protected QStats() {
-			super(0, 0, 0);
-		}
-	}
+    public boolean hasNext() {
+      return next != null;
+    }
 
-	@Override
-	public int getDims() {
-		return dims;
-	}
+    @Override
+    public PointEntry<T> next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+      PointEntry<T> ret = next;
+      findNext();
+      return ret;
+    }
 
-	@Override
-	public PointIterator<T> iterator() {
-		if (root == null) {
-			return query(new double[dims], new double[dims]);
-		}
-		//return query(root.);
-		//TODO
-		throw new UnsupportedOperationException();
-	}
+    /**
+     * Reset the iterator. This iterator can be reused in order to reduce load on the garbage
+     * collector.
+     *
+     * @param min lower left corner of query
+     * @param max upper right corner of query
+     * @return this.
+     */
+    @Override
+    public PointIterator<T> reset(double[] min, double[] max) {
+      stack.clear();
+      this.min = min;
+      this.max = max;
+      next = null;
+      if (tree.root != null) {
+        stack.push(tree.root.getChildIterator());
+        findNext();
+      }
+      return this;
+    }
+  }
 
-	@Override
-	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
-		return queryKnn(center, k, PointDistance.L2);
-	}
+  @Override
+  public PointEntryKnn<T> query1nn(double[] center) {
+    return new QIteratorKnn<>(this.root, 1, center, PointDistance.L2, (e, d) -> true).next();
+  }
 
-	@Override
-	public int getNodeCount() {
-		return getStats().getNodeCount();
-	}
+  /**
+   * @param center center point
+   * @param k number of neighbors
+   * @param dist the point distance function to be used
+   * @return Iterator over query result
+   * @see PointMultimap#queryKnn(double[], int, PointDistance)
+   */
+  @Override
+  public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance dist) {
+    return new QIteratorKnn<>(this.root, k, center, dist, (e, d) -> true);
+  }
 
-	@Override
-	public int getDepth() {
-		return getStats().getMaxDepth();
-	}
+  /**
+   * Returns a printable list of the tree.
+   *
+   * @return the tree as String
+   */
+  @Override
+  public String toStringTree() {
+    StringBuilderLn sb = new StringBuilderLn();
+    if (root == null) {
+      sb.append("empty tree");
+    } else {
+      toStringTree(sb, root, 0, 0);
+    }
+    return sb.toString();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void toStringTree(StringBuilderLn sb, QNode<T> node, int depth, int posInParent) {
+    Iterator<?> it = node.getChildIterator();
+    String prefix = ".".repeat(depth);
+    sb.append(prefix + posInParent + " d=" + depth);
+    sb.append(" " + Arrays.toString(node.getCenter()));
+    sb.appendLn("/" + node.getRadius());
+    prefix += " ";
+    int pos = 0;
+    while (it.hasNext()) {
+      Object o = it.next();
+      if (o instanceof QNode) {
+        QNode<T> sub = (QNode<T>) o;
+        toStringTree(sb, sub, depth + 1, pos);
+      } else if (o instanceof PointEntry) {
+        PointEntry<T> e = (PointEntry<T>) o;
+        sb.append(prefix + Arrays.toString(e.point()));
+        sb.appendLn(" v=" + e.value());
+      }
+      pos++;
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "QuadTreeKD0;maxNodeSize="
+        + maxNodeSize
+        + ";maxDepth="
+        + MAX_DEPTH
+        + ";DEBUG="
+        + DEBUG
+        + ";center/radius="
+        + (root == null ? "null" : (Arrays.toString(root.getCenter()) + "/" + root.getRadius()));
+  }
+
+  @Override
+  public QStats getStats() {
+    QStats s = new QStats();
+    if (root != null) {
+      root.checkNode(s, null, 0);
+    }
+    return s;
+  }
+
+  /** Statistics container class. */
+  public static class QStats extends Stats {
+    /** Create new statistics entry. */
+    protected QStats() {
+      super(0, 0, 0);
+    }
+  }
+
+  @Override
+  public int getDims() {
+    return dims;
+  }
+
+  @Override
+  public PointIterator<T> iterator() {
+    if (root == null) {
+      return query(new double[dims], new double[dims]);
+    }
+    // return query(root.);
+    // TODO
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public PointIteratorKnn<T> queryKnn(double[] center, int k) {
+    return queryKnn(center, k, PointDistance.L2);
+  }
+
+  @Override
+  public int getNodeCount() {
+    return getStats().getNodeCount();
+  }
+
+  @Override
+  public int getDepth() {
+    return getStats().getMaxDepth();
+  }
 }

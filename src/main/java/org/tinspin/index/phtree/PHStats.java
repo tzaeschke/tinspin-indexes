@@ -1,7 +1,7 @@
 /*
  * Copyright 2016 Tilmann Zaeschke
- * 
- * 
+ *
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,35 +16,33 @@
  */
 package org.tinspin.index.phtree;
 
+import ch.ethz.globis.phtree.util.PhTreeStats;
 import org.tinspin.index.Stats;
 
-import ch.ethz.globis.phtree.util.PhTreeStats;
-
-
-/**
- * Statistics of a PH-tree.
- */
+/** Statistics of a PH-tree. */
 public class PHStats extends Stats {
-	private final PhTreeStats ph;
+  private final PhTreeStats ph;
 
-	/**
-	 * Constructor.
-	 * @param s stats
-	 * @param dims dimensions
-	 */
-	public PHStats(PhTreeStats s, int dims) {
-		super(0, 0, 0);
-		ph = s;
-		this.dims = dims;
-		nNodes = s.nNodes;
-		nEntries = (int) s.size;
-	}
+  /**
+   * Constructor.
+   *
+   * @param s stats
+   * @param dims dimensions
+   */
+  public PHStats(PhTreeStats s, int dims) {
+    super(0, 0, 0);
+    ph = s;
+    this.dims = dims;
+    nNodes = s.nNodes;
+    nEntries = (int) s.size;
+  }
 
-	/**
-	 * Get stats.
-	 * @return stats
-	 */
-	public PhTreeStats getPhStats() {
-		return ph;
-	}
+  /**
+   * Get stats.
+   *
+   * @return stats
+   */
+  public PhTreeStats getPhStats() {
+    return ph;
+  }
 }

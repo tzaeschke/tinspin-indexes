@@ -1,8 +1,8 @@
 /*
  * Copyright 2016-2017 Tilmann Zaeschke
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,88 +18,86 @@
 package org.tinspin.index.kdtree;
 
 import java.util.Arrays;
-
 import org.tinspin.index.Index;
 import org.tinspin.index.kdtree.KDTree.KDStats;
 
 /**
  * Node class for the quadtree.
- * 
- * @author ztilmann
  *
+ * @author ztilmann
  * @param <T> Value type
  */
 public class Node<T> extends Index.PointEntry<T> {
 
-	private Node<T> left;
-	private Node<T> right;
-	private final int dim;
-	
-	Node(double[] p, T value, int dim, boolean defensiveKeyCopy) {
-		super(defensiveKeyCopy ? p.clone() : p, value);
-		this.dim = dim;
-	}
-	
-	Node<T> getClosestNodeOrAddPoint(double[] p, T value, int dims, boolean defensiveKeyCopy) {
-		//Find best sub-node.
-		//If there is no node, we create one and return null
-		if (p[dim] >= point()[dim]) {
-			if (right != null) {
-				return right;
-			}
-			right = new Node<>(p, value, (dim + 1) % dims, defensiveKeyCopy);
-			return null;
-		} 
-		if (left != null) {
-			return left;
-		}
-		left = new Node<>(p, value, (dim + 1) % dims, defensiveKeyCopy);
-		return null;
-	}
+  private Node<T> left;
+  private Node<T> right;
+  private final int dim;
 
-	Node<T> getLo() {
-		return left;
-	}
-	
-	Node<T> getHi() {
-		return right;
-	}
+  Node(double[] p, T value, int dim, boolean defensiveKeyCopy) {
+    super(defensiveKeyCopy ? p.clone() : p, value);
+    this.dim = dim;
+  }
 
-	void setLeft(Node<T> left) {
-		this.left = left;
-	}
+  Node<T> getClosestNodeOrAddPoint(double[] p, T value, int dims, boolean defensiveKeyCopy) {
+    // Find best sub-node.
+    // If there is no node, we create one and return null
+    if (p[dim] >= point()[dim]) {
+      if (right != null) {
+        return right;
+      }
+      right = new Node<>(p, value, (dim + 1) % dims, defensiveKeyCopy);
+      return null;
+    }
+    if (left != null) {
+      return left;
+    }
+    left = new Node<>(p, value, (dim + 1) % dims, defensiveKeyCopy);
+    return null;
+  }
 
-	void setRight(Node<T> right) {
-		this.right = right;
-	}
+  Node<T> getLo() {
+    return left;
+  }
 
-	void checkNode(KDStats s, int depth) {
-		s.nNodes++;
-		if (depth > s.maxDepth) {
-			s.maxDepth = depth;
-		}
-		if (left != null) {
-			left.checkNode(s, depth + 1);
-		}
-		if (right != null) {
-			right.checkNode(s, depth + 1);
-		}
-	}
+  Node<T> getHi() {
+    return right;
+  }
 
-	@Override
-	public String toString() {
-		return "center=" + Arrays.toString(point()) + " " + System.identityHashCode(this);
-	}
+  void setLeft(Node<T> left) {
+    this.left = left;
+  }
 
-	boolean isLeaf() {
-		return this.left == null && this.right == null;
-	}
+  void setRight(Node<T> right) {
+    this.right = right;
+  }
 
-	int getDim() {
-		return dim;
-	}
+  void checkNode(KDStats s, int depth) {
+    s.nNodes++;
+    if (depth > s.maxDepth) {
+      s.maxDepth = depth;
+    }
+    if (left != null) {
+      left.checkNode(s, depth + 1);
+    }
+    if (right != null) {
+      right.checkNode(s, depth + 1);
+    }
+  }
 
-	public void set(double[] point, T value) {
-		super.set(point, value);
-	}
+  @Override
+  public String toString() {
+    return "center=" + Arrays.toString(point()) + " " + System.identityHashCode(this);
+  }
+
+  boolean isLeaf() {
+    return this.left == null && this.right == null;
+  }
+
+  int getDim() {
+    return dim;
+  }
+
+  public void set(double[] point, T value) {
+    super.set(point, value);
+  }
 }

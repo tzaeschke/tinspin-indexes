@@ -17,75 +17,78 @@
  */
 package org.tinspin.index.util;
 
-/**
- * Collection of math utility functions.
- */
+/** Collection of math utility functions. */
 public class MathTools {
 
-    private MathTools() {}
+  private MathTools() {}
 
-    /**
-     * Similar to Math.ceil() with the ceiling being the next higher power of 2.
-     * The resulting number can repeatedly and (almost) always be divided by two without loss of precision.
-     * @param d input
-     * @return next power of two above or equal to 'input'
-     */
-    public static double ceilPowerOfTwo(double d) {
-        double ceil = floorPowerOfTwo(d);
-        return ceil == d ? ceil : ceil * 2;
-    }
+  /**
+   * Similar to Math.ceil() with the ceiling being the next higher power of 2. The resulting number
+   * can repeatedly and (almost) always be divided by two without loss of precision.
+   *
+   * @param d input
+   * @return next power of two above or equal to 'input'
+   */
+  public static double ceilPowerOfTwo(double d) {
+    double ceil = floorPowerOfTwo(d);
+    return ceil == d ? ceil : ceil * 2;
+  }
 
-    /**
-     * Calculates the {@link #ceilPowerOfTwo(double)} of an array.
-     * @param d input vector
-     * @return copied vector with next power of two above or equal to 'input'
-     * @see #floorPowerOfTwo(double)
-     */
-    public static double[] ceilPowerOfTwoCopy(double[] d) {
-        double[] d2 = new double[d.length];
-        for (int i = 0; i < d.length; i++) {
-            d2[i] = ceilPowerOfTwo(d[i]);
-        }
-        return d2;
+  /**
+   * Calculates the {@link #ceilPowerOfTwo(double)} of an array.
+   *
+   * @param d input vector
+   * @return copied vector with next power of two above or equal to 'input'
+   * @see #floorPowerOfTwo(double)
+   */
+  public static double[] ceilPowerOfTwoCopy(double[] d) {
+    double[] d2 = new double[d.length];
+    for (int i = 0; i < d.length; i++) {
+      d2[i] = ceilPowerOfTwo(d[i]);
     }
+    return d2;
+  }
 
-    /**
-     * Similar to Math.floor() with the floor being the next lower power of 2.
-     * The resulting number can repeatedly and (almost) always be divided by two without loss of precision.
-     * We calculate the "floor" by setting the "fraction" of the bit representation to 0.
-     * @param d input
-     * @return next power of two below or equal to 'input'
-     */
-    public static double floorPowerOfTwo(double d) {
-        // Set fraction to "0".
-        return Double.longBitsToDouble(Double.doubleToRawLongBits(d) & 0xFFF0_0000_0000_0000L);
-    }
+  /**
+   * Similar to Math.floor() with the floor being the next lower power of 2. The resulting number
+   * can repeatedly and (almost) always be divided by two without loss of precision. We calculate
+   * the "floor" by setting the "fraction" of the bit representation to 0.
+   *
+   * @param d input
+   * @return next power of two below or equal to 'input'
+   */
+  public static double floorPowerOfTwo(double d) {
+    // Set fraction to "0".
+    return Double.longBitsToDouble(Double.doubleToRawLongBits(d) & 0xFFF0_0000_0000_0000L);
+  }
 
-    /**
-     * Calculates the {@link #floorPowerOfTwo(double)} of an array.
-     * @param d input vector
-     * @return copied vector with next lower power of two below 'input'
-     * @see #floorPowerOfTwo(double)
-     */
-    public static double[] floorPowerOfTwoCopy(double[] d) {
-        double[] d2 = new double[d.length];
-        for (int i = 0; i < d.length; i++) {
-            d2[i] = floorPowerOfTwo(d[i]);
-        }
-        return d2;
+  /**
+   * Calculates the {@link #floorPowerOfTwo(double)} of an array.
+   *
+   * @param d input vector
+   * @return copied vector with next lower power of two below 'input'
+   * @see #floorPowerOfTwo(double)
+   */
+  public static double[] floorPowerOfTwoCopy(double[] d) {
+    double[] d2 = new double[d.length];
+    for (int i = 0; i < d.length; i++) {
+      d2[i] = floorPowerOfTwo(d[i]);
     }
+    return d2;
+  }
 
-    /**
-     * Returns the maximal delta between any pair of scalars in the vector.
-     * @param v1 vector 1
-     * @param v2 vector 2
-     * @return maximal delta (positive or zero).
-     */
-    public static double maxDelta(double[] v1, double[] v2) {
-        double dMax = 0;
-        for (int i = 0; i < v1.length; i++) {
-            dMax = Math.max(dMax, Math.abs(v1[i] - v2[i]));
-        }
-        return dMax;
+  /**
+   * Returns the maximal delta between any pair of scalars in the vector.
+   *
+   * @param v1 vector 1
+   * @param v2 vector 2
+   * @return maximal delta (positive or zero).
+   */
+  public static double maxDelta(double[] v1, double[] v2) {
+    double dMax = 0;
+    for (int i = 0; i < v1.length; i++) {
+      dMax = Math.max(dMax, Math.abs(v1[i] - v2[i]));
     }
+    return dMax;
+  }
 }

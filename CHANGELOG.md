@@ -22,6 +22,8 @@ TODO
   [#49](https://github.com/tzaeschke/tinspin-indexes/pull/49)
 - Fixed linter warnings
   [#50](https://github.com/tzaeschke/tinspin-indexes/pull/50)
+- Changed code formatting to google format
+  [#51](https://github.com/tzaeschke/tinspin-indexes/pull/51)
 
 ## [2.1.4] - 2024-08-01
 

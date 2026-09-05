@@ -1,7 +1,7 @@
 /*
  * Copyright 2017 Tilmann Zaeschke
- * 
- * 
+ *
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,195 +16,194 @@
  */
 package org.tinspin.index.phtree;
 
-import org.tinspin.index.BoxMap;
-
 import ch.ethz.globis.phtree.PhTreeSolidF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhEntryDistSF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhEntrySF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhIteratorSF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhKnnQuerySF;
 import ch.ethz.globis.phtree.PhTreeSolidF.PhQuerySF;
+import org.tinspin.index.BoxMap;
 
 /**
  * PH-tree for rectangles/boxes. This is a map with one entry per key.
+ *
  * @param <T> value type.
  */
 public class PHTreeR<T> implements BoxMap<T> {
 
-	private final PhTreeSolidF<T> tree;
-	
-	private PHTreeR(int dims) {
-		tree = PhTreeSolidF.create(dims);
-	}
+  private final PhTreeSolidF<T> tree;
 
-	/**
-	 * Constructor.
-	 * @param dims dimensions
-	 * @return new PH-tree
-	 * @param <T> value type
-	 */
-	public static <T> PHTreeR<T> createPHTree(int dims) {
-		return new PHTreeR<>(dims);
-	}
-	
-	@Override
-	public int getDims() {
-		return tree.getDims();
-	}
+  private PHTreeR(int dims) {
+    tree = PhTreeSolidF.create(dims);
+  }
 
-	@Override
-	public int size() {
-		return tree.size();
-	}
+  /**
+   * Constructor.
+   *
+   * @param dims dimensions
+   * @return new PH-tree
+   * @param <T> value type
+   */
+  public static <T> PHTreeR<T> createPHTree(int dims) {
+    return new PHTreeR<>(dims);
+  }
 
-	@Override
-	public void clear() {
-		tree.clear();
-	}
+  @Override
+  public int getDims() {
+    return tree.getDims();
+  }
 
-	@Override
-	public PHStats getStats() {
-		return new PHStats(tree.getInternalTree().getStats(), tree.getDims());
-	}
+  @Override
+  public int size() {
+    return tree.size();
+  }
 
-	@Override
-	public int getNodeCount() {
-		return tree.getInternalTree().getStats().getNodeCount();
-	}
+  @Override
+  public void clear() {
+    tree.clear();
+  }
 
-	@Override
-	public int getDepth() {
-		return tree.getInternalTree().getStats().getBitDepth();
-	}
+  @Override
+  public PHStats getStats() {
+    return new PHStats(tree.getInternalTree().getStats(), tree.getDims());
+  }
 
-	@Override
-	public String toStringTree() {
-		return tree.getInternalTree().toStringTree();
-	}
+  @Override
+  public int getNodeCount() {
+    return tree.getInternalTree().getStats().getNodeCount();
+  }
 
-	@Override
-	public void insert(double[] lower, double[] upper, T value) {
-		tree.put(lower, upper, value);
-	}
+  @Override
+  public int getDepth() {
+    return tree.getInternalTree().getStats().getBitDepth();
+  }
 
-	@Override
-	public T remove(double[] lower, double[] upper) {
-		return tree.remove(lower, upper);
-	}
+  @Override
+  public String toStringTree() {
+    return tree.getInternalTree().toStringTree();
+  }
 
-	@Override
-	public T update(double[] lo1, double[] up1, double[] lo2, double[] up2) {
-		return tree.update(lo1, up1, lo2, up2);
-	}
+  @Override
+  public void insert(double[] lower, double[] upper, T value) {
+    tree.put(lower, upper, value);
+  }
 
-	@Override
-	public boolean contains(double[] min, double[] max) {
-		return tree.contains(min, max);
-	}
+  @Override
+  public T remove(double[] lower, double[] upper) {
+    return tree.remove(lower, upper);
+  }
 
-	@Override
-	public T queryExact(double[] lower, double[] upper) {
-		return tree.get(lower, upper);
-	}
+  @Override
+  public T update(double[] lo1, double[] up1, double[] lo2, double[] up2) {
+    return tree.update(lo1, up1, lo2, up2);
+  }
 
-	@Override
-	public BoxIterator<T> iterator() {
-		return new ExtentWrapper();
-	}
+  @Override
+  public boolean contains(double[] min, double[] max) {
+    return tree.contains(min, max);
+  }
 
-	@Override
-	public BoxIterator<T> queryIntersect(double[] min, double[] max) {
-		return new QueryIteratorPH<>(tree.queryIntersect(min, max));
-	}
+  @Override
+  public T queryExact(double[] lower, double[] upper) {
+    return tree.get(lower, upper);
+  }
 
-	@Override
-	public BoxIteratorKnn<T> queryKnn(double[] center, int k) {
-		return new QueryIteratorKnnPH<>(tree.nearestNeighbour(k, null, center));
-	}
+  @Override
+  public BoxIterator<T> iterator() {
+    return new ExtentWrapper();
+  }
 
-	private class ExtentWrapper implements BoxIterator<T> {
+  @Override
+  public BoxIterator<T> queryIntersect(double[] min, double[] max) {
+    return new QueryIteratorPH<>(tree.queryIntersect(min, max));
+  }
 
-		private PhIteratorSF<T> iter;
-		
-		private ExtentWrapper() {
-			reset(null, null);
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return iter.hasNext();
-		}
+  @Override
+  public BoxIteratorKnn<T> queryKnn(double[] center, int k) {
+    return new QueryIteratorKnnPH<>(tree.nearestNeighbour(k, null, center));
+  }
 
-		@Override
-		public BoxEntry<T> next() {
-			//This reuses the entry object, but we have to clone the arrays...
-			PhEntrySF<T> e = iter.nextEntryReuse();
-			return new BoxEntry<>(e.lower().clone(), e.upper().clone(), e.value());
-		}
+  private class ExtentWrapper implements BoxIterator<T> {
 
-		@Override
-		public BoxIterator<T> reset(double[] min, double[] max) {
-			if (min != null || max != null) {
-				throw new UnsupportedOperationException("min/max must be `null`");
-			}
-			iter = tree.iterator();
-			return this;
-		}
-	}
-	
-	private static class QueryIteratorPH<T> implements BoxIterator<T> {
+    private PhIteratorSF<T> iter;
 
-		private final PhQuerySF<T> iter;
-		
-		private QueryIteratorPH(PhQuerySF<T> iter) {
-			this.iter = iter;
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return iter.hasNext();
-		}
+    private ExtentWrapper() {
+      reset(null, null);
+    }
 
-		@Override
-		public BoxEntry<T> next() {
-			//This reuses the entry object, but we have to clone the arrays...
-			PhEntrySF<T> e = iter.nextEntryReuse();
-			return new BoxEntry<>(e.lower().clone(), e.upper().clone(), e.value());
-		}
+    @Override
+    public boolean hasNext() {
+      return iter.hasNext();
+    }
 
-		@Override
-		public BoxIterator<T> reset(double[] min, double[] max) {
-			iter.reset(min, max);
-			return this;
-		}
-	}
-	
-	private static class QueryIteratorKnnPH<T> implements BoxIteratorKnn<T> {
+    @Override
+    public BoxEntry<T> next() {
+      // This reuses the entry object, but we have to clone the arrays...
+      PhEntrySF<T> e = iter.nextEntryReuse();
+      return new BoxEntry<>(e.lower().clone(), e.upper().clone(), e.value());
+    }
 
-		private final PhKnnQuerySF<T> iter;
-		
-		private QueryIteratorKnnPH(PhKnnQuerySF<T> iter) {
-			this.iter = iter;
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return iter.hasNext();
-		}
+    @Override
+    public BoxIterator<T> reset(double[] min, double[] max) {
+      if (min != null || max != null) {
+        throw new UnsupportedOperationException("min/max must be `null`");
+      }
+      iter = tree.iterator();
+      return this;
+    }
+  }
 
-		@Override
-		public BoxEntryKnn<T> next() {
-			//This reuses the entry object, but we have to clone the arrays...
-			PhEntryDistSF<T> e = iter.nextEntryReuse();
-			return new BoxEntryKnn<>(e.lower().clone(), e.upper().clone(), e.value(), e.dist());
-		}
+  private static class QueryIteratorPH<T> implements BoxIterator<T> {
 
-		@Override
-		public QueryIteratorKnnPH<T> reset(double[] center, int k) {
-			iter.reset(k, null, center);
-			return this;
-		}
-		
-	}
-	
+    private final PhQuerySF<T> iter;
+
+    private QueryIteratorPH(PhQuerySF<T> iter) {
+      this.iter = iter;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return iter.hasNext();
+    }
+
+    @Override
+    public BoxEntry<T> next() {
+      // This reuses the entry object, but we have to clone the arrays...
+      PhEntrySF<T> e = iter.nextEntryReuse();
+      return new BoxEntry<>(e.lower().clone(), e.upper().clone(), e.value());
+    }
+
+    @Override
+    public BoxIterator<T> reset(double[] min, double[] max) {
+      iter.reset(min, max);
+      return this;
+    }
+  }
+
+  private static class QueryIteratorKnnPH<T> implements BoxIteratorKnn<T> {
+
+    private final PhKnnQuerySF<T> iter;
+
+    private QueryIteratorKnnPH(PhKnnQuerySF<T> iter) {
+      this.iter = iter;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return iter.hasNext();
+    }
+
+    @Override
+    public BoxEntryKnn<T> next() {
+      // This reuses the entry object, but we have to clone the arrays...
+      PhEntryDistSF<T> e = iter.nextEntryReuse();
+      return new BoxEntryKnn<>(e.lower().clone(), e.upper().clone(), e.value(), e.dist());
+    }
+
+    @Override
+    public QueryIteratorKnnPH<T> reset(double[] center, int k) {
+      iter.reset(k, null, center);
+      return this;
+    }
+  }
 }
