@@ -15,109 +15,120 @@
  */
 package org.tinspin.index.rtree;
 
-import org.junit.Test;
-import org.tinspin.index.BoxDistance;
-
-import java.util.*;
-
 import static org.junit.Assert.*;
 import static org.tinspin.index.Index.BoxEntryKnn;
 
+import java.util.*;
+import org.junit.Test;
+import org.tinspin.index.BoxDistance;
+
 public class RTreeMixedQueryTest {
 
-    private static final int DIMS = 8;
-    private static final int REPEAT = 10;
+  private static final int DIMS = 8;
+  private static final int REPEAT = 10;
 
-    // seed chosen randomly using a well equilibrated dice :-)
-    // [makes test reproducible]
-    Random rnd = new Random(4);
+  // seed chosen randomly using a well equilibrated dice :-)
+  // [makes test reproducible]
+  Random rnd = new Random(4);
+
+  {
+    // fail here if Random implementation changes
+    assertEquals(-4969378402838085704L, rnd.nextLong());
+  }
+
+  @SuppressWarnings("rawtypes")
+  @Test
+  public void test() {
+    RTree<String> tree = RTree.createRStar(DIMS);
+
+    int N_ELEMENTS = 100000;
+    for (int i = 0; i < N_ELEMENTS; i++) {
+      double[] position = randDouble(DIMS);
+      assert tree.queryExact(position, position) == null;
+      tree.insert(position, "#" + i);
+    }
+
+    Iterable<BoxEntryKnn<String>> q =
+        tree.queryRangedNearestNeighbor(
+            createAndFill(1),
+            BoxDistance.CENTER,
+            BoxDistance.EDGE,
+            createAndFill(0.5),
+            createAndFill(1));
+
+    double lastDistance = 0;
+    int maxQueueSize = 0;
+    int nElements = 0;
+    Set<String> duplicateCheck = new HashSet<>();
+    for (Iterator<BoxEntryKnn<String>> iterator = q.iterator(); iterator.hasNext(); ) {
+      BoxEntryKnn<String> e = iterator.next();
+      // System.out.println(nElements + " " + iterator + " " + e);
+
+      assertTrue(e.value() + " @" + nElements, duplicateCheck.add(e.value()));
+      assertTrue("Order should be ascending", lastDistance <= e.dist());
+      lastDistance = e.dist();
+      nElements++;
+      maxQueueSize = Math.max(maxQueueSize, ((RTreeMixedQuery) iterator).queueSize());
+
+      if (true) {
+        iterator.remove();
+        assertEquals(tree.size(), N_ELEMENTS - nElements);
+      }
+    }
+
+    perfTestNN(tree);
+    // System.out.println("maxQueueSize=" + maxQueueSize + " / ");
+    // System.out.println("nElements=" + nElements);
+    if (DIMS == 3) {
+      assertEquals("Test should be reproducible thanks to fixed seed", 12582, nElements);
+    }
+  }
+
+  private void perfTestNN(RTree<String> tree) {
+    int k = tree.size() / 8;
+    double[] center = createAndFill(1);
 
     {
-        // fail here if Random implementation changes
-        assertEquals(-4969378402838085704L, rnd.nextLong());
+      Iterable<BoxEntryKnn<String>> q =
+          tree.queryRangedNearestNeighbor(center, BoxDistance.EDGE, BoxDistance.EDGE, Filter.ALL);
+      RTreeQueryKnn<String> res = tree.queryKnn(center, k, BoxDistance.EDGE);
+      // test that we get the same results
+      Iterator<BoxEntryKnn<String>> iterator = q.iterator();
+      int i = 0;
+      while (iterator.hasNext()) {
+        assertTrue("I=" + i, res.hasNext());
+        assertEquals(res.next().value(), iterator.next().value());
+        i++;
+        if (i >= k) break;
+      }
+      assertFalse(res.hasNext());
     }
 
-    @SuppressWarnings("rawtypes")
-    @Test
-    public void test() {
-        RTree<String> tree = RTree.createRStar(DIMS);
+    fillProcessorCache();
 
-        int N_ELEMENTS = 100000;
-        for (int i = 0; i < N_ELEMENTS; i++) {
-            double[] position = randDouble(DIMS);
-            assert tree.queryExact(position, position) == null;
-            tree.insert(position, "#" + i);
-        }
-
-        Iterable<BoxEntryKnn<String>> q = tree.queryRangedNearestNeighbor(createAndFill(1), BoxDistance.CENTER, BoxDistance.EDGE, createAndFill(0.5), createAndFill(1));
-
-
-        double lastDistance = 0;
-        int maxQueueSize = 0;
-        int nElements = 0;
-        Set<String> duplicateCheck = new HashSet<>();
-        for (Iterator<BoxEntryKnn<String>> iterator = q.iterator(); iterator.hasNext(); ) {
-            BoxEntryKnn<String> e = iterator.next();
-            // System.out.println(nElements + " " + iterator + " " + e);
-
-            assertTrue(e.value() + " @" + nElements, duplicateCheck.add(e.value()));
-            assertTrue("Order should be ascending", lastDistance <= e.dist());
-            lastDistance = e.dist();
-            nElements++;
-            maxQueueSize = Math.max(maxQueueSize, ((RTreeMixedQuery) iterator).queueSize());
-
-            if (true) {
-                iterator.remove();
-                assertEquals(tree.size(), N_ELEMENTS - nElements);
-            }
-        }
-
-        perfTestNN(tree);
-        // System.out.println("maxQueueSize=" + maxQueueSize + " / ");
-        // System.out.println("nElements=" + nElements);
-        if (DIMS == 3) {
-            assertEquals("Test should be reproducible thanks to fixed seed", 12582, nElements);
-        }
-    }
-
-    private void perfTestNN(RTree<String> tree) {
-        int k = tree.size() / 8;
-        double[] center = createAndFill(1);
-
-        {
-            Iterable<BoxEntryKnn<String>> q = tree.queryRangedNearestNeighbor(center, BoxDistance.EDGE, BoxDistance.EDGE, Filter.ALL);
-            RTreeQueryKnn<String> res = tree.queryKnn(center, k, BoxDistance.EDGE);
-            // test that we get the same results
-            Iterator<BoxEntryKnn<String>> iterator = q.iterator();
-            int i = 0;
-            while (iterator.hasNext()) {
-                assertTrue("I=" + i, res.hasNext());
-                assertEquals(res.next().value(), iterator.next().value());
-                i++;
-                if (i >= k) break;
-            }
-            assertFalse(res.hasNext());
-        }
-
-        fillProcessorCache();
-
-        long timeRef = timeOf(() -> {
-            RTreeQueryKnn<String> res = tree.queryKnn(center, k, BoxDistance.EDGE);
-            int cnt = 0;
-            while (res.hasNext()) {
+    long timeRef =
+        timeOf(
+            () -> {
+              RTreeQueryKnn<String> res = tree.queryKnn(center, k, BoxDistance.EDGE);
+              int cnt = 0;
+              while (res.hasNext()) {
                 cnt++;
                 BoxEntryKnn<String> e = res.next();
                 assertNotNull(e);
-            }
-            assertEquals(k, cnt);
-        });
+              }
+              assertEquals(k, cnt);
+            });
 
-        fillProcessorCache();
+    fillProcessorCache();
 
-        long timeMixed = timeOf(() -> {
-            Iterable<BoxEntryKnn<String>> q = tree.queryRangedNearestNeighbor(center, BoxDistance.EDGE, BoxDistance.EDGE, Filter.ALL);
-            int cnt = 0;
-            if (false) {
+    long timeMixed =
+        timeOf(
+            () -> {
+              Iterable<BoxEntryKnn<String>> q =
+                  tree.queryRangedNearestNeighbor(
+                      center, BoxDistance.EDGE, BoxDistance.EDGE, Filter.ALL);
+              int cnt = 0;
+              if (false) {
                 /*
                  * A lot of the speedup is simply due to the copy. Adding this
                  * makes the code 6,28 times slower for 12500 neighbors out of 100000.
@@ -129,53 +140,53 @@ public class RTreeMixedQueryTest {
                 List<BoxEntryKnn<String>> arr = new ArrayList<>();
                 q.forEach(arr::add);
                 q = arr;
-            }
-            for (Iterator<BoxEntryKnn<String>> iterator = q.iterator(); iterator.hasNext(); ) {
+              }
+              for (Iterator<BoxEntryKnn<String>> iterator = q.iterator(); iterator.hasNext(); ) {
                 BoxEntryKnn<String> e = iterator.next();
                 assertNotNull(e);
                 cnt++;
                 if (cnt >= k) break;
-            }
-        });
+              }
+            });
 
-        // System.out.println("timeMixed=" + timeMixed + ", timeRef=" + timeRef + " # speedup:" + (timeRef / (double)timeMixed));
+    // System.out.println("timeMixed=" + timeMixed + ", timeRef=" + timeRef + " # speedup:" +
+    // (timeRef / (double)timeMixed));
+  }
+
+  private void fillProcessorCache() {
+    // 20MB
+    int[] mem = new int[1024 * 1024 * 20];
+    for (int i = 0; i < mem.length; i++) {
+      mem[i] = i;
     }
+  }
 
-    private void fillProcessorCache() {
-        // 20MB
-        int[] mem = new int[1024 * 1024 * 20];
-        for (int i = 0; i < mem.length; i++) {
-            mem[i] = i;
-        }
+  public long timeOf(Runnable run) {
+    final int nRuns = REPEAT;
+    long time = 0;
+    for (int i = 0; i <= nRuns; i++) {
+      long timeBefore = System.nanoTime();
+      run.run();
+      long delta = System.nanoTime() - timeBefore;
+      if (i > 0) {
+        // ignore the first one for warm up
+        time += delta;
+      }
     }
+    return time / nRuns;
+  }
 
-    public long timeOf(Runnable run) {
-        final int nRuns = REPEAT;
-        long time = 0;
-        for (int i = 0; i <= nRuns; i++) {
-            long timeBefore = System.nanoTime();
-            run.run();
-            long delta = System.nanoTime() - timeBefore;
-            if (i > 0) {
-                // ignore the first one for warm up
-                time += delta;
-            }
-        }
-        return time / nRuns;
+  private static double[] createAndFill(double d) {
+    double[] ret = new double[DIMS];
+    Arrays.fill(ret, d);
+    return ret;
+  }
+
+  private double[] randDouble(int n) {
+    double[] r = new double[n];
+    for (int i = 0; i < n; i++) {
+      r[i] = rnd.nextDouble();
     }
-
-    private static double[] createAndFill(double d) {
-        double[] ret = new double[DIMS];
-        Arrays.fill(ret, d);
-        return ret;
-    }
-
-    private double[] randDouble(int n) {
-        double[] r = new double[n];
-        for (int i = 0; i < n; i++) {
-            r[i] = rnd.nextDouble();
-        }
-        return r;
-    }
-
+    return r;
+  }
 }

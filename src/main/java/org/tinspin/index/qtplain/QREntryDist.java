@@ -1,8 +1,8 @@
 /*
  * Copyright 2016-2017 Tilmann Zaeschke
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,11 +17,10 @@
  */
 package org.tinspin.index.qtplain;
 
-import java.util.Comparator;
 
-//import org.tinspin.index.BoxEntryKnn;
+// import org.tinspin.index.BoxEntryKnn;
 
-//public class QREntryDist<T> extends QREntry<T> implements BoxEntryKnn<T> {
+// public class QREntryDist<T> extends QREntry<T> implements BoxEntryKnn<T> {
 //	private double distance;
 //
 //	public QREntryDist(QREntry<T> e, double dist) {
@@ -56,4 +55,4 @@ import java.util.Comparator;
 //	    }
 //	}
 //
-//}
+// }

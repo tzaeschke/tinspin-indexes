@@ -17,46 +17,48 @@
  */
 package org.tinspin.index.util;
 
+import static org.tinspin.index.Index.*;
+import static org.tinspin.index.Index.BoxIterator;
+
 import java.util.Iterator;
 import java.util.function.BiFunction;
 
-import static org.tinspin.index.Index.BoxIterator;
-
-import static org.tinspin.index.Index.*;
-
 /**
  * Wrapper class to create an iterator over BoxEntries.
+ *
  * @param <E> Value type.
  */
 public class BoxIteratorWrapper<E> implements BoxIterator<E> {
 
-    private final BiFunction<double[], double[], Iterator<BoxEntry<E>>> fn;
-    private Iterator<BoxEntry<E>> it;
+  private final BiFunction<double[], double[], Iterator<BoxEntry<E>>> fn;
+  private Iterator<BoxEntry<E>> it;
 
-    /**
-     * Constructor.
-     * @param min query window min
-     * @param max query window max
-     * @param f query function
-     */
-    public BoxIteratorWrapper(double[] min, double[] max, BiFunction<double[], double[], Iterator<BoxEntry<E>>> f) {
-        fn = f;
-        it = fn.apply(min, max);
-    }
+  /**
+   * Constructor.
+   *
+   * @param min query window min
+   * @param max query window max
+   * @param f query function
+   */
+  public BoxIteratorWrapper(
+      double[] min, double[] max, BiFunction<double[], double[], Iterator<BoxEntry<E>>> f) {
+    fn = f;
+    it = fn.apply(min, max);
+  }
 
-    @Override
-    public boolean hasNext() {
-        return it.hasNext();
-    }
+  @Override
+  public boolean hasNext() {
+    return it.hasNext();
+  }
 
-    @Override
-    public BoxEntry<E> next() {
-        return it.next();
-    }
+  @Override
+  public BoxEntry<E> next() {
+    return it.next();
+  }
 
-    @Override
-    public BoxIterator<E> reset(double[] min, double[] max) {
-        it = fn.apply(min, max);
-        return this;
-    }
+  @Override
+  public BoxIterator<E> reset(double[] min, double[] max) {
+    it = fn.apply(min, max);
+    return this;
+  }
 }

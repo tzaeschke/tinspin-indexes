@@ -24,92 +24,90 @@ import org.tinspin.index.rtree.RTree;
 
 public class TestInstances {
 
-	/**
-	 * Enum with shortcuts to the candidate test classes.
-	 * 
-	 * The class names can be overridden in the TestStats class.
-	 */
-	public enum IDX implements IndexHandle {
-		//Our implementations
-		//===================
-		/** Naive array implementation, for verification only */
-		ARRAY(PointArray.class.getName(), RectArray.class.getName()),
-		/** PH-Tree */
-		PHTREE(PHTreeP.class.getName(), PHTreeR.class.getName()),
-		/** PH-Tree multimap based on PhTreeMultiMapF2 */
-		PHTREE_MM(PHTreeMMP.class.getName(), ""),
-		/** CoverTree */
-		COVER(CoverTree.class.getName(), ""),
-		/** KD-Tree */
-		KDTREE(KDTree.class.getName(), ""),
-		/** Quadtree with HC navigation */
-		QUAD_HC(QuadTreeKD.class.getName(), QuadTreeRKD.class.getName()),
-		/** Quadtree with HC navigation v2 */
-		QUAD_HC2(QuadTreeKD2.class.getName(), ""),
-		/** Plain Quadtree */
-		QUAD_PLAIN(QuadTreeKD0.class.getName(), QuadTreeRKD.class.getName()),
-		/** RStarTree */
-		RSTAR(RTree.class.getName(), RTree.class.getName()),
-		/** STR-loaded RStarTree */
-		STR(RTree.class.getName(), RTree.class.getName()),
+  /**
+   * Enum with shortcuts to the candidate test classes.
+   *
+   * <p>The class names can be overridden in the TestStats class.
+   */
+  public enum IDX implements IndexHandle {
+    // Our implementations
+    // ===================
+    /** Naive array implementation, for verification only */
+    ARRAY(PointArray.class.getName(), RectArray.class.getName()),
+    /** PH-Tree */
+    PHTREE(PHTreeP.class.getName(), PHTreeR.class.getName()),
+    /** PH-Tree multimap based on PhTreeMultiMapF2 */
+    PHTREE_MM(PHTreeMMP.class.getName(), ""),
+    /** CoverTree */
+    COVER(CoverTree.class.getName(), ""),
+    /** KD-Tree */
+    KDTREE(KDTree.class.getName(), ""),
+    /** Quadtree with HC navigation */
+    QUAD_HC(QuadTreeKD.class.getName(), QuadTreeRKD.class.getName()),
+    /** Quadtree with HC navigation v2 */
+    QUAD_HC2(QuadTreeKD2.class.getName(), ""),
+    /** Plain Quadtree */
+    QUAD_PLAIN(QuadTreeKD0.class.getName(), QuadTreeRKD.class.getName()),
+    /** RStarTree */
+    RSTAR(RTree.class.getName(), RTree.class.getName()),
+    /** STR-loaded RStarTree */
+    STR(RTree.class.getName(), RTree.class.getName()),
 
-		//Other
-		//=====
-		CUSTOM1(null, null),
-		CUSTOM2(null, null),
-		CUSTOM3(null, null),
-		USE_PARAM_CLASS(null, null);
+    // Other
+    // =====
+    CUSTOM1(null, null),
+    CUSTOM2(null, null),
+    CUSTOM3(null, null),
+    USE_PARAM_CLASS(null, null);
 
-		private final String candidateClassNamePoint;
-		private final String candidateClassNameBox;
+    private final String candidateClassNamePoint;
+    private final String candidateClassNameBox;
 
-		IDX(String candidateClassNamePoint, 
-				String candidateClassNameBox) {
-			this.candidateClassNamePoint = candidateClassNamePoint;
-			this.candidateClassNameBox = candidateClassNameBox;
-		}
+    IDX(String candidateClassNamePoint, String candidateClassNameBox) {
+      this.candidateClassNamePoint = candidateClassNamePoint;
+      this.candidateClassNameBox = candidateClassNameBox;
+    }
 
-		@Override
-		public String getCandidateClassNamePoint() {
-			return candidateClassNamePoint;
-		}
+    @Override
+    public String getCandidateClassNamePoint() {
+      return candidateClassNamePoint;
+    }
 
-		@Override
-		public String getCandidateClassNameRectangle() {
-			return candidateClassNameBox;
-		}
-	}
+    @Override
+    public String getCandidateClassNameRectangle() {
+      return candidateClassNameBox;
+    }
+  }
 
-	public enum TST implements TestHandle {
-		CUBE_P(		TestPointCube.class, 	false),
-		CLUSTER_P(	TestPointCluster.class, false),
+  public enum TST implements TestHandle {
+    CUBE_P(TestPointCube.class, false),
+    CLUSTER_P(TestPointCluster.class, false),
 
-		CUBE_R(		TestBoxCube.class, true),
-		CLUSTER_R(	TestBoxCluster.class, true),
-		CUSTOM( 	"", false);
+    CUBE_R(TestBoxCube.class, true),
+    CLUSTER_R(TestBoxCluster.class, true),
+    CUSTOM("", false);
 
-		private final String className;
-		private boolean isRangeData;
-		
-		TST(Class<? extends AbstractTest> cls, boolean isRangeData) {
-			this.className = cls.getName();
-			this.isRangeData = isRangeData;
-		}
-		
-		TST(String className, boolean isRangeData) {
-			this.className = className;
-			this.isRangeData = isRangeData;
-		}
-		
-		@Override
-		public String getTestClassName() {
-			return className;
-		}
-		
-		@Override
-		public boolean isRangeData() {
-			return isRangeData;
-		}
-	}
+    private final String className;
+    private boolean isRangeData;
 
+    TST(Class<? extends AbstractTest> cls, boolean isRangeData) {
+      this.className = cls.getName();
+      this.isRangeData = isRangeData;
+    }
+
+    TST(String className, boolean isRangeData) {
+      this.className = className;
+      this.isRangeData = isRangeData;
+    }
+
+    @Override
+    public String getTestClassName() {
+      return className;
+    }
+
+    @Override
+    public boolean isRangeData() {
+      return isRangeData;
+    }
+  }
 }

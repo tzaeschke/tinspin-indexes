@@ -22,207 +22,214 @@ import java.util.Comparator;
 import java.util.NoSuchElementException;
 
 /**
- * Min-max heap implementation based on:
- * <a href="https://en.wikipedia.org/wiki/Min-max_heap">https://en.wikipedia.org/wiki/Min-max_heap</a>
+ * Min-max heap implementation based on: <a
+ * href="https://en.wikipedia.org/wiki/Min-max_heap">https://en.wikipedia.org/wiki/Min-max_heap</a>
  *
  * @param <T> Entry type
  */
 public class MinHeap<T> implements MinHeapI<T> {
 
-    private static final int DEFAULT_SIZE = 16;
-    // Data. The first slot is left empty, i.e. the first data element is at [1]!
-    private T[] data;
-    // index of first free entry
-    private int size = 0;
-    private final Less<T> less;
+  private static final int DEFAULT_SIZE = 16;
+  // Data. The first slot is left empty, i.e. the first data element is at [1]!
+  private T[] data;
+  // index of first free entry
+  private int size = 0;
+  private final Less<T> less;
 
-    @SuppressWarnings("unchecked")
-    private MinHeap(int capacity, Less<T> lessFn) {
-        data = (T[]) new Object[capacity];
-        this.less = lessFn;
-    }
+  @SuppressWarnings("unchecked")
+  private MinHeap(int capacity, Less<T> lessFn) {
+    data = (T[]) new Object[capacity];
+    this.less = lessFn;
+  }
 
+  /**
+   * Comparison function.
+   *
+   * @param <T> entry type
+   */
+  @FunctionalInterface
+  public interface Less<T> {
     /**
-     * Comparison function.
-     * @param <T> entry type
+     * Compare two entries
+     *
+     * @param o1 entry 1
+     * @param o2 entry 2
+     * @return 'true' if o1 is less than o2
      */
-    @FunctionalInterface
-    public interface Less<T> {
-        /**
-         * Compare two entries
-         * @param o1 entry 1
-         * @param o2 entry 2
-         * @return 'true' if o1 is less than o2
-         */
-        boolean less(T o1, T o2);
-    }
+    boolean less(T o1, T o2);
+  }
 
-    static class LessWrapper<C> implements Less<C> {
-        private final Comparator<C> comp;
-        LessWrapper (Comparator<C> comp) {
-            this.comp = comp;
-        }
-        @Override
-        public boolean less(C o1, C o2) {
-            return comp.compare(o1, o2) < 0;
-        }
-    }
+  static class LessWrapper<C> implements Less<C> {
+    private final Comparator<C> comp;
 
-    /**
-     * WARNING: This is slow, see {@link #create(Less)}.
-     * Creates a new MinMaxHeap using the compareTo method of the provided entry type.
-     * @return A new MinMaxHeap
-     * @param <T> The entry type. Must implement {@code Comparable<T>}.
-     */
-    public static <T extends Comparable<T>> MinHeap<T> create() {
-        return new MinHeap<>(DEFAULT_SIZE, new LessWrapper<>(Comparable::compareTo));
-    }
-
-    /**
-     * Providing a less() method is the preferred way to use this MinMaxHeap. Using less() is about 20% faster
-     * than using Comparator/Comparable.
-     * @param less A method that return `true` if the first parameter is less than the second
-     * @return A new MinMaxHeap
-     * @param <T> The entry type.
-     */
-    public static <T> MinHeap<T> create(Less<T> less) {
-        return new MinHeap<>(DEFAULT_SIZE, less);
-    }
-
-    private boolean hasChildren(int i) {
-        return i * 2 <= size;
-    }
-
-    private void swap(int i1, int i2) {
-        T v = data[i1];
-        data[i1] = data[i2];
-        data[i2] = v;
-    }
-
-    private int parent(int i) {
-        return i >> 1;
-    }
-
-    private boolean hasParent(int i) {
-        return i >> 1 > 0;
-    }
-
-    private int indexOfSmallestChild(int index) {
-        int end = end();
-        int start = index * 2;
-
-        if (start + 1 < end) {
-            return start + (less.less(data[start], data[start + 1]) ? 0 : 1);
-        } else {
-            return start;
-        }
-    }
-
-    private void pushDown(int m) {
-        while (hasChildren(m)) {
-            int i = m;
-            m = indexOfSmallestChild(i);
-            if (less.less(data[m], data[i])) {
-                swap(m, i);
-            } else {
-                return;
-            }
-        }
-    }
-
-    private void pushUp(int index, T value) {
-        pushUpMin(index, value);
-    }
-
-    private void pushUpMin(int index, T value) {
-        while (hasParent(index) && less.less(value, data[parent(index)])) {
-            data[index] = data[parent(index)];
-            index = parent(index);
-        }
-        data[index] = value;
-    }
-
-    private int end() {
-        return size + 1;
+    LessWrapper(Comparator<C> comp) {
+      this.comp = comp;
     }
 
     @Override
-    public void push(T value) {
-        if (size == 0) {
-            data[1] = value;
-            size++;
-            return;
-        }
+    public boolean less(C o1, C o2) {
+      return comp.compare(o1, o2) < 0;
+    }
+  }
 
-        if (size + 1 >= data.length) {
-            data = Arrays.copyOf(data, data.length * 2);
-        }
+  /**
+   * WARNING: This is slow, see {@link #create(Less)}. Creates a new MinMaxHeap using the compareTo
+   * method of the provided entry type.
+   *
+   * @return A new MinMaxHeap
+   * @param <T> The entry type. Must implement {@code Comparable<T>}.
+   */
+  public static <T extends Comparable<T>> MinHeap<T> create() {
+    return new MinHeap<>(DEFAULT_SIZE, new LessWrapper<>(Comparable::compareTo));
+  }
 
-        size++;
-        pushUp(size, value);
+  /**
+   * Providing a less() method is the preferred way to use this MinMaxHeap. Using less() is about
+   * 20% faster than using Comparator/Comparable.
+   *
+   * @param less A method that return `true` if the first parameter is less than the second
+   * @return A new MinMaxHeap
+   * @param <T> The entry type.
+   */
+  public static <T> MinHeap<T> create(Less<T> less) {
+    return new MinHeap<>(DEFAULT_SIZE, less);
+  }
+
+  private boolean hasChildren(int i) {
+    return i * 2 <= size;
+  }
+
+  private void swap(int i1, int i2) {
+    T v = data[i1];
+    data[i1] = data[i2];
+    data[i2] = v;
+  }
+
+  private int parent(int i) {
+    return i >> 1;
+  }
+
+  private boolean hasParent(int i) {
+    return i >> 1 > 0;
+  }
+
+  private int indexOfSmallestChild(int index) {
+    int end = end();
+    int start = index * 2;
+
+    if (start + 1 < end) {
+      return start + (less.less(data[start], data[start + 1]) ? 0 : 1);
+    } else {
+      return start;
+    }
+  }
+
+  private void pushDown(int m) {
+    while (hasChildren(m)) {
+      int i = m;
+      m = indexOfSmallestChild(i);
+      if (less.less(data[m], data[i])) {
+        swap(m, i);
+      } else {
+        return;
+      }
+    }
+  }
+
+  private void pushUp(int index, T value) {
+    pushUpMin(index, value);
+  }
+
+  private void pushUpMin(int index, T value) {
+    while (hasParent(index) && less.less(value, data[parent(index)])) {
+      data[index] = data[parent(index)];
+      index = parent(index);
+    }
+    data[index] = value;
+  }
+
+  private int end() {
+    return size + 1;
+  }
+
+  @Override
+  public void push(T value) {
+    if (size == 0) {
+      data[1] = value;
+      size++;
+      return;
     }
 
-    @Override
-    public void popMin() {
-        if (size == 0) {
-            throw new NoSuchElementException();
-        }
-        int end = end();
-        T value = data[end - 1];
-        data[end - 1] = null;
-        size--;
-
-        if (size == 0) {
-            return;
-        }
-        data[1] = value;
-
-        pushDown(1);
+    if (size + 1 >= data.length) {
+      data = Arrays.copyOf(data, data.length * 2);
     }
 
-    @Override
-    public T peekMin() {
-        if (size < 1) {
-            throw new NoSuchElementException();
-        }
-        return data[1];
-    }
+    size++;
+    pushUp(size, value);
+  }
 
-    @Override
-    public int size() {
-        return size;
+  @Override
+  public void popMin() {
+    if (size == 0) {
+      throw new NoSuchElementException();
     }
+    int end = end();
+    T value = data[end - 1];
+    data[end - 1] = null;
+    size--;
 
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
+    if (size == 0) {
+      return;
     }
+    data[1] = value;
 
-    /**
-     * Print heap to string.
-     * @return heap content as string.
-     */
-    public String print() {
-        StringBuilderLn s = new StringBuilderLn();
-        int x = 2;
-        for (int i = 1; i <= size; i++) {
-            if (i % x == 0) {
-                s.appendLn();
-                x *= 2;
-            }
-            s.append(data[i] + "   ");
-        }
+    pushDown(1);
+  }
+
+  @Override
+  public T peekMin() {
+    if (size < 1) {
+      throw new NoSuchElementException();
+    }
+    return data[1];
+  }
+
+  @Override
+  public int size() {
+    return size;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return size == 0;
+  }
+
+  /**
+   * Print heap to string.
+   *
+   * @return heap content as string.
+   */
+  public String print() {
+    StringBuilderLn s = new StringBuilderLn();
+    int x = 2;
+    for (int i = 1; i <= size; i++) {
+      if (i % x == 0) {
         s.appendLn();
-        return s.toString();
+        x *= 2;
+      }
+      s.append(data[i] + "   ");
     }
+    s.appendLn();
+    return s.toString();
+  }
 
-    @SuppressWarnings("unchecked")
-    public void clear() {
-        size = 0;
-        if (data.length > DEFAULT_SIZE) {
-            data = (T[]) new Object[DEFAULT_SIZE];
-        } else {
-            Arrays.fill(data, null);
-        }
+  @SuppressWarnings("unchecked")
+  public void clear() {
+    size = 0;
+    if (data.length > DEFAULT_SIZE) {
+      data = (T[]) new Object[DEFAULT_SIZE];
+    } else {
+      Arrays.fill(data, null);
     }
+  }
 }

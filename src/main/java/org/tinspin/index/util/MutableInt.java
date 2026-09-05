@@ -16,62 +16,63 @@
  */
 package org.tinspin.index.util;
 
-/**
- * Mutable integer.
- */
+/** Mutable integer. */
 public class MutableInt {
-    private int i;
+  private int i;
 
-    /**
-     * Create.
-     */
-    public MutableInt() {
-        i = 0;
-    }
+  /** Create. */
+  public MutableInt() {
+    i = 0;
+  }
 
-    /**
-     * Create.
-     * @param i initial value
-     */
-    public MutableInt(int i) {
-        this.i = i;
-    }
+  /**
+   * Create.
+   *
+   * @param i initial value
+   */
+  public MutableInt(int i) {
+    this.i = i;
+  }
 
-    /**
-     * Get.
-     * @return current value
-     */
-    public int get() {
-        return i;
-    }
+  /**
+   * Get.
+   *
+   * @return current value
+   */
+  public int get() {
+    return i;
+  }
 
-    /**
-     * Set.
-     * @param i new value
-     */
-    public void set(int i) {
-        this.i = i;
-    }
+  /**
+   * Set.
+   *
+   * @param i new value
+   */
+  public void set(int i) {
+    this.i = i;
+  }
 
-    /**
-     * Increment.
-     * @return this object
-     */
-    public MutableInt inc() {
-        ++i;
-        return this;
-    }
+  /**
+   * Increment.
+   *
+   * @return this object
+   */
+  public MutableInt inc() {
+    ++i;
+    return this;
+  }
 
-    @Override
-    public String toString() {
-        return Integer.toString(i);
-    }
+  @Override
+  public String toString() {
+    return Integer.toString(i);
+  }
 
-    /**
-     * Add value.
-     * @param i value to add.
-     */
-    public void add(int i) {
-        this.i += i;
-    }
+  /**
+   * Add value.
+   *
+   * @param i value to add.
+   */
+  public void add(int i) {
+    this.i += i;
+  }
 }

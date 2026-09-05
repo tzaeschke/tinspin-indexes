@@ -17,70 +17,71 @@
  */
 package org.tinspin.index;
 
-/**
- * Configuration object for indexes.
- */
+/** Configuration object for indexes. */
 public class IndexConfig {
-    private int dimensions = 3;
-	private boolean defensiveKeyCopy = true;
+  private int dimensions = 3;
+  private boolean defensiveKeyCopy = true;
 
-	/**
-	 * Constructor.
-	 * @param dimensions dimensions
-	 */
-	protected IndexConfig(int dimensions) {
-		this.dimensions = dimensions;
-	}
+  /**
+   * Constructor.
+   *
+   * @param dimensions dimensions
+   */
+  protected IndexConfig(int dimensions) {
+    this.dimensions = dimensions;
+  }
 
-	/**
-	 * Create.
-	 * @param dimensions number of dimensions.
-	 * @return new IndexCOnfiguration object.
-	 */
-	public static IndexConfig create(int dimensions) {
-		return new IndexConfig(dimensions);
-	}
+  /**
+   * Create.
+   *
+   * @param dimensions number of dimensions.
+   * @return new IndexCOnfiguration object.
+   */
+  public static IndexConfig create(int dimensions) {
+    return new IndexConfig(dimensions);
+  }
 
+  /**
+   * Number of dimensions.
+   *
+   * @param dimensions Number of dimensions of keys.
+   * @return this
+   */
+  public IndexConfig setDimensions(int dimensions) {
+    this.dimensions = dimensions;
+    return this;
+  }
 
-	/**
-	 * Number of dimensions.
-	 * @param dimensions Number of dimensions of keys.
-	 * @return this
-	 */
-	public IndexConfig setDimensions(int dimensions) {
-		this.dimensions = dimensions;
-		return this;
-	}
+  /**
+   * Defensive keys copying. If 'false', the kd-tree will store the passed in double[] keys
+   * internally (this reduces required memory). If 'true', the keys are copied in order to avoid
+   * accidental modification. The latter obviously requires more memory. Default is 'true'.
+   *
+   * <p>This setting works only for kd-trees.
+   *
+   * @param defensiveKeyCopy enable defensive copying
+   * @return this
+   */
+  public IndexConfig setDefensiveKeyCopy(boolean defensiveKeyCopy) {
+    this.defensiveKeyCopy = defensiveKeyCopy;
+    return this;
+  }
 
-	/**
-	 * Defensive keys copying. If 'false', the kd-tree will store the passed in
-	 * double[] keys internally (this reduces required memory).
-	 * If 'true', the keys are copied in order to avoid accidental modification.
-	 * The latter obviously requires more memory. Default is 'true'.
-	 * <p>
-	 * This setting works only for kd-trees.
-	 *
-	 * @param defensiveKeyCopy enable defensive copying
-	 * @return this
-	 */
-	public IndexConfig setDefensiveKeyCopy(boolean defensiveKeyCopy) {
-		this.defensiveKeyCopy = defensiveKeyCopy;
-		return this;
-	}
+  /**
+   * Number of dimensions.
+   *
+   * @return number of dimensions.
+   */
+  public int getDimensions() {
+    return dimensions;
+  }
 
-	/**
-	 * Number of dimensions.
-	 * @return number of dimensions.
-	 */
-	public int getDimensions() {
-		return dimensions;
-	}
-
-	/**
-	 * Defensive copying.
-	 * @return true or false.
-	 */
-	public boolean getDefensiveKeyCopy() {
-		return defensiveKeyCopy;
-	}
+  /**
+   * Defensive copying.
+   *
+   * @return true or false.
+   */
+  public boolean getDefensiveKeyCopy() {
+    return defensiveKeyCopy;
+  }
 }

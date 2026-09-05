@@ -1,8 +1,8 @@
 /*
  * Copyright 2016 Tilmann Zaeschke
  * Modification Copyright 2017 Christophe Schmaltz
- * 
- * 
+ *
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,78 +17,81 @@
  */
 package org.tinspin.index;
 
-/**
- * Interface and standard implementations of Point distances.
- */
+/** Interface and standard implementations of Point distances. */
 @FunctionalInterface
 public interface PointDistance {
 
-	/** L1/Manhattan/taxi distance. */
-	PointDistance L1 = PointDistance::l1;
-	/** L2/Euclidean distance. */
-	PointDistance L2 = PointDistance::l2;
+  /** L1/Manhattan/taxi distance. */
+  PointDistance L1 = PointDistance::l1;
 
-	/**
-	 * Distance function.
-	 * @param p1 point 1
-	 * @param p2 point 2
-	 * @return the distance between the two points.
-	 */
-	double dist(double[] p1, double[] p2);
+  /** L2/Euclidean distance. */
+  PointDistance L2 = PointDistance::l2;
 
-	/**
-	 * Distance function.
-	 * @param p1 a point
-	 * @param entry another point
-	 * @return distance between the points
-	 */
-	default double dist(double[] p1, Index.PointEntry<?> entry) {
-		return dist(p1, entry.point());
-	}
+  /**
+   * Distance function.
+   *
+   * @param p1 point 1
+   * @param p2 point 2
+   * @return the distance between the two points.
+   */
+  double dist(double[] p1, double[] p2);
 
+  /**
+   * Distance function.
+   *
+   * @param p1 a point
+   * @param entry another point
+   * @return distance between the points
+   */
+  default double dist(double[] p1, Index.PointEntry<?> entry) {
+    return dist(p1, entry.point());
+  }
 
-	/**
-	 * Manhattan/Taxi distance / L1.
-	 * @param p1 point 1
-	 * @param p2 point 2
-	 * @return distance
-	 */
-	static double l1(double[] p1, double[] p2) {
-		double dist = 0;
-		for (int i = 0; i < p1.length; i++) {
-			double d = Math.abs(p1[i] - p2[i]);
-			dist += d;
-		}
-		return dist;
-	}
+  /**
+   * Manhattan/Taxi distance / L1.
+   *
+   * @param p1 point 1
+   * @param p2 point 2
+   * @return distance
+   */
+  static double l1(double[] p1, double[] p2) {
+    double dist = 0;
+    for (int i = 0; i < p1.length; i++) {
+      double d = Math.abs(p1[i] - p2[i]);
+      dist += d;
+    }
+    return dist;
+  }
 
-	/**
-	 * Euclidean distance / L2.
-	 * @param p1 point 1
-	 * @param p2 point 2
-	 * @return distance
-	 */
-	static double l2(double[] p1, double[] p2) {
-		double dist = 0;
-		for (int i = 0; i < p1.length; i++) {
-			double d = p1[i] - p2[i];
-			dist += d*d;
-		}
-		return Math.sqrt(dist);
-	}
+  /**
+   * Euclidean distance / L2.
+   *
+   * @param p1 point 1
+   * @param p2 point 2
+   * @return distance
+   */
+  static double l2(double[] p1, double[] p2) {
+    double dist = 0;
+    for (int i = 0; i < p1.length; i++) {
+      double d = p1[i] - p2[i];
+      dist += d * d;
+    }
+    return Math.sqrt(dist);
+  }
 
-	/**
-	 * The name of the distance function.
-	 * @param fn distance function
-	 * @return name if known, otherwise "unknown"
-	 */
-	static String getName(PointDistance fn) {
-		//'nice' hack, eh?
-		if (fn == L1) {
-			return "L1";
-		} else if (fn == L2) {
-			return "L2";
-		}
-		return "unknown";
-	}
+  /**
+   * The name of the distance function.
+   *
+   * @param fn distance function
+   * @return name if known, otherwise "unknown"
+   */
+  static String getName(PointDistance fn) {
+    // 'nice' hack, eh?
+    if (fn == L1) {
+      return "L1";
+    } else if (fn == L2) {
+      return "L2";
+    }
+    return "unknown";
+  }
 }

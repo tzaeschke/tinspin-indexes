@@ -1,8 +1,8 @@
 /*
  * Copyright 2009-2017 Tilmann Zaeschke. All rights reserved.
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,70 +23,69 @@ import org.tinspin.index.critbit.CritBit.QueryIteratorKD;
  * A k-dimensional critbit tree.
  *
  * @author Tilmann Zaeschke
- * 
  * @param <V> value type
  */
 public interface CritBitKD<V> {
 
-	/**
-	 * Add entry.
-	 * @param key key
-	 * @param value value 
-	 * @return previous value or 'null' if none existed
-	 * 
-	 * @see CritBit#putKD(long[], Object) 
-	 */
-	V putKD(long[] key, V value);
+  /**
+   * Add entry.
+   *
+   * @param key key
+   * @param value value
+   * @return previous value or 'null' if none existed
+   * @see CritBit#putKD(long[], Object)
+   */
+  V putKD(long[] key, V value);
 
-	/**
-	 * Check if entry exists.
-	 * @param key key
-	 * @return 'true' if the key exists
-	 * 
-	 * @see CritBit#containsKD(long[]) 
-	 */
-	boolean containsKD(long[] key);
+  /**
+   * Check if entry exists.
+   *
+   * @param key key
+   * @return 'true' if the key exists
+   * @see CritBit#containsKD(long[])
+   */
+  boolean containsKD(long[] key);
 
-	/**
-	 * Number of entries.
-	 * @return Number of entries
-	 *  
-	 * @see CritBit#size() 
-	 */  
-	int size();
+  /**
+   * Number of entries.
+   *
+   * @return Number of entries
+   * @see CritBit#size()
+   */
+  int size();
 
-	/**
-	 * Window query.
-	 * @param lowerLeft Lower left corner of the query window
-	 * @param upperRight Upper right corner of the query window
-	 * @return Iterator over query result
-	 * 
-	 * @see CritBit#queryKD(long[], long[]) 
-	 */  
-	QueryIteratorKD<V> queryKD(long[] lowerLeft, long[] upperRight);
+  /**
+   * Window query.
+   *
+   * @param lowerLeft Lower left corner of the query window
+   * @param upperRight Upper right corner of the query window
+   * @return Iterator over query result
+   * @see CritBit#queryKD(long[], long[])
+   */
+  QueryIteratorKD<V> queryKD(long[] lowerLeft, long[] upperRight);
 
-	/**
-	 * Remove entry.
-	 * @param key key
-	 * @return previous value or 'null' if none existed
-	 * 
-	 * @see CritBit#removeKD(long[]) 
-	 */  
-	V removeKD(long[] key);
+  /**
+   * Remove entry.
+   *
+   * @param key key
+   * @return previous value or 'null' if none existed
+   * @see CritBit#removeKD(long[])
+   */
+  V removeKD(long[] key);
 
-	/**
-	 * Print entries.
-	 * @see CritBit#printTree() 
-	 */  
-	void printTree();
+  /**
+   * Print entries.
+   *
+   * @see CritBit#printTree()
+   */
+  void printTree();
 
-	/**
-	 * Get value for key.
-	 * @param key key
-	 * @return the value or 'null' if the key does not exists
-	 * 
-	 * @see CritBit#getKD(long[]) 
-	 */  
-	V getKD(long[] key);
-
+  /**
+   * Get value for key.
+   *
+   * @param key key
+   * @return the value or 'null' if the key does not exists
+   * @see CritBit#getKD(long[])
+   */
+  V getKD(long[] key);
 }

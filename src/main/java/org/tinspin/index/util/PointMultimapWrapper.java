@@ -1,8 +1,8 @@
 /*
  * Copyright 2016-2017 Tilmann Zaeschke
- * 
+ *
  * This file is part of TinSpin.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,190 +17,191 @@
  */
 package org.tinspin.index.util;
 
-import org.tinspin.index.*;
-import org.tinspin.index.rtree.RTreeEntry;
-import org.tinspin.index.rtree.RTree;
-
 import java.util.function.Predicate;
+import org.tinspin.index.*;
+import org.tinspin.index.rtree.RTree;
+import org.tinspin.index.rtree.RTreeEntry;
 
 /**
  * Wrapper class to make a BoxMultiMap look like a PointMultiMap.
+ *
  * @param <T> value type.
  */
 public class PointMultimapWrapper<T> implements PointMultimap<T> {
 
-	private final BoxMultimap<T> ind;
+  private final BoxMultimap<T> ind;
 
-	private PointMultimapWrapper(BoxMultimap<T> ind) {
-		this.ind = ind;
-	}
+  private PointMultimapWrapper(BoxMultimap<T> ind) {
+    this.ind = ind;
+  }
 
-	/**
-	 * Create a PointMultiMap from a BoxMultiMap.
-	 * @param ind index
-	 * @return wrapper
-	 * @param <T> value type
-	 */
-	public static <T> PointMultimap<T> create(BoxMultimap<T> ind) {
-		return new PointMultimapWrapper<>(ind);
-	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@Override
-	public PointIterator<T> iterator() {
-		return new PointIter(ind.iterator());
-	}
+  /**
+   * Create a PointMultiMap from a BoxMultiMap.
+   *
+   * @param ind index
+   * @return wrapper
+   * @param <T> value type
+   */
+  public static <T> PointMultimap<T> create(BoxMultimap<T> ind) {
+    return new PointMultimapWrapper<>(ind);
+  }
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
-	public PointIterator<T> query(double[] min, double[] max) {
-		return new PointIter(ind.queryIntersect(min, max));
-	}
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  @Override
+  public PointIterator<T> iterator() {
+    return new PointIter(ind.iterator());
+  }
 
-	private static class PointIter<T> implements PointIterator<T> {
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  @Override
+  public PointIterator<T> query(double[] min, double[] max) {
+    return new PointIter(ind.queryIntersect(min, max));
+  }
 
-		private final BoxIterator<T> it;
-		
-		PointIter(BoxIterator<T> it) {
-			this.it = it;
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
+  private static class PointIter<T> implements PointIterator<T> {
 
-		@Override
-		public PointEntry<T> next() {
-			BoxEntry<T> e = it.next();
-			return new PointEntry<>(e.min(), e.value());
-		}
+    private final BoxIterator<T> it;
 
-		@Override
-		public PointIterator<T> reset(double[] min, double[] max) {
-			it.reset(min, max);
-			return this;
-		}
-	}
-	
-	@Override
-	public PointEntryKnn<T> query1nn(double[] center) {
-		BoxEntryKnn<T> r = ind.query1nn(center);
-		return new PointEntryKnn<>(r.min(), r.value(), r.dist());
-	}
+    PointIter(BoxIterator<T> it) {
+      this.it = it;
+    }
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
-	public PointIteratorKnn<T> queryKnn(double[] center, int k) {
-		return new PointDIter(ind.queryKnn(center, k));
-	}
+    @Override
+    public boolean hasNext() {
+      return it.hasNext();
+    }
 
-	@Override
-	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
-		BoxDistance.EdgeDistance fn = new BoxDistance.EdgeDistance(distFn);
-		return new PointDIter<>(ind.queryKnn(center, k, fn::edgeDistance));
-	}
+    @Override
+    public PointEntry<T> next() {
+      BoxEntry<T> e = it.next();
+      return new PointEntry<>(e.min(), e.value());
+    }
 
-	private static class PointDIter<T> implements PointIteratorKnn<T> {
+    @Override
+    public PointIterator<T> reset(double[] min, double[] max) {
+      it.reset(min, max);
+      return this;
+    }
+  }
 
-		private final BoxIteratorKnn<T> it;
+  @Override
+  public PointEntryKnn<T> query1nn(double[] center) {
+    BoxEntryKnn<T> r = ind.query1nn(center);
+    return new PointEntryKnn<>(r.min(), r.value(), r.dist());
+  }
 
-		PointDIter(BoxIteratorKnn<T> it) {
-			this.it = it;
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  @Override
+  public PointIteratorKnn<T> queryKnn(double[] center, int k) {
+    return new PointDIter(ind.queryKnn(center, k));
+  }
 
-		@Override
-		public PointEntryKnn<T> next() {
-			BoxEntryKnn<T> e = it.next();
-			return new PointEntryKnn<>(e.min(), e.value(), e.dist());
-		}
+  @Override
+  public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
+    BoxDistance.EdgeDistance fn = new BoxDistance.EdgeDistance(distFn);
+    return new PointDIter<>(ind.queryKnn(center, k, fn::edgeDistance));
+  }
 
-		@Override
-		public PointDIter<T> reset(double[] center, int k) {
-			it.reset(center, k);
-			return this;
-		}
-	}
-	
-	@Override
-	public void insert(double[] key, T value) {
-		ind.insert(key, key, value);
-	}
+  private static class PointDIter<T> implements PointIteratorKnn<T> {
 
-	@Override
-	public boolean remove(double[] point, T value) {
-		return ind.remove(point, point, value);
-	}
+    private final BoxIteratorKnn<T> it;
 
-	@Override
-	public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
-		return ind.removeIf(point, point, e -> condition.test(new PointEntry<>(e.min(), e.value())));
-	}
+    PointDIter(BoxIteratorKnn<T> it) {
+      this.it = it;
+    }
 
-	@Override
-	public PointIterator<T> queryExactPoint(double[] point) {
-		return new PointIter<>(ind.queryExactBox(point, point));
-	}
+    @Override
+    public boolean hasNext() {
+      return it.hasNext();
+    }
 
-	@Override
-	public boolean update(double[] oldPoint, double[] newPoint, T value) {
-		return ind.update(oldPoint, oldPoint, newPoint, newPoint, value);
-	}
+    @Override
+    public PointEntryKnn<T> next() {
+      BoxEntryKnn<T> e = it.next();
+      return new PointEntryKnn<>(e.min(), e.value(), e.dist());
+    }
 
-	@Override
-	public boolean contains(double[] point, T value) {
-		return ind.contains(point, point, value);
-	}
+    @Override
+    public PointDIter<T> reset(double[] center, int k) {
+      it.reset(center, k);
+      return this;
+    }
+  }
 
-	@Override
-	public int getDims() {
-		return ind.getDims();
-	}
+  @Override
+  public void insert(double[] key, T value) {
+    ind.insert(key, key, value);
+  }
 
-	@Override
-	public int size() {
-		return ind.size();
-	}
+  @Override
+  public boolean remove(double[] point, T value) {
+    return ind.remove(point, point, value);
+  }
 
-	@Override
-	public void clear() {
-		ind.clear();
-	}
+  @Override
+  public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
+    return ind.removeIf(point, point, e -> condition.test(new PointEntry<>(e.min(), e.value())));
+  }
 
-	@Override
-	public Stats getStats() {
-		return ind.getStats();
-	}
+  @Override
+  public PointIterator<T> queryExactPoint(double[] point) {
+    return new PointIter<>(ind.queryExactBox(point, point));
+  }
 
-	@Override
-	public int getNodeCount() {
-		return ind.getNodeCount();
-	}
+  @Override
+  public boolean update(double[] oldPoint, double[] newPoint, T value) {
+    return ind.update(oldPoint, oldPoint, newPoint, newPoint, value);
+  }
 
-	@Override
-	public int getDepth() {
-		return ind.getDepth();
-	}
+  @Override
+  public boolean contains(double[] point, T value) {
+    return ind.contains(point, point, value);
+  }
 
-	/**
-	 * Load the index with a set of entries.
-	 * @param entries entries
-	 */
-	public void load(RTreeEntry<T>[] entries) {
-		if (!(ind instanceof RTree)) {
-			throw new UnsupportedOperationException(
-					"Bulkloading is only supported for RTrees");
-		}
-		((RTree<T>)ind).load(entries);
-	}
+  @Override
+  public int getDims() {
+    return ind.getDims();
+  }
 
-	@Override
-	public String toStringTree() {
-		return ind.toStringTree();
-	}
+  @Override
+  public int size() {
+    return ind.size();
+  }
+
+  @Override
+  public void clear() {
+    ind.clear();
+  }
+
+  @Override
+  public Stats getStats() {
+    return ind.getStats();
+  }
+
+  @Override
+  public int getNodeCount() {
+    return ind.getNodeCount();
+  }
+
+  @Override
+  public int getDepth() {
+    return ind.getDepth();
+  }
+
+  /**
+   * Load the index with a set of entries.
+   *
+   * @param entries entries
+   */
+  public void load(RTreeEntry<T>[] entries) {
+    if (!(ind instanceof RTree)) {
+      throw new UnsupportedOperationException("Bulkloading is only supported for RTrees");
+    }
+    ((RTree<T>) ind).load(entries);
+  }
+
+  @Override
+  public String toStringTree() {
+    return ind.toStringTree();
+  }
 }

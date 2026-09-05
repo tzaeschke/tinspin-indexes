@@ -8,310 +8,304 @@ package org.tinspin.index.array;
 
 import java.util.*;
 import java.util.function.Predicate;
-
 import org.tinspin.index.*;
 import org.tinspin.index.util.Refs;
 import org.tinspin.index.util.StringBuilderLn;
 
 /**
  * A simple spatial index based on an array.
+ *
  * @param <T> value type
  */
 public class PointArray<T> implements PointMap<T>, PointMultimap<T> {
-	
-	private final double[][] phc;
-	private final int dims;
-	private int N;
-	private PointEntry<T>[] values;
-	private int insPos = 0;
-	private static final PEComparator comparator = Index.PE_COMP_DEFAULT;
 
-	/**
-	 * Setup of a simple array data structure (no indexing).
-	 * 
-	 * @param dims dimensions
-	 * @param size size
-	 * 
-	 */
-	@SuppressWarnings("unchecked")
-	public PointArray(int dims, int size) {
-		this.N = size;
-		this.dims = dims;
-		phc = new double[N][dims];
-		values = Refs.newArray(PointEntry.class, N);
-	}
-	
-	
-	@Override
-	public void insert(double[] key, T value) {
-		System.arraycopy(key, 0, phc[insPos], 0, dims);
-		values[insPos] = new PointEntryKnn<>(key, value, -1);
-		insPos++;
-	}
+  private final double[][] phc;
+  private final int dims;
+  private int N;
+  private PointEntry<T>[] values;
+  private int insPos = 0;
+  private static final PEComparator comparator = Index.PE_COMP_DEFAULT;
 
-	@Override
-	public boolean remove(double[] point, T value) {
-		return false;
-	}
+  /**
+   * Setup of a simple array data structure (no indexing).
+   *
+   * @param dims dimensions
+   * @param size size
+   */
+  @SuppressWarnings("unchecked")
+  public PointArray(int dims, int size) {
+    this.N = size;
+    this.dims = dims;
+    phc = new double[N][dims];
+    values = Refs.newArray(PointEntry.class, N);
+  }
 
-	@Override
-	public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
-		return false;
-	}
+  @Override
+  public void insert(double[] key, T value) {
+    System.arraycopy(key, 0, phc[insPos], 0, dims);
+    values[insPos] = new PointEntryKnn<>(key, value, -1);
+    insPos++;
+  }
 
-	@Override
-	public PointIterator<T> queryExactPoint(double[] point) {
-		return null;
-	}
+  @Override
+  public boolean remove(double[] point, T value) {
+    return false;
+  }
 
+  @Override
+  public boolean removeIf(double[] point, Predicate<PointEntry<T>> condition) {
+    return false;
+  }
 
-	@Override
-	public boolean contains(double[] key) {
-		return queryExact(key) != null;
-	}
+  @Override
+  public PointIterator<T> queryExactPoint(double[] point) {
+    return null;
+  }
 
-	@Override
-	public T queryExact(double[] point) {
-		for (int j = 0; j < N; j++) { 
-			if (eq(phc[j], point)) {
-				return values[j].value();
-			}
-		}
-		return null;
-	}
+  @Override
+  public boolean contains(double[] key) {
+    return queryExact(key) != null;
+  }
 
-	@Override
-	public boolean contains(double[] point, T value) {
-		for (int j = 0; j < N; j++) {
-			if (eq(phc[j], point) && Objects.equals(value, values[j].value())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean eq(double[] a, double[] b) {
-		for (int i = 0; i < a.length; i++) {
-			if (a[i] != b[i]) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	private boolean geq(double[] a, double[] b) {
-		for (int i = 0; i < a.length; i++) {
-			if (a[i] < b[i]) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	private boolean leq(double[] a, double[] b) {
-		for (int i = 0; i < a.length; i++) {
-			if (a[i] > b[i]) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	@Override
-	public AQueryIterator query(double[] min, double[] max) {
-		return new AQueryIterator(min, max);
-	}
-
-	@Override
-	public PointEntryKnn<T> query1nn(double[] center) {
-		PointIteratorKnn<T> it = queryKnn(center, 1);
-		return it.hasNext() ? it.next() : null;
-	}
-
-	private class AQueryIterator implements PointIterator<T> {
-
-    	private Iterator<PointEntry<T>> it;
-    	
-		public AQueryIterator(double[] min, double[] max) {
-			reset(min, max);
-		}
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public PointEntry<T> next() {
-			return it.next();
-		}
-
-		@Override
-		public PointIterator<T> reset(double[] min, double[] max) {
-			ArrayList<PointEntry<T>> results = new ArrayList<>(); 
-			for (int i = 0; i < N; i++) { 
-				if (leq(phc[i], max) && geq(phc[i], min)) {
-					results.add(values[i]);
-				}
-			}
-			it = results.iterator();
-			return this;
-		}
+  @Override
+  public T queryExact(double[] point) {
+    for (int j = 0; j < N; j++) {
+      if (eq(phc[j], point)) {
+        return values[j].value();
+      }
     }
-    
-	@Override
-	public PointIterator<T> iterator() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
-	}
+    return null;
+  }
 
-	@Override
-	public AQueryIteratorKnn queryKnn(double[] center, int k) {
-		return new AQueryIteratorKnn(center, k);
-	}
+  @Override
+  public boolean contains(double[] point, T value) {
+    for (int j = 0; j < N; j++) {
+      if (eq(phc[j], point) && Objects.equals(value, values[j].value())) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-	@Override
-	public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
-		return null;
-	}
+  private boolean eq(double[] a, double[] b) {
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 
+  private boolean geq(double[] a, double[] b) {
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] < b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 
-	private class AQueryIteratorKnn implements PointIteratorKnn<T> {
+  private boolean leq(double[] a, double[] b) {
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] > b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 
-    	private Iterator<PointEntryKnn<T>> it;
-    	
-		public AQueryIteratorKnn(double[] center, int k) {
-			reset(center, k);
-		}
+  @Override
+  public AQueryIterator query(double[] min, double[] max) {
+    return new AQueryIterator(min, max);
+  }
 
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
+  @Override
+  public PointEntryKnn<T> query1nn(double[] center) {
+    PointIteratorKnn<T> it = queryKnn(center, 1);
+    return it.hasNext() ? it.next() : null;
+  }
 
-		@Override
-		public PointEntryKnn<T> next() {
-			return it.next();
-		}
+  private class AQueryIterator implements PointIterator<T> {
 
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		@Override
-		public AQueryIteratorKnn reset(double[] center, int k) {
-			it = ((List)knnQuery(center, k)).iterator();
-			return this;
-		}
+    private Iterator<PointEntry<T>> it;
 
-		private ArrayList<PointEntryKnn<T>> knnQuery(double[] center, int k) {
-			ArrayList<PointEntryKnn<T>> ret = new ArrayList<>(k);
-			for (int i = 0; i < phc.length; i++) {
-				double[] p = phc[i];
-				double dist = dist(center, p);
-				if (ret.size() < k) {
-					ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
-					ret.sort(comparator);
-				} else if (ret.get(k-1).dist() > dist) {
-					ret.remove(k-1);
-					ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
-					ret.sort(comparator);
-				}
-			}
-			return ret;
-		}
-	}
-    
+    public AQueryIterator(double[] min, double[] max) {
+      reset(min, max);
+    }
 
+    @Override
+    public boolean hasNext() {
+      return it.hasNext();
+    }
 
-	private static double dist(double[] a, double[] b) {
-		double dist = 0;
-		for (int i = 0; i < a.length; i++) {
-			double d =  a[i]-b[i];
-			dist += d*d;
-		}
-		return Math.sqrt(dist);
-	}
+    @Override
+    public PointEntry<T> next() {
+      return it.next();
+    }
 
-	@Override
-	public T update(double[] oldPoint, double[] newPoint) {
-		for (int i = 0; i < N; i++) { 
-			if (eq(phc[i], oldPoint)) {
-				System.arraycopy(newPoint, 0, phc[i], 0, dims);
-				return values[i].value();
-			}
-		}
-		return null;
-	}
+    @Override
+    public PointIterator<T> reset(double[] min, double[] max) {
+      ArrayList<PointEntry<T>> results = new ArrayList<>();
+      for (int i = 0; i < N; i++) {
+        if (leq(phc[i], max) && geq(phc[i], min)) {
+          results.add(values[i]);
+        }
+      }
+      it = results.iterator();
+      return this;
+    }
+  }
 
-	@Override
-	public boolean update(double[] oldPoint, double[] newPoint, T value) {
-		for (int i = 0; i < N; i++) {
-			if (eq(phc[i], oldPoint) && Objects.equals(values[i].value(), value)) {
-				System.arraycopy(newPoint, 0, phc[i], 0, dims);
-				return true;
-			}
-		}
-		return false;
-	}
+  @Override
+  public PointIterator<T> iterator() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException();
+    // return null;
+  }
 
-	@Override
-	public T remove(double[] point) {
-		for (int i = 0; i < N; i++) { 
-			if (phc[i] != null && eq(phc[i], point)) {
-				T v = values[i].value();
-				values[i] = null;
-				phc[i] = null;
-				return v;
-			}
-		}
-		return null;
-	}
-	
-	@Override
-	public String toString() {
-		return "NaiveArray";
-	}
+  @Override
+  public AQueryIteratorKnn queryKnn(double[] center, int k) {
+    return new AQueryIteratorKnn(center, k);
+  }
 
-	@Override
-	public int getDims() {
-		return dims;
-	}
+  @Override
+  public PointIteratorKnn<T> queryKnn(double[] center, int k, PointDistance distFn) {
+    return null;
+  }
 
-	@Override
-	public int size() {
-		return N;
-	}
+  private class AQueryIteratorKnn implements PointIteratorKnn<T> {
 
-	@Override
-	public void clear() {
-		for (int i = 0; i < N; i++) {
-			values[i] = null;
-			phc[i] = null;
-		}
-		N = 0;
-	}
+    private Iterator<PointEntryKnn<T>> it;
 
-	@Override
-	public Stats getStats() {
-		throw new UnsupportedOperationException();
-		//return null;
-	}
+    public AQueryIteratorKnn(double[] center, int k) {
+      reset(center, k);
+    }
 
-	@Override
-	public int getNodeCount() {
-		return 1;
-	}
+    @Override
+    public boolean hasNext() {
+      return it.hasNext();
+    }
 
-	@Override
-	public int getDepth() {
-		return 0;
-	}
+    @Override
+    public PointEntryKnn<T> next() {
+      return it.next();
+    }
 
-	@Override
-	public String toStringTree() {
-		StringBuilderLn s = new StringBuilderLn();
-		for (int i = 0; i < N; i++) {
-			s.append(Arrays.toString(phc[i]) + " v=" + values[i]);
-		}
-		return s.toString();
-	}
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
+    public AQueryIteratorKnn reset(double[] center, int k) {
+      it = ((List) knnQuery(center, k)).iterator();
+      return this;
+    }
+
+    private ArrayList<PointEntryKnn<T>> knnQuery(double[] center, int k) {
+      ArrayList<PointEntryKnn<T>> ret = new ArrayList<>(k);
+      for (int i = 0; i < phc.length; i++) {
+        double[] p = phc[i];
+        double dist = dist(center, p);
+        if (ret.size() < k) {
+          ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
+          ret.sort(comparator);
+        } else if (ret.get(k - 1).dist() > dist) {
+          ret.remove(k - 1);
+          ret.add(new PointEntryKnn<>(p, values[i].value(), dist));
+          ret.sort(comparator);
+        }
+      }
+      return ret;
+    }
+  }
+
+  private static double dist(double[] a, double[] b) {
+    double dist = 0;
+    for (int i = 0; i < a.length; i++) {
+      double d = a[i] - b[i];
+      dist += d * d;
+    }
+    return Math.sqrt(dist);
+  }
+
+  @Override
+  public T update(double[] oldPoint, double[] newPoint) {
+    for (int i = 0; i < N; i++) {
+      if (eq(phc[i], oldPoint)) {
+        System.arraycopy(newPoint, 0, phc[i], 0, dims);
+        return values[i].value();
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public boolean update(double[] oldPoint, double[] newPoint, T value) {
+    for (int i = 0; i < N; i++) {
+      if (eq(phc[i], oldPoint) && Objects.equals(values[i].value(), value)) {
+        System.arraycopy(newPoint, 0, phc[i], 0, dims);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public T remove(double[] point) {
+    for (int i = 0; i < N; i++) {
+      if (phc[i] != null && eq(phc[i], point)) {
+        T v = values[i].value();
+        values[i] = null;
+        phc[i] = null;
+        return v;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public String toString() {
+    return "NaiveArray";
+  }
+
+  @Override
+  public int getDims() {
+    return dims;
+  }
+
+  @Override
+  public int size() {
+    return N;
+  }
+
+  @Override
+  public void clear() {
+    for (int i = 0; i < N; i++) {
+      values[i] = null;
+      phc[i] = null;
+    }
+    N = 0;
+  }
+
+  @Override
+  public Stats getStats() {
+    throw new UnsupportedOperationException();
+    // return null;
+  }
+
+  @Override
+  public int getNodeCount() {
+    return 1;
+  }
+
+  @Override
+  public int getDepth() {
+    return 0;
+  }
+
+  @Override
+  public String toStringTree() {
+    StringBuilderLn s = new StringBuilderLn();
+    for (int i = 0; i < N; i++) {
+      s.append(Arrays.toString(phc[i]) + " v=" + values[i]);
+    }
+    return s.toString();
+  }
 }

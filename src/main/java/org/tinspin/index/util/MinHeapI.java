@@ -19,41 +19,42 @@ package org.tinspin.index.util;
 
 /**
  * Common interface for MinHeap implementations.
+ *
  * @param <T> entry type.
  */
 public interface MinHeapI<T> {
 
-    /**
-     * Add entry.
-     * @param value entry
-     */
-    void push(T value);
+  /**
+   * Add entry.
+   *
+   * @param value entry
+   */
+  void push(T value);
 
-    /**
-     * Remove first entry.
-     */
-    void popMin();
+  /** Remove first entry. */
+  void popMin();
 
-    /**
-     * Look at first entry.
-     * @return first entry
-     */
-    T peekMin();
+  /**
+   * Look at first entry.
+   *
+   * @return first entry
+   */
+  T peekMin();
 
-    /**
-     * Heap size.
-     * @return number of entries.
-     */
-    int size();
+  /**
+   * Heap size.
+   *
+   * @return number of entries.
+   */
+  int size();
 
-    /**
-     * Is empty.
-     * @return 'true' if empty
-     */
-    boolean isEmpty();
+  /**
+   * Is empty.
+   *
+   * @return 'true' if empty
+   */
+  boolean isEmpty();
 
-    /**
-     * Remove all entries.
-     */
-    void clear();
+  /** Remove all entries. */
+  void clear();
 }
