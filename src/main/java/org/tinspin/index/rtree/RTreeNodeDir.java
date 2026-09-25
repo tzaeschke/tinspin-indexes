@@ -74,7 +74,7 @@ public class RTreeNodeDir<T> extends RTreeNode<T> {
         e.setParent(null);
         children.remove(i);
         recalcMBB();
-        recalcParentMBB();
+        shrinkParentMBB();
         return;
       }
     }

@@ -169,7 +169,7 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
   }
 
   /** Recursively recalculate bounding box of parents. */
-  public void recalcParentMBB() {
+  public void shrinkParentMBB() {
     RTreeNodeDir<T> current = this.parent;
     // stop adjusting parent if we get a root or if there was no change
     while (current != null && current.recalcMBB()) {
@@ -178,9 +178,9 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
   }
 
   /** Recursively recalculate bounding box of this node and its parents. */
-  public void recalcRecursiveMBB() {
+  public void shrinkRecursiveMBB() {
     if (recalcMBB()) {
-      recalcParentMBB();
+      shrinkParentMBB();
     }
   }
 
@@ -205,6 +205,6 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
    */
   public void removeEntry(int i) {
     getEntries().remove(i);
-    recalcRecursiveMBB();
+    shrinkRecursiveMBB();
   }
 }

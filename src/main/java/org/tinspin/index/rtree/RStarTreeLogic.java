@@ -321,7 +321,7 @@ public class RStarTreeLogic implements RTreeLogic {
       nodeToSplit.addEntry(children[i]);
     }
     // shrink parents
-    nodeToSplit.recalcParentMBB();
+    nodeToSplit.shrinkParentMBB();
 
     for (int i = bestIndex; i < children.length; i++) {
       newNode.addEntry(children[i]);
@@ -357,7 +357,7 @@ public class RStarTreeLogic implements RTreeLogic {
       node.addEntry(children[i].entry);
     }
     // shrink parents
-    node.recalcParentMBB();
+    node.shrinkParentMBB();
 
     // RI4 reinsert entries
     // use 'close reinsert', starting with best values, as suggested in paper
