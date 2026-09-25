@@ -67,8 +67,7 @@ public class RStarTreeLogic implements RTreeLogic {
 
     @Override
     public int compareTo(NDPair<T> o) {
-      double dist = d - o.d;
-      return dist < 0 ? -1 : dist > 0 ? 1 : 0;
+      return Double.compare(d, o.d);
     }
 
     @Override
@@ -93,7 +92,7 @@ public class RStarTreeLogic implements RTreeLogic {
 
     @Override
     public int compareTo(EDPair<T> o) {
-      return d < o.d ? -1 : d > o.d ? 1 : 0;
+      return Double.compare(d, o.d);
     }
   }
 
@@ -377,14 +376,8 @@ public class RStarTreeLogic implements RTreeLogic {
 
     @Override
     public int compare(RTreeEntry<?> o1, RTreeEntry<?> o2) {
-      double dMin = o1.min()[axis] - o2.min()[axis];
-      if (dMin < 0) {
-        return -1;
-      } else if (dMin > 0) {
-        return 1;
-      }
-      double dMax = o1.max()[axis] - o2.max()[axis];
-      return dMax < 0 ? -1 : dMax > 0 ? 1 : 0;
+      int dMin = Double.compare(o1.min()[axis], o2.min()[axis]);
+      return dMin != 0 ? dMin : Double.compare(o1.max()[axis], o2.max()[axis]);
     }
   }
 
@@ -397,14 +390,8 @@ public class RStarTreeLogic implements RTreeLogic {
 
     @Override
     public int compare(RTreeEntry<?> o2, RTreeEntry<?> o1) {
-      double dMin = o1.min()[axis] - o2.min()[axis];
-      if (dMin < 0) {
-        return -1;
-      } else if (dMin > 0) {
-        return 1;
-      }
-      double dMax = o1.max()[axis] - o2.max()[axis];
-      return dMax < 0 ? -1 : dMax > 0 ? 1 : 0;
+      int dMin = Double.compare(o1.min()[axis], o2.min()[axis]);
+      return dMin != 0 ? dMin : Double.compare(o1.max()[axis], o2.max()[axis]);
     }
   }
 
