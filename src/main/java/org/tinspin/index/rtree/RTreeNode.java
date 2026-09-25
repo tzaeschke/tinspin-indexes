@@ -39,7 +39,7 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
   abstract ArrayList<RTreeEntry<T>> getEntries();
 
   /**
-   * Calculates the overlap of this node with 'othernode' if this node would be enlarged to contain
+   * Calculates the overlap of this node with 'otherNode' if this node would be enlarged to contain
    * 'enlargement'.
    *
    * @param enlargement enlargement
@@ -91,16 +91,21 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
    * Extends the MBB to ensure it covers the new entry.
    *
    * @param e new entry
+   * @return 'true' iff the MBB has changed
    */
-  protected void extendMBB(RTreeEntry<T> e) {
+  protected boolean extendMBB(RTreeEntry<T> e) {
+    boolean changed = false;
     for (int i = 0; i < min().length; i++) {
       if (min()[i] > e.min()[i]) {
         min()[i] = e.min()[i];
+        changed = true;
       }
       if (max()[i] < e.max()[i]) {
         max()[i] = e.max()[i];
+        changed = true;
       }
     }
+    return changed;
   }
 
   /**
@@ -109,8 +114,8 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
    * @return 'true' iff the MBB has changed
    */
   public boolean recalcMBB() {
-    double[] minOld = min().clone();
-    double[] maxOld = max().clone();
+    double[] minOld = Arrays.copyOf(min(), min().length);
+    double[] maxOld = Arrays.copyOf(max(), max().length);
     resetMBB();
     ArrayList<RTreeEntry<T>> entries = getEntries();
     for (int i = 0; i < entries.size(); i++) {
@@ -157,11 +162,8 @@ public abstract class RTreeNode<T> extends RTreeEntry<T> {
   /** Recursively recalculate bounding box of parents. */
   public void extendParentMBB() {
     RTreeNodeDir<T> current = this.parent;
-    // TODO ?
     // stop adjusting parent if we get a root or if there was no change
-    // TODO remove this method? Difference to recalcParentMBB() ?
-    while (current != null) {
-      current.extendMBB(this);
+    while (current != null && current.extendMBB(this)) {
       current = current.getParent();
     }
   }
