@@ -76,6 +76,7 @@ public class TestRunner {
   }
 
   public TestStats run() {
+    String name = "(" + S.INDEX.name() + " - " + S.TEST.name() + ")";
     JmxTools.startUp();
 
     // load
@@ -96,9 +97,9 @@ public class TestRunner {
       repeatQuery(S.cfgWindowQueryRepeat, 1);
       S.assortedInfo += " WINDOW_RESULTS=" + S.cfgWindowQuerySize;
     } else if (S.cfgNDims > 60) {
-      System.err.println("WARNING: skipping window queries for dims=" + S.cfgNDims);
+      System.err.println("WARNING: skipping window queries for dims=" + S.cfgNDims + name);
     } else {
-      System.err.println("WARNING: window queries disabled");
+      System.err.println("WARNING: window queries disabled" + name);
     }
 
     // point queries.
@@ -107,7 +108,7 @@ public class TestRunner {
       repeatPointQuery(S.cfgPointQueryRepeat, 0);
       repeatPointQuery(S.cfgPointQueryRepeat, 1);
     } else {
-      System.err.println("WARNING: point queries disabled");
+      System.err.println("WARNING: point queries disabled" + name);
     }
 
     // kNN queries
@@ -120,7 +121,7 @@ public class TestRunner {
       repeatKnnQuery(repeat, 0, 10);
       repeatKnnQuery(repeat, 1, 10);
     } else {
-      System.err.println("WARNING: kNN queries disabled");
+      System.err.println("WARNING: kNN queries disabled" + name);
     }
 
     // update
@@ -130,14 +131,14 @@ public class TestRunner {
       update(0);
       update(1);
     } else {
-      System.err.println("WARNING: update() disabled");
+      System.err.println("WARNING: update() disabled" + name);
     }
 
     // unload
     if (tree.supportsUnload()) {
       unload();
     } else {
-      System.err.println("WARNING: unload() disabled");
+      System.err.println("WARNING: unload() disabled" + name);
     }
 
     tree.getStats(S);

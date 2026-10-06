@@ -17,7 +17,6 @@
  */
 package org.tinspin.index.qtplain;
 
-
 // import org.tinspin.index.BoxEntryKnn;
 
 // public class QREntryDist<T> extends QREntry<T> implements BoxEntryKnn<T> {

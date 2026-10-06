@@ -6,10 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-TODO
-- remove RTreeNode.extendParentMBB()  line 150
-
-
 - Nothing yet
 
 ### Fixed
@@ -24,6 +20,8 @@ TODO
   [#50](https://github.com/tzaeschke/tinspin-indexes/pull/50)
 - Changed code formatting to google format
   [#51](https://github.com/tzaeschke/tinspin-indexes/pull/51)
+- Minor optimization and cleanup in RTree nodes
+  [#52](https://github.com/tzaeschke/tinspin-indexes/pull/52)
 
 ## [2.1.4] - 2024-08-01
 
