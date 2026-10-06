@@ -23,7 +23,7 @@ TinSpin indexes are also available via maven:
 <dependency>
     <groupId>org.tinspin</groupId>
     <artifactId>tinspin-indexes</artifactId>
-    <version>2.1.4</version>
+    <version>2.1.5</version>
 </dependency>
 ```
   
