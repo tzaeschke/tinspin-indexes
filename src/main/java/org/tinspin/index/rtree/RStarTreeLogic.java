@@ -149,8 +149,9 @@ public class RStarTreeLogic implements RTreeLogic {
       RTreeEntry<T> node, RTreeEntry<T> toSkip, ArrayList<RTreeNode<T>> children) {
     double o = 0;
     for (int i = 0; i < children.size(); i++) {
-      if (children.get(i) != toSkip) {
-        o += node.calcOverlap(children.get(i));
+      RTreeNode<T> child = children.get(i);
+      if (child != toSkip) {
+        o += node.calcOverlap(child);
       }
     }
     return o;
@@ -167,8 +168,7 @@ public class RStarTreeLogic implements RTreeLogic {
       if (areaEnl < bestAreaEnl) {
         bestAreaEnl = areaEnl;
         bestNode = child;
-      }
-      if (areaEnl == bestAreaEnl) {
+      } else if (areaEnl == bestAreaEnl) {
         // ties are resolved by choosing the node with the smallest area
         double aBest = bestNode.calcArea();
         double aNew = child.calcArea();
@@ -202,7 +202,6 @@ public class RStarTreeLogic implements RTreeLogic {
     return chooseSplitIndex(node, children, splitAxis);
   }
 
-  @SuppressWarnings("unused")
   private <T> int chooseSplitAxis(RTreeEntry<T>[] children) {
     int dims = children[0].min().length;
     double[] bufMin = new double[dims];
