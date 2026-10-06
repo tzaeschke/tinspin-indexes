@@ -49,6 +49,7 @@ Note:
 ## Changelog
 
 See [CHANGELOG](CHANGELOG.md) for details.
+ - 2.1.5 Minor R-Tree improvements. Fixed a ton of compiler/linter warngings.
  - 2.1.4 Fixed precision problems in quadtrees when adding/removing entries.
  - 2.1.3 Fixed `remove()` not cleaning up properly and kNN returning deleted entries.
  - 2.1.2 Made `create()` method `static` for `IndexConfig`.
